@@ -1,0 +1,60 @@
+links	"trina_base_link" "torso_link" "upper_torso_link" "left_ee_link" "right_ee_link" "right_control_box_link" "right_control_box_link"
+parents	-1 0 1 2 2 0 0
+
+axis	0 0 1	0 0 1	0 1 0  0 1 0  0 1 0  0 0 1  0 0 1
+
+jointtype 	r p r r r r r
+
+#height of the base is 0.36
+Tparent	1 0 0	0 1 0	0 0 1	0 0 0 \
+1 0 0	0 1 0	0 0 1	0.07 0 0.37905 \
+1 0 0	0 1 0	0 0 1	0 0 0 \
+1 0 0	0 1 0	0 0 1	0 0.174625 0.5206375 \
+1 0 0	0 1 0	0 0 1	0 -0.174625 0.5206375 \
+1 0 0	0 1 0	0 0 1	-0.09 0.0428625 0.366 \
+1 0 0	0 1 0	0 0 1	-0.09 -0.0428625 0.366 \
+#1 0 0	0 1 0	0 0 1	-0.09 0.0428625 0.366 \
+#1 0 0	0 1 0	0 0 1	-0.09 -0.0428625 0.366 \
+
+q	0 0 0 0 0 0 0
+
+qmin	0 0 0 0 0 0 0 
+
+qmax	0 0.7 1 0 0 0 0 
+
+geometry "trina/Fetch_base.off" "" "trina/torso.off" "" "" "trina/left_control_box.off" "trina/right_control_box.off"
+
+mass	68 10 4 0.0001 0.0001 15 15
+
+com	0 0 0.18	0 0 0.25	0 0 0.25	0 0 0	0 0 0 -0.12 0.16 0.2	-0.12 -0.16 0.2
+
+automass
+
+torquemax	inf 150 150 inf inf inf inf
+
+velmax	0 3.2 3.2 0 0 0 0
+
+accmax  0 1 1 0 0 0 0
+
+mount 3 "ur5e_with_gripper.rob"   -0.7071 0.7071 0 0.5 0.5 0.7071 0.5 0.5 -0.7071 0 0 0 as "left"
+mount 4 "ur5e_with_gripper.rob"    0.7071 0.7071 0 0.5 -0.5 -0.7071 -0.5 0.5 -0.7071 0 0 0 as "right"
+
+joint weld 0
+joint normal 1
+joint normal 2
+joint weld 3
+joint weld 4
+joint weld 5
+joint weld 6
+driver normal 1
+driver normal 2
+driver normal 3
+
+
+servoP	5000 20000 5000 
+servoI	100 100 100
+servoD	200 400 200
+
+dryFriction	0 0 0
+viscousFriction	25 100 100
+noselfcollision 0 2  2 5  2 6  7 5  7 6  24 5  24 6  7 8 8 9 9 10 10 11 11 12 12 13 24 25 25 26 26 27 27 28 28 29 7 24
