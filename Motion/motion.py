@@ -2,14 +2,13 @@ import os
 import sys
 import time
 #import the limb, base, EE, gripper,Torso, etc classes...
-
-
-
+#import the config file for network configurations
+#import TRINAConfig
 class Motion:
     def __init__(self):
-        self.left_limb = Limb(LEFT)
+        self.left_limb = Limb(TRINAConfig.left_arm_address)
         self.right_limb = Limb(RIGHT)
-	self.base = MobileBase()
+	    self.base = MobileBase()
         #self.left_ee = EndEffector(LEFT)
         #self.right_ee = EndEffector(RIGHT)
         #self.left_gripper = Gripper(LEFT)
