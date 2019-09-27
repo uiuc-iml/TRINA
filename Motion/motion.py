@@ -8,7 +8,7 @@ import TRINAConfig #network configs and other configs
 import motionStates #state structures
 import utils 
 from copy import deepcopy
-
+from klampt.math import vectorops 
 class Motion:
     def __init__(self):
         ##T#he individual components
@@ -72,12 +72,12 @@ class Motion:
         #    self.shutdown()
         #    raise KeyboardInterrupt()
         #signal.signal(signal.SIGINT,interrupter)
-        controlThread = threading.Thread(target = self.controlLoop)
+        controlThread = threading.Thread(target = self._controlLoop)
         controlThread.start()
         self.startUp = True
         return self.startUp
 
-    def controlLoop(self):
+    def _controlLoop(self):
         print("motion.controlLoop(): controlLoop started.")
         while not self.shutdownFlag:
             loopStartTime = time.time()
@@ -161,12 +161,15 @@ class Motion:
         return 
     def setLeftLimbPosition(self,q):
         """q should be a list of 6 elements"""
+        """This will clear the motion queue"""
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
         self.controlLoopLock.acquire()
         self.left_limb_state.commandSent = False
         self.left_limb_state.commandedq = deepcopy(q)
         self.left_limb_state.commandeddq = []
         self.left_limb_state.commandType = 0
+        self.left_limb_state.commandQueue = False
+        self.left_limb_state.commandedqQueue = []
         self.controlLoopLock.release()
         return 
 
@@ -178,12 +181,58 @@ class Motion:
         self.right_limb_state.commandedq = deepcopy(q)
         self.right_limb_state.commandeddq = []
         self.right_limb_state.commandType = 0
+        self.right_limb_state.commandQueue = False
+        self.right_limb_state.commandedqQueue = []
         self.controlLoopLock.release()
         return 
+
     def setLeftLimbPositionLinear(self,q,duration):
+        """set a motion queue, this will clear the setPosition() commands"""
         assert len(q) == 6, "motion.setLeftLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setLeftLimbPositionLinear(): Duration needs to be a positive number"
+        #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
+        #Also collision checks
+        planningTime = 0.0 + TRINAConfig.ur5eControlRate
+        positionQueue = []
+        currentq = self.left_limb_state.sensedq
+        difference = vectorops.sub(q,currentq)
+        while planningTime < duration:
+            positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
+            planningTime = planningTime + TRINAConfig.ur5eControlRate
+        positionQueue.append(q)
 
+        self.controlLoopLock.acquire()
+        self.left_limb_state.commendSent = False
+        self.left_limb_state.commandType = 0
+        self.left_limb_state.commandedqQueue = positionQueue
+        self.left_limb_state.commandQueue = True
+        self.left_limb_state.commandedq = []
+        self.left_limb_state.commandeddq = []
+        self.controlLoopLock.release()
+
+    def setRightLimbPositionLinear(self,q,duration):
+        """set a motion queue, this will clear the setPosition() commands"""
+        assert len(q) == 6, "motion.setRightLimbPositionLinear(): Wrong number of joint positions sent"
+        assert duration > 0, "motion.setRightLimbPositionLinear(): Duration needs to be a positive number"
+        #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
+        #Also collision checks
+        planningTime = 0.0 + TRINAConfig.ur5eControlRate
+        positionQueue = []
+        currentq = self.right_limb_state.sensedq
+        difference = vectorops.sub(q,currentq)
+        while planningTime < duration:
+            positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
+            planningTime = planningTime + TRINAConfig.ur5eControlRate
+        positionQueue.append(q)
+        
+        self.controlLoopLock.acquire()
+        self.right_limb_state.commendSent = False
+        self.right_limb_state.commandType = 0
+        self.right_limb_state.commandedqQueue = positionQueue
+        self.right_limb_state.commandQueue = True
+        self.right_limb_state.commandedq = []
+        self.right_limb_state.commandeddq = []
+        self.controlLoopLock.release()
 
     def sensedLeftLimbPosition(self):
         return self.left_limb_state.sensedq
@@ -204,15 +253,19 @@ class Motion:
         self.left_limb_state.commandeddq = deepcopy(qdot)
         self.left_limb_state.commandedq = []
         self.left_limb_state.commandType = 1
+        self.left_limb_state.commandQueue = False
+        self.left_limb_state.commandedqQueue = []
         return 
 
-    def setLeftLimbVelocity(self,qdot)
-        assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
+    def setRightLimbVelocity(self,qdot)
+        assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
         self.controlLoopLock.acquire()
-        self.left_limb_state.commandSent = False
-        self.left_limb_state.commandeddq = deepcopy(qdot)
-        self.left_limb_state.commandedq = []
-        self.left_limb_state.commandType = 1
+        self.right_limb_state.commandSent = False
+        self.right_limb_state.commandeddq = deepcopy(qdot)
+        self.right_limb_state.commandedq = []
+        self.right_limb_state.commandType = 1
+        self.right_limb_state.commandQueue = False
+        self.right_limb_state.commandedqQueue = []
         return 
 
     def sensedLeftLimbVelocity(self):
