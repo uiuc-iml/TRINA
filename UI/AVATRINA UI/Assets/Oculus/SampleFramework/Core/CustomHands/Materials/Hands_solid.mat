@@ -4,10 +4,11 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: Hands_solid
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: 5e0c88c3d888e4489929314c7c1ebf4b, type: 3}
   m_ShaderKeywords: _EMISSION
   m_LightmapFlags: 1
   m_EnableInstancingVariants: 0
@@ -80,6 +81,7 @@ Material:
     - _OcclusionStrength: 1
     - _OutlineWidth: 0.005
     - _Parallax: 0.02
+    - _RimPower: 3
     - _Shininess: 0.75
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
@@ -90,8 +92,10 @@ Material:
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _InnerColor: {r: 1, g: 1, b: 1, a: 1}
     - _MyColor: {r: 0.87058824, g: 0.87058824, b: 0.87058824, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
     - _ReflectColor: {r: 1, g: 0, b: 0, a: 0.5019608}
+    - _RimColor: {r: 0.16078432, g: 0.2428818, b: 0.25882354, a: 0}
     - _SpecColor: {r: 0.50735295, g: 0.50735295, b: 0.50735295, a: 1}
     - _TintColor: {r: 0.5, g: 0.5, b: 0.5, a: 0.5}

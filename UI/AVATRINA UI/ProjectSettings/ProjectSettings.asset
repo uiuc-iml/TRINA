@@ -152,7 +152,7 @@ PlayerSettings:
       dashSupport: 1
       lowOverheadMode: 0
       protectedContext: 0
-      v2Signing: 0
+      v2Signing: 1
     enable360StereoCapture: 0
   isWsaHolographicRemotingEnabled: 0
   protectGraphicsMemory: 0
@@ -164,7 +164,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: com.DefaultCompany.AVATRINAUI
+    Android: com.DefaultCompany.AVATRINAUI1
     Standalone: com.DefaultCompany.AVATRINAUI
   buildNumber: {}
   AndroidBundleVersionCode: 1
