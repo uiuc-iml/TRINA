@@ -223,7 +223,7 @@ class limbController:
 
     ####
     def stopMotion(self):
-        #implement this....
+        self.setConfig(self._q_curr)
         return
 
     def moving(self):

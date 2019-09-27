@@ -334,7 +334,6 @@ def untuck_arm(robot,leftControlApi,rightControlApi,left=False,right=False):
     return 0
 
 
-
 def tuck_arm(robot,leftControlApi,rightControlApi,left=False,right=False):
     fullLeftTucked = get_Partial_Config(robot,0.2,0,leftTuckedConfig,[0,-math.pi/2.0,0,-math.pi/2.0,0,0,0])
     fullWaypoint1 = get_Partial_Config(robot,0.2,0,waypoint1,[0,-math.pi/2.0,0,-math.pi/2.0,0,0,0])
