@@ -12,8 +12,8 @@ from klampt.math import vectorops
 class Motion:
     def __init__(self):
         ##T#he individual components
-        self.left_limb = limbController(TRINAConfig.left_limb_address)
-        self.right_limb = limbController(TRINAConfig.right_limb_address)
+        self.left_limb = LimbController(TRINAConfig.left_limb_address)
+        self.right_limb = LimbController(TRINAConfig.right_limb_address)
 	    #self.base = MobileBase()
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
@@ -108,41 +108,41 @@ class Motion:
                     if self.left_limb_state.commandType == 0:
                         if len(left_limb_state.commandedqQueue) > 0:
                             if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5eControlRate):
-                                self.left_limb.setConfig(left_limb_state.commandedqQueue.pop() + [0.0])
+                                self.left_limb.setConfig(left_limb_state.commandedqQueue.pop(0) + [0.0])
                                 self.left_limb_state.lastCommandQueueTime = time.time()
                     elif self.left_limb_state.commandType == 1:
                         if len(left_limb_state.commandeddqQueue) > 0:
                             if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5eControlRate):
-                                self.left_limb.setVelocity(left_limb_state.commandeddqQueue.pop() + [0.0])
+                                self.left_limb.setVelocity(left_limb_state.commandeddqQueue.pop(0) + [0.0])
                                 self.left_limb_state.lastCommandQueueTime = time.time()
                 else:
                     if not self.left_limb_state.commandSent:
-                    ###setting position will clear velocity commands
-                    if self.left_limb_state.commandType == 0:
-                        self.left_limb.setConfig(self.left_limb_state.commandedq+[0.0])
-                    elif self.left_limb_state.commandType == 1:
-                        self.left_limb.setVelocity(self.left_limb_state.commandeddq + [0.0])
-                    self.left_limb_state.commandSent = True
+                        ###setting position will clear velocity commands
+                        if self.left_limb_state.commandType == 0:
+                            self.left_limb.setConfig(self.left_limb_state.commandedq+[0.0])
+                        elif self.left_limb_state.commandType == 1:
+                            self.left_limb.setVelocity(self.left_limb_state.commandeddq + [0.0])
+                        self.left_limb_state.commandSent = True
 
                 if right_limb_state.commandQueue:
                     if self.right_limb_state.commandType == 0:
                         if len(right_limb_state.commandedqQueue) > 0:
                             if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5eControlRate):
-                                self.right_limb.setConfig(right_limb_state.commandedqQueue.pop() + [0.0])
+                                self.right_limb.setConfig(right_limb_state.commandedqQueue.pop(0) + [0.0])
                                 self.right_limb_state.lastCommandQueueTime = time.time()
                     elif self.right_limb_state.commandType == 1:
                         if len(right_limb_state.commandeddqQueue) > 0:
                             if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5eControlRate):
-                                self.right_limb.setVelocity(right_limb_state.commandeddqQueue.pop() + [0.0])
+                                self.right_limb.setVelocity(right_limb_state.commandeddqQueue.pop(0) + [0.0])
                                 self.right_limb_state.lastCommandQueueTime = time.time()
                 else:
                     if not self.right_limb_state.commandSent:
-                    ###setting position will clear velocity commands
-                    if self.right_limb_state.commandType == 0:
-                        self.right_limb.setConfig(self.right_limb_state.commandedq+[0.0])
-                    elif self.right_limb_state.commandType == 1:
-                        self.right_limb.setVelocity(self.right_limb_state.commandeddq + [0.0])
-                    self.right_limb_state.commandSent = True
+                        ###setting position will clear velocity commands
+                        if self.right_limb_state.commandType == 0:
+                            self.right_limb.setConfig(self.right_limb_state.commandedq+[0.0])
+                        elif self.right_limb_state.commandType == 1:
+                            self.right_limb.setVelocity(self.right_limb_state.commandeddq + [0.0])
+                        self.right_limb_state.commandSent = True
             self.controlLoopLock.release()
             
             elapsedTime = time.time() - loopStartTime
@@ -294,6 +294,8 @@ class Motion:
         """Stops all motion"""
         self.stopMotionFlag = True
         self.stopMotionSent = False
+        ##TODO: purge commands
+
         return
     def resumeMotion(self):
         """The robot is ready to take more commands"""

@@ -160,7 +160,7 @@ class Robotiq2Controller:
         return (virtual_value-min_virt)*(max_phys - min_phys) + min_phys
 
 
-class limbController:
+class LimbController:
     def __init__(self, host, **kwargs):
         """
         - host: the UR5 controller IP address
@@ -412,7 +412,7 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gripper', type=bool, help='enable gripper', default=True)
 
     args = parser.parse_args()  
-    ur5 = limbController(args.robot, gripper=False, gravity=[0,0,9.8])
+    ur5 = LimbController(args.robot, gripper=False, gravity=[0,0,9.8])
     ur5.start()
     time.sleep(1)
     print ur5.getSpeedFraction()

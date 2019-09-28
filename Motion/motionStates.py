@@ -1,4 +1,4 @@
-class limbState:
+class LimbState:
 	def __init__(self):
 		self.sensedq = [0.0,0.0,0.0,0.0,0.0,0.0]
 		self.commandedq = []
@@ -11,3 +11,6 @@ class limbState:
 		commandType = 0 #0 is position, 1 is velocity
 		commandQueue = False
 		lastCommandQueueTime = 0.0
+
+class mobileBase():
+	def __init__(self):
