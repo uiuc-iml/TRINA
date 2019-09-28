@@ -14,6 +14,7 @@ import serial
 import sys
 import binascii
 import ur5_config as config
+from copy import deepcopy
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
@@ -337,16 +338,16 @@ class UR5Controller(object):
             self._servo_velocity = None
         elif q:
             self._servo_halt = None
-            self._servo_position = q
+            self._servo_position = deepcopy(q)
             self._servo_velocity = None
         elif qd:
             self._servo_halt = None
             self._servo_position = None
-            self._servo_velocity = qd
+            self._servo_velocity = deepcopy(qd)
         else:
             raise RuntimeError('missing halt, q, or qd')
         if g is not None:
-            self._gravity = g
+            self._gravity = deepcopy(g)
         if qd_max is not None:
             self._velocity = qd_max
         if qdd_max is not None:
@@ -394,6 +395,9 @@ class UR5Controller(object):
 
     def connected(self):
         return (not self._no_connection)
+
+    def setGravity(self,g):
+            self._gravity = deepcopy(g)
 
     @property
     def version(self):

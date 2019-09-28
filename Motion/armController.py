@@ -187,7 +187,7 @@ class limbController:
         self._qdot_curr = []
         self._q_commanded = []
         self._qdot_commanded = []
-        self._gravity = kwargs.pop('gravity', [0, 0, 9.82])
+        self._gravity = kwargs.pop('gravity', [0, 0, 9.81])
         self._wrench=[]
         self._started = False
         #debugging
@@ -199,11 +199,11 @@ class limbController:
         self._command_lock = Lock()
         self._state_read = False 
 
-    def start(self):
+    def start(self,gravity=self._gravity):
         #start the gripper
         if self.gripper:
             self.gripper.start()
-       
+        ur5.setGravity(gravity)
         res = self.ur5.start()
         time.sleep(0.2) 
         #wait for controller to initialize so that we can start in a valid config
@@ -248,6 +248,8 @@ class limbController:
     def setGravity(self,g):
         if len(g) == 3 and vectorops.norm(g) < 10.0:
             self._gravity = g
+        else
+            print("setGravity() error")
 
     def setConfig(self, q_in):
         if self.isFormatted(q_in):

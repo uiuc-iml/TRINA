@@ -7,10 +7,13 @@ class LimbState:
 		self.commandeddq = []
 		self.senseddqQueue = []
 		self.sensedWrench = [0.0,0.0,0.0,0.0,0.0,0.0]
-		commandSent = True
-		commandType = 0 #0 is position, 1 is velocity
-		commandQueue = False
-		lastCommandQueueTime = 0.0
+		self.gravityVector = [0,0,-9.81]
+
+		self.commandSent = True
+		self.commandType = 0 #0 is position, 1 is velocity
+		self.commandQueue = False
+		self.lastCommandQueueTime = 0.0
+
 
 class mobileBase():
 	def __init__(self):
