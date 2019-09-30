@@ -7,26 +7,50 @@ public class WebsocketClient : MonoBehaviour
 {
     // Start is called before the first frame update
 
-
+    [System.Serializable]
     public class WsMessage
     {
         public string type;
         public string candidate;
         public int room;
-        public string offer;
+        public Offer offer;
+        public string answer;
+        [System.Serializable]
+        public class Offer
+        {
+            public string type = "offer";
+            public string sdp;
+        }
     }
 
-    public class WsMessageOffer
+  
+
+    [System.Serializable]
+    public class WsMessageAnswer
     {
-        public string type = "offer";
-        public string offer;
-
-
+        public string type = "answer";
+        public Answer answer;
+        [System.Serializable]
+        public class Answer
+        {
+            public string type = "answer";
+            public string sdp;
+        }
+        public static WsMessageAnswer ToWsMessageAnswer(RTCSessionDescription desc)
+        {
+            return new WsMessageAnswer
+            {
+                answer = new Answer
+                {
+                    sdp = desc.sdp
+                },
+            };
+        }
     }
 
     public class WsMessageRoom
     {
-        public string type = "room";
+        public string type = "ready";
         public int room;
     }
 
@@ -37,70 +61,39 @@ public class WebsocketClient : MonoBehaviour
     }
 
     private WebSocket ws;
-    private RTCPeerConnection pc;
-
-    private RTCOfferOptions OfferOptions = new RTCOfferOptions
-    {
-        iceRestart = false,
-        offerToReceiveAudio = true,
-        offerToReceiveVideo = true
-    };
-
-    RTCConfiguration GetSelectedSdpSemantics()
-    {
-        RTCConfiguration config = default;
-        config.iceServers = new RTCIceServer[]
-        {
-            new RTCIceServer { urls = new string[] { "stun:stun1.l.google.com:19302", "stun:stun2.1.google.com:19302" } }
-        };
-
-        return config;
-    }
+    public bool offerReceived = false;
+    public RTCSessionDescription sessionDesc = new RTCSessionDescription();
 
 
-
-
-    private void Awake()
-    {
-        WebRTC.Initialize();
-    }
 
     void Start()
     {
+
         Debug.Log("initiate websocket");
         //initiate websocket and webrtc peerConnection
         ws = new WebSocket("ws://130.126.138.139:9000");
-        var configuration = GetSelectedSdpSemantics();
-        pc = new RTCPeerConnection(ref configuration);
-        
-        pc.OnIceCandidate += e => {
-            Debug.Log("111");
-            Debug.Log(e.candidate);
-            if (!string.IsNullOrEmpty(e.candidate)){
-                WsMessageCandidate message = new WsMessageCandidate
-                {
-                    candidate = e.candidate
-                };
-                ws.Send(JsonUtility.ToJson(message));
-            };
-        };
+ 
 
-        ws.OnMessage += (sender, e) => {
+        ws.OnMessage += (sender, e) =>
+        {
             Debug.Log("onMessage");
             var data = JsonUtility.FromJson<WsMessage>(e.Data);
             Debug.Log(data.type);
-            switch (data.type) {
+            switch (data.type)
+            {
                 case "ready":
-                    //onReady(offerOnReady);
                     break;
                 case "offer":
-                    //onOffer(data.offer);
+                    sessionDesc = new RTCSessionDescription
+                    {
+                        type = RTCSdpType.Offer,
+                        sdp = data.offer.sdp
+                    };
+                    offerReceived = true;
                     break;
                 case "answer":
-                    //onAnswer(data.answer);
                     break;
                 case "candidate":
-                    //onCandidate(data.candidate);
                     break;
                 default:
                     break;
@@ -117,23 +110,22 @@ public class WebsocketClient : MonoBehaviour
             ws.Send(JsonUtility.ToJson(message));
         };
 
+
         ws.OnClose += (sender, e) =>
         {
             Debug.Log("onClose");
             Debug.Log("WebSocket closed with reason: " + e.Reason);
         };
 
-        pc.OnNegotiationNeeded += () =>
-        {
-           var offer = pc.CreateOffer(ref OfferOptions);
-           var message = new WsMessageOffer { offer = "unity" };
-           ws.Send(JsonUtility.ToJson(message));
-           pc.SetLocalDescription(ref offer.desc);
-        };
 
         ws.Connect();
-     
+
     }
 
- 
+    public void SendWS(string data)
+    {
+        ws.Send(data);
+    }
+
+
 }
