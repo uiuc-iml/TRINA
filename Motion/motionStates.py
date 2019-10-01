@@ -13,7 +13,9 @@ class LimbState:
 		self.commandType = 0 #0 is position, 1 is velocity
 		self.commandQueue = False
 		self.lastCommandQueueTime = 0.0
-
+		#for kinematic to use...
+		self.lastSensedq = []
 
 class mobileBase():
 	def __init__(self):
+		pass
