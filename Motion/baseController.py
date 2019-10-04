@@ -101,7 +101,7 @@ class BaseControlMode(Enum):
 
 class BaseController:
 
-    def __init__(self, dt):
+    def __init__(self, dt = 1.0/100.0):
         self.control_mode = BaseControlMode.NOTHING
         self.enabled = False
         self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
@@ -124,7 +124,6 @@ class BaseController:
             elif self.control_mode == BaseControlMode.VELOCITY:
                 self.cmd_pub.publish(create_twist(self.commanded_vel))
             elif self.control_mode == BaseControlMode.PATH_FOLLOWING:
-                print("here")
                 curr_angle = self.target_path.get_pose(float(self.curr_path_point)/self.num_points)[2]
                 if self.prev_angle is None:
                     w = 0
@@ -144,7 +143,7 @@ class BaseController:
         self.measured_pos[1] = odom_msg.pose.pose.position.y
         # yaw
         quat = odom_msg.pose.pose.orientation # quat to euler conversion
-        self.measured_pos[2] = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w] )[2]
+        self.measured_pos[2] = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])[2]
 
         # linear velocity
         self.measured_vel[0] = odom_msg.twist.twist.linear.x;

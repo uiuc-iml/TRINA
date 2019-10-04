@@ -21,10 +21,12 @@ print('starting')
 base.start()
 print('started')
 
-while time.time() - start_time < TIME:
-    base.setCommandedVelocity((0, 0.5))
+base.setPath([(0, 0, 0), (2, 2, math.pi/2), (5, 5, 0)], 0.5)
+while not base.isPathDone():
     if base.newState():
 	print(base.getPosition())
 	base.markRead()
     time.sleep(dt)
+
+print('done')
 base.shutdown()

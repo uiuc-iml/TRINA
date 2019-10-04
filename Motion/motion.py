@@ -4,6 +4,7 @@ import time
 from threading import Thread, Lock
 import threading
 from limbController import LimbController
+from baseController import BaseController
 from kinematicController import KinematicController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
@@ -24,7 +25,7 @@ class Motion:
             self.left_limb = LimbController(TRINAConfig.left_limb_address)
             self.right_limb = LimbController(TRINAConfig.right_limb_address)
             ###TODO: add the other components here 
-    	    #self.base = MobileBase()
+    	    self.base = BaseController()
             self.left_limb_state = LimbState()
             self.right_limb_state = LimbState()
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
