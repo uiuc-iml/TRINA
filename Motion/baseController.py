@@ -3,6 +3,7 @@ import rospy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
+import tf
 from threading import Thread
 import math
 
@@ -135,20 +136,20 @@ class BaseController:
                 self.curr_path_point += 1
             rate.sleep()
 
-    def _odom_callback(self, imu_msg):
+    def _odom_callback(self, odom_msg):
         self.state_read = False
         # x-position
-        self.measured_pos[0] = pose.pose.point.x
+        self.measured_pos[0] = odom_msg.pose.pose.position.x
         # y-position
-        self.measured_pos[1] = pose.pose.point.y
+        self.measured_pos[1] = odom_msg.pose.pose.position.y
         # yaw
-        quat = pose.pose.orientation # quat to euler conversion
-        self.measured_pos[2] = euler_from_quaternion(tf.quaternion(quat.x, quat.y, quat.z, quat.w))[2]
+        quat = odom_msg.pose.pose.orientation # quat to euler conversion
+        self.measured_pos[2] = euler_from_quaternion([quat.x, quat.y, quat.z, quat.w] )[2]
 
         # linear velocity
-        self.measured_vel[0] = pose.twist.twist.linear.x;
+        self.measured_vel[0] = odom_msg.twist.twist.linear.x;
         # angular velocity
-        self.measured_vel[1] = pose.twist.twist.angular.z;
+        self.measured_vel[1] = odom_msg.twist.twist.angular.z;
 
     def start(self):
         rospy.init_node("drive_base")
@@ -200,7 +201,7 @@ class BaseController:
 
     # returns [x, y, theta]
     def getPosition(self):
-        # TODO
+        return self.measured_pos
         pass
 
     def markRead(self):
