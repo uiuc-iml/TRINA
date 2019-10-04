@@ -1,7 +1,8 @@
 from enum import Enum
 import rospy
 from geometry_msgs.msg import Twist
-from sensor_msgs.msg import Imu
+from nav_msgs.msg import Odometry
+from tf.transformations import euler_from_quaternion
 from threading import Thread
 import math
 
@@ -103,11 +104,12 @@ class BaseController:
         self.control_mode = BaseControlMode.NOTHING
         self.enabled = False
         self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
-        self.imu_sub = rospy.Subscriber("/imu", Imu, self._imu_callback)
+        self.odom_sub = rospy.Subscriber("/odom", Odometry, self._odom_callback)
         self.control_thread = Thread(target = self._controlLoop)
         self.state_read = False
         self.commanded_vel = [0.0, 0.0]
         self.measured_vel = [0.0, 0.0]
+        self.measured_pos = [0.0, 0.0, 0.0]
         self.EPS = 0.0001
         self.dt = dt
         self.target_path = None
@@ -133,9 +135,20 @@ class BaseController:
                 self.curr_path_point += 1
             rate.sleep()
 
-    def _imu_callback(self, imu_msg):
+    def _odom_callback(self, imu_msg):
         self.state_read = False
-        # TODO: figure out position + velocity from imu_msg
+        # x-position
+        self.measured_pos[0] = pose.pose.point.x
+        # y-position
+        self.measured_pos[1] = pose.pose.point.y
+        # yaw
+        quat = pose.pose.orientation # quat to euler conversion
+        self.measured_pos[2] = euler_from_quaternion(tf.quaternion(quat.x, quat.y, quat.z, quat.w))[2]
+
+        # linear velocity
+        self.measured_vel[0] = pose.twist.twist.linear.x;
+        # angular velocity
+        self.measured_vel[1] = pose.twist.twist.angular.z;
 
     def start(self):
         rospy.init_node("drive_base")
@@ -177,12 +190,15 @@ class BaseController:
     def isPathDone(self):
         return self.curr_path_point == self.num_points
 
+    # returns [v, w]
     def getCommandedVelocity(self):
         return self.commanded_vel
 
+    # returns [v, w]
     def getMeasuredVelocity(self):
         return self.measured_vel
 
+    # returns [x, y, theta]
     def getPosition(self):
         # TODO
         pass
