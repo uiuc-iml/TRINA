@@ -87,6 +87,10 @@ class Motion:
         #    self.shutdown()
         #    raise KeyboardInterrupt()
         #signal.signal(signal.SIGINT,interrupter)
+
+        ###Initialize commanded q......
+
+
         controlThread = threading.Thread(target = self._controlLoop)
         controlThread.start()
         self.startUp = True
