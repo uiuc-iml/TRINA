@@ -24,7 +24,6 @@ class Motion:
             ##The individual components
             self.left_limb = LimbController(TRINAConfig.left_limb_address)
             self.right_limb = LimbController(TRINAConfig.right_limb_address)
-            ###TODO: add the other components here 
     	    self.base = BaseController()
             self.left_limb_state = LimbState()
             self.right_limb_state = LimbState()
@@ -81,6 +80,7 @@ class Motion:
                 print("motion.startup(): left limb started.")
 
         #start the other components        
+        self.base.start()
         #overrides the default Ctrl+C behavior which kills the program
         #check this....
         #def interrupter(x,y):
@@ -351,13 +351,23 @@ class Motion:
     def sensedRightLimbVelocity(self):
         return self.right_limb_state.senseddq()
 
+    def setBaseVelocity(self, v, w):
+        self.base.setCommandedVelocity((v, w))
 
+    # returns [v, w]
+    def sensedBaseVelocity(self):
+        return self.base.getMeasuredVelocity()
+
+    # returns [x, y, theta]
+    def sensedBasePosition(self):
+        return self.base.getPosition()
 
     def shutdown(self):
         """shutdown the componets... """
         left_limb.stop()
         right_limb.stop()
         #stop other components
+        self.base.shutdown();
         return 0
 
     def isStarted(self):
@@ -365,13 +375,14 @@ class Motion:
 
     def moving(self):
         """Returns true if the robot is currently moving."""
-        return self.left_limb.moving() or self.right_limb.moving()
+        return self.left_limb.moving() or self.right_limb.moving() or self.base.moving()
 
     def mode(self):
         return self.mode
 
     def stopMotion(self):
         """Stops all motion"""
+        self.base.stopMotion()
         self.stopMotionFlag = True
         self.stopMotionSent = False
         ##TODO: purge commands
@@ -379,6 +390,7 @@ class Motion:
         return
     def resumeMotion(self):
         """The robot is ready to take more commands"""
+        self.base.startMotion()
         self.startMotionFlag = False
         return 
 

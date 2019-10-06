@@ -201,7 +201,6 @@ class BaseController:
     # returns [x, y, theta]
     def getPosition(self):
         return self.measured_pos
-        pass
 
     def markRead(self):
         self.state_read = True
