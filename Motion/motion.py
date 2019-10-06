@@ -277,7 +277,7 @@ class Motion:
         positionQueue.append(q)
 
         self.controlLoopLock.acquire()
-        self.left_limb_state.commendSent = False
+        self.left_limb_state.commandSent = False
         self.left_limb_state.commandType = 0
         self.left_limb_state.commandedqQueue = positionQueue
         self.left_limb_state.commandQueue = True
@@ -301,7 +301,7 @@ class Motion:
         positionQueue.append(q)
         
         self.controlLoopLock.acquire()
-        self.right_limb_state.commendSent = False
+        self.right_limb_state.commandSent = False
         self.right_limb_state.commandType = 0
         self.right_limb_state.commandedqQueue = positionQueue
         self.right_limb_state.commandQueue = True
@@ -330,6 +330,7 @@ class Motion:
         self.left_limb_state.commandType = 1
         self.left_limb_state.commandQueue = False
         self.left_limb_state.commandedqQueue = []
+        self.controlLoopLock.release()
         return 
 
     def setRightLimbVelocity(self,qdot)
@@ -341,6 +342,7 @@ class Motion:
         self.right_limb_state.commandType = 1
         self.right_limb_state.commandQueue = False
         self.right_limb_state.commandedqQueue = []
+        self.controlLoopLock.release()
         return 
 
     def sensedLeftLimbVelocity(self):
