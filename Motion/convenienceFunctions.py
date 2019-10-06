@@ -1,10 +1,10 @@
 leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172, 0]
-    leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974,0]
-    waypoint1 = [0.7934980392456055, -2.541288038293356+math.pi/2, -2.7311811447143555, 4.664876623744629, -0.04916698137392217, 0.09736919403076172, 0]
+leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974,0]
+waypoint1 = [0.7934980392456055, -2.541288038293356+math.pi/2, -2.7311811447143555, 4.664876623744629, -0.04916698137392217, 0.09736919403076172, 0]
 
-    rightTuckedConfig = left_2_right(leftTuckedConfig)
-    rightUntuckedConfig = left_2_right(leftUntuckedConfig)
-    waypoint2 = left_2_right(waypoint1)
+rightTuckedConfig = left_2_right(leftTuckedConfig)
+rightUntuckedConfig = left_2_right(leftUntuckedConfig)
+waypoint2 = left_2_right(waypoint1)
 
     def tuckArm(robot,arm='left'):  ##Under construction
         """While tucking arms, the other components are not allowed to move"""

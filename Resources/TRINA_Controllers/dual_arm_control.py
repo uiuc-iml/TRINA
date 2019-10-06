@@ -426,8 +426,8 @@ if MODE == "Physical":
     #print leftArmControlApi.getConfig()
     untuck_arm(robot,leftArmControlApi,[],left=True,right=False)
     untuck_arm(robot,[],rightArmControlApi,left=False,right=True)
-    tuck_arm(robot,leftArmControlApi,[],left=True,right=False)
-    tuck_arm(robot,[],rightArmControlApi,left=False,right=True)
+    #tuck_arm(robot,leftArmControlApi,[],left=True,right=False)
+    #tuck_arm(robot,[],rightArmControlApi,left=False,right=True)
 
     rightArmControlApi.stop()
     leftArmControlApi.stop()

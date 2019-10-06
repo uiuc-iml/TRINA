@@ -377,7 +377,7 @@ class UR5Controller(object):
                 if not(q[i] <= max_limits[i] and q[i] >= min_limits[i]):
                     return False
             else:
-                print "warning, joint limits not set"
+                print("warning, joint limits not set")
                 return False
         return True
 

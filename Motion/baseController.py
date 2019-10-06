@@ -6,7 +6,7 @@ from tf.transformations import euler_from_quaternion
 import tf
 from threading import Thread
 import math
-
+from copy import deepcopy
 def create_twist(vel_tuple):
     assert len(vel_tuple) == 2
     rv = Twist()
@@ -173,7 +173,7 @@ class BaseController:
             return
         if self.control_mode != BaseControlMode.VELOCITY:
             self.control_mode = BaseControlMode.VELOCITY
-        self.commanded_vel = cmd_vel
+        self.commanded_vel = deepcopy(cmd_vel)
 
     # target_path = [] where each element is a 3-tuple (x, y, theta)
     # velocity = float representing constant linear velocity to drive the path

@@ -9,31 +9,34 @@ from baseController import BaseController
 from kinematicController import KinematicController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
-import convenienceFunctions 
+#import convenienceFunctions 
 from copy import deepcopy
 from klampt.math import vectorops,so3
-
+from klampt import vis
 ##Two different modes:
 #"Physical" == actual robot
 #"Kinematic" == Klampt model
+armFlag = True
 class Motion:
 
-    def __init__(self, mode = 'Kinematic'):
+    def __init__(self, mode = 'Kinematic',model_path = "data/TRINA_world.xml"):
         self.mode = mode
         if self.mode == "Kinematic":
             self.simulated_robot = KinematicController(model_path)
         elif self.mode == "Physical":
             ##The individual components
-            self.left_limb = LimbController(TRINAConfig.left_limb_address)
-            self.right_limb = LimbController(TRINAConfig.right_limb_address)
-    	    self.base = BaseController()
-            self.left_limb_state = LimbState()
-            self.right_limb_state = LimbState()
+            if armFlag:
+                self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
+                self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
+            self.base = BaseController()
+            
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
             ##TODO: Add other components
         else:
             raise RuntimeError('Wrong mode specified') 
-        
+        self.left_limb_state = LimbState()
+        self.right_limb_state = LimbState()
+        self.base_state = BaseState()
         self.startTime = time.time()
         self.t = 0 #time since startup
         self.startUp = False
@@ -62,34 +65,42 @@ class Motion:
             self.simulated_robot.start()
         elif self.mode == "Physical":
         #Set the correct gravity vector on startup....
-            tilt_angle = 0.0
-            R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
-            R_local_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
-            R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)
-            gravity_left = so3.apply(so3.inv(R_local_global_left),[0,0,.-9.81])
-            gravity_right = so3.apply(so3.inv(R_local_global_right),[0,0,-9.81])
-            self.left_limb.setGravity(gravity_left)
-            self.right_limb.setGravity(gravity_right)
+            if armFlag:
+                tilt_angle = 0.0
+                R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
+                R_local_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
+                R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)
+                #gravity_left = so3.apply(so3.inv(R_local_global_left),[0,0,-9.81])
+                #gravity_right = so3.apply(so3.inv(R_local_global_right),[0,0,-9.81])
+                #self.left_limb.setGravity(gravity_left)
+                #self.right_limb.setGravity(gravity_right)
 
-            res = self.left_limb.start(gravity_left)
-            if res == False:
-                #better to replace this with logger
-                print("motion.startup(): ERROR, left limb start failure.")
-                return False
-            else:
-                print("motion.startup(): left limb started.")
+                res = self.left_limb.start()
+                time.sleep(1)
+                if res == False:
+                    #better to replace this with logger
+                    print("motion.startup(): ERROR, left limb start failure.")
+                    return False
+                else:
+                    print("motion.startup(): left limb started.")
+                    self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
+                    self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
+                    self.left_limb_state.sensedWrench =self.left_limb.getWrench()
 
-            res = self.right_limb.start(gravity_right)    
-            if res == False:
-                #better to replace this with logger
-                print("motion.startup(): ERROR, left limb start failure.")
-                return False
-            else:
-                print("motion.startup(): left limb started.")
-
-        # start the other components        
-        self.base.start()
-        # TODO: add more components...
+                res = self.right_limb.start()
+                time.sleep(1)    
+                if res == False:
+                    #better to replace this with logger
+                    print("motion.startup(): ERROR, left limb start failure.")
+                    return False
+                else:
+                    print("motion.startup(): left limb started.")
+                    self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
+                    self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
+                    self.right_limb_state.sensedWrench = self.right_limb.getWrench()
+            # start the other components        
+            self.base.start()
+            # TODO: add more components...
 
         controlThread = threading.Thread(target = self._controlLoop)
         controlThread.start()
@@ -106,62 +117,74 @@ class Motion:
             if self.mode == "Physical":
                 if self.stopMotionFlag:
                     if not self.stopMotionSent: #send only once to avoid drifting...
-                        self.left_limb.stopMotion()
-                        self.right_limb.stopMotion()
-                        self.stopMotionSent = True
+                        if armFlag:
+                            self.left_limb.stopMotion()
+                            self.right_limb.stopMotion()
+                        self.base.stopMotion()
+                        self.stopMotionSent = True #unused
                 else:
                     ###update current state
-                    if left_limb.newState():
-                        self.left_limb_state.sensedq = left_limb.getConfig()[0:6]
-                        self.left_limb_state.senseddq = left_limb.getVelocity()[0:6]
-                        self.left_limb_state.sensedWrench = left_limb.getWrench()
-                        left_limb.markRead()
-                    if right_limb.newState():
-                        self.right_limb_state.sensedq = left_limb.getConfig()[0:6]
-                        self.right_limb_state.senseddq = left_limb.getVelocity()[0:6]
-                        self.right_limb_state.sensedWrench = left_limb.getWrench()
-                        right_limb.markRead()
+                    if self.base.newState():
+                        self.base_state.measuredVel = self.base.getMeasuredVelocity()
+                        self.base_state.measuredPos = self.base.getPosition()
+                        self.base.markRead()
+                    if armFlag:
+                        if self.left_limb.newState():
+                            self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
+                            self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
+                            self.left_limb_state.sensedWrench =self.left_limb.getWrench()
+                            self.left_limb.markRead()
+                        if self.right_limb.newState():
+                            self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
+                            self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
+                            self.right_limb_state.sensedWrench = self.right_limb.getWrench()
+                            self.right_limb.markRead()
 
                     ###send commands
-                    if left_limb_state.commandQueue:
-                        if self.left_limb_state.commandType == 0:
-                            if len(left_limb_state.commandedqQueue) > 0:
-                                if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                    self.left_limb.setConfig(left_limb_state.commandedqQueue.pop(0) + [0.0])
-                                    self.left_limb_state.lastCommandQueueTime = time.time()
-                        elif self.left_limb_state.commandType == 1:
-                            if len(left_limb_state.commandeddqQueue) > 0:
-                                if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                    self.left_limb.setVelocity(left_limb_state.commandeddqQueue.pop(0) + [0.0])
-                                    self.left_limb_state.lastCommandQueueTime = time.time()
-                    else:
-                        if not self.left_limb_state.commandSent:
-                            ###setting position will clear velocity commands
-                            if self.left_limb_state.commandType == 0:
-                                self.left_limb.setConfig(self.left_limb_state.commandedq+[0.0])
-                            elif self.left_limb_state.commandType == 1:
-                                self.left_limb.setVelocity(self.left_limb_state.commandeddq + [0.0])
-                            self.left_limb_state.commandSent = True
+                    if armFlag:
 
-                    if right_limb_state.commandQueue:
-                        if self.right_limb_state.commandType == 0:
-                            if len(right_limb_state.commandedqQueue) > 0:
-                                if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                    self.right_limb.setConfig(right_limb_state.commandedqQueue.pop(0) + [0.0])
-                                    self.right_limb_state.lastCommandQueueTime = time.time()
-                        elif self.right_limb_state.commandType == 1:
-                            if len(right_limb_state.commandeddqQueue) > 0:
-                                if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                    self.right_limb.setVelocity(right_limb_state.commandeddqQueue.pop(0) + [0.0])
-                                    self.right_limb_state.lastCommandQueueTime = time.time()
-                    else:
-                        if not self.right_limb_state.commandSent:
-                            ###setting position will clear velocity commands
+                        if self.left_limb_state.commandQueue:
+                            if self.left_limb_state.commandType == 0:
+                                if len(self.left_limb_state.commandedqQueue) > 0:
+                                    if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
+                                        self.left_limb.setConfig(self.left_limb_state.commandedqQueue.pop(0) + [0.0])
+                                        self.left_limb_state.lastCommandQueueTime = time.time()
+                            elif self.left_limb_state.commandType == 1:
+                                if len(self.left_limb_state.commandeddqQueue) > 0:
+                                    if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
+                                        self.left_limb.setVelocity(self.left_limb_state.commandeddqQueue.pop(0) + [0.0])
+                                        self.left_limb_state.lastCommandQueueTime = time.time()
+                        else:
+                            if not self.left_limb_state.commandSent:
+                                ###setting position will clear velocity commands
+                                if self.left_limb_state.commandType == 0:
+                                    self.left_limb.setConfig(self.left_limb_state.commandedq+[0.0])
+                                elif self.left_limb_state.commandType == 1:
+                                    self.left_limb.setVelocity(self.left_limb_state.commandeddq + [0.0])
+                                self.left_limb_state.commandSent = True
+
+                        if self.right_limb_state.commandQueue:
                             if self.right_limb_state.commandType == 0:
-                                self.right_limb.setConfig(self.right_limb_state.commandedq+[0.0])
+                                if len(self.right_limb_state.commandedqQueue) > 0:
+                                    if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
+                                        self.right_limb.setConfig(self.right_limb_state.commandedqQueue.pop(0) + [0.0])
+                                        self.right_limb_state.lastCommandQueueTime = time.time()
                             elif self.right_limb_state.commandType == 1:
-                                self.right_limb.setVelocity(self.right_limb_state.commandeddq + [0.0])
-                            self.right_limb_state.commandSent = True
+                                if len(self.right_limb_state.commandeddqQueue) > 0:
+                                    if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
+                                        self.right_limb.setVelocity(self.right_limb_state.commandeddqQueue.pop(0) + [0.0])
+                                        self.right_limb_state.lastCommandQueueTime = time.time()
+                        else:
+                            if not self.right_limb_state.commandSent:
+                                ###setting position will clear velocity commands
+                                if self.right_limb_state.commandType == 0:
+                                    self.right_limb.setConfig(self.right_limb_state.commandedq+[0.0])
+                                elif self.right_limb_state.commandType == 1:
+                                    self.right_limb.setVelocity(self.right_limb_state.commandeddq + [0.0])
+                                self.right_limb_state.commandSent = True
+
+                    ##Base:add set path later
+                    self.base.setCommandedVelocity(self.base_state.commandedVel)        
                     ###TODO: add the other components here
 
 
@@ -169,27 +192,29 @@ class Motion:
                 if self.stopMotionFlag:
                     self.simulated_robot.stopMotion()
                 else:
-                    if simulated_robot.newState():
+                    if self.simulated_robot.newState():
                         self.left_limb_state.sensedq = self.simulated_robot.getLeftLimbConfig()[0:6]
                         self.left_limb_state.senseddq = self.simulated_robot.getLeftLimbVelocity()[0:6]
                         self.left_limb_state.sensedWrench = []
                         self.right_limb_state.sensedq = self.simulated_robot.getRightLimbConfig()[0:6]
                         self.right_limb_state.senseddq = self.simulated_robot.getRightLimbVelocity()[0:6]
                         self.right_limb_state.sensedWrench = []
+                        self.base_state.measuredVel = self.simulated_robot.getBaseVelocity()
+                        self.base_state.measuredPos = self.simulated_robot.getBaseConfig()
                         ##Add other components...
-                        simulated_robot.markRead()
+                        self.simulated_robot.markRead()
 
                     ###send commands
-                    if left_limb_state.commandQueue:
+                    if self.left_limb_state.commandQueue:
                         if self.left_limb_state.commandType == 0:
-                            if len(left_limb_state.commandedqQueue) > 0:
+                            if len(self.left_limb_state.commandedqQueue) > 0:
                                 if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
-                                    self.simulated_robot.setLeftLimbConfig(left_limb_state.commandedqQueue.pop(0))
+                                    self.simulated_robot.setLeftLimbConfig(self.left_limb_state.commandedqQueue.pop(0))
                                     self.left_limb_state.lastCommandQueueTime = time.time()
                         elif self.left_limb_state.commandType == 1:
-                            if len(left_limb_state.commandeddqQueue) > 0:
+                            if len(self.left_limb_state.commandeddqQueue) > 0:
                                 if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
-                                    self.simulated_robot.setLeftLimbVelocity(left_limb_state.commandeddqQueue.pop(0))
+                                    self.simulated_robot.setLeftLimbVelocity(self.left_limb_state.commandeddqQueue.pop(0))
                                     self.left_limb_state.lastCommandQueueTime = time.time()
                     else:
                         if not self.left_limb_state.commandSent:
@@ -200,9 +225,9 @@ class Motion:
                                 self.simulated_robot.setLeftLimbVelocity(self.left_limb_state.commandeddq)
                             self.left_limb_state.commandSent = True
 
-                    if right_limb_state.commandQueue:
+                    if self.right_limb_state.commandQueue:
                         if self.right_limb_state.commandType == 0:
-                            if len(right_limb_state.commandedqQueue) > 0:
+                            if len(self.right_limb_state.commandedqQueue) > 0:
                                 if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
                                     self.simulated_robot.setRightLimbConfig(right_limb_state.commandedqQueue.pop(0))
                                     self.right_limb_state.lastCommandQueueTime = time.time()
@@ -220,7 +245,7 @@ class Motion:
                                 self.simulated_robot.setRightLimbVelocity(self.right_limb_state.commandeddq)
                             self.right_limb_state.commandSent = True
 
-
+                    self.simulated_robot.setBaseVelocity(self.base_state.commandedVel) 
 
             self.controlLoopLock.release()
             
@@ -325,7 +350,7 @@ class Motion:
         self.setRightLimbVelcity(qdot[6:12])
         return 
 
-    def setLeftLimbVelocity(self,qdot)
+    def setLeftLimbVelocity(self,qdot):
         assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
         self.controlLoopLock.acquire()
         self.left_limb_state.commandSent = False
@@ -337,7 +362,7 @@ class Motion:
         self.controlLoopLock.release()
         return 
 
-    def setRightLimbVelocity(self,qdot)
+    def setRightLimbVelocity(self,qdot):
         assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
         self.controlLoopLock.acquire()
         self.right_limb_state.commandSent = False
@@ -355,8 +380,9 @@ class Motion:
     def sensedRightLimbVelocity(self):
         return self.right_limb_state.senseddq()
 
-    def setBaseVelocity(self, v, w):
-        self.base.setCommandedVelocity((v, w))
+    def setBaseVelocity(self, q):
+        assert len(q) == 2 ,"motion.setBaseVelocity(): wrong dimensions"
+        self.base_state.commandedVel = deepcopy(q)
 
     # returns [v, w]
     def sensedBaseVelocity(self):
@@ -369,10 +395,14 @@ class Motion:
     def shutdown(self):
         """shutdown the componets... """
         self.shutdownFlag = True
-        left_limb.stop()
-        right_limb.stop()
-        #stop other components
-        self.base.shutdown();
+        if self.mode == "Physical":
+            if armFlag:
+                self.left_limb.stop()
+                self.right_limb.stop()
+            #stop other components
+            self.base.shutdown()
+        elif self.mode == "Kinematic":
+            self.simulated_robot.shutdown()
         return 0
 
     def isStarted(self):
@@ -412,52 +442,52 @@ class Motion:
 
         for ele in RConfig:
             if ele >= 2*math.pi or ele <= -2*math.pi:
-                print 'out of range..'
+                print('out of range..')
                 return []
         return RConfig
 
+    def getWorld(self):
+        return self.simulated_robot.getWorld()
+
 if __name__=="__main__":
 
+    robot = Motion(mode = 'Physical')
+    robot.startup()
+    startTime = time.time()
+    initialConfigLeft = robot.sensedLeftLimbPosition()
+    #initialConfigRight = robot.sensedRightLimbPosition()
+    print('initialConfigRight',initialConfigLeft)
+    totalTime = 10
+    while(time.time()-startTime) < totalTime:
+        t = (time.time()-startTime)
+        if t <totalTime/2.0:
+            q = vectorops.add(initialConfigLeft,[0,0,0,0,t/5.0,0])
+        else:
+            q = vectorops.add(initialConfigLeft,[0,0,0,0,(totalTime-t)/5.0,0])
+        print(q)
+        robot.setLeftLimbPosition(q)
+        #print(robot.sensedBaseVelocity())
+        #print(robot.sensedRightLimbPosition())
+        robot.setBaseVelocity([0.05,0.0])
+        time.sleep(0.01)
 
-    print "Testing TRINA2 Motion Module..."
-    robot = motion()
-    if not robot.isStarted():
-        res = robot.startup()
-        if not res:
-            raise RuntimeError("Ebolabot Motion could not be started")
-    else:
-        print "Robot started by another process"
-        
-    print "Is robot started?",robot.isStarted()
-    print "Left limb:"
-    print "   configuration:",robot.left_limb.sensedPosition()
-    print "   velocity:",robot.left_limb.sensedVelocity()
-    print "   effort:",robot.left_limb.sensedEffort()
-    print "   motion queue enabled:",robot.left_mq.enabled()
-    print "   motion queue moving:",robot.left_mq.moving()
-    print "Right limb:"
-    print "   configuration:",robot.right_limb.sensedPosition()
-    print "   velocity:",robot.right_limb.sensedVelocity()
-    print "   effort:",robot.right_limb.sensedEffort()
-    print "   motion queue enabled:",robot.right_mq.enabled()
-    print "   motion queue moving:",robot.right_mq.moving()
-    print "Left gripper:"
-    print "   end effector xform:",robot.left_ee.sensedTransform()
-    print "   type:",robot.left_gripper.type()
-    print "   enabled:",robot.left_gripper.enabled()
-    print "   moving:",robot.left_gripper.moving()
-    print "   position:",robot.left_gripper.position()
-    print "Right gripper:"
-    print "   end effector xform:",robot.right_ee.sensedTransform()
-    print "   type:",robot.right_gripper.type()
-    print "   enabled:",robot.right_gripper.enabled()
-    print "   moving:",robot.right_gripper.moving()
-    print "   position:",robot.right_gripper.position()
-    print
-    print "Shutting down..."
     robot.shutdown()
-    print "Shutdown completed"
+    # robot = Motion(mode = 'Kinematic')
+    # robot.startup()
+    # print('Robot start() called')
+    # startTime = time.time()
+    # world = robot.getWorld()
+    # vis.add("world",world)
+    # vis.show()
+    # while (time.time()-startTime < 5):
+    #     vis.lock()
+    #     robot.setBaseVelocity([200,0.1])
+    #     #print(robot.get)
+    #     vis.unlock()
+    #     time.sleep(0.02)
+        
+    #     print(time.time()-startTime)
 
-    ###To tuck the arm, which loaded in convenienceFunctions.py
-    res = convenienceFunctions.tuckArm(robot,'left')## we can design this either to return only after
-    #the tucking arm is completed or right away... either works....
+    # robot.shutdown()
+
+    

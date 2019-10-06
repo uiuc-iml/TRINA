@@ -56,51 +56,51 @@ def calcString( st, crc):
     return crc
 
 if __name__ == '__main__':
+    pass
+#     # test Modbus
+#     print "testing Modbus messages with crc16.py"
+#     print "test case #1:",
+#     crc = INITIAL_MODBUS
+#     st = "\xEA\x03\x00\x00\x00\x64"
+#     for ch in st:
+#         crc = calcByte( ch, crc)
+#     if crc != 0x3A53:
+#         print "BAD - ERROR - FAILED!",
+#         print "expect:0x3A53 but saw 0x%x" % crc
+#     else:
+#         print "Ok"
 
-    # test Modbus
-    print "testing Modbus messages with crc16.py"
-    print "test case #1:",
-    crc = INITIAL_MODBUS
-    st = "\xEA\x03\x00\x00\x00\x64"
-    for ch in st:
-        crc = calcByte( ch, crc)
-    if crc != 0x3A53:
-        print "BAD - ERROR - FAILED!",
-        print "expect:0x3A53 but saw 0x%x" % crc
-    else:
-        print "Ok"
+#     print "test case #2:",
+#     st = "\x4b\x03\x00\x2c\x00\x37"
+#     crc = calcString( st, INITIAL_MODBUS)
+#     if crc != 0xbfcb:
+#         print "BAD - ERROR - FAILED! ",
+#         print "expect:0xBFCB but saw 0x%x" % crc
+#     else:
+#         print "Ok"
 
-    print "test case #2:",
-    st = "\x4b\x03\x00\x2c\x00\x37"
-    crc = calcString( st, INITIAL_MODBUS)
-    if crc != 0xbfcb:
-        print "BAD - ERROR - FAILED! ",
-        print "expect:0xBFCB but saw 0x%x" % crc
-    else:
-        print "Ok"
+#     print "test case #3:",
+#     st = "\x0d\x01\x00\x62\x00\x33"
+#     crc = calcString( st, INITIAL_MODBUS)
+#     if crc != 0x0ddd:
+#         print "BAD - ERROR - FAILED!",
+#         print "expect:0x0DDD but saw 0x%x" % crc
+#     else:
+#         print "Ok"
 
-    print "test case #3:",
-    st = "\x0d\x01\x00\x62\x00\x33"
-    crc = calcString( st, INITIAL_MODBUS)
-    if crc != 0x0ddd:
-        print "BAD - ERROR - FAILED!",
-        print "expect:0x0DDD but saw 0x%x" % crc
-    else:
-        print "Ok"
+#     print
+#     print "testing DF1 messages with crc16.py"
 
-    print
-    print "testing DF1 messages with crc16.py"
+#     print "test case #1:",
+#     st = "\x07\x11\x41\x00\x53\xB9\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+#     # DF1 uses same algorithm - just starts with CRC=0x0000 instead of 0xFFFF
+#     # note: <DLE><STX> and the <DLE> of the <DLE><ETX> pair NOT to be included
+#     crc = calcString( st, INITIAL_DF1)
+#     crc = calcByte( "\x03", crc) # final ETX added
+#     if crc != 0x4C6B:
+#         print "BAD - ERROR - FAILED!",
+#         print "expect:0x4C6B but saw 0x%x" % crc
+#     else:
+#         print "Ok"
 
-    print "test case #1:",
-    st = "\x07\x11\x41\x00\x53\xB9\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-    # DF1 uses same algorithm - just starts with CRC=0x0000 instead of 0xFFFF
-    # note: <DLE><STX> and the <DLE> of the <DLE><ETX> pair NOT to be included
-    crc = calcString( st, INITIAL_DF1)
-    crc = calcByte( "\x03", crc) # final ETX added
-    if crc != 0x4C6B:
-        print "BAD - ERROR - FAILED!",
-        print "expect:0x4C6B but saw 0x%x" % crc
-    else:
-        print "Ok"
-
-# end file
+# # end file

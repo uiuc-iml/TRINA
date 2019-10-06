@@ -102,7 +102,7 @@ class Robotiq2Controller:
             else:
                 #can return without setting gripper
                 #if we get here, something has gone wrong
-                print "Warning, neither q nor dq set for gripper"
+                print("Warning, neither q nor dq set for gripper")
                 return
             #command for adding CRC is at the top of file
             #takes full command, appends CRC and returns appended command
@@ -139,7 +139,7 @@ class Robotiq2Controller:
                 self._last_gripper = float_position
                 #sometimes, the gripper has trouble reading quickly
             except:
-                print "gripper read exception"
+                print("gripper read exception")
                 return float_position
         return float_position
 
@@ -415,7 +415,7 @@ if __name__ == "__main__":
     ur5 = LimbController(args.robot, gripper=False, gravity=[0,0,9.8])
     ur5.start()
     time.sleep(1)
-    print ur5.getSpeedFraction()
+    print(ur5.getSpeedFraction())
     
     start_time=time.time()
     while time.time()-start_time < 15:

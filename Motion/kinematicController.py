@@ -46,8 +46,8 @@ class KinematicController:
         if not res:
         	raise RuntimeError("unable to load model")
         self.robot = self.world.robot(0)
-        self.newState = False
-        self.shutDown = False
+        self.new_state = False
+        self.shut_down = False
         self.controlLoopLock = Lock()
 
     def start(self):
@@ -60,7 +60,7 @@ class KinematicController:
         controlThread.start()
 
     def _controlLoop(self):
-        while not self.shutDown:
+        while not self.shut_down:
             loopStartTime = time.time()
             self.controlLoopLock.acquire()
             q_to_be_set = [0.0]
@@ -131,7 +131,7 @@ class KinematicController:
 
             #set klampt robot config
             self.robot.setConfig(base_state_q_to_be_set + [0]*7 +left_limb_to_be_set+[0]*11+right_limb_to_be_set+[0]*10)
-            self.newState = True
+            self.new_state = True
             self.controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
             if elapsedTime < self.dt:
@@ -162,14 +162,14 @@ class KinematicController:
     def getBaseConfig(self):
         return self.base_state.measuredPos
     def newState(self):
-        return self.newState
+        return self.new_state
 
     def markRead(self):
-        self.newState = False
+        self.new_state = False
         return
 
-    def shutDownRobot(self):
-        self.shutDown = True
+    def shutdown(self):
+        self.shut_down = True
         return
 
     def _setKlamptModelConfig(self):
@@ -198,4 +198,4 @@ if __name__=="__main__":
         
         print(time.time()-startTime)
 
-    robot.shutDownRobot()
+    robot.shutdown()
