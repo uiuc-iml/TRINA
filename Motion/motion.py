@@ -1,4 +1,5 @@
 import os
+import signal
 import sys
 import time
 from threading import Thread, Lock
@@ -16,6 +17,7 @@ from klampt.math import vectorops,so3
 #"Physical" == actual robot
 #"Kinematic" == Klampt model
 class Motion:
+
     def __init__(self, mode = 'Kinematic'):
         self.mode = mode
         if self.mode == "Kinematic":
@@ -41,6 +43,12 @@ class Motion:
         self.stopMotionSent = False
         self.shutdownFlag = False
         self.controlLoopLock = Lock()
+        signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
+
+    def sigint_handler(self, signum, frame):
+        assert(signum == signal.SIGINT)
+        print("SIGINT caught...shutting down the api!")
+        self.shutdown()
 
     def time(self):
         """Returns the time since robot startup, in s"""
@@ -79,14 +87,10 @@ class Motion:
             else:
                 print("motion.startup(): left limb started.")
 
-        #start the other components        
+        # start the other components        
         self.base.start()
-        #overrides the default Ctrl+C behavior which kills the program
-        #check this....
-        #def interrupter(x,y):
-        #    self.shutdown()
-        #    raise KeyboardInterrupt()
-        #signal.signal(signal.SIGINT,interrupter)
+        # TODO: add more components...
+
         controlThread = threading.Thread(target = self._controlLoop)
         controlThread.start()
         self.startUp = True
@@ -364,6 +368,7 @@ class Motion:
 
     def shutdown(self):
         """shutdown the componets... """
+        self.shutdownFlag = True
         left_limb.stop()
         right_limb.stop()
         #stop other components
