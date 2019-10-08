@@ -184,7 +184,11 @@ class Motion:
                                 self.right_limb_state.commandSent = True
 
                     ##Base:add set path later
-                    self.base.setCommandedVelocity(self.base_state.commandedVel)        
+                    if self.base_state.commandType == 1:
+                        self.base.setCommandedVelocity(self.base_state.commandedVel)        
+                    elif self.base_state.commandType == 0 and not base_state.commandSent:
+                        base_state.commandSent = True
+                        self.base.setTargetPosition(self.base_state.commandedVel)        
                     ###TODO: add the other components here
 
 
@@ -245,7 +249,11 @@ class Motion:
                                 self.simulated_robot.setRightLimbVelocity(self.right_limb_state.commandeddq)
                             self.right_limb_state.commandSent = True
 
-                    self.simulated_robot.setBaseVelocity(self.base_state.commandedVel) 
+                    if self.base_state.commandType == 1:
+                        self.simulated_robot.setBaseVelocity(self.base_state.commandedVel) 
+                    elif self.base_state.commandType == 0 and not base_state.commandSent:
+                        base_state.commandSent = True
+                        self.base.setTargetPosition(self.base_state.commandedVel) 
 
             self.controlLoopLock.release()
             
@@ -380,8 +388,15 @@ class Motion:
     def sensedRightLimbVelocity(self):
         return self.right_limb_state.senseddq()
 
+    def setBaseTargetPosition(self, q, vel):
+        assert len(q) == 3, "motion.setBaseTargetPosition(): wrong dimensions"
+        self.base_state.commandType = 0
+        self.base_state.commandedTargetPosition = deepcopy(q)
+        self.base_state.pathFollowingVel = vel
+
     def setBaseVelocity(self, q):
         assert len(q) == 2 ,"motion.setBaseVelocity(): wrong dimensions"
+        self.base_state.commandType = 1
         self.base_state.commandedVel = deepcopy(q)
 
     # returns [v, w]
@@ -451,43 +466,19 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Physical')
+    robot = Motion(mode = 'Kinematic')
     robot.startup()
+    print('Robot start() called')
     startTime = time.time()
-    initialConfigLeft = robot.sensedLeftLimbPosition()
-    #initialConfigRight = robot.sensedRightLimbPosition()
-    print('initialConfigRight',initialConfigLeft)
-    totalTime = 10
-    while(time.time()-startTime) < totalTime:
-        t = (time.time()-startTime)
-        if t <totalTime/2.0:
-            q = vectorops.add(initialConfigLeft,[0,0,0,0,t/5.0,0])
-        else:
-            q = vectorops.add(initialConfigLeft,[0,0,0,0,(totalTime-t)/5.0,0])
-        print(q)
-        robot.setLeftLimbPosition(q)
-        #print(robot.sensedBaseVelocity())
-        #print(robot.sensedRightLimbPosition())
-        robot.setBaseVelocity([0.05,0.0])
-        time.sleep(0.01)
-
-    robot.shutdown()
-    # robot = Motion(mode = 'Kinematic')
-    # robot.startup()
-    # print('Robot start() called')
-    # startTime = time.time()
-    # world = robot.getWorld()
-    # vis.add("world",world)
-    # vis.show()
-    # while (time.time()-startTime < 5):
-    #     vis.lock()
-    #     robot.setBaseVelocity([200,0.1])
-    #     #print(robot.get)
-    #     vis.unlock()
-    #     time.sleep(0.02)
+    world = robot.getWorld()
+    vis.add("world",world)
+    vis.show()
+    while (time.time()-startTime < 5):
+        vis.lock()
+        robot.setBaseVelocity([0.5,0.1])
+        #print(robot.get)
+        vis.unlock()
+        time.sleep(0.02)
         
-    #     print(time.time()-startTime)
-
-    # robot.shutdown()
-
-    
+        print(time.time()-startTime)
+    robot.shutdown()

@@ -7,6 +7,7 @@ import tf
 from threading import Thread
 import math
 from copy import deepcopy
+
 def create_twist(vel_tuple):
     assert len(vel_tuple) == 2
     rv = Twist()
@@ -175,7 +176,19 @@ class BaseController:
             self.control_mode = BaseControlMode.VELOCITY
         self.commanded_vel = deepcopy(cmd_vel)
 
-    # target_path = [] where each element is a 3-tuple (x, y, theta)
+    # target_position = (x, y, theta) - relative to the robot's current position
+    # velocity = (float) linear_velocity
+    def setTargetPosition(self, target_position, velocity):
+        self.target_path = Path2d([(0, 0, 0), target_position])
+        self.path_velocity = velocity
+        total_path_time = self.target_path.length/self.path_velocity
+        self.num_points = int(total_path_time/self.dt)
+        self.curr_path_point = 0
+        self.prev_angle = None
+        if self.control_mode != BaseControlMode.PATH_FOLLOWING:
+            self.control_mode = BaseControlMode.PATH_FOLLOWING
+
+    # target_path = [] where each element is a 3-tuple (x, y, theta) - relative to the robot's current position
     # velocity = float representing constant linear velocity to drive the path
     def setPath(self, target_path, velocity):
         self.target_path = Path2d(target_path)

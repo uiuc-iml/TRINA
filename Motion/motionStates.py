@@ -21,4 +21,12 @@ class BaseState():
         self.measuredPos = [0.0, 0.0, 0.0] #[x, y, yaw]
         self.measuredVel = [0.0, 0.0] #[v, w]
         self.commandedVel = [0.0, 0.0] #[v, w]
-        self.commandedPath = [] #[(x0, y0, theta0), (x1, y1, theta1), ...] (list of waypoints)
+
+        self.generatedPath = None
+        self.pathFollowingVel = 0.0
+        self.pathFollowingIdx = 0
+        self.pathFollowingNumPoints = 0
+        self.commandedTargetPosition = [] #[x, y, theta]
+
+        self.commandType = 1 # 0 is position, 1 is velocity, 2 is path
+        self.commandSent = False
