@@ -78,7 +78,7 @@ class KinematicController:
                 if not prev_angle:
                     w = 0
                 else:
-                    w = (prev_angle - angle)/self.dt
+                    w = (angle - prev_angle)/self.dt
 
                 prev_angle = angle
                 self.base_state.pathFollowingIdx += 1
@@ -218,8 +218,10 @@ if __name__=="__main__":
     world = robot.getWorld()
     vis.add("world",world)
     vis.show()
-    #robot.setBaseTargetPosition([1, 1, math.pi/2], 0.5)
-    robot.setBaseTargetPosition([1, 0, 0], 0.5)
+    #robot.setBaseTargetPosition([1, 1, math.pi/4], 0.5)
+    robot.setBaseTargetPosition([1, 1, math.pi/2], 0.5)
+    #robot.setBaseTargetPosition([1, 0, 0], 0.5)
+    #robot.setBaseTargetPosition([0, 1, 0], 0.25)
     while not robot.isBasePathDone():
         vis.lock()
         vis.unlock()
@@ -235,3 +237,7 @@ if __name__=="__main__":
         print(time.time()-startTime)
     """
     robot.shutdown()
+    while True:
+        vis.lock()
+        vis.unlock()
+        time.sleep(0.1)
