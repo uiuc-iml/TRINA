@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.WebRTC;
+using System.Linq;
 using static WebsocketClient;
 
 public class WebRTCClient : MonoBehaviour
@@ -11,6 +12,8 @@ public class WebRTCClient : MonoBehaviour
     {
         iceRestart = false,
     };
+
+    private int candiateCount = 0;
 
     RTCConfiguration GetSelectedSdpSemantics()
     {
@@ -39,6 +42,30 @@ public class WebRTCClient : MonoBehaviour
     {
         var configuration = GetSelectedSdpSemantics();
         pc = new RTCPeerConnection(ref configuration);
+        pc.OnIceCandidate = e =>
+        {
+            Debug.Log(e.candidate);
+            if (!string.IsNullOrEmpty(e.candidate))
+            {
+                WsMessage message = WsMessage.Candidate.ToWsMessage(e);
+                gameObject.GetComponent<WebsocketClient>().SendWS(JsonUtility.ToJson(message));
+            }
+
+        };
+
+        pc.OnDataChannel = e =>
+        {
+            Debug.Log(e.Label);
+        };
+
+        pc.OnTrack = e =>
+        {
+            Debug.Log("on track");
+            Debug.Log(e.Track);
+           
+        };
+
+        
 
     }
 
@@ -49,6 +76,13 @@ public class WebRTCClient : MonoBehaviour
             var sessionDesc = gameObject.GetComponent<WebsocketClient>().sessionDesc;
             StartCoroutine(Signal(sessionDesc));
             gameObject.GetComponent<WebsocketClient>().offerReceived = false;
+        }
+
+        if (gameObject.GetComponent<WebsocketClient>().iceCandidates.Count > candiateCount)
+        {
+            var candidate = gameObject.GetComponent<WebsocketClient>().iceCandidates.Last();
+            StartCoroutine(AddCandidate(candidate));
+            candiateCount++;
         }
     }
 
@@ -67,8 +101,14 @@ public class WebRTCClient : MonoBehaviour
         yield return op2;
         var op3 = pc.SetLocalDescription(ref op2.desc);
         yield return op3;
-        WsMessageAnswer message = WsMessageAnswer.ToWsMessageAnswer(op2.desc);
+        WsMessage message = WsMessage.Answer.ToWsMessage(op2.desc);
         gameObject.GetComponent<WebsocketClient>().SendWS(JsonUtility.ToJson(message));
+    }
+
+    IEnumerator AddCandidate(RTCIceCandidate​ candidate)
+    {
+        pc.AddIceCandidate(ref candidate);
+        yield return null;
     }
 
 
