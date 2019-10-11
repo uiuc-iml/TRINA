@@ -120,9 +120,7 @@ class BaseController:
     def _controlLoop(self):
         rate = rospy.Rate(1.0/self.dt)
         while not rospy.is_shutdown() and self.enabled:
-            if not self.enabled:
-                self.cmd_pub.publish(create_twist((0, 0)))
-            elif self.control_mode == BaseControlMode.VELOCITY:
+            if self.control_mode == BaseControlMode.VELOCITY:
                 self.cmd_pub.publish(create_twist(self.commanded_vel))
             elif self.control_mode == BaseControlMode.PATH_FOLLOWING:
                 curr_angle = self.target_path.get_pose(float(self.curr_path_point)/self.num_points)[2]
@@ -135,6 +133,7 @@ class BaseController:
                 self.prev_angle = curr_angle
                 self.curr_path_point += 1
             rate.sleep()
+        self.cmd_pub.publish(create_twist((0, 0)))
 
     def _odom_callback(self, odom_msg):
         self.state_read = False

@@ -1,5 +1,7 @@
 import serial
+import signal
 import time
+from threading import Thread
 
 """
 Class to interface between a python script and an Arduino microcontroller
@@ -20,16 +22,41 @@ class ArduinoBridge:
 
 class TorsoController:
 
-    def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 9600):
+    def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 9600, dt = 0.01):
         self.arduino = ArduinoBridge(arduino_port_addr, arduino_baud)
         self.message_header = "TRINA\t"
         self.message_footer = "\tTRINA"
+        self.height = 0
+        self.tilt = 0
+        self.tilt_limit_switch = False
+        self.lift_limit_switch = False
+        self.control_thread = Thread(target = self._controlLoop)
+        self.enabled = False
+        self.dt = dt
+        signal.signal(signal.SIGINT, self._sigintHandler)
 
-    def send_target_positions(self, height, tilt):
-        message = self.message_header + "\0" + str(height) + "\0" + str(tilt) + "\0" + self.message_header
+    def sendTargetPositions(self, height, tilt):
+        message = str(height) + "\0" + str(tilt) + "\0"
+        print(message)
         self.arduino.send_message(message)
 
-    def get_positions(self):
+    def _sigintHandler(self, signum, msg):
+        assert(signum == signal.SIGINT)
+        self.shutdown()
+
+    def _controlLoop(self):
+        while self.enabled:
+            self._updateSensorFeedback()
+            time.sleep(self.dt)
+
+    def start(self):
+        self.enabled = True
+        self.control_thread.start()
+
+    def shutdown(self):
+        self.enabled = False
+
+    def _updateSensorFeedback(self):
         message = self.arduino.read_message()
         header_idx = message.find(self.message_header)
         footer_idx = message.find(self.message_footer)
@@ -38,19 +65,31 @@ class TorsoController:
             print("invalid serial data!")
             return
 
-        parsed_message = message[header_idx+6 : footer_idx-1]
+        parsed_message = message[header_idx+6 : footer_idx]
         vals = parsed_message.split("\t")
-        if len(vals) != 2:
+        if len(vals) != 4:
             print("invalid serial data!")
             return
 
-        tilt = float(vals[0])
-        height = float(vals[1])
-        return tilt, height
+        try:
+            self.tilt = float(vals[0])
+            self.height = float(vals[1])
+            self.tilt_limit_switch = vals[2] != '0'
+            self.lift_limit_switch = vals[3] != '0'
+        except:
+            print("invalid serial data!")
+
+    def get_positions(self):
+        return self.tilt, self.height, self.tilt_limit_switch, self.lift_limit_switch
 
 if __name__ == "__main__":
     t = TorsoController()
-    #t.send_target_positions(10.0, 12.0)
-    while True:
+    print("starting...")
+    t.start()
+    start_time = time.time()
+    while(time.time() - start_time < 5):
+        t.sendTargetPositions(time.time() - start_time, 100)
         print(t.get_positions())
-        time.sleep(0.1)
+        time.sleep(0.5)
+    print("shutting down...")
+    t.shutdown()
