@@ -164,7 +164,7 @@ PlayerSettings:
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
-    Android: com.DefaultCompany.AVATRINAUI1
+    Android: com.DefaultCompany.AVATRINAUI
     Standalone: com.DefaultCompany.AVATRINAUI
   buildNumber: {}
   AndroidBundleVersionCode: 1

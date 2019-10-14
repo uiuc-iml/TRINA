@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using WebSocketSharp;
-using Unity.WebRTC;
 
 public class OutputState : MonoBehaviour
 {
@@ -164,7 +163,7 @@ public class OutputState : MonoBehaviour
         Debug.Log("initiate WebSocket");
         //initiate websocket Connection
         //ws = new WebSocket("ws://130.126.138.139:9000");
-        ws = new WebSocket("ws://localhost:1234");
+        ws = new WebSocket("ws://130.126.138.139:1234");
 
         ws.OnMessage += (sender, e) =>
         {
