@@ -1,9 +1,12 @@
 import asyncio
 import websockets
+import pprint
+import json
 
 async def response(websocket, path):
     message = await websocket.recv()
-    print(message)
+    obj = json.loads(message)
+    pprint.pprint(obj,depth=4)
     await websocket.send("confirm")
 
 start_server = websockets.serve(response, '130.126.138.139', 1234)

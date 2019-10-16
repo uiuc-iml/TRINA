@@ -5,6 +5,8 @@ using UnityEngine;
 public class OVRInputMap : MonoBehaviour
 {
     private OutputState OutputState;
+    public OVRGrabber left;
+    public OVRGrabber right;
     void Start()
     {
         OutputState = gameObject.GetComponent<OutputState>();
@@ -22,5 +24,11 @@ public class OVRInputMap : MonoBehaviour
         OutputState.outputState.controllerButtonState.rightController.press[0] = OVRInput.Get(OVRInput.Button.One);
         OutputState.outputState.controllerButtonState.rightController.press[0] = OVRInput.Get(OVRInput.Button.Two);
         OutputState.outputState.controllerButtonState.rightController.press[0] = OVRInput.Get(OVRInput.Button.SecondaryHandTrigger);
+        OutputState.outputState.controllerPositionState.leftController.controllerPosition[0] = left.pos.x;
+        OutputState.outputState.controllerPositionState.leftController.controllerPosition[1] = left.pos.y;
+        OutputState.outputState.controllerPositionState.leftController.controllerPosition[2] = left.pos.z;
+        OutputState.outputState.controllerPositionState.rightController.controllerPosition[0] = right.pos.x;
+        OutputState.outputState.controllerPositionState.rightController.controllerPosition[1] = right.pos.y;
+        OutputState.outputState.controllerPositionState.rightController.controllerPosition[2] = right.pos.z;
     }
 }

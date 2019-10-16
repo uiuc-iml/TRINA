@@ -50,6 +50,8 @@ public class OVRGrabber : MonoBehaviour
     [SerializeField]
     protected Transform m_parentTransform;
 
+    public Vector3 pos;
+
     protected bool m_grabVolumeEnabled = true;
     protected Vector3 m_lastPos;
     protected Quaternion m_lastRot;
@@ -121,6 +123,8 @@ public class OVRGrabber : MonoBehaviour
 
 	void FixedUpdate()
 	{
+
+        pos = m_lastPos;
 		if (operatingWithoutOVRCameraRig)
 			OnUpdatedAnchors();
 	}
