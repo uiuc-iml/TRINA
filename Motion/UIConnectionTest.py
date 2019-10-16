@@ -1,3 +1,6 @@
+from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
+import pprint
+import json
 import os
 import signal
 import sys
@@ -17,6 +20,65 @@ from klampt import vis
 #"Physical" == actual robot
 #"Kinematic" == Klampt model
 armFlag = True
+
+class SimpleEcho(WebSocket):
+
+    def handleMessage(self):
+        # echo message back to client
+        obj = json.loads(self.data)
+        print("message!")
+        print(obj["controllerPositionState"]["leftController"]["controllerPosition"][1])
+        print(obj["controllerPositionState"]["rightController"]["controllerPosition"][1])
+        if obj["controllerPositionState"]["leftController"]["controllerPosition"][1]>0 and obj["controllerPositionState"]["rightController"]["controllerPosition"][1]<0:
+            robot = Motion(mode = 'Kinematic')
+            res = robot.startup()
+            if res:
+                startTime = time.time()
+            else:
+                raise RuntimeError('not started')
+
+            ###Physical mode
+            leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+            rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
+            leftGoalConfig = [-1.5596893469439905, -2.3927437267699183, -0.547968864440918, 3.699364348048828, -0.945113484059469, 0.09734535217285156]
+            rightGoalConfig = [0.3436760902404785, 0.41109005987133784, 1.171091381703512, -0.38271458566699224, 1.606001377105713, -0.09720212617983037]
+            startTime = time.time()
+            world = robot.getWorld()
+            vis.add("world",world)
+            vis.show()
+            robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+            robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
+            while (time.time()-startTime < 5):
+                vis.lock()
+                robot.setBaseVelocity([0.0,0.0])
+                #print(robot.get)
+                time.sleep(0.01)
+                vis.unlock()
+                print(time.time()-startTime)
+
+            robot.setLeftLimbPositionLinear(leftGoalConfig,10)
+            robot.setRightLimbPositionLinear(rightGoalConfig,10)
+            while (time.time()-startTime < 15):
+                vis.lock()
+                robot.setBaseVelocity([0.05,-0.1])
+                #print(robot.get)
+                time.sleep(0.01)
+                vis.unlock()
+                print(time.time()-startTime)
+
+            robot.setBaseVelocity([0.0,0.0])    
+            time.sleep(10)
+            robot.shutdown()
+
+    def handleConnected(self):
+        print(self.address, 'connected')
+        
+
+
+    def handleClose(self):
+        print(self.address, 'closed')
+
+
 class Motion:
 
     def __init__(self, mode = 'Kinematic',model_path = "data/TRINA_world.xml"):
@@ -450,57 +512,5 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Kinematic')
-    res = robot.startup()
-    if res:
-        startTime = time.time()
-    else:
-        raise RuntimeError('not started')
-
-    ###Physical mode
-    leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-    rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
-    leftGoalConfig = [-1.5596893469439905, -2.3927437267699183, -0.547968864440918, 3.699364348048828, -0.945113484059469, 0.09734535217285156]
-    rightGoalConfig = [0.3436760902404785, 0.41109005987133784, 1.171091381703512, -0.38271458566699224, 1.606001377105713, -0.09720212617983037]
-    # robot.setLeftLimbPositionLinear(leftUntuckedConfig,10.0)
-    # robot.setRightLimbPositionLinear(rightUntuckedConfig,10.0)
-    # time.sleep(10.0)
-    # robot.setLeftLimbPositionLinear(leftGoalConfig,10.0)
-    # robot.setRightLimbPositionLinear(rightGoalConfig,10.0)
-
-    # startTime = time.time()
-    # while time.time() - startTime < 10:
-    #     #robot.setBaseVelocity([0.05,-0.1])
-    #     time.sleep(0.01)
-
-    # robot.shutdown()
-
-    startTime = time.time()
-    world = robot.getWorld()
-    vis.add("world",world)
-    vis.show()
-    robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
-    while (time.time()-startTime < 5):
-        vis.lock()
-        robot.setBaseVelocity([0.0,0.0])
-        #print(robot.get)
-        time.sleep(0.01)
-        vis.unlock()
-        print(time.time()-startTime)
-
-    robot.setLeftLimbPositionLinear(leftGoalConfig,10)
-    robot.setRightLimbPositionLinear(rightGoalConfig,10)
-    while (time.time()-startTime < 15):
-        vis.lock()
-        robot.setBaseVelocity([0.05,-0.1])
-        #print(robot.get)
-        time.sleep(0.01)
-        vis.unlock()
-        print(time.time()-startTime)
-
-    robot.setBaseVelocity([0.0,0.0])    
-    time.sleep(10)
-    robot.shutdown()
-
-    
+    server = SimpleWebSocketServer('130.126.139.236', 1234, SimpleEcho)
+    server.serveforever()
