@@ -13,6 +13,7 @@ from threading import Thread, Lock
 import threading
 from copy import deepcopy
 from motionStates import * #state structures
+from baseController import Path2d
 
 def setup():
   vis.show()
@@ -60,15 +61,28 @@ class KinematicController:
         controlThread.start()
 
     def _controlLoop(self):
+        prev_angle = None
+
         while not self.shut_down:
             loopStartTime = time.time()
             self.controlLoopLock.acquire()
             q_to_be_set = [0.0]
 
             #base
-            vx = self.base_state.commandedVel[0]
-            #print(vx)
-            w = self.base_state.commandedVel[1]
+            if self.base_state.commandType == 1:
+                vx = self.base_state.commandedVel[0]
+                w = self.base_state.commandedVel[1]
+            elif self.base_state.commandType == 0:
+                vx = self.base_state.pathFollowingVel
+                angle = self.base_state.generatedPath.get_pose(float(self.base_state.pathFollowingIdx)/self.base_state.pathFollowingNumPoints)[2]
+                if not prev_angle:
+                    w = 0
+                else:
+                    w = (angle - prev_angle)/self.dt
+
+                prev_angle = angle
+                self.base_state.pathFollowingIdx += 1
+
             dq_global = [vx*math.cos(self.base_state.measuredPos[2])*self.dt,\
                 vx*math.sin(self.base_state.measuredPos[2])*self.dt,w*self.dt]
 
@@ -146,7 +160,22 @@ class KinematicController:
         return
 
     def setBaseVelocity(self,q):
+        self.base_state.commandType = 1
         self.base_state.commandedVel = deepcopy(q)
+
+    def setBaseTargetPosition(self, q, vel):
+        assert len(q) == 3
+        self.base_state.commandedTargetPosition = deepcopy(q)
+        self.base_state.pathFollowingVel = vel
+        self.base_state.generatedPath = Path2d([(0, 0, 0), q])
+        self.base_state.pathFollowingIdx = 0
+        total_path_time = self.base_state.generatedPath.length/self.base_state.pathFollowingVel
+        self.base_state.pathFollowingNumPoints = int(total_path_time/self.dt)
+        self.base_state.commandType = 0
+
+    def isBasePathDone(self):
+        assert(self.base_state.commandType == 0 or self.base_state.commandType == 2)
+        return self.base_state.pathFollowingIdx >= self.base_state.pathFollowingNumPoints
 
     def getLeftLimbConfig(self):
         return self.left_limb_state.sensedq
@@ -189,6 +218,15 @@ if __name__=="__main__":
     world = robot.getWorld()
     vis.add("world",world)
     vis.show()
+    #robot.setBaseTargetPosition([1, 1, math.pi/4], 0.5)
+    robot.setBaseTargetPosition([1, 1, math.pi/2], 0.5)
+    #robot.setBaseTargetPosition([1, 0, 0], 0.5)
+    #robot.setBaseTargetPosition([0, 1, 0], 0.25)
+    while not robot.isBasePathDone():
+        vis.lock()
+        vis.unlock()
+        time.sleep(0.02)
+    """
     while (time.time()-startTime < 5):
         vis.lock()
         robot.setBaseVelocity([0.1,0])
@@ -197,5 +235,9 @@ if __name__=="__main__":
         time.sleep(0.02)
         
         print(time.time()-startTime)
-
+    """
     robot.shutdown()
+    while True:
+        vis.lock()
+        vis.unlock()
+        time.sleep(0.1)

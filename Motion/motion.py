@@ -12,7 +12,8 @@ from motionStates import * #state structures
 #import convenienceFunctions 
 from copy import deepcopy
 from klampt.math import vectorops,so3
-from klampt import vis
+from klampt import vis,ik
+import numpy as np
 ##Two different modes:
 #"Physical" == actual robot
 #"Kinematic" == Klampt model
@@ -33,7 +34,17 @@ class Motion:
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
             ##TODO: Add other components
         else:
-            raise RuntimeError('Wrong mode specified') 
+            raise RuntimeError('Wrong mode specified')
+        self.world = WorldModel()
+        res = self.world.readFile(self.model_path)
+        if not res:
+            raise RuntimeError("unable to load model")
+        self.robot_model = self.world.robot(0)
+        self.left_EE_link = self.robot_model(16)
+        self.left_active_Dofs = [10,11,12,13,14,15]
+        self.right_EE_link = self.robot_model(33)
+        self.right_active_Dofs = [27,28,29,30,31,32]
+
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
@@ -184,9 +195,18 @@ class Motion:
                                 self.right_limb_state.commandSent = True
 
                     ##Base:add set path later
-                    self.base.setCommandedVelocity(self.base_state.commandedVel)        
+                    if self.base_state.commandType == 1:
+                        self.base.setCommandedVelocity(self.base_state.commandedVel)        
+                    elif self.base_state.commandType == 0 and not base_state.commandSent:
+                        base_state.commandSent = True
+                        self.base.setTargetPosition(self.base_state.commandedVel)        
                     ###TODO: add the other components here
 
+                    ##update internal robot model, does not use the base's position and orientation
+                    ##basically assumes that the world frame is the frame centered at the base local frame, on the floor.
+                    #robot_modelQ = self.base_state.sensedq + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
+                    robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
+                    self.robot_model.setConfig(robot_model_Q)
 
             elif self.mode == "Kinematic":
                 if self.stopMotionFlag:
@@ -245,7 +265,11 @@ class Motion:
                                 self.simulated_robot.setRightLimbVelocity(self.right_limb_state.commandeddq)
                             self.right_limb_state.commandSent = True
 
-                    self.simulated_robot.setBaseVelocity(self.base_state.commandedVel) 
+                    if self.base_state.commandType == 1:
+                        self.simulated_robot.setBaseVelocity(self.base_state.commandedVel) 
+                    elif self.base_state.commandType == 0 and not base_state.commandSent:
+                        base_state.commandSent = True
+                        self.base.setTargetPosition(self.base_state.commandedVel) 
 
             self.controlLoopLock.release()
             
@@ -337,6 +361,7 @@ class Motion:
         self.right_limb_state.commandedq = []
         self.right_limb_state.commandeddq = []
         self.controlLoopLock.release()
+        return
 
     def sensedLeftLimbPosition(self):
         return self.left_limb_state.sensedq
@@ -374,14 +399,76 @@ class Motion:
         self.controlLoopLock.release()
         return 
 
+    def setLeftEEInertialTransform(self,Ttarget,duration):
+        """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
+        self.controlLoopLock.acquire()
+        initial = self.robot_model.getConfig()
+        goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
+        if ik.solve_nearby(goal,maxDeviatoin=3,activeDofs = self.left_active_Dofs):
+            target_config = self.robot_model.getConfig()
+        else:
+            print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
+            return
+
+        if self.check_collision_linear(self.robot_model,self.robot_model.getConfig(),target_config,15):
+            print('motion.setLeftEEInertialtransform():Self-collision midway')
+            return
+        else:
+            self.setLeftLimbPositionLinear(target_config[10:16],duration)
+
+        self.robot_model.setConfig(inital)
+        self.controlLoopLock.release()
+        return
+
+    def setLeftEEVelocity(self,v,w,duration):
+        """Set the EE to translate at v and rotate at w for a specific amount of duration of time"""
+        """implemented using position control"""
+        """Collision detection not implemented rn"""
+        planningTime = 0.0 + TRINAConfig.ur5e_control_rate
+        positionQueue = []
+        currentq = self.right_limb_state.sensedq
+        nextTransform = self.robot_model.getTransform()
+        while planningTime < duration:
+            nextTranslation = vectorops.add(nextTransform[1],vectorops.mul(v,TRINAConfig.ur5e_control_rate))
+            nextRotation = so3.mul(so3.from_moment(vectorops.mul(w,TRINAConfig.ur5e_control_rate)),nextTransform[0])
+            nextTransform = (nextRotation,nextTranslation)
+            goal = ik.objective(self.left_EE_link,R=nextRotation,t=nextTranslation)
+            if ik.solve_nearby(goal,maxDeviatoin=0.5,activeDofs = self.left_active_Dofs):
+                target_config = self.robot_model.getConfig()
+                positionQueue.append(target_config[10:16])
+            else:
+                print('motion.setLeftEEVelocity:IK solve failure: no IK solution found')
+                return
+            planningTime = planningTime + TRINAConfig.ur5e_control_rate
+        
+        self.controlLoopLock.acquire()
+        self.right_limb_state.commandSent = False
+        self.right_limb_state.commandType = 0
+        self.right_limb_state.commandedqQueue = positionQueue
+        self.right_limb_state.commandQueue = True
+        self.right_limb_state.commandedq = []
+        self.right_limb_state.commandeddq = []
+        self.controlLoopLock.release()
+
+    def sensedLeftEETransform(self):
+        """Return the transform w.r.t. the base frame"""
+        return self.left_EE_link.getTransform()
+
     def sensedLeftLimbVelocity(self):
         return self.left_limb_state.senseddq()
 
     def sensedRightLimbVelocity(self):
         return self.right_limb_state.senseddq()
 
+    def setBaseTargetPosition(self, q, vel):
+        assert len(q) == 3, "motion.setBaseTargetPosition(): wrong dimensions"
+        self.base_state.commandType = 0
+        self.base_state.commandedTargetPosition = deepcopy(q)
+        self.base_state.pathFollowingVel = vel
+
     def setBaseVelocity(self, q):
         assert len(q) == 2 ,"motion.setBaseVelocity(): wrong dimensions"
+        self.base_state.commandType = 1
         self.base_state.commandedVel = deepcopy(q)
 
     # returns [v, w]
@@ -445,62 +532,43 @@ class Motion:
                 return []
         return RConfig
 
+    def check_collision_linear(robot,q1,q2,disrectization):
+        lin = np.linspace(0,1,disrectization)
+        initialConfig = robot.getConfig()
+        diff = vectorops.sub(q2,q1)
+        counter = 0
+        for c in lin:
+            Q=vectorops.madd(q1,diff,c)
+            robot.setConfig(Q)
+            collisions = collider.robotSelfCollisions(robot) 
+            colCounter = 0
+            for col in collisions:
+                colCounter = colCounter + 1
+            if colCounter > 0:
+                return True
+            #add_ghosts(robot,vis,[robot.getConfig()],counter)
+            counter = counter + 1
+        robot.setConfig(initialConfig)
+        return False
+
     def getWorld(self):
         return self.simulated_robot.getWorld()
 
 if __name__=="__main__":
 
     robot = Motion(mode = 'Kinematic')
-    res = robot.startup()
-    if res:
-        startTime = time.time()
-    else:
-        raise RuntimeError('not started')
-
-    ###Physical mode
-    leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-    rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
-    leftGoalConfig = [-1.5596893469439905, -2.3927437267699183, -0.547968864440918, 3.699364348048828, -0.945113484059469, 0.09734535217285156]
-    rightGoalConfig = [0.3436760902404785, 0.41109005987133784, 1.171091381703512, -0.38271458566699224, 1.606001377105713, -0.09720212617983037]
-    # robot.setLeftLimbPositionLinear(leftUntuckedConfig,10.0)
-    # robot.setRightLimbPositionLinear(rightUntuckedConfig,10.0)
-    # time.sleep(10.0)
-    # robot.setLeftLimbPositionLinear(leftGoalConfig,10.0)
-    # robot.setRightLimbPositionLinear(rightGoalConfig,10.0)
-
-    # startTime = time.time()
-    # while time.time() - startTime < 10:
-    #     #robot.setBaseVelocity([0.05,-0.1])
-    #     time.sleep(0.01)
-
-    # robot.shutdown()
-
+    robot.startup()
+    print('Robot start() called')
     startTime = time.time()
     world = robot.getWorld()
     vis.add("world",world)
     vis.show()
-    robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
     while (time.time()-startTime < 5):
         vis.lock()
-        robot.setBaseVelocity([0.0,0.0])
+        robot.setBaseVelocity([0.5,0.1])
         #print(robot.get)
-        time.sleep(0.01)
         vis.unlock()
+        time.sleep(0.02)
+        
         print(time.time()-startTime)
-
-    robot.setLeftLimbPositionLinear(leftGoalConfig,10)
-    robot.setRightLimbPositionLinear(rightGoalConfig,10)
-    while (time.time()-startTime < 15):
-        vis.lock()
-        robot.setBaseVelocity([0.05,-0.1])
-        #print(robot.get)
-        time.sleep(0.01)
-        vis.unlock()
-        print(time.time()-startTime)
-
-    robot.setBaseVelocity([0.0,0.0])    
-    time.sleep(10)
     robot.shutdown()
-
-    
