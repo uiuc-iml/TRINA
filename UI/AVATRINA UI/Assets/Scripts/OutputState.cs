@@ -162,8 +162,8 @@ public class OutputState : MonoBehaviour
 
         Debug.Log("initiate WebSocket");
         //initiate websocket Connection
-        //ws = new WebSocket("ws://130.126.138.139:9000");
-        ws = new WebSocket("ws://130.126.138.139:1234");
+        //ws = new WebSocket("ws://130.126.138.139:1234");
+        ws = new WebSocket("ws://130.126.139.236:1234");
 
         ws.OnMessage += (sender, e) =>
         {
