@@ -566,7 +566,6 @@ if __name__=="__main__":
     while (time.time()-startTime < 5):
         vis.lock()
         robot.setBaseVelocity([0.5,0.1])
-        #print(robot.get)
         vis.unlock()
         time.sleep(0.02)
         
