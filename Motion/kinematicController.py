@@ -14,6 +14,10 @@ import threading
 from copy import deepcopy
 from motionStates import * #state structures
 from baseController import Path2d
+import os
+dirname = os.path.dirname(__file__)
+#getting absolute model name
+model_name = os.path.join(dirname, "data/TRINA_world.xml")
 
 def setup():
   vis.show()
@@ -34,7 +38,7 @@ base_indeces = [0,3]
 left_limb_indexes = [10,16]
 right_limb_indexes = [27,33]
 class KinematicController:
-    def __init__(self, model_path = "data/TRINA_world.xml"):
+    def __init__(self, model_path = model_name):
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()

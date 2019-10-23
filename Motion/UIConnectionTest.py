@@ -26,9 +26,9 @@ class SimpleEcho(WebSocket):
     def handleMessage(self):
         # echo message back to client
         obj = json.loads(self.data)
-        print("message!")
-        print(obj["controllerPositionState"]["leftController"]["controllerPosition"][1])
-        print(obj["controllerPositionState"]["rightController"]["controllerPosition"][1])
+        print(obj)
+        # print(obj["controllerPositionState"]["leftController"]["controllerPosition"][1])
+        # print(obj["controllerPositionState"]["rightController"]["controllerPosition"][1])
         if obj["controllerPositionState"]["leftController"]["controllerPosition"][1]>0 and obj["controllerPositionState"]["rightController"]["controllerPosition"][1]<0:
             robot = Motion(mode = 'Kinematic')
             res = robot.startup()

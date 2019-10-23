@@ -12,16 +12,25 @@ from motionStates import * #state structures
 #import convenienceFunctions 
 from copy import deepcopy
 from klampt.math import vectorops,so3
-from klampt import vis,ik
+from klampt import vis
+from klampt.model import ik
 import numpy as np
+from klampt import *
 ##Two different modes:
 #"Physical" == actual robot
 #"Kinematic" == Klampt model
+
+import os
+dirname = os.path.dirname(__file__)
+#getting absolute model name
+model_name = os.path.join(dirname, "data/TRINA_world.xml")
+
 armFlag = True
 class Motion:
 
-    def __init__(self, mode = 'Kinematic',model_path = "data/TRINA_world.xml"):
+    def __init__(self,  mode = 'Kinematic', model_path = model_name):
         self.mode = mode
+        self.model_path = model_path
         if self.mode == "Kinematic":
             self.simulated_robot = KinematicController(model_path)
         elif self.mode == "Physical":
@@ -40,9 +49,9 @@ class Motion:
         if not res:
             raise RuntimeError("unable to load model")
         self.robot_model = self.world.robot(0)
-        self.left_EE_link = self.robot_model(16)
+        #self.left_EE_link = self.robot_model(16)
         self.left_active_Dofs = [10,11,12,13,14,15]
-        self.right_EE_link = self.robot_model(33)
+        #self.right_EE_link = self.robot_model(33)
         self.right_active_Dofs = [27,28,29,30,31,32]
 
         self.left_limb_state = LimbState()
