@@ -87,10 +87,6 @@ class UIController(WebSocket) :
         print "headSetPositionState:"
         print "------------deviceRotation:" , 
         print  self.UI_state["headSetPositionState"]["deviceRotation"]
-        print "------------devicePosition:" , 
-        print  self.UI_state["headSetPositionState"]["devicePosition"]
-        print "------------neckPositoin:" , 
-        print  self.UI_state["headSetPositionState"]["neckPositoin"]
         print "controllerPositionState:"
         print "---leftController:"
         print "------------controllerOrientation:" , 
