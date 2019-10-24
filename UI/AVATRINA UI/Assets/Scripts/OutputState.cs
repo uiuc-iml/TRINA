@@ -17,9 +17,9 @@ public class OutputState : MonoBehaviour
         {
             return new LeftController
             {
-                press = new List<bool> {false, false, false, false , false, false},
+                press = new List<bool> {false, false, false, false },
                 touch = new List<bool> { false, false, false, false, false, false, false, false},
-                nearTouch = new List<bool> { false, false, false },
+                nearTouch = new List<bool> { false, false },
                 squeeze = new List<float> {0,0},
                 thumbstickMovement = new List<float> {0,0}
             };
@@ -37,9 +37,9 @@ public class OutputState : MonoBehaviour
         {
             return new RightController
             {
-                press = new List<bool> { false, false, false, false, false, false },
+                press = new List<bool> { false, false, false, false },
                 touch = new List<bool> { false, false, false, false, false, false, false, false },
-                nearTouch = new List<bool> { false, false, false },
+                nearTouch = new List<bool> { false, false },
                 squeeze = new List<float> { 0, 0 },
                 thumbstickMovement = new List<float> { 0, 0 }
             };
@@ -63,15 +63,11 @@ public class OutputState : MonoBehaviour
     public class HeadSetPositionState
     {
         public List<float> deviceRotation;
-        public List<float> devicePosition;
-        public List<float> neckPositoin;
         public static HeadSetPositionState ToHeadSetPositionState()
         {
             return new HeadSetPositionState
             {
-                devicePosition = new List<float> {0,0,0},
-                deviceRotation = new List<float> {0,0},
-                neckPositoin = new List<float> {0,0,0}
+                deviceRotation = new List<float> {0,0,0,0}
             };
         }
     }
@@ -84,7 +80,7 @@ public class OutputState : MonoBehaviour
         {
             return new RightController2
             {
-                controllerOrientation = new List<float> { 0, 0 },
+                controllerOrientation = new List<float> { 0, 0, 0, 0 },
                 controllerPosition = new List<float> { 0, 0, 0 }
             };
         }
@@ -98,7 +94,7 @@ public class OutputState : MonoBehaviour
         {
             return new LeftController2
             {
-                controllerOrientation = new List<float> { 0, 0 },
+                controllerOrientation = new List<float> { 0, 0,0,0 },
                 controllerPosition = new List<float> { 0, 0, 0 }
             };
         }

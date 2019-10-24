@@ -51,6 +51,7 @@ public class OVRGrabber : MonoBehaviour
     protected Transform m_parentTransform;
 
     public Vector3 pos;
+    public Quaternion rot;
 
     protected bool m_grabVolumeEnabled = true;
     protected Vector3 m_lastPos;
@@ -125,6 +126,7 @@ public class OVRGrabber : MonoBehaviour
 	{
 
         pos = m_lastPos;
+        rot = m_lastRot;
 		if (operatingWithoutOVRCameraRig)
 			OnUpdatedAnchors();
 	}
