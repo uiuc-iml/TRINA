@@ -24,7 +24,7 @@ MIN_MOTOR_SPEED = -3.5
 MAX_MOTOR_TRAVEL = 3.6
 MIN_MOTOR_TRAVEL = 0
 
-class gripperController:
+class GripperController:
     def __init__(self):
         self.command_pub = rospy.Publisher('/reflex_takktile2/command', Command, queue_size=10)
         self.pos_pub = rospy.Publisher('/reflex_takktile2/command_position', PoseCommand, queue_size=10)
@@ -36,10 +36,12 @@ class gripperController:
         self.fingertwo = 0.0
         self.fingerthree = 0.0
         self.preshape = 0.0
+        self.enable = False
         self.method = NULL
         self.exit = False
 
     def start(self):
+        self.enable = True
         rospy.init_node('gripperController')
         controlThread = threading.Thread(target = self.controlLoop)
         controlThread.start()
@@ -49,7 +51,9 @@ class gripperController:
         self.lastStateTime = float(now.secs) + 1e-9*float(now.nsecs) #get the ros time for each robot state msg
 		rate = rospy.Rate(1.0/self.dt)
 
+        self.calibrate()
         while not rospy.is_shutdown() and (not self.exit):
+
             if self.method == "pose":
                 self.pos_pub.publish(PoseCommand(f1 = self.fingerone, f2 = self.fingertwo, f3 = self.fingerthree, preshape = self.preshape))
                 self.method = NULL
@@ -59,7 +63,11 @@ class gripperController:
 
             rate.sleep()
 
-
+    def moving(self):
+        if not self.enable:
+            return False
+        else:
+            return True
     def callback(self, data):
         self.lastStateTime = float(data.header.stamp.secs)+1e-9*float(data.header.stamp.nsecs)
         self.fingerone = data.motor[0].joint_angle
@@ -123,6 +131,19 @@ class gripperController:
                 print("command velocity for gripper is too fast, set to max velocity")
                 velocity[i] = MIN_MOTOR_SPEED
 
+    def calibrate(self):
+        rospy.wait_for_service('/reflex_takktile2/calibrate_fingers')
+        calibrate_fingers = rospy.ServiceProxy('/reflex_takktile2/calibrate_fingers', Empty)
+        rospy.wait_for_service('/reflex_takktile2/calibrate_tactile')
+        calibrate_tactile = rospy.ServiceProxy('/reflex_takktile2/calibrate_tactile', Empty)
+        calibrate_fingers()
+        calibrate_tactile()
+
+    def set_threshold(self, x):
+        set_tactile_threshold = rospy.ServiceProxy('/your_gripper/set_tactile_threshold', SetTactileThreshold)
+        set_tactile_threshold(x)
+
 
     def stop(self):
-        self.exit = True;
+        self.enable = False
+        self.exit = True

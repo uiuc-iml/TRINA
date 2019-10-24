@@ -6,10 +6,11 @@ from threading import Thread, Lock
 import threading
 from limbController import LimbController
 from baseController import BaseController
+from gripperController import GripperController
 from kinematicController import KinematicController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
-#import convenienceFunctions 
+#import convenienceFunctions
 from copy import deepcopy
 from klampt.math import vectorops,so3
 from klampt import vis
@@ -39,7 +40,7 @@ class Motion:
                 self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
                 self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
             self.base = BaseController()
-            
+            self.gripper = GripperController()
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
             ##TODO: Add other components
         else:
@@ -57,6 +58,7 @@ class Motion:
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
+        self.gripper_state = GripperState()
         self.startTime = time.time()
         self.t = 0 #time since startup
         self.startUp = False
@@ -108,7 +110,7 @@ class Motion:
                     self.left_limb_state.sensedWrench =self.left_limb.getWrench()
 
                 res = self.right_limb.start()
-                time.sleep(1)    
+                time.sleep(1)
                 if res == False:
                     #better to replace this with logger
                     print("motion.startup(): ERROR, left limb start failure.")
@@ -118,8 +120,9 @@ class Motion:
                     self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                     self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
                     self.right_limb_state.sensedWrench = self.right_limb.getWrench()
-            # start the other components        
+            # start the other components
             self.base.start()
+            self.gripper.start()
             # TODO: add more components...
 
         controlThread = threading.Thread(target = self._controlLoop)
@@ -132,7 +135,7 @@ class Motion:
         while not self.shutdownFlag:
             loopStartTime = time.time()
             self.t = time.time() - self.startTime
-            ###lock the thread 
+            ###lock the thread
             self.controlLoopLock.acquire()
             if self.mode == "Physical":
                 if self.stopMotionFlag:
@@ -141,6 +144,7 @@ class Motion:
                             self.left_limb.stopMotion()
                             self.right_limb.stopMotion()
                         self.base.stopMotion()
+                        self.gripper.stop()
                         self.stopMotionSent = True #unused
                 else:
                     ###update current state
@@ -205,10 +209,16 @@ class Motion:
 
                     ##Base:add set path later
                     if self.base_state.commandType == 1:
-                        self.base.setCommandedVelocity(self.base_state.commandedVel)        
+                        self.base.setCommandedVelocity(self.base_state.commandedVel)
                     elif self.base_state.commandType == 0 and not base_state.commandSent:
                         base_state.commandSent = True
-                        self.base.setTargetPosition(self.base_state.commandedVel)        
+                        self.base.setTargetPosition(self.base_state.commandedVel)
+
+                    if self.gripper.method == 'pose':
+                        self.gripper.setPose(self.gripper_state.pose)
+                    elif self.gripper.method == 'velocity':
+                        self.gripper.setVelocity(self.gripper_state.velocity)
+                        
                     ###TODO: add the other components here
 
                     ##update internal robot model, does not use the base's position and orientation
@@ -275,13 +285,13 @@ class Motion:
                             self.right_limb_state.commandSent = True
 
                     if self.base_state.commandType == 1:
-                        self.simulated_robot.setBaseVelocity(self.base_state.commandedVel) 
+                        self.simulated_robot.setBaseVelocity(self.base_state.commandedVel)
                     elif self.base_state.commandType == 0 and not base_state.commandSent:
                         base_state.commandSent = True
-                        self.base.setTargetPosition(self.base_state.commandedVel) 
+                        self.base.setTargetPosition(self.base_state.commandedVel)
 
             self.controlLoopLock.release()
-            
+
             elapsedTime = time.time() - loopStartTime
             self.t = time.time() - self.startTime
             if elapsedTime < self.dt:
@@ -295,7 +305,7 @@ class Motion:
         assert len(q) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
         self.setLeftLimbPosition(q[0:6])
         self.setRightLimbPosition(q[6:12])
-        return 
+        return
     def setLeftLimbPosition(self,q):
         """q should be a list of 6 elements"""
         """This will clear the motion queue"""
@@ -308,7 +318,7 @@ class Motion:
         self.left_limb_state.commandQueue = False
         self.left_limb_state.commandedqQueue = []
         self.controlLoopLock.release()
-        return 
+        return
 
     def setRightLimbPosition(self,q):
         """q should be a list of 6 elements"""
@@ -321,7 +331,7 @@ class Motion:
         self.right_limb_state.commandQueue = False
         self.right_limb_state.commandedqQueue = []
         self.controlLoopLock.release()
-        return 
+        return
 
     def setLeftLimbPositionLinear(self,q,duration):
         """set a motion queue, this will clear the setPosition() commands"""
@@ -361,7 +371,7 @@ class Motion:
             positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
             planningTime = planningTime + TRINAConfig.ur5e_control_rate
         positionQueue.append(q)
-        
+
         self.controlLoopLock.acquire()
         self.right_limb_state.commandSent = False
         self.right_limb_state.commandType = 0
@@ -382,7 +392,7 @@ class Motion:
         assert len(qdot) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
         self.setLeftLimbVelocity(qdot[0:6])
         self.setRightLimbVelcity(qdot[6:12])
-        return 
+        return
 
     def setLeftLimbVelocity(self,qdot):
         assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
@@ -394,7 +404,7 @@ class Motion:
         self.left_limb_state.commandQueue = False
         self.left_limb_state.commandedqQueue = []
         self.controlLoopLock.release()
-        return 
+        return
 
     def setRightLimbVelocity(self,qdot):
         assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
@@ -406,7 +416,7 @@ class Motion:
         self.right_limb_state.commandQueue = False
         self.right_limb_state.commandedqQueue = []
         self.controlLoopLock.release()
-        return 
+        return
 
     def setLeftEEInertialTransform(self,Ttarget,duration):
         """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
@@ -449,7 +459,7 @@ class Motion:
                 print('motion.setLeftEEVelocity:IK solve failure: no IK solution found')
                 return
             planningTime = planningTime + TRINAConfig.ur5e_control_rate
-        
+
         self.controlLoopLock.acquire()
         self.right_limb_state.commandSent = False
         self.right_limb_state.commandType = 0
@@ -488,6 +498,14 @@ class Motion:
     def sensedBasePosition(self):
         return self.base.getPosition()
 
+
+    def setGripperVelocity(self, q):
+        self.gripper.setVelocity(q)
+
+    def setGripperPose(self, q):
+        self.gripper.setPose(q)
+
+
     def shutdown(self):
         """shutdown the componets... """
         self.shutdownFlag = True
@@ -514,6 +532,7 @@ class Motion:
     def stopMotion(self):
         """Stops all motion"""
         self.base.stopMotion()
+        self.gripper.stop()
         self.stopMotionFlag = True
         self.stopMotionSent = False
         ##TODO: purge commands
@@ -523,7 +542,7 @@ class Motion:
         """The robot is ready to take more commands"""
         self.base.startMotion()
         self.startMotionFlag = False
-        return 
+        return
 
     def mirror_arm_config(self,config):
         """given the Klampt config of the left or right arm, return the other"""
@@ -549,7 +568,7 @@ class Motion:
         for c in lin:
             Q=vectorops.madd(q1,diff,c)
             robot.setConfig(Q)
-            collisions = collider.robotSelfCollisions(robot) 
+            collisions = collider.robotSelfCollisions(robot)
             colCounter = 0
             for col in collisions:
                 colCounter = colCounter + 1
@@ -577,6 +596,6 @@ if __name__=="__main__":
         robot.setBaseVelocity([0.5,0.1])
         vis.unlock()
         time.sleep(0.02)
-        
+
         print(time.time()-startTime)
     robot.shutdown()
