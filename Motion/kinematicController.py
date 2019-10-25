@@ -156,6 +156,7 @@ class KinematicController:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
+        #print("KinematicController.controlThread():exited")
     def setLeftLimbConfig(self,q):
         self.left_limb_state.commandedq = deepcopy(q)
         return

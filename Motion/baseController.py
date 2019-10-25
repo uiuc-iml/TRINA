@@ -133,6 +133,7 @@ class BaseController:
                 self.prev_angle = curr_angle
                 self.curr_path_point += 1
             rate.sleep()
+        print("BaseController:controlloop ended")
         self.cmd_pub.publish(create_twist((0, 0)))
 
     def _odom_callback(self, odom_msg):
@@ -161,7 +162,7 @@ class BaseController:
     def shutdown(self):
         self.enabled = False
         self.commanded_vel = [0.0, 0.0]
-
+        print("BaseController:shutdown called")
     def moving(self):
         if not self.enabled:
             return False

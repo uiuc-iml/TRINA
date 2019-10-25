@@ -1,12 +1,13 @@
 import os
 import signal
 import sys
-import time,math
+import time
+import math
 from threading import Thread, Lock
 import threading
 from limbController import LimbController
 from baseController import BaseController
-from gripperController import GripperController
+#from gripperController import GripperController
 from kinematicController import KinematicController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
@@ -14,9 +15,9 @@ from motionStates import * #state structures
 from copy import deepcopy
 from klampt.math import vectorops,so3
 from klampt import vis
-from klampt.model import ik
+from klampt.model import ik, collide
 import numpy as np
-from klampt import *
+from klampt import WorldModel
 ##Two different modes:
 #"Physical" == actual robot
 #"Kinematic" == Klampt model
@@ -40,7 +41,7 @@ class Motion:
                 self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
                 self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
             self.base = BaseController()
-            self.gripper = GripperController()
+            #self.gripper = GripperController()
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
             ##TODO: Add other components
         else:
@@ -49,16 +50,17 @@ class Motion:
         res = self.world.readFile(self.model_path)
         if not res:
             raise RuntimeError("unable to load model")
+        self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
-        #self.left_EE_link = self.robot_model(16)
+        self.left_EE_link = self.robot_model.link(16)
         self.left_active_Dofs = [10,11,12,13,14,15]
-        #self.right_EE_link = self.robot_model(33)
+        self.right_EE_link = self.robot_model.link(33)
         self.right_active_Dofs = [27,28,29,30,31,32]
 
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
-        self.gripper_state = GripperState()
+        #self.gripper_state = GripperState()
         self.startTime = time.time()
         self.t = 0 #time since startup
         self.startUp = False
@@ -113,16 +115,16 @@ class Motion:
                 time.sleep(1)
                 if res == False:
                     #better to replace this with logger
-                    print("motion.startup(): ERROR, left limb start failure.")
+                    print("motion.startup(): ERROR, right limb start failure.")
                     return False
                 else:
-                    print("motion.startup(): left limb started.")
+                    print("motion.startup(): right limb started.")
                     self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                     self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
                     self.right_limb_state.sensedWrench = self.right_limb.getWrench()
             # start the other components
             self.base.start()
-            self.gripper.start()
+            #self.gripper.start()
             # TODO: add more components...
 
         controlThread = threading.Thread(target = self._controlLoop)
@@ -144,7 +146,7 @@ class Motion:
                             self.left_limb.stopMotion()
                             self.right_limb.stopMotion()
                         self.base.stopMotion()
-                        self.gripper.stop()
+                        #self.gripper.stop()
                         self.stopMotionSent = True #unused
                 else:
                     ###update current state
@@ -214,10 +216,10 @@ class Motion:
                         base_state.commandSent = True
                         self.base.setTargetPosition(self.base_state.commandedVel)
 
-                    if self.gripper.method == 'pose':
-                        self.gripper.setPose(self.gripper_state.pose)
-                    elif self.gripper.method == 'velocity':
-                        self.gripper.setVelocity(self.gripper_state.velocity)
+                    #if self.gripper.method == 'pose':
+                    #    self.gripper.setPose(self.gripper_state.pose)
+                    #elif self.gripper.method == 'velocity':
+                    #    self.gripper.setVelocity(self.gripper_state.velocity)
                         
                     ###TODO: add the other components here
 
@@ -290,6 +292,8 @@ class Motion:
                         base_state.commandSent = True
                         self.base.setTargetPosition(self.base_state.commandedVel)
 
+                    robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
+                    self.robot_model.setConfig(robot_model_Q)  
             self.controlLoopLock.release()
 
             elapsedTime = time.time() - loopStartTime
@@ -298,7 +302,7 @@ class Motion:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
-
+        print("motion.controlThread: exited")
     ###TODO
     def setPosition(self,q):
         """q is a list of [left limb, right limb, base] 6+6+3"""
@@ -348,6 +352,7 @@ class Motion:
             planningTime = planningTime + TRINAConfig.ur5e_control_rate
         positionQueue.append(q)
 
+        #print("motion.setLeftLimbPositionLinear")
         self.controlLoopLock.acquire()
         self.left_limb_state.commandSent = False
         self.left_limb_state.commandType = 0
@@ -420,58 +425,93 @@ class Motion:
 
     def setLeftEEInertialTransform(self,Ttarget,duration):
         """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
+        #print("motion.setLeftEEInertialTransform():started..")
         self.controlLoopLock.acquire()
         initial = self.robot_model.getConfig()
         goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
-        if ik.solve_nearby(goal,maxDeviatoin=3,activeDofs = self.left_active_Dofs):
+        if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
             target_config = self.robot_model.getConfig()
+            print("motion.setLeftEEInertialTransform():IK solve successful")
         else:
             print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
             return
-
-        if self.check_collision_linear(self.robot_model,self.robot_model.getConfig(),target_config,15):
+        res = self.check_collision_linear(self.robot_model,initial,target_config,15)
+        #print(res)
+        if res:
             print('motion.setLeftEEInertialtransform():Self-collision midway')
             return
         else:
-            self.setLeftLimbPositionLinear(target_config[10:16],duration)
+            print("motion.setLeftEEInertialTransform():No collisoin")
 
-        self.robot_model.setConfig(inital)
-        self.controlLoopLock.release()
+        self.robot_model.setConfig(initial)
+        self.controlLoopLock.release()     
+        self.setLeftLimbPositionLinear(target_config[10:16],duration)
+        
         return
 
-    def setLeftEEVelocity(self,v,w,duration):
-        """Set the EE to translate at v and rotate at w for a specific amount of duration of time"""
-        """implemented using position control"""
-        """Collision detection not implemented rn"""
-        planningTime = 0.0 + TRINAConfig.ur5e_control_rate
-        positionQueue = []
-        currentq = self.right_limb_state.sensedq
-        nextTransform = self.robot_model.getTransform()
-        while planningTime < duration:
-            nextTranslation = vectorops.add(nextTransform[1],vectorops.mul(v,TRINAConfig.ur5e_control_rate))
-            nextRotation = so3.mul(so3.from_moment(vectorops.mul(w,TRINAConfig.ur5e_control_rate)),nextTransform[0])
-            nextTransform = (nextRotation,nextTranslation)
-            goal = ik.objective(self.left_EE_link,R=nextRotation,t=nextTranslation)
-            if ik.solve_nearby(goal,maxDeviatoin=0.5,activeDofs = self.left_active_Dofs):
-                target_config = self.robot_model.getConfig()
-                positionQueue.append(target_config[10:16])
-            else:
-                print('motion.setLeftEEVelocity:IK solve failure: no IK solution found')
-                return
-            planningTime = planningTime + TRINAConfig.ur5e_control_rate
+    # def setLeftEEVelocity(self,v,w,duration):
+    #     """Set the EE to translate at v and rotate at w for a specific amount of duration of time"""
+    #     """implemented using position control"""
+    #     """Collision detection not implemented rn"""
+    #     planningTime = 0.0 + TRINAConfig.ur5e_control_rate
+    #     positionQueue = []
+    #     currentq = self.right_limb_state.sensedq
+    #     nextTransform = self.robot_model.getTransform()
+    #     while planningTime < duration:
+    #         nextTranslation = vectorops.add(nextTransform[1],vectorops.mul(v,TRINAConfig.ur5e_control_rate))
+    #         nextRotation = so3.mul(so3.from_moment(vectorops.mul(w,TRINAConfig.ur5e_control_rate)),nextTransform[0])
+    #         nextTransform = (nextRotation,nextTranslation)
+    #         goal = ik.objective(self.left_EE_link,R=nextRotation,t=nextTranslation)
+    #         if ik.solve_nearby(goal,maxDeviatoin=0.5,activeDofs = self.left_active_Dofs):
+    #             target_config = self.robot_model.getConfig()
+    #             positionQueue.append(target_config[10:16])
+    #         else:
+    #             print('motion.setLeftEEVelocity:IK solve failure: no IK solution found')
+    #             return
+    #         planningTime = planningTime + TRINAConfig.ur5e_control_rate
 
+    #     self.controlLoopLock.acquire()
+    #     self.right_limb_state.commandSent = False
+    #     self.right_limb_state.commandType = 0
+    #     self.right_limb_state.commandedqQueue = positionQueue
+    #     self.right_limb_state.commandQueue = True
+    #     self.right_limb_state.commandedq = []
+    #     self.right_limb_state.commandeddq = []
+    #     self.controlLoopLock.release()
+
+    def setRightEEInertialTransform(self,Ttarget,duration):
+        """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
+        #print("motion.setLeftEEInertialTransform():started..")
         self.controlLoopLock.acquire()
-        self.right_limb_state.commandSent = False
-        self.right_limb_state.commandType = 0
-        self.right_limb_state.commandedqQueue = positionQueue
-        self.right_limb_state.commandQueue = True
-        self.right_limb_state.commandedq = []
-        self.right_limb_state.commandeddq = []
-        self.controlLoopLock.release()
+        initial = self.robot_model.getConfig()
+        goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
+        if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
+            target_config = self.robot_model.getConfig()
+            print("motion.setRightEEInertialTransform():IK solve successful")
+        else:
+            print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
+            return
+        res = self.check_collision_linear(self.robot_model,initial,target_config,15)
+        #print(res)
+        if res:
+            print('motion.setRighttEEInertialtransform():Self-collision midway')
+            return
+        else:
+            print("motion.setRightEEInertialTransform():No collisoin")
 
+        self.robot_model.setConfig(initial)
+        self.controlLoopLock.release()     
+        self.setRightLimbPositionLinear(target_config[27:33],duration)
+        
+        return
     def sensedLeftEETransform(self):
         """Return the transform w.r.t. the base frame"""
         return self.left_EE_link.getTransform()
+
+    def sensedRightEETransform(self):
+        """Return the transform w.r.t. the base frame"""
+        return self.right_EE_link.getTransform()
+
 
     def sensedLeftLimbVelocity(self):
         return self.left_limb_state.senseddq()
@@ -499,11 +539,11 @@ class Motion:
         return self.base.getPosition()
 
 
-    def setGripperVelocity(self, q):
-        self.gripper.setVelocity(q)
+    #def setGripperVelocity(self, q):
+    #    self.gripper.setVelocity(q)
 
-    def setGripperPose(self, q):
-        self.gripper.setPose(q)
+    #def setGripperPose(self, q):
+    #    self.gripper.setPose(q)
 
 
     def shutdown(self):
@@ -532,7 +572,7 @@ class Motion:
     def stopMotion(self):
         """Stops all motion"""
         self.base.stopMotion()
-        self.gripper.stop()
+        #self.gripper.stop()
         self.stopMotionFlag = True
         self.stopMotionSent = False
         ##TODO: purge commands
@@ -560,15 +600,17 @@ class Motion:
                 return []
         return RConfig
 
-    def check_collision_linear(robot,q1,q2,disrectization):
+    def check_collision_linear(self,robot,q1,q2,disrectization):
+        #print('check_collision_linear():started')
         lin = np.linspace(0,1,disrectization)
         initialConfig = robot.getConfig()
         diff = vectorops.sub(q2,q1)
         counter = 0
         for c in lin:
+            #print('check_collision_linear():started',c)
             Q=vectorops.madd(q1,diff,c)
             robot.setConfig(Q)
-            collisions = collider.robotSelfCollisions(robot)
+            collisions = self.collider.robotSelfCollisions(robot)
             colCounter = 0
             for col in collisions:
                 colCounter = colCounter + 1
@@ -577,6 +619,7 @@ class Motion:
             #add_ghosts(robot,vis,[robot.getConfig()],counter)
             counter = counter + 1
         robot.setConfig(initialConfig)
+        #print('check_collision_linear():no collision')
         return False
 
     def getWorld(self):
@@ -598,4 +641,6 @@ if __name__=="__main__":
         time.sleep(0.02)
 
         print(time.time()-startTime)
+    
+    vis.kill()
     robot.shutdown()
