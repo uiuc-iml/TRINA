@@ -33,7 +33,13 @@ class BaseState():
 
 class GripperState:
     def __init__(self):
-        self.fingerone = 0
+        self.sensed_fingerone = 0
         self.fingertwo = 0
         self.fingerthree = 0
         self.fingerfour = 0
+
+        self.commande
+
+        self.commandType
+
+        self.commandSent

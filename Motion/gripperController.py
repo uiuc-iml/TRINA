@@ -33,10 +33,15 @@ class GripperController:
 
         self.dt = 0.01
 
-        self.fingerone = 0.0
-        self.fingertwo = 0.0
-        self.fingerthree = 0.0
-        self.preshape = 0.0
+        self.sensed_finger_1 = 0.0
+        self.sensed_finger_2 = 0.0
+        self.sensed_finger_3 = 0.0
+        self.sensed_preshape = 0.0
+        self.commanded_finger_1 = 0.0
+        self.sensed_finger_2 = 0.0
+        self.sensed_finger_3 = 0.0
+        self.sensed_preshape = 0.0
+
         self.method = NULL
 
         
@@ -57,6 +62,8 @@ class GripperController:
         self.calibrate()
         while not rospy.is_shutdown() and (not self.exit):
 
+            if stop_flag:
+                set velocity zero
             if self.method == "pose":
                 self.pos_pub.publish(PoseCommand(f1 = self.fingerone, f2 = self.fingertwo, f3 = self.fingerthree, preshape = self.preshape))
                 self.method = NULL
@@ -73,10 +80,11 @@ class GripperController:
             return True
     def callback(self, data):
         self.lastStateTime = float(data.header.stamp.secs)+1e-9*float(data.header.stamp.nsecs)
-        self.fingerone = data.motor[0].joint_angle
+        self.sensed_finger_1 = data.motor[0].joint_angle
         self.fingertwo = data.motor[1].joint_angle
         self.fingerthree = data.motor[2].joint_angle
         self.preshape = data.motor[3].joint_angle
+        self.newStateFlag = True
 
     def setPose(self, position):
         now = rospy.get_rostime()
@@ -112,6 +120,15 @@ class GripperController:
         self.preshape = 0.0
         self.method = "pose"
 
+    def isOpen(self):
+        return 0 
+
+    def objectInHand(self):
+        return 0
+
+    def sensedFingerPositions(self):
+
+        return [sensed_finger_1, , ,sensed_preshape]
     # velocity: an array of 4,
     # positive speed moves finger inward,
     # and negative speed moves finger outward
@@ -150,3 +167,14 @@ class GripperController:
     def stop(self):
         self.enable = False
         self.exit = True
+
+    def shutDown(self):
+        self.enable = False
+        self.exit = True
+        zero 
+
+    def newState(self):
+        return self.newStateFlag
+ 
+    def markRead()
+        newStateFlag = False

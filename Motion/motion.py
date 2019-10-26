@@ -41,7 +41,7 @@ class Motion:
                 self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
                 self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
             self.base = BaseController()
-            #self.gripper = GripperController()
+            #self.left_gripper = GripperController()
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
             ##TODO: Add other components
         else:
@@ -166,6 +166,8 @@ class Motion:
                             self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                             self.right_limb.markRead()
 
+                    #if self.left_gripper.newState() 
+                        self.left_gripper_state
                     ###send commands
                     if armFlag:
 
@@ -216,7 +218,7 @@ class Motion:
                         base_state.commandSent = True
                         self.base.setTargetPosition(self.base_state.commandedVel)
 
-                    #if self.gripper.method == 'pose':
+                    #if self.gripper_state.commandType == 0:
                     #    self.gripper.setPose(self.gripper_state.pose)
                     #elif self.gripper.method == 'velocity':
                     #    self.gripper.setVelocity(self.gripper_state.velocity)
@@ -538,6 +540,13 @@ class Motion:
     def sensedBasePosition(self):
         return self.base.getPosition()
 
+    def setGripperPosition(self):
+        self.gripper_state.commandType = 1
+
+    def setGripperVelocity(self):
+        
+    def sensedGripperPosition(self):
+        return self.gripper_state.
 
     #def setGripperVelocity(self, q):
     #    self.gripper.setVelocity(q)
