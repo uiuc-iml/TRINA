@@ -32,12 +32,15 @@ class GripperController:
         self.sub = rospy.Subscriber('/reflex_takktile2/hand_state', Hand, self.callback)
 
         self.dt = 0.01
+
         self.fingerone = 0.0
         self.fingertwo = 0.0
         self.fingerthree = 0.0
         self.preshape = 0.0
-        self.enable = False
         self.method = NULL
+
+        
+        self.enable = False
         self.exit = False
 
     def start(self):

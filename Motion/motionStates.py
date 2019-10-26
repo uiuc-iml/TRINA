@@ -30,3 +30,10 @@ class BaseState():
 
         self.commandType = 1 # 0 is position, 1 is velocity, 2 is path
         self.commandSent = False
+
+class GripperState:
+    def __init__(self):
+        self.fingerone = 0
+        self.fingertwo = 0
+        self.fingerthree = 0
+        self.fingerfour = 0
