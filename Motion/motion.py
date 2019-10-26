@@ -7,7 +7,7 @@ from threading import Thread, Lock
 import threading
 from limbController import LimbController
 from baseController import BaseController
-#from gripperController import GripperController
+from gripperController import GripperController
 from kinematicController import KinematicController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
@@ -41,7 +41,7 @@ class Motion:
                 self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
                 self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
             self.base = BaseController()
-            #self.left_gripper = GripperController()
+            self.right_gripper = GripperController()
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
             ##TODO: Add other components
         else:
@@ -60,7 +60,7 @@ class Motion:
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
-        #self.gripper_state = GripperState()
+        self.right_gripper_state = GripperState()
         self.startTime = time.time()
         self.t = 0 #time since startup
         self.startUp = False
@@ -124,7 +124,7 @@ class Motion:
                     self.right_limb_state.sensedWrench = self.right_limb.getWrench()
             # start the other components
             self.base.start()
-            #self.gripper.start()
+            self.gripper.start()
             # TODO: add more components...
 
         controlThread = threading.Thread(target = self._controlLoop)
@@ -146,7 +146,7 @@ class Motion:
                             self.left_limb.stopMotion()
                             self.right_limb.stopMotion()
                         self.base.stopMotion()
-                        #self.gripper.stop()
+                        self.gripper.stop()
                         self.stopMotionSent = True #unused
                 else:
                     ###update current state
@@ -166,8 +166,9 @@ class Motion:
                             self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                             self.right_limb.markRead()
 
-                    #if self.left_gripper.newState() 
-                        self.left_gripper_state
+                    if self.right_gripper.new_state():
+                        self.right_gripper_state.sense_finger_set = self.right_gripper.sense_finger_set
+                        self.right_gripper.mark_read()
                     ###send commands
                     if armFlag:
 
@@ -218,11 +219,11 @@ class Motion:
                         base_state.commandSent = True
                         self.base.setTargetPosition(self.base_state.commandedVel)
 
-                    #if self.gripper_state.commandType == 0:
-                    #    self.gripper.setPose(self.gripper_state.pose)
-                    #elif self.gripper.method == 'velocity':
-                    #    self.gripper.setVelocity(self.gripper_state.velocity)
-                        
+                    if self.right_gripper_state.commandType == 0:
+                       self.right_gripper.setPose(self.right_gripper_state.command_finger_set)
+                   elif self.right_gripper_state.commandType == 1:
+                       self.right_gripper.setVelocity(self.right_gripper_state.command_finger_set)
+
                     ###TODO: add the other components here
 
                     ##update internal robot model, does not use the base's position and orientation
@@ -295,7 +296,7 @@ class Motion:
                         self.base.setTargetPosition(self.base_state.commandedVel)
 
                     robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
-                    self.robot_model.setConfig(robot_model_Q)  
+                    self.robot_model.setConfig(robot_model_Q)
             self.controlLoopLock.release()
 
             elapsedTime = time.time() - loopStartTime
@@ -446,9 +447,9 @@ class Motion:
             print("motion.setLeftEEInertialTransform():No collisoin")
 
         self.robot_model.setConfig(initial)
-        self.controlLoopLock.release()     
+        self.controlLoopLock.release()
         self.setLeftLimbPositionLinear(target_config[10:16],duration)
-        
+
         return
 
     # def setLeftEEVelocity(self,v,w,duration):
@@ -502,9 +503,9 @@ class Motion:
             print("motion.setRightEEInertialTransform():No collisoin")
 
         self.robot_model.setConfig(initial)
-        self.controlLoopLock.release()     
+        self.controlLoopLock.release()
         self.setRightLimbPositionLinear(target_config[27:33],duration)
-        
+
         return
     def sensedLeftEETransform(self):
         """Return the transform w.r.t. the base frame"""
@@ -540,20 +541,16 @@ class Motion:
     def sensedBasePosition(self):
         return self.base.getPosition()
 
-    #def setGripperPosition(self):
-    #    self.gripper_state.commandType = 1
+    def setGripperPosition(self, position):
+       self.right_gripper_state.commandType = 0
+       self.right_gripper_state.command_finger_set = position
 
-    #def setGripperVelocity(self):
-    #
-    #def sensedGripperPosition(self):
-    #    return self.gripper_state.
+    def setGripperVelocity(self):
+        self.right_gripper_state.commandType = 1
+        self.right_gripper_state.command_finger_set = position
 
-    #def setGripperVelocity(self, q):
-    #    self.gripper.setVelocity(q)
-
-    #def setGripperPose(self, q):
-    #    self.gripper.setPose(q)
-
+    def sensedGripperPosition(self):
+       return self.right_gripper_state.sense_finger_set
 
     def shutdown(self):
         """shutdown the componets... """
@@ -564,6 +561,7 @@ class Motion:
                 self.right_limb.stop()
             #stop other components
             self.base.shutdown()
+            self.right_gripper.shutDown()
         elif self.mode == "Kinematic":
             self.simulated_robot.shutdown()
         return 0
@@ -573,7 +571,7 @@ class Motion:
 
     def moving(self):
         """Returns true if the robot is currently moving."""
-        return self.left_limb.moving() or self.right_limb.moving() or self.base.moving()
+        return self.left_limb.moving() or self.right_limb.moving() or self.base.moving() or self.right_gripper.moving()
 
     def mode(self):
         return self.mode
@@ -581,7 +579,7 @@ class Motion:
     def stopMotion(self):
         """Stops all motion"""
         self.base.stopMotion()
-        #self.gripper.stop()
+        self.right_gripper.stop()
         self.stopMotionFlag = True
         self.stopMotionSent = False
         ##TODO: purge commands
@@ -591,6 +589,7 @@ class Motion:
         """The robot is ready to take more commands"""
         self.base.startMotion()
         self.startMotionFlag = False
+        self.right_gripper.resume()
         return
 
     def mirror_arm_config(self,config):
@@ -650,6 +649,6 @@ if __name__=="__main__":
         time.sleep(0.02)
 
         print(time.time()-startTime)
-    
+
     vis.kill()
     robot.shutdown()
