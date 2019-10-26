@@ -540,13 +540,13 @@ class Motion:
     def sensedBasePosition(self):
         return self.base.getPosition()
 
-    def setGripperPosition(self):
-        self.gripper_state.commandType = 1
+    #def setGripperPosition(self):
+    #    self.gripper_state.commandType = 1
 
-    def setGripperVelocity(self):
-        
-    def sensedGripperPosition(self):
-        return self.gripper_state.
+    #def setGripperVelocity(self):
+    #
+    #def sensedGripperPosition(self):
+    #    return self.gripper_state.
 
     #def setGripperVelocity(self, q):
     #    self.gripper.setVelocity(q)
