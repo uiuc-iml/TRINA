@@ -30,20 +30,7 @@ while (time.time()-startTime < 5):
 
 ##use EE velocity drive
 startTime = time.time()
-robot.setLeftEEVelocity(v = [0.05,0,0])
-while (time.time()-startTime < 20):
-    vis.lock()
-    #robot.setBaseVelocity([0.5,0.1])
-    vis.unlock()
-    time.sleep(0.02)
-    if robot.cartesian_drive_fail():
-    	break
-    	print(time.time()-startTime)
-
-for i in range(5):
-	print("########################")
-robot.setLeftEEVelocity(v = [-0.01,0,0], w =[0,0,0])
-startTime = time.time()
+robot.setLeftEEVelocity(v = [0.0,0,0], w = [0,0,0.2],tool = [0.1,0,0])
 while (time.time()-startTime < 5):
     vis.lock()
     #robot.setBaseVelocity([0.5,0.1])
@@ -52,6 +39,19 @@ while (time.time()-startTime < 5):
     if robot.cartesian_drive_fail():
     	break
     	print(time.time()-startTime)
+
+# for i in range(5):
+# 	print("########################")
+# robot.setLeftEEVelocity(v = [-0.01,0,0], w =[0,0,0] , tool = [0,0,0])
+# startTime = time.time()
+# while (time.time()-startTime < 5):
+#     vis.lock()
+#     #robot.setBaseVelocity([0.5,0.1])
+#     vis.unlock()
+#     time.sleep(0.02)
+#     if robot.cartesian_drive_fail():
+#     	break
+#     	print(time.time()-startTime)
 vis.kill()
 print('flag')
 robot.shutdown()

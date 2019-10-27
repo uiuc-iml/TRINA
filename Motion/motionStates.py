@@ -24,7 +24,8 @@ class LimbState:
         self.driveTransform = ([1,0,0,0,1,0,0,0,1],[0,0,0])
         self.driveSpeedAdjustment = 1.0
         self.cartesianMode = 0 # 0 means both translation and rotation, 2 only rotation, 1 only position
-
+        self.toolCenter = [0,0,0]
+        
 class BaseState():
     def __init__(self):
         self.measuredPos = [0.0, 0.0, 0.0] #[x, y, yaw]
