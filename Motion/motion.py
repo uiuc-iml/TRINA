@@ -134,6 +134,8 @@ class Motion:
         return self.startUp
 
     def _controlLoop(self):
+        """main control thread, synchronizing all components"""
+        """in each loop,states are updated and new commands are issued"""
         print("motion.controlLoop(): controlLoop started.")
         while not self.shut_down_flag:
             loopStartTime = time.time()
@@ -359,12 +361,15 @@ class Motion:
         print("motion.controlThread: exited")
     ###TODO
     def setPosition(self,q):
+        """set the position of the entire robot"""
+        """under development rn"""
         """q is a list of [left limb, right limb, base] 6+6+3"""
         assert len(q) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
         self.setLeftLimbPosition(q[0:6])
         self.setRightLimbPosition(q[6:12])
         return
     def setLeftLimbPosition(self,q):
+        """set the left limb joint position, and the robot moves as fast as possible"""
         """q should be a list of 6 elements"""
         """This will clear the motion queue"""
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
@@ -380,6 +385,7 @@ class Motion:
         return
 
     def setRightLimbPosition(self,q):
+        """set the right limb joint sposition, and the robot moves as fast as possible"""
         """q should be a list of 6 elements"""
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
         self._controlLoopLock.acquire()
@@ -394,6 +400,7 @@ class Motion:
         return
 
     def setLeftLimbPositionLinear(self,q,duration):
+        """left limb moves to q in duration time"""
         """set a motion queue, this will clear the setPosition() commands"""
         assert len(q) == 6, "motion.setLeftLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setLeftLimbPositionLinear(): Duration needs to be a positive number"
@@ -420,6 +427,7 @@ class Motion:
         self._controlLoopLock.release()
 
     def setRightLimbPositionLinear(self,q,duration):
+        """limb moves to q in duration time"""
         """set a motion queue, this will clear the setPosition() commands"""
         assert len(q) == 6, "motion.setRightLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setRightLimbPositionLinear(): Duration needs to be a positive number"
@@ -452,12 +460,14 @@ class Motion:
         return self.right_limb_state.sensedq
 
     def setVelocity(self,qdot):
+        """set the velocity of the entire robot, under development rn"""
         assert len(qdot) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
         self.setLeftLimbVelocity(qdot[0:6])
         self.setRightLimbVelcity(qdot[6:12])
         return
 
     def setLeftLimbVelocity(self,qdot):
+        """set limb joint velocities"""
         assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
         self._controlLoopLock.acquire()
         self.left_limb_state.commandSent = False
@@ -471,6 +481,7 @@ class Motion:
         return
 
     def setRightLimbVelocity(self,qdot):
+        """set limb joint velocities"""
         assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
         self._controlLoopLock.acquire()
         self.right_limb_state.commandSent = False
@@ -618,12 +629,15 @@ class Motion:
         return self.right_limb_state.senseddq()
 
     def setBaseTargetPosition(self, q, vel):
+        """set the local target position of the base"""
+        """base constructs a path to go to the desired position"""
         assert len(q) == 3, "motion.setBaseTargetPosition(): wrong dimensions"
         self.base_state.commandType = 0
         self.base_state.commandedTargetPosition = deepcopy(q)
         self.base_state.pathFollowingVel = vel
 
     def setBaseVelocity(self, q):
+        """set the velocity of the base relative to the local base frame"""
         assert len(q) == 2 ,"motion.setBaseVelocity(): wrong dimensions"
         self.base_state.commandType = 1
         self.base_state.commandedVel = deepcopy(q)
