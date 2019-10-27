@@ -23,7 +23,7 @@ class LimbState:
         self.startTransform = ([1,0,0,0,1,0,0,0,1],[0,0,0])
         self.driveTransform = ([1,0,0,0,1,0,0,0,1],[0,0,0])
         self.driveSpeedAdjustment = 1.0
-        
+        self.cartesianMode = 0 # 0 means both translation and rotation, 2 only rotation, 1 only position
 
 class BaseState():
     def __init__(self):
