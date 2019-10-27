@@ -65,11 +65,12 @@ class Motion:
         self.t = 0 #time since startup
         self.startUp = False
         self.dt = 0.002
-        self.automaticMode = False #if in this mode, a planner or recorded motion can take over. Can be interruped by stopMotion()
-        self.stopMotionFlag = False
-        self.stopMotionSent = False
-        self.shutdownFlag = False
-        self.controlLoopLock = Lock()
+        self.automatic_mode = False #if in this mode, a planner or recorded motion can take over. Can be interruped by stopMotion()
+        self.stop_motion_flag = False
+        self.stop_motion_sent = False
+        self.shut_down_flag = False
+        self._controlLoopLock = Lock()
+        self.cartedian_drive_failure = False
         signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
 
     def sigint_handler(self, signum, frame):
@@ -134,20 +135,20 @@ class Motion:
 
     def _controlLoop(self):
         print("motion.controlLoop(): controlLoop started.")
-        while not self.shutdownFlag:
+        while not self.shut_down_flag:
             loopStartTime = time.time()
             self.t = time.time() - self.startTime
             ###lock the thread
-            self.controlLoopLock.acquire()
+            self._controlLoopLock.acquire()
             if self.mode == "Physical":
-                if self.stopMotionFlag:
-                    if not self.stopMotionSent: #send only once to avoid drifting...
+                if self.stop_motion_flag:
+                    if not self.stop_motion_sent: #send only once to avoid drifting...
                         if armFlag:
                             self.left_limb.stopMotion()
                             self.right_limb.stopMotion()
                         self.base.stopMotion()
                         #self.gripper.stop()
-                        self.stopMotionSent = True #unused
+                        self.stop_motion_sent = True #unused
                 else:
                     ###update current state
                     if self.base.newState():
@@ -232,7 +233,7 @@ class Motion:
                     self.robot_model.setConfig(robot_model_Q)
 
             elif self.mode == "Kinematic":
-                if self.stopMotionFlag:
+                if self.stop_motion_flag:
                     self.simulated_robot.stopMotion()
                 else:
                     if self.simulated_robot.newState():
@@ -262,16 +263,28 @@ class Motion:
                     #### addition here
                     ####
                     elif self.left_limb_state.cartesianDrive:
+                        clock1 = time.time()
                         flag = 1
                         while flag:
-                            res, target_config = self.left_limb_cartesian_drive(self.left_limb_state.driveTransform)
+                            res, target_config = self._left_limb_cartesian_drive(self.left_limb_state.driveTransform)
                             if res == 0:
+                                #set to position mode...
+                                self.cartesian_drive_failure = True
+                                self.left_limb_state.commandSent = False
+                                self.left_limb_state.commandedq = deepcopy(self.sensedLeftLimbPosition())
+                                self.left_limb_state.commandeddq = []
+                                self.left_limb_state.commandType = 0
+                                self.left_limb_state.commandQueue = False
+                                self.left_limb_state.commandedqQueue = []
+                                self.left_limb_state.cartesianDrive = False
                                 break
                             elif res == 1:
                                 flag = 1
                             elif res == 2:
                                 flag = 0
-                                self.left_limb.setConfig(target_config + [0.0])
+                                self.simulated_robot.setLeftLimbConfig(target_config)
+                            #print(res)
+                        #print("CartesianDrive IK took",time.time() - clock1, "secs")
                     ####                           
                     #### ended addition here
                     else:
@@ -311,7 +324,7 @@ class Motion:
 
                     robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
                     self.robot_model.setConfig(robot_model_Q)  
-            self.controlLoopLock.release()
+            self._controlLoopLock.release()
 
             elapsedTime = time.time() - loopStartTime
             self.t = time.time() - self.startTime
@@ -332,7 +345,7 @@ class Motion:
         """q should be a list of 6 elements"""
         """This will clear the motion queue"""
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
-        self.controlLoopLock.acquire()
+        self._controlLoopLock.acquire()
         self.left_limb_state.commandSent = False
         self.left_limb_state.commandedq = deepcopy(q)
         self.left_limb_state.commandeddq = []
@@ -340,13 +353,13 @@ class Motion:
         self.left_limb_state.commandQueue = False
         self.left_limb_state.commandedqQueue = []
         self.left_limb_state.cartesianDrive = False
-        self.controlLoopLock.release()
+        self._controlLoopLock.release()
         return
 
     def setRightLimbPosition(self,q):
         """q should be a list of 6 elements"""
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
-        self.controlLoopLock.acquire()
+        self._controlLoopLock.acquire()
         self.right_limb_state.commandSent = False
         self.right_limb_state.commandedq = deepcopy(q)
         self.right_limb_state.commandeddq = []
@@ -354,7 +367,7 @@ class Motion:
         self.right_limb_state.commandQueue = False
         self.right_limb_state.commandedqQueue = []
         self.right_limb_state.cartesianDrive = False
-        self.controlLoopLock.release()
+        self._controlLoopLock.release()
         return
 
     def setLeftLimbPositionLinear(self,q,duration):
@@ -373,7 +386,7 @@ class Motion:
         positionQueue.append(q)
 
         #print("motion.setLeftLimbPositionLinear")
-        self.controlLoopLock.acquire()
+        self._controlLoopLock.acquire()
         self.left_limb_state.commandSent = False
         self.left_limb_state.commandType = 0
         self.left_limb_state.commandedqQueue = positionQueue
@@ -381,7 +394,7 @@ class Motion:
         self.left_limb_state.commandedq = []
         self.left_limb_state.commandeddq = []
         self.left_limb_state.cartesianDrive = False
-        self.controlLoopLock.release()
+        self._controlLoopLock.release()
 
     def setRightLimbPositionLinear(self,q,duration):
         """set a motion queue, this will clear the setPosition() commands"""
@@ -398,7 +411,7 @@ class Motion:
             planningTime = planningTime + TRINAConfig.ur5e_control_rate
         positionQueue.append(q)
 
-        self.controlLoopLock.acquire()
+        self._controlLoopLock.acquire()
         self.right_limb_state.commandSent = False
         self.right_limb_state.commandType = 0
         self.right_limb_state.commandedqQueue = positionQueue
@@ -406,7 +419,7 @@ class Motion:
         self.right_limb_state.commandedq = []
         self.right_limb_state.commandeddq = []
         self.right_limb_state.cartesianDrive = False
-        self.controlLoopLock.release()
+        self._controlLoopLock.release()
         return
 
     def sensedLeftLimbPosition(self):
@@ -423,7 +436,7 @@ class Motion:
 
     def setLeftLimbVelocity(self,qdot):
         assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
-        self.controlLoopLock.acquire()
+        self._controlLoopLock.acquire()
         self.left_limb_state.commandSent = False
         self.left_limb_state.commandeddq = deepcopy(qdot)
         self.left_limb_state.commandedq = []
@@ -431,12 +444,12 @@ class Motion:
         self.left_limb_state.commandQueue = False
         self.left_limb_state.commandedqQueue = []
         self.left_limb_state.cartesianDrive = False
-        self.controlLoopLock.release()
+        self._controlLoopLock.release()
         return
 
     def setRightLimbVelocity(self,qdot):
         assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
-        self.controlLoopLock.acquire()
+        self._controlLoopLock.acquire()
         self.right_limb_state.commandSent = False
         self.right_limb_state.commandeddq = deepcopy(qdot)
         self.right_limb_state.commandedq = []
@@ -444,13 +457,13 @@ class Motion:
         self.right_limb_state.commandQueue = False
         self.right_limb_state.commandedqQueue = []
         self.right_limb_state.cartesianDrive = False
-        self.controlLoopLock.release()
+        self._controlLoopLock.release()
         return
 
     def setLeftEEInertialTransform(self,Ttarget,duration):
         """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
         #print("motion.setLeftEEInertialTransform():started..")
-        self.controlLoopLock.acquire()
+        self._controlLoopLock.acquire()
         initial = self.robot_model.getConfig()
         goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
         if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
@@ -468,7 +481,7 @@ class Motion:
             print("motion.setLeftEEInertialTransform():No collisoin")
 
         self.robot_model.setConfig(initial)
-        self.controlLoopLock.release()     
+        self._controlLoopLock.release()     
         self.setLeftLimbPositionLinear(target_config[10:16],duration)
         
         return
@@ -477,36 +490,37 @@ class Motion:
         """set the ee to translate at v and rotate at w for a specific amount of duration of time"""
         """implemented using position control"""
         """collision detection not implemented rn..."""
-        self.controllooplock.acquire()
+        self._controlLoopLock.acquire()
         self.left_limb_state.commandedq = []
         self.left_limb_state.commandedqQueue = []
         self.left_limb_state.commandeddq = []
         self.left_limb_state.commandQueue = False
-
+        self.cartesian_drive_failure = False
         ##cartesian velocity drive
         if v:
-            self.cartesianDriveV = [0,0,0]
+            self.left_limb_state.cartesianDriveV = deepcopy(v)
         if w:
-            self.cartesianDriveW = [0,0,0]
+            self.left_limb_state.cartesianDriveW = deepcopy(w)
         if v and w:
             self.left_limb_state.cartesianMode = 0
         else:
             if v:
                 self.left_limb_state.cartesianMode = 1
             elif w:
-                self.left_limb_state.cartesianMode = 2
+                #self.left_limb_state.cartesianMode = 2
+                print("motion.setLeftEEVelocity(): wrong input, can't specify w alone")
             else:
                 print("motion.setLeftEEVelocity(): wrong input")
         self.left_limb_state.cartesianDrive = True
         self.left_limb_state.startTransform = self.left_EE_link.getTransform()
         self.left_limb_state.driveTransform = self.left_EE_link.getTransform()
         self.left_limb_state.driveSpeedAdjustment = 1.0
-        self.controllooplock.release()
+        self._controlLoopLock.release()
 
     def setRightEEInertialTransform(self,Ttarget,duration):
         """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
         #print("motion.setLeftEEInertialTransform():started..")
-        self.controlLoopLock.acquire()
+        self._controlLoopLock.acquire()
         initial = self.robot_model.getConfig()
         goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
         if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
@@ -524,7 +538,7 @@ class Motion:
             print("motion.setRightEEInertialTransform():No collisoin")
 
         self.robot_model.setConfig(initial)
-        self.controlLoopLock.release()     
+        self._controlLoopLock.release()     
         self.setRightLimbPositionLinear(target_config[27:33],duration)
         
         return
@@ -580,7 +594,7 @@ class Motion:
 
     def shutdown(self):
         """shutdown the componets... """
-        self.shutdownFlag = True
+        self.shut_down_flag = True
         if self.mode == "Physical":
             if armFlag:
                 self.left_limb.stop()
@@ -605,8 +619,8 @@ class Motion:
         """Stops all motion"""
         self.base.stopMotion()
         #self.gripper.stop()
-        self.stopMotionFlag = True
-        self.stopMotionSent = False
+        self.stop_motion_flag = True
+        self.stop_motion_sent = False
         ##TODO: purge commands
 
         return
@@ -635,7 +649,9 @@ class Motion:
                 print('out of range..')
                 return []
         return RConfig
-    ###Below are internal helper functions
+    def cartesian_drive_fail(self):
+        return self.cartesian_drive_failure
+    
 
     def _check_collision_linear(self,robot,q1,q2,disrectization):
         #print('check_collision_linear():started')
@@ -681,46 +697,54 @@ class Motion:
         v = self.left_limb_state.cartesianDriveV
         w = self.left_limb_state.cartesianDriveW
         amount = self.dt * self.left_limb_state.driveSpeedAdjustment
-        self.left_limb_state.driveTransform = (so3.mul(so3.from_moment(vectorops.mul(v,amount)),\
+        #print("Before:",self.left_limb_state.driveTransform)
+        #print(v,amount,vectorops.mul(v,amount))
+        target_transform = (so3.mul(so3.from_moment(vectorops.mul(w,amount)),\
             self.left_limb_state.driveTransform[0]),vectorops.add(\
-            self.left_limb_state.driveTransform[1],vectorops.mul(w,amount)))
-
+            self.left_limb_state.driveTransform[1],vectorops.mul(v,amount)))
+        #print("After:",self.left_limb_state.driveTransform)
         #joint position limits from the joint speed limit
         joint_upper_limits = vectorops.add(self.left_limb_state.sensedq,vectorops.mul(\
-            TRINAConfig.limb_velocity_limit,self.dt))
+            TRINAConfig.limb_velocity_limits,self.dt))
         joint_lower_limits = vectorops.add(self.left_limb_state.sensedq,vectorops.mul(\
-            TRINAConfig.limb_velocity_limit,-self.dt))
+            TRINAConfig.limb_velocity_limits,-self.dt))
         if self.left_limb_state.cartesianMode == 0:
-            goal = ik.objective(self.left_EE_link,R=self.left_limb_state.driveTransform[0],\
-                t = self.left_limb_state.driveTransform[1])
+            goal = ik.objective(self.left_EE_link,R=target_transform[0],\
+                t = target_transform[1])
         elif self.left_limb_state.cartesianMode == 1:
-                        goal = ik.objective(self.left_EE_link,t = self.left_limb_state.driveTransform[1])
-        elif self.left_limb_state.cartesianMode == 2:
-                        goal = ik.objective(self.left_EE_link,R=self.left_limb_state.driveTransform[0])
+                        goal = ik.objective(self.left_EE_link,local = [0,0,0], world = target_transform[1])
+        #elif self.left_limb_state.cartesianMode == 2:
+        #                goal = ik.objective(self.left_EE_link,R=target_transform[0])
         
         initialConfig = self.robot_model.getConfig()
-        res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs)
+        res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.000001)
         failFlag = False
         if res:
-            if self._arm_is_in_limit(self.robot_model.getConfig()[10:16],joint_upper_limits,joint_lower_limits)
+            if self._arm_is_in_limit(self.robot_model.getConfig()[10:16],joint_upper_limits,joint_lower_limits):
                 pass
             else:
                 failFlag = True
+                #print(self.left_limb_state.driveSpeedAdjustment)
+                #print("motion.controlLoop():IK not in joint limit")
+                #print(self.left_limb_state.sensedq)
+                #print(self.robot_model.getConfig()[10:16])
+                #print(target_transform)
         else:
             failFlag = True
-
+            #print("motion.controlLoop():IK solution not found")
         if failFlag:
             self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment - 0.1
             if self.left_limb_state.driveSpeedAdjustment < 0.001:
                 self.left_limb_state.cartesianDrive = False
-                print("motion.controlLoop():CartesianDrive IK has failed completely,exited.. ")
+                print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
                 return 0,0 # 0 means the IK has failed completely
             else:
-                print("motion.controlLoop():CartesianDrive IK has failed, next trying: ",\
-                    self.left_limb_state.driveSpeedAdjustment)
+                #print("motion.controlLoop():CartesianDrive IK has failed, next trying: ",\
+                #    self.left_limb_state.driveSpeedAdjustment)
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
-            target_config = self.robot_model.getConfig()[10:16]    
+            target_config = self.robot_model.getConfig()[10:16]
+            self.left_limb_state.driveTransform = target_transform    
             if self.left_limb_state.driveSpeedAdjustment < 1:
                 self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment + 0.1
     
