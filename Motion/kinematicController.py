@@ -42,7 +42,7 @@ class KinematicController:
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
-        self.limb_velocity_limit = 1.5
+        self.limb_velocity_limit = 2.0
 
         self.dt = 0.004
         self.model_path = model_path

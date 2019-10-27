@@ -16,6 +16,15 @@ class LimbState:
         #for kinematic to use...
         self.lastSensedq = []
 
+        ##cartesian velocity drive
+        self.cartesianDrive = False
+        self.cartesianDriveV = [0,0,0]
+        self.cartesianDriveW = [0,0,0]
+        self.startTransform = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        self.driveTransform = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        self.driveSpeedAdjustment = 1.0
+        
+
 class BaseState():
     def __init__(self):
         self.measuredPos = [0.0, 0.0, 0.0] #[x, y, yaw]
