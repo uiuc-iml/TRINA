@@ -16,9 +16,9 @@ class ArduinoBridge:
     def send_message(self, message):
         self.port.write(message)
 
+    # blocks until a message with a "\n" is received
     def read_message(self):
         return self.port.readline()
-
 
 class TorsoController:
 
@@ -33,12 +33,38 @@ class TorsoController:
         self.control_thread = Thread(target = self._controlLoop)
         self.enabled = False
         self.dt = dt
+        self.connected = False
+        # calls shutdown() upon catching SIGINT
         signal.signal(signal.SIGINT, self._sigintHandler)
+        self.sendHandshake()
+
+    def sendHandshake(self):
+        self.arduino.send_message("TRINA_CONNECTION_CHECK")
+        while not self.connected:
+            if self.arduino.read_message() != "TRINA_CONNECTION_CHECK":
+                time.sleep(self.dt)
+            else:
+                self.connected = True
 
     def sendTargetPositions(self, height, tilt):
         message = str(height) + "\0" + str(tilt) + "\0"
         print(message)
-        self.arduino.send_message(message)
+        self.arduino.send_message(message) 
+
+    def start(self):
+        if not self.connected:
+            return
+        self.enabled = True
+        self.control_thread.start()
+
+    def stopMotion(self):
+        self.sendTargetPositions(self.height, self.tilt)
+
+    def shutdown(self):
+        self.enabled = False
+
+    def getStates(self):
+        return self.tilt, self.height, self.tilt_limit_switch, self.lift_limit_switch
 
     def _sigintHandler(self, signum, msg):
         assert(signum == signal.SIGINT)
@@ -48,13 +74,6 @@ class TorsoController:
         while self.enabled:
             self._updateSensorFeedback()
             time.sleep(self.dt)
-
-    def start(self):
-        self.enabled = True
-        self.control_thread.start()
-
-    def shutdown(self):
-        self.enabled = False
 
     def _updateSensorFeedback(self):
         message = self.arduino.read_message()
@@ -77,19 +96,22 @@ class TorsoController:
             self.tilt_limit_switch = vals[2] != '0'
             self.lift_limit_switch = vals[3] != '0'
         except:
-            print("invalid serial data!")
-
-    def get_positions(self):
-        return self.tilt, self.height, self.tilt_limit_switch, self.lift_limit_switch
+            print("invalid serial data!") 
 
 if __name__ == "__main__":
     t = TorsoController()
     print("starting...")
     t.start()
+
     start_time = time.time()
     while(time.time() - start_time < 5):
-        t.sendTargetPositions(time.time() - start_time, 100)
-        print(t.get_positions())
-        time.sleep(0.5)
+        time.sleep(0.25)
+    print("setting target!")
+    t.sendTargetPositions(0.32, 0)
+
+    start_time = time.time()
+    while(time.time() - start_time < 20):
+        print(t.getStates())
+        time.sleep(0.25)
     print("shutting down...")
     t.shutdown()
