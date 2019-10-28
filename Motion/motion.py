@@ -7,7 +7,7 @@ from threading import Thread, Lock
 import threading
 from limbController import LimbController
 from baseController import BaseController
-#from gripperController import GripperController
+from gripperController import GripperController
 from kinematicController import KinematicController
 from torsoController import TorsoController
 import TRINAConfig #network configs and other configs
@@ -42,7 +42,7 @@ class Motion:
                 self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
                 self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
             self.base = BaseController()
-            #self.right_gripper = GripperController()
+            self.right_gripper = GripperController()
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
             self.torso = TorsoController()
             ##TODO: Add other components
@@ -63,7 +63,7 @@ class Motion:
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
         self.torso_state = TorsoState()
-        #self.right_gripper_state = GripperState()
+        self.right_gripper_state = GripperState()
         self.startTime = time.time()
         self.t = 0 #time since startup
         self.startUp = False
@@ -128,7 +128,7 @@ class Motion:
                     self.right_limb_state.sensedWrench = self.right_limb.getWrench()
             # start the other components
             self.base.start()
-            #self.gripper.start()
+            self.right_gripper.start()
             # TODO: add more components...
 
         controlThread = threading.Thread(target = self._controlLoop)
@@ -152,7 +152,7 @@ class Motion:
                             self.left_limb.stopMotion()
                             self.right_limb.stopMotion()
                         self.base.stopMotion()
-                        self.gripper.stop()
+                        self.right_gripper.stop()
                         self.stop_motion_sent = True #unused
                 else:
                     ###update current state
@@ -179,9 +179,9 @@ class Motion:
                             self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                             self.right_limb.markRead()
 
-                    #if self.right_gripper.new_state():
-                    #    self.right_gripper_state.sense_finger_set = self.right_gripper.sense_finger_set
-                    #    self.right_gripper.mark_read()
+                    if self.right_gripper.new_state():
+                       self.right_gripper_state.sense_finger_set = self.right_gripper.sense_finger_set
+                       self.right_gripper.mark_read()
                     ###send commands
                     if armFlag:
 
@@ -677,16 +677,16 @@ class Motion:
     def sensedTorsoPosition(self):
         return [self.torso_state.measuredHeight, self.torso_state.measuredTilt]
 
-    #def setGripperPosition(self, position):
-    #   self.right_gripper_state.commandType = 0
-    #   self.right_gripper_state.command_finger_set = position
+    def setGripperPosition(self, position):
+      self.right_gripper_state.commandType = 0
+      self.right_gripper_state.command_finger_set = position
 
-    #def setGripperVelocity(self):
-    #    self.right_gripper_state.commandType = 1
-    #    self.right_gripper_state.command_finger_set = position
+    def setGripperVelocity(self):
+       self.right_gripper_state.commandType = 1
+       self.right_gripper_state.command_finger_set = position
 
-    #def sensedGripperPosition(self):
-    #   return self.right_gripper_state.sense_finger_set
+    def sensedGripperPosition(self):
+      return self.right_gripper_state.sense_finger_set
 
     def shutdown(self):
         """shutdown the componets... """

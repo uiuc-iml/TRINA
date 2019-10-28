@@ -1,10 +1,11 @@
+from __future__ import print_function
+from __future__ import division
 import roslib
 import rospy
 import time
 import threading
 
-from __future__ import print_function
-from __future__ import division
+
 
 from std_srvs.srv import Empty
 
@@ -55,7 +56,7 @@ class GripperController:
     def controlLoop(self):
         now = rospy.get_rostime()
         self.lastStateTime = float(now.secs) + 1e-9*float(now.nsecs) #get the ros time for each robot state msg
-		rate = rospy.Rate(1.0/self.dt)
+        rate = rospy.Rate(1.0/self.dt)
 
         self.calibrate()
         while not rospy.is_shutdown() and (not self.exit):
@@ -158,7 +159,7 @@ class GripperController:
 
 
     def is_open(self):
-        if sense_finger_set[0] == 0.0 && sense_finger_set[1] == 0.0 && sense_finger_set[2] == 0.0 && sense_finger_set[3] == 0.0:
+        if sense_finger_set[0] == 0.0 and sense_finger_set[1] == 0.0 and sense_finger_set[2] == 0.0 and sense_finger_set[3] == 0.0:
             return 1
         else:
             return 0
@@ -189,7 +190,7 @@ class GripperController:
         else:
             return False
 
-    def mark_read(self)
+    def mark_read(self):
         self.new_state = False
 
     def new_state(self):
