@@ -9,6 +9,7 @@ from limbController import LimbController
 from baseController import BaseController
 #from gripperController import GripperController
 from kinematicController import KinematicController
+from torsoController import TorsoController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
 #import convenienceFunctions
@@ -43,6 +44,7 @@ class Motion:
             self.base = BaseController()
             #self.right_gripper = GripperController()
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
+            self.torso = TorsoController()
             ##TODO: Add other components
         else:
             raise RuntimeError('Wrong mode specified')
@@ -60,6 +62,7 @@ class Motion:
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
+        self.torso_state = TorsoState()
         #self.right_gripper_state = GripperState()
         self.startTime = time.time()
         self.t = 0 #time since startup
@@ -157,6 +160,13 @@ class Motion:
                         self.base_state.measuredVel = self.base.getMeasuredVelocity()
                         self.base_state.measuredPos = self.base.getPosition()
                         self.base.markRead()
+
+                    if self.torso.newState():
+                        tilt, height, _, _ = self.torso.getStates()
+                        self.torso_state.measuredTilt = tilt
+                        self.torso_state.measuredHeight = height
+                        self.torso.markRead()
+
                     if armFlag:
                         if self.left_limb.newState():
                             self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
@@ -219,8 +229,12 @@ class Motion:
                     if self.base_state.commandType == 1:
                         self.base.setCommandedVelocity(self.base_state.commandedVel)
                     elif self.base_state.commandType == 0 and not base_state.commandSent:
-                        base_state.commandSent = True
+                        self.base_state.commandSent = True
                         self.base.setTargetPosition(self.base_state.commandedVel)
+
+                    if not self.torso_state.commandSent:
+                        self.torso_state.commandSent = True
+                        self.torso.setTargetPositions(self.torso_state.commandedHeight, self.torso_state.commandedTilt)
 
                     if self.right_gripper_state.commandType == 0:
                        self.right_gripper.setPose(self.right_gripper_state.command_finger_set)
@@ -635,20 +649,33 @@ class Motion:
         self.base_state.commandType = 0
         self.base_state.commandedTargetPosition = deepcopy(q)
         self.base_state.pathFollowingVel = vel
+        self.base_state.commandSent = False
 
     def setBaseVelocity(self, q):
         """set the velocity of the base relative to the local base frame"""
         assert len(q) == 2 ,"motion.setBaseVelocity(): wrong dimensions"
         self.base_state.commandType = 1
         self.base_state.commandedVel = deepcopy(q)
+        self.base_state.commandSent = False
+
+    def setTorsoTargetPosition(self, q):
+        assert len(q) == 2, "mtion.SetTorsoTargetPosition(): wrong dimensions"
+        height, tilt = q
+        self.torso_state.commandedHeight = height
+        self.torso_state.commandedTilt = tilt
+        self.torso_state.commandSent = False
 
     # returns [v, w]
     def sensedBaseVelocity(self):
-        return self.base.getMeasuredVelocity()
+        return self.base_state.measuredVel
 
     # returns [x, y, theta]
     def sensedBasePosition(self):
-        return self.base.getPosition()
+        return self.base_state.measuredPos
+
+    # returns [height, tilt]
+    def sensedTorsoPosition(self):
+        return [self.torso_state.measuredHeight, self.torso_state.measuredTilt]
 
     #def setGripperPosition(self, position):
     #   self.right_gripper_state.commandType = 0
@@ -671,6 +698,7 @@ class Motion:
             #stop other components
             self.base.shutdown()
             self.right_gripper.shutDown()
+            self.torso.shutdown()
         elif self.mode == "Kinematic":
             self.simulated_robot.shutdown()
         return 0
@@ -680,7 +708,7 @@ class Motion:
 
     def moving(self):
         """Returns true if the robot is currently moving."""
-        return self.left_limb.moving() or self.right_limb.moving() or self.base.moving() or self.right_gripper.moving()
+        return self.left_limb.moving() or self.right_limb.moving() or self.base.moving() or self.right_gripper.moving() or self.torso.moving()
 
     def mode(self):
         return self.mode

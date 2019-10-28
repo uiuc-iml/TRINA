@@ -26,6 +26,8 @@ class TorsoController:
         self.arduino = ArduinoBridge(arduino_port_addr, arduino_baud)
         self.message_header = "TRINA\t"
         self.message_footer = "\tTRINA"
+        self.target_tilt = 0
+        self.target_height = 0
         self.height = 0
         self.tilt = 0
         self.tilt_limit_switch = False
@@ -33,9 +35,12 @@ class TorsoController:
         self.control_thread = Thread(target = self._controlLoop)
         self.enabled = False
         self.dt = dt
+        self.stateRead = False
         self.connected = False
         # calls shutdown() upon catching SIGINT
         signal.signal(signal.SIGINT, self._sigintHandler)
+
+        # initiate connection to the arduino
         self.sendHandshake()
 
     def sendHandshake(self):
@@ -47,6 +52,9 @@ class TorsoController:
                 self.connected = True
 
     def sendTargetPositions(self, height, tilt):
+        self.target_height = height
+        self.target_tilt = tilt
+
         message = str(height) + "\0" + str(tilt) + "\0"
         print(message)
         self.arduino.send_message(message) 
@@ -65,6 +73,15 @@ class TorsoController:
 
     def getStates(self):
         return self.tilt, self.height, self.tilt_limit_switch, self.lift_limit_switch
+
+    def moving(self):
+        return not (self.target_height == self.height and self.target_tilt == self.tilt)
+
+    def newState(self):
+        return not self.stateRead
+
+    def markRead(self):
+        self.stateRead = True
 
     def _sigintHandler(self, signum, msg):
         assert(signum == signal.SIGINT)
@@ -97,6 +114,8 @@ class TorsoController:
             self.lift_limit_switch = vals[3] != '0'
         except:
             print("invalid serial data!") 
+
+        self.stateRead = False
 
 if __name__ == "__main__":
     t = TorsoController()

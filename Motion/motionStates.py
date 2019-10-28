@@ -46,3 +46,12 @@ class GripperState:
         self.sense_finger_set = [0.0, 0.0, 0.0, 0.0]
         self.command_finger_set = [0.0, 0.0, 0.0, 0.0]
         self.commandType = 0 #0 is position, 1 is velocity
+
+class TorsoState:
+    def __init__(self):
+        self.measuredHeight = 0.0
+        self.measuredTilt = 0.0
+        self.commandedHeight = 0.0
+        self.commandedTilt = 0.0
+
+        self.commandSent = False
