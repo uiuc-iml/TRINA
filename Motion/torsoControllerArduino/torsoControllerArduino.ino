@@ -11,10 +11,10 @@ int Tilt_PWMPin = 5;
 
 //Tilt Potentiometer Setup
 
-
 //Python communication setup
 double target_height_max = 0.2;
 double target_height_min = 0.4;
+double height_error_range = 0.01;
 double target_height = 0.25; //set target height here between 0.2 and 0.4
 double target_tilt = 0;
 double current_height = 0;
@@ -30,21 +30,26 @@ double height_e_last, tilt_e_last, dt;
 double previous_time = millis(); //initialize previous time to current time
 
 //Initial waittime
-bool wait = false;
+bool connect_to_py = false;
 
 void setup()
 {
   pinMode(Height_PWMPin, OUTPUT);
   pinMode(Height_PotPin, INPUT);
   Serial.begin(9600);
+  while(!connect_to_py){
+    poll_message(target_height, target_tilt);
+    if(target_height == 0.2 && target_tilt == 0.2){
+      connect_to_py = true;
+      send_message(0.2, 0.2, lift_motion, tilt_limit_switch);
+    }
+    else {
+      //send_message(target_height, target_tilt, 0, 0);
+    }
+  }
 }
 void loop()
 {
-  //Pulse width: 2ms (0.6~2.4ms), initial wait for 3 seconds
-  if(wait == false){
-    delay(3000); 
-    wait = true;
-  }
 
   //read in sensors values, receive target and send current states
   double current_height = analogRead(Height_PotPin) * 25.0 * 0.0254 / 1024.0;
@@ -56,7 +61,7 @@ void loop()
   previous_time = millis();
     
   if(target_height > target_height_min && target_height < target_height_max){ //check if the target height is within range
-    if(abs(current_height-target_height)<0.01){
+    if(abs(current_height-target_height)<height_error_range){
       stop_motor_lift();
     }else{
       height_pid_control(current_height, target_height);      
@@ -117,7 +122,7 @@ void stop_motor_lift(){
   digitalWrite(Height_PWMPin, HIGH);
   delayMicroseconds(1500); //Pulse width: 1.5ms to stop
   digitalWrite(Height_PWMPin, LOW);
-  delayMicroseconds(dtPulseWidth - height_pwm_int);
+  delayMicroseconds(dtPulseWidth - 1500);
 }
 
 /*
