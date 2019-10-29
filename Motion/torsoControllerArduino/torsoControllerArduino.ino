@@ -29,33 +29,36 @@ double height_kp = 80 , height_ki = 5 , height_kd = 0;             // PID parame
 double height_e_last, tilt_e_last, dt;
 double previous_time = millis(); //initialize previous time to current time
 
-//Initial waittime
-bool connect_to_py = false;
-
 void setup()
 {
   pinMode(Height_PWMPin, OUTPUT);
   pinMode(Height_PotPin, INPUT);
   Serial.begin(9600);
-  while(!connect_to_py){
-    poll_message(target_height, target_tilt);
-    if(target_height == 0.2 && target_tilt == 0.2){
-      connect_to_py = true;
-      send_message(0.2, 0.2, lift_motion, tilt_limit_switch);
-    }
-    else {
-      //send_message(target_height, target_tilt, 0, 0);
-    }
-  }
 }
+
 void loop()
 {
-
   //read in sensors values, receive target and send current states
   double current_height = analogRead(Height_PotPin) * 25.0 * 0.0254 / 1024.0;
-  poll_message(target_height, target_tilt);
-  //current_tilt = encoderPosition_Float;    // input from tilt encoder (add ANT23 code to this)
+  int good_message = poll_message(target_height, target_tilt);
+
   send_message(current_height, current_tilt, lift_motion, tilt_limit_switch); //send current state to python
+
+  if (good_message != 0){
+    stop_motor_lift();
+    return;
+  }
+
+  // check if this is a special "handshake" message from the python side
+  if (target_height == 0xDEAD && target_tilt == 0xBEEF){
+    send_message(0xFACE, 0xB00C, lift_motion, tilt_limit_switch);
+    target_height = 0.25;
+    target_tilt = 0;
+    stop_motor_lift();
+    return;
+  }
+  
+  //current_tilt = encoderPosition_Float;    // input from tilt encoder (add ANT23 code to this)
   
   dt = millis() - previous_time;
   previous_time = millis();
@@ -162,11 +165,22 @@ int poll_message(double &target_height, double &target_tilt){
   }
   int N = 100;
   char height_buf[N], tilt_buf[N];
-  String height_str = Serial.readStringUntil('\0');
+  
+  String header_str = Serial.readStringUntil('\t');
+  if (header_str != "TRINA"){
+    return 1;
+  }
+  String height_str = Serial.readStringUntil('\t');
+  String tilt_str = Serial.readStringUntil('\t');
+  String footer_str = Serial.readStringUntil('\t');
+  if (footer_str != "TRINA"){
+    return 1;
+  }
+  
   height_str.toCharArray(height_buf, N);
   target_height = atof(height_buf);
-  String tilt_str = Serial.readStringUntil('\0');
   tilt_str.toCharArray(tilt_buf, N);
   target_tilt = atof(tilt_buf);
+  
   return 0;
 }
