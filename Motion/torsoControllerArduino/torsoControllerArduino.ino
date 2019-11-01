@@ -1,20 +1,19 @@
-//for potentiometer
-int Height_PotPin = A2;    // Analog pin 2 for the potentiometer
-int val = 0;       // variable to store the value coming from the sensor
+//Height String Potentiometer Setup
+#define Height_PotPin    A2     // Analog pin 2 for the potentiometer
 
 //Height Motor Setup
-int dtPulseWidth = 10000;//Time between pulses: 10ms (2.9~100ms)
-int Height_PWMPin = 6; //Digital pin 6 for motor driver
+#define dtPulseWidth     10000  //Time between pulses: 10ms (2.9~100ms)
+#define Height_PWMPin    6      //Digital pin 6 for motor driver
 
 //Tilt Motor Setup
-int Tilt_PWMPin = 5;
+#define Tilt_PWMPin      5
 
 //Tilt Potentiometer Setup
 
-//Python communication setup
-double target_height_max = 0.2;
-double target_height_min = 0.4;
-double height_error_range = 0.01;
+//Python Communication Setup
+#define target_height_max    0.4
+#define target_height_min    0.2
+#define height_error_range   0.01
 double target_height = 0.25; //set target height here between 0.2 and 0.4
 double target_tilt = 0;
 double current_height = 0;
@@ -22,10 +21,11 @@ double current_tilt = 0;
 bool lift_motion = false;
 bool tilt_limit_switch = false;
 float encoderPosition_Float = 0;// input from tilt encoder
-float height_calibration = 140; //value = height input - actual height, 140 when at lowest point
 
 //PID setup
-double height_kp = 80 , height_ki = 5 , height_kd = 0;             // PID parameters for height
+#define height_kp   80 
+#define height_ki   5
+#define height_kd   0             // PID parameters for height
 double height_e_last, tilt_e_last, dt;
 double previous_time = millis(); //initialize previous time to current time
 
@@ -40,6 +40,9 @@ void loop()
 {
   //read in sensors values, receive target and send current states
   double current_height = analogRead(Height_PotPin) * 25.0 * 0.0254 / 1024.0;
+  Serial.println(current_height);
+
+  /*
   int good_message = poll_message(target_height, target_tilt);
 
   send_message(current_height, current_tilt, lift_motion, tilt_limit_switch); //send current state to python
@@ -57,6 +60,7 @@ void loop()
     stop_motor_lift();
     return;
   }
+*/
   
   //current_tilt = encoderPosition_Float;    // input from tilt encoder (add ANT23 code to this)
   
@@ -67,7 +71,7 @@ void loop()
     if(abs(current_height-target_height)<height_error_range){
       stop_motor_lift();
     }else{
-      height_pid_control(current_height, target_height);      
+      height_pid_control(current_height, target_height); 
     }
   }  
 }
@@ -148,6 +152,7 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
 
 void send_message(double height, double tilt, bool lift_motion, bool tilt_limit_switch){
   // serialized data format: "TRINA\t[tilt]\t[height]\t[tilt_limit_switch]\t[lift_limit_switch]\tTRINA\n"
+  
   Serial.print("TRINA\t");
   Serial.print(tilt);
   Serial.print("\t");
@@ -157,6 +162,7 @@ void send_message(double height, double tilt, bool lift_motion, bool tilt_limit_
   Serial.print("\t");
   Serial.print(lift_motion);
   Serial.println("\tTRINA");
+  
 }
 
 int poll_message(double &target_height, double &target_tilt){
