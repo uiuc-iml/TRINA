@@ -33,6 +33,7 @@ class TorsoController:
         self.tilt = 0
         self.lift_moving = False
         self.tilt_moving = False
+        self.tilt_limit_switch = False
         self.control_thread = Thread(target = self._controlLoop)
         self.enabled = False
         self.dt = dt
@@ -106,7 +107,7 @@ class TorsoController:
 
         parsed_message = message[header_idx+6 : footer_idx]
         vals = parsed_message.split("\t")
-        if len(vals) != 4:
+        if len(vals) != 5:
             return
 
         try:
@@ -114,6 +115,7 @@ class TorsoController:
             self.height = float(vals[1])
             self.tilt_moving = vals[2] != '0'
             self.lift_moving = vals[3] != '0'
+            self.tilt_limit_switch = vals[4] != '0'
         except:
             pass
 
