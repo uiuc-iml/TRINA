@@ -18,7 +18,8 @@ double target_height = 0.25; //set target height here between 0.2 and 0.4
 double target_tilt = 0;
 double current_height = 0;
 double current_tilt = 0;
-bool lift_motion = false;
+bool lift_moving = false;
+bool tilt_moving = false;
 bool tilt_limit_switch = false;
 float encoderPosition_Float = 0;// input from tilt encoder
 
@@ -45,7 +46,7 @@ void loop()
   /*
   int good_message = poll_message(target_height, target_tilt);
 
-  send_message(current_height, current_tilt, lift_motion, tilt_limit_switch); //send current state to python
+  send_message(current_height, current_tilt, lift_moving, tilt_moving, tilt_limit_switch); //send current state to python
 
   if (good_message != 0){
     stop_motor_lift();
@@ -54,7 +55,7 @@ void loop()
 
   // check if this is a special "handshake" message from the python side
   if (target_height == 0xDEAD && target_tilt == 0xBEEF){
-    send_message(0xFACE, 0xB00C, lift_motion, tilt_limit_switch);
+    send_message(0xFACE, 0xB00C, lift_moving, tilt_moving, tilt_limit_switch);
     target_height = 0.25;
     target_tilt = 0;
     stop_motor_lift();
@@ -113,7 +114,7 @@ float tilt_pid_control(double current_tilt, double target_tilt) {
 */
 
 void run_motor_lift(double u) {
-  lift_motion = true; //shows that the lift motor is moving
+  lift_moving = true; //shows that the lift motor is moving
   if (u > 3)u = 3;
   if (u < -3)u = -3;
   double height_pwm = mapfloat(u, -3.0, 3.0, 1400, 1600); //1000us = clockwise, 2000us = counter-clockwise, map [-1000, 1000] to [1000, 2000]
@@ -125,7 +126,7 @@ void run_motor_lift(double u) {
 }
 
 void stop_motor_lift(){
-  lift_motion = false; //shows that the lift motor is not moving
+  lift_moving = false; //shows that the lift motor is not moving
   digitalWrite(Height_PWMPin, HIGH);
   delayMicroseconds(1500); //Pulse width: 1.5ms to stop
   digitalWrite(Height_PWMPin, LOW);
@@ -150,7 +151,7 @@ float mapfloat(float x, float in_min, float in_max, float out_min, float out_max
  return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
 }
 
-void send_message(double height, double tilt, bool lift_motion, bool tilt_limit_switch){
+void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool tilt_limit_switch){
   // serialized data format: "TRINA\t[tilt]\t[height]\t[tilt_limit_switch]\t[lift_limit_switch]\tTRINA\n"
   
   Serial.print("TRINA\t");
@@ -158,9 +159,11 @@ void send_message(double height, double tilt, bool lift_motion, bool tilt_limit_
   Serial.print("\t");
   Serial.print(height);
   Serial.print("\t");
-  Serial.print(tilt_limit_switch);
+  Serial.print(tilt_moving);
   Serial.print("\t");
-  Serial.print(lift_motion);
+  Serial.print(lift_moving);
+  Serial.print("\t");
+  Serial.print(tilt_limit_switch);
   Serial.println("\tTRINA");
   
 }
