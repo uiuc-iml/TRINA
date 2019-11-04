@@ -378,9 +378,9 @@ class Motion:
             elapsedTime = time.time() - loopStartTime
             self.t = time.time() - self.startTime
             if elapsedTime < self.dt:
-                print("before sleep",time.time() - self.robot_start_time)        
+                #print("before sleep",time.time() - self.robot_start_time)        
                 time.sleep(self.dt-elapsedTime)
-                print("after sleep", time.time() - self.robot_start_time)
+                #print("after sleep", time.time() - self.robot_start_time)
             else:
                 pass
             self._controlLoopLock.release()
