@@ -700,9 +700,9 @@ class Motion:
         self.left_gripper_state.commandType = 0
         self.left_gripper_state.command_finger_set = deepcopy(position)
         self._controlLoopLock.release()
-    def setGripperVelocity(self):
-       self.left_gripper_state.commandType = 1
-       self.left_gripper_state.command_finger_set = deepcopy(position)
+    def setGripperVelocity(self,velocity):
+        self.left_gripper_state.commandType = 1
+        self.left_gripper_state.command_finger_set = deepcopy(velocity)
 
     def sensedGripperPosition(self):
         return self.left_gripper_state.sense_finger_set
@@ -778,7 +778,7 @@ class Motion:
     def getWorld(self):
         return self.simulated_robot.getWorld()
 
-    def cartesian_drive_fail(self):
+    def cartesianDriveFail(self):
         return self.cartesian_drive_failure
 
     ###Below are internal helper functions

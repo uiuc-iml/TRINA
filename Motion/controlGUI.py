@@ -5,6 +5,7 @@ from klampt.vis.glcommon import GLWidgetPlugin
 from klampt import vis
 from klampt.vis.qtbackend import QtBackend
 from klampt.io import loader
+from motion_client import MotionClient
 import math
 import time
 import sys
@@ -21,7 +22,6 @@ else:
     from PyQt5.QtOpenGL import *
 
 import os
-from motion import Motion
 #api_root = os.environ.setdefault("RS_DUKE_API_PATH",os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')))
 #if __name__ == '__main__':
 #    import sys
@@ -184,7 +184,7 @@ class ControlWidget(QWidget):
         #QMetaObject.invokeMethod(self.start_button, "clicked")
 
     def startMotionAPI(self):
-        self.robot = Motion(mode = 'Kinematic')
+        self.robot = MotionClient()
         res = self.robot.startup()
         if not res:
             return
