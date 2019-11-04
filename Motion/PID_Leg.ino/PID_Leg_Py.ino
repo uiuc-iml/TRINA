@@ -26,10 +26,9 @@ double target_min = 2;
 double error_range = 0.01;
 double target = 1; //set target height here between 0 and 2
 double current_loc = 0;
-bool extend = false;
-bool retract = false;
+bool moving = false;
 float potPosition_Float = 0;// input from tilt encoder
-float loc_calibration = 140; //value = height input - actual height, 140 when at lowest point
+float loc_calibration = 140; //value = loc input - actual loc
 
 //-----------------------------------------------------------
  void setup() {
@@ -43,6 +42,21 @@ float loc_calibration = 140; //value = height input - actual height, 140 when at
   Serial.println("Start");
 }
 void loop() {
+  
+  send_message(current_loc, moving); //send current state to python
+
+  if (good_message != 0){
+    stopActuator();
+    return;
+  }
+  // check if this is a special "handshake" message from the python side
+  if (target_loc == 0xDEAD){
+    send_message(0xFACE, moving);
+    target_loc = 1;
+    stopAcuator();
+    return;
+  }
+  
   float current_pos = (float)(analogRead(potPin) / (117.0));
   Serial.print("current location is: ");
   Serial.println(current_pos, 3);
@@ -179,3 +193,36 @@ void extendMaximum(double cur_pos){
     analogWrite(pwm, 235);
     }
   }
+
+ void send_message(double current_pos, bool moving){
+  // serialized data format: "TRINA\t[loc]\tTRINA\n"
+  Serial.print("TRINA\t");
+  Serial.print(current_pos);
+  Serial.print("\t");
+  Serial.print(moving);
+  Serial.println("\tTRINA");
+}
+
+int poll_message(double &target){
+  if (!(Serial.available() > 0)){
+    return -1;
+  }
+  int N = 100;
+  char buf[N];
+  
+  String header_str = Serial.readStringUntil('\t');
+  if (header_str != "TRINA"){
+    return 1;
+  }
+  
+  String position_str = Serial.readStringUntil('\t');
+  String footer_str = Serial.readStringUntil('\t');
+  if (footer_str != "TRINA"){
+    return 1;
+  }
+  
+  position_str.toCharArray(buf, N);
+  target = atof(buf);
+
+  return 0;
+}
