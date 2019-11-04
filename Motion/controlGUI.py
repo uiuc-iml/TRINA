@@ -206,10 +206,15 @@ class ControlWidget(QWidget):
         self.layout().addWidget(viewer_window)
 
         self.createDisplays()
-
+        self.posTimer = self.startTimer(1) # returns timer ID
         self.viewer.run(self)
         return
 
+    #def timerEvent(self,event):
+    #    if event.timerId() == self.posTimer:
+    #        time.sleep(0.0001)
+    #        print("timer activated")
+    #    return
     def createDisplays(self):
         posebutton = QPushButton("Send pose", self)
         posebutton.clicked.connect(self.viewer.sendPose)
