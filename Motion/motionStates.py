@@ -43,7 +43,7 @@ class BaseState():
 
 class GripperState:
     def __init__(self):
-        self.sense_finger_set = [0.0, 0.0, 0.0, 0.0]
+        self.sense_finger_set = [0.0, 0.0, 0.0, 0.0] #finger 1 finger 2 finger 3 preshape
         self.command_finger_set = [0.0, 0.0, 0.0, 0.0]
         self.commandType = 0 #0 is position, 1 is velocity
 
