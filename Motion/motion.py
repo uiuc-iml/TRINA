@@ -136,12 +136,14 @@ class Motion:
 
         controlThread = threading.Thread(target = self._controlLoop)
         controlThread.start()
+        print("motion.startup():robot started")
         self.startUp = True
         return self.startUp
 
     def _controlLoop(self):
         """main control thread, synchronizing all components"""
         """in each loop,states are updated and new commands are issued"""
+        self.robot_start_time = time.time()
         print("motion.controlLoop(): controlLoop started.")
         while not self.shut_down_flag:
             loopStartTime = time.time()
@@ -274,7 +276,8 @@ class Motion:
                         if self.left_limb_state.commandType == 0:
                             if len(self.left_limb_state.commandedqQueue) > 0:
                                 if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
-                                    self.simulated_robot.setLeftLimbConfig(self.left_limb_state.commandedqQueue.pop(0))
+                                    tmp = self.left_limb_state.commandedqQueue.pop(0)
+                                    self.simulated_robot.setLeftLimbConfig(tmp)
                                     self.left_limb_state.lastCommandQueueTime = time.time()
                         elif self.left_limb_state.commandType == 1:
                             if len(self.left_limb_state.commandeddqQueue) > 0:
@@ -370,14 +373,18 @@ class Motion:
                     self.simulated_robot.setLeftGripperPosition(self.left_gripper_state.command_finger_set)
                     robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
                     self.robot_model.setConfig(robot_model_Q)
-            self._controlLoopLock.release()
+            
 
             elapsedTime = time.time() - loopStartTime
             self.t = time.time() - self.startTime
             if elapsedTime < self.dt:
+                print("before sleep",time.time() - self.robot_start_time)        
                 time.sleep(self.dt-elapsedTime)
+                print("after sleep", time.time() - self.robot_start_time)
             else:
                 pass
+            self._controlLoopLock.release()
+            #print("main",time.time() - robotStartTime)
         print("motion.controlThread: exited")
     ###TODO
     def setPosition(self,q):
@@ -698,7 +705,18 @@ class Motion:
        self.left_gripper_state.command_finger_set = deepcopy(position)
 
     def sensedGripperPosition(self):
-      return self.left_gripper_state.sense_finger_set
+        return self.left_gripper_state.sense_finger_set
+
+    def getKlamptCommandedPosition(self):
+        ###using attached grippers as reflex grippers ###
+
+        if self.left_limb_state.commandedq and self.right_limb_state.commandedq:
+            return [0]*10 + self.left_limb_state.commandedq + [0]*19 + self.right_limb_state.commandedq + [0]*18
+        else:
+            return self.getKlamptSensedPosition()
+
+    def getKlamptSensedPosition(self):
+        return [0]*10 + self.left_limb_state.sensedq + [0]*19 + self.right_limb_state.sensedq + [0]*18
 
     def shutdown(self):
         """shutdown the componets... """

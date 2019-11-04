@@ -71,9 +71,11 @@ class KinematicController:
 
     def _controlLoop(self):
         prev_angle = None
-
+        self.robot_start_time = time.time()
         while not self.shut_down:
             loopStartTime = time.time()
+            #print("loop start time:",loopStartTime - self.robot_start_time)
+            
             self.controlLoopLock.acquire()
             q_to_be_set = [0.0]
 
@@ -108,7 +110,7 @@ class KinematicController:
                     old = self.left_limb_state.sensedq[i]           
                     if (command-old) > self.limb_velocity_limit*self.dt:
                         qi = self.limb_velocity_limit*self.dt + old
-                    elif (command-old) <  -self.limb_velocity_limit:
+                    elif (command-old) <  -self.limb_velocity_limit*self.dt:
                         qi = old-self.limb_velocity_limit*self.dt
                     else:
                         qi = command
@@ -138,7 +140,7 @@ class KinematicController:
                     old = self.right_limb_state.sensedq[i]           
                     if (command-old) > self.limb_velocity_limit*self.dt:
                         qi = self.limb_velocity_limit*self.dt + old
-                    elif (command-old) <  -self.limb_velocity_limit:
+                    elif (command-old) <  -self.limb_velocity_limit*self.dt:
                         qi = old-self.limb_velocity_limit*self.dt
                     else:
                         qi = command
@@ -183,10 +185,17 @@ class KinematicController:
             self.new_state = True
             self.controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
+            # print("sleep for",self.dt-elapsedTime)
+
             if elapsedTime < self.dt:
+                # print("before sleep",time.time() - self.robot_start_time)
                 time.sleep(self.dt-elapsedTime)
+                # print("after sleep",time.time() - self.robot_start_time)
             else:
                 pass
+            #print(self.left_limb_state.commandedq)
+            # print("elapsedTime",elapsedTime)
+            # print("loopendtime:",time.time() - self.robot_start_time)
         #print("KinematicController.controlThread():exited")
     def setLeftLimbConfig(self,q):
         self.left_limb_state.commandedq = deepcopy(q)
