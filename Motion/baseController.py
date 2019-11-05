@@ -191,6 +191,11 @@ class BaseController:
             return
         if self.control_mode != BaseControlMode.VELOCITY_RAMPED:
             self.control_mode = BaseControlMode.VELOCITY_RAMPED
+        else:
+            if cmd_vel == self.commanded_vel:
+                return
+            else:
+                print("resetting ramped velocity...")
 
         target_v, target_w = cmd_vel
         curr_v, curr_w = self.measured_vel
