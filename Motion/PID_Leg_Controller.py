@@ -100,7 +100,7 @@ class PID_Leg_Controller:
 
         parsed_message = message[header_idx+6 : footer_idx]
         vals = parsed_message.split("\t")
-        if len(vals) != 5:
+        if len(vals) != 2:
             return
 
         try:

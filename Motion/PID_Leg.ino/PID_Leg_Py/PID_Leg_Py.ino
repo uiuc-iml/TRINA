@@ -50,7 +50,8 @@ void loop() {
   if (good_message != 0){
     stopActuator();
     return;
-  }
+  } 
+  
   // check if this is a special "handshake" message from the python side
   if (targetpy == 0xDEAD){
     send_message(0xFACE, moving);
@@ -210,6 +211,7 @@ int poll_message(double &target){
   if (!(Serial.available() > 0)){
     return -1;
   }
+  
   int N = 100;
   char buf[N];
   
