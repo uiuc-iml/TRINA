@@ -21,12 +21,14 @@ print('starting')
 base.start()
 print('started')
 
-base.setPath([(0, 0, 0), (2, 2, math.pi/2), (5, 5, 0)], 0.5)
-while not base.isPathDone():
-    if base.newState():
-	print(base.getPosition())
-	base.markRead()
-    time.sleep(dt)
+start_time = time.time()
+target = 1
+ramp_time = 5
+
+base.setCommandedVelocityRamped([target, target], ramp_time)
+while time.time() - start_time < ramp_time:
+    print(base.getMeasuredVelocity())
+    time.sleep(0.01)
 
 print('done')
 base.shutdown()
