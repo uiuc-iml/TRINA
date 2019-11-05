@@ -18,13 +18,12 @@ double dt = 0.01;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
-double target = 1.0;
+double target = 2.0;
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
 double target_max = 0;
 double target_min = 2;
 double error_range = 0.01;
-double targetpy = 1; //set target height here between 0 and 2
 double current_loc = 0;
 bool moving = false;
 float potPosition_Float = 0;// input from tilt encoder
@@ -43,28 +42,27 @@ float potPosition_Float = 0;// input from tilt encoder
 }
 void loop() {
   
-  send_message(current_loc, moving); //send current state to python
-
-  int good_message = poll_message(targetpy);
+  //send_message(current_loc, moving); //send current state to python
+  send_message(target, moving);
+  int good_message = poll_message(target);
+  current_loc = (float)(analogRead(potPin) / (117.0));
+  pidCalc(current_loc, target);
   
   if (good_message != 0){
-    stopActuator();
+    //stopActuator();
     return;
   }
   // check if this is a special "handshake" message from the python side
-  if (targetpy == 0xDEAD){
+  if (target == 0xDEAD){
     send_message(0xFACE, moving);
-    targetpy = 1;
     stopActuator();
     return;
 }
   
-  current_loc = (float)(analogRead(potPin) / (117.0));
   Serial.print("current location is: ");
   Serial.println(current_loc, 3);
-  //runMotor(2- current_pos);
+  //runMotor(2- current_loc);
  // target = 2*sin(0.5*currentTime);
-  pidCalc(current_loc, target);
  // delay(10);
  // currentTime += 0.01;
   Serial.print("current TARGET is: ");
@@ -141,7 +139,7 @@ void runMotor(double pid){
   if(fabs(pid) < (1.0/117.0)){
         digitalWrite(dir, LOW);
         analogWrite(pwm, 0);
-        //reachedTarget=true;
+        reachedTarget=true;
         
     return;
     }else{
