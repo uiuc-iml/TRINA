@@ -24,7 +24,6 @@ boolean reachedTarget=false;
 double target_max = 0;
 double target_min = 2;
 double error_range = 0.01;
-double targetpy = 1; //set target height here between 0 and 2
 double current_loc = 0;
 bool moving = false;
 float potPosition_Float = 0;// input from tilt encoder
@@ -45,27 +44,26 @@ void loop() {
   
   send_message(current_loc, moving); //send current state to python
 
-  int good_message = poll_message(targetpy);
+  int good_message = poll_message(target);
   
   if (good_message != 0){
     stopActuator();
     return;
-  } 
-  
+  }
   // check if this is a special "handshake" message from the python side
-  if (targetpy == 0xDEAD){
+  if (target == 0xDEAD){
     send_message(0xFACE, moving);
-    targetpy = 1;
+    target = 1;
     stopActuator();
     return;
 }
   
   float current_pos = (float)(analogRead(potPin) / (117.0));
   Serial.print("current location is: ");
-  Serial.println(current_pos, 3);
-  //runMotor(2- current_pos);
+  Serial.println(current_loc, 3);
+  //runMotor(2- current_loc);
  // target = 2*sin(0.5*currentTime);
-  pidCalc(current_pos, target);
+  pidCalc(current_loc, target);
  // delay(10);
  // currentTime += 0.01;
   Serial.print("current TARGET is: ");
@@ -211,7 +209,6 @@ int poll_message(double &target){
   if (!(Serial.available() > 0)){
     return -1;
   }
-  
   int N = 100;
   char buf[N];
   

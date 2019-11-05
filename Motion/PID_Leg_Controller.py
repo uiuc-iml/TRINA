@@ -23,7 +23,7 @@ class ArduinoBridge:
 
 class PID_Leg_Controller:
 
-    def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 9600, dt = 0.01):
+    def __init__(self, arduino_port_addr = "/dev/ttyACM1", arduino_baud = 9600, dt = 0.01):
         self.arduino = ArduinoBridge(arduino_port_addr, arduino_baud)
         self.message_header = "TRINA\t"
         self.message_footer = "\tTRINA"
