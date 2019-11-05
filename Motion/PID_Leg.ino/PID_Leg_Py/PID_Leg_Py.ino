@@ -20,7 +20,17 @@ double previous_time = micros(); //previous time var. Default set to current tim
 int dtpulsewidth = 1000;
 double target = 1.0;
 boolean reachedTarget=false;
-//--------------------------------------------------------
+//-----------------------Python Comm Setup-------------------
+double target_max = 0;
+double target_min = 2;
+double error_range = 0.01;
+double targetpy = 1; //set target height here between 0 and 2
+double current_loc = 0;
+bool moving = false;
+float potPosition_Float = 0;// input from tilt encoder
+//float loc_calibration = 140; //value = loc input - actual loc
+
+//-----------------------------------------------------------
  void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
@@ -32,6 +42,23 @@ boolean reachedTarget=false;
   Serial.println("Start");
 }
 void loop() {
+  
+  send_message(current_loc, moving); //send current state to python
+
+  int good_message = poll_message(targetpy);
+  
+  if (good_message != 0){
+    stopActuator();
+    return;
+  }
+  // check if this is a special "handshake" message from the python side
+  if (targetpy == 0xDEAD){
+    send_message(0xFACE, moving);
+    targetpy = 1;
+    stopActuator();
+    return;
+}
+  
   float current_pos = (float)(analogRead(potPin) / (117.0));
   Serial.print("current location is: ");
   Serial.println(current_pos, 3);
@@ -83,6 +110,7 @@ float pidCalc(double current_pos, double target){
 //    stopActuator();
 //  }
 //}
+
 void stopActuator(){
   digitalWrite(dir, LOW);
   analogWrite(pwm, 0);
@@ -168,3 +196,36 @@ void extendMaximum(double cur_pos){
     analogWrite(pwm, 235);
     }
   }
+
+ void send_message(double current_pos, bool moving){
+  // serialized data format: "TRINA\t[loc]\tTRINA\n"
+  Serial.print("TRINA\t");
+  Serial.print(current_pos);
+  Serial.print("\t");
+  Serial.print(moving);
+  Serial.println("\tTRINA");
+}
+
+int poll_message(double &target){
+  if (!(Serial.available() > 0)){
+    return -1;
+  }
+  int N = 100;
+  char buf[N];
+  
+  String header_str = Serial.readStringUntil('\t');
+  if (header_str != "TRINA"){
+    return 1;
+  }
+  
+  String position_str = Serial.readStringUntil('\t');
+  String footer_str = Serial.readStringUntil('\t');
+  if (footer_str != "TRINA"){
+    return 1;
+  }
+  
+  position_str.toCharArray(buf, N);
+  target = atof(buf);
+
+  return 0;
+}

@@ -21,7 +21,7 @@ class ArduinoBridge:
     def read_message(self):
         return self.port.readline()
 
-class TorsoController:
+class PID_Leg_Controller:
 
     def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 9600, dt = 0.01):
         self.arduino = ArduinoBridge(arduino_port_addr, arduino_baud)
@@ -43,15 +43,15 @@ class TorsoController:
         while not self.connected:
             self.sendTargetPositions(0xdead)
             self._updateSensorFeedback()
-            if self.current_loc == 0xface
-                self.connected = True
+            if self.current_loc == 0xface:
+               self.connected = True
         self.current_loc = None
         self.moving = False
 
     def sendTargetPositions(self, current_loc):
         self.target = current_loc
 
-        message = self.message_header + str(current_loc) + "\t" + self.message_footer + "\t"
+        message = self.message_header + str(current_loc) + self.message_footer + "\t"
         self.arduino.send_message(message)
 
     def start(self):
@@ -112,7 +112,7 @@ class TorsoController:
         self.stateRead = False
 
 if __name__ == "__main__":
-    t = PID_Leg()
+    t = PID_Leg_Controller()
     t.start()
 
     t.sendTargetPositions(1)
