@@ -37,36 +37,32 @@ float potPosition_Float = 0;// input from tilt encoder
   pinMode(dir, OUTPUT);
   pinMode(5, OUTPUT);
   digitalWrite(dir,LOW);
-  //Start indicator
-  Serial.println("Start");
 }
 void loop() {
   
-  //send_message(current_loc, moving); //send current state to python
-  send_message(target, moving);
+  send_message(current_loc, moving); //send current state to python
+  //send_message(target, moving);
   int good_message = poll_message(target);
   current_loc = (float)(analogRead(potPin) / (117.0));
   pidCalc(current_loc, target);
   
   if (good_message != 0){
+    //send_message(good_message, moving);
     //stopActuator();
     return;
   }
   // check if this is a special "handshake" message from the python side
   if (target == 0xDEAD){
     send_message(0xFACE, moving);
+    target = 0;
     stopActuator();
     return;
 }
   
-  Serial.print("current location is: ");
-  Serial.println(current_loc, 3);
   //runMotor(2- current_loc);
  // target = 2*sin(0.5*currentTime);
  // delay(10);
  // currentTime += 0.01;
-  Serial.print("current TARGET is: ");
-  Serial.println(target, 3);
 }
 
 void runMotorTest()
@@ -84,8 +80,6 @@ float pidCalc(double current_pos, double target){
   error = target - current_pos; 
   de = (error - error_last) / dt;
   ie = ie + error * dt;
-  Serial.print("Error: ");
-  Serial.println(error, 10);
   error_last = error;
   double pid = (kp*error) + (ki * ie) + (kd * de);
   if(reachedTarget){
@@ -93,8 +87,6 @@ float pidCalc(double current_pos, double target){
     }else{
   runMotor(pid);
     }
-  Serial.print("PID= ");
-  Serial.println(pid, 10);
   return 0;
 }
 //void moveActuator(double error){ //change error to 
@@ -154,19 +146,14 @@ void runMotor(double pid){
        //delayMicroseconds(pwm_int);
 
 
-       Serial.print("Moving Backward");
-
       }else {
         digitalWrite(dir, LOW);
         analogWrite(pwm, 255);
         analogWrite(5, 255);
         //delayMicroseconds(pwm_int);
 
-        Serial.print("Moving Forwards");
 }
   
-       Serial.print("PWM_INT: ");
-       Serial.println(pwm_int);
     }
  
   }
@@ -180,10 +167,7 @@ void home(double cur_pos){
 
   float mapValues(double value, double fromLow, double fromHigh, double toLow, double toHigh){
     
-    Serial.print("Mapped Value: ");
     float f = (value-fromLow) * (toHigh - toLow) / (float)((fromHigh - fromLow) + toLow);
-    Serial.println(f);
-    Serial.println("");
     return f;
 
     }
@@ -210,16 +194,21 @@ int poll_message(double &target){
   }
   int N = 100;
   char buf[N];
+  int rv = 0;
   
   String header_str = Serial.readStringUntil('\t');
-  if (header_str != "TRINA"){
-    return 1;
-  }
-  
   String position_str = Serial.readStringUntil('\t');
   String footer_str = Serial.readStringUntil('\t');
+  
+  if (header_str != "TRINA"){
+    rv = 1;
+  }
   if (footer_str != "TRINA"){
-    return 1;
+    rv = 2;
+  }
+
+  if (rv != 0){
+    return rv;
   }
   
   position_str.toCharArray(buf, N);

@@ -23,7 +23,7 @@ class ArduinoBridge:
 
 class PID_Leg_Controller:
 
-    def __init__(self, arduino_port_addr = "/dev/ttyACM4", arduino_baud = 9600, dt = 0.01):
+    def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 9600, dt = 0.01):
         self.arduino = ArduinoBridge(arduino_port_addr, arduino_baud)
         self.message_header = "TRINA\t"
         self.message_footer = "\tTRINA"
@@ -52,6 +52,11 @@ class PID_Leg_Controller:
         self.target = current_loc
 
         message = self.message_header + str(current_loc) + self.message_footer + "\t"
+        cnt = 0
+        for char in message:
+            if char == '\t':
+                cnt+=1
+        print(cnt)
         self.arduino.send_message(message)
 
     def start(self):
@@ -118,7 +123,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
     while(time.time() - start_time < 20):
-        t.sendTargetPositions(0.5)
+        t.sendTargetPositions(1.5)
         print(t.getStates())
         time.sleep(0.1)
     print("shutting down...")
