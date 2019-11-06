@@ -1,27 +1,22 @@
 import pprint
 import json
+from Motion.motion_client import MotionClient
 from Motion.motion import Motion
 from SimpleWebSocketServer import SimpleWebSocketServer,WebSocket
 import time,math
 from klampt import vis
+from klampt import WorldModel
+import threading
 
 
 # ws://localhost:9000
 robot_ip = '130.126.139.236'
 ws_port = 1234
 robot_mode = 'Kinematic'
-clients = {}
+
 
 class UIController(WebSocket) : 
     # UI state object detailing controller and headset states/position as well as UI logic
-    UI_state = {}
-    # robot controller api porvided by control team
-    robot = Motion(mode = robot_mode)
-    world = robot.getWorld()
-    robot.startup()
-    vis.show()
-    vis.add("world",world)
-
     def handleMessage(self) : 
         print("message from UI")
         # print(self.data)
@@ -47,13 +42,13 @@ class UIController(WebSocket) :
 
     def checkState(self):
         print("checking!")
-        if not self.UI_state["title"] == "UI Outputs" :
-            print("UI state object INVALID")
-            return
-        #different cases 
+        # if not self.UI_state["title"] == "UI Outputs" :
+        #     print("UI state object INVALID")
+        #     return
+        # #different cases 
 
-        base_velocity = [0.1*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.1*(self.UI_state["controllerButtonState"]["leftController"]["thumbstickMovement"][0])]
-        self.robot.setBaseVelocity(base_velocity)
+        # base_velocity = [0.1*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.1*(self.UI_state["controllerButtonState"]["leftController"]["thumbstickMovement"][0])]
+        # self.robot.setBaseVelocity(base_velocity)
        
 
     def printState(self):
@@ -105,9 +100,24 @@ class UIController(WebSocket) :
         print "-----------------------------------end-------------------------------------"
 
 
+def _visualUpdateLoop():
+    while not robot.isShutDown:
+        q = robot.getKlamptSensedPosition()
+        robot.setConfig(q)
+        time.sleep(dt)
+
+
+   
 
 if __name__ == "__main__" : 
-
     server = SimpleWebSocketServer(robot_ip, ws_port, UIController)
     server.serveforever()
+    # robot.startup()
+    # world = WorldModel()
+    # res = world.readFile(model_name)
+    # controlThread = threading.Thread(target = _visualUpdateLoop)
+    # controlThread.start()
+  
+
+
    

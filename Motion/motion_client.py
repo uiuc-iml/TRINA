@@ -1,12 +1,37 @@
 import xmlrpclib
-
+from threading import Thread, Lock
+import threading
+import time
+from klampt import WorldModel
+import os
+dirname = os.path.dirname(__file__)
+#getting absolute model name
+model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 
 class MotionClient:
-	def __init__(self,  address = 'http://localhost:8000'):
+	def __init__(self, address = 'http://localhost:8000'):
 		self.s = xmlrpclib.ServerProxy('http://localhost:8000')
+		self.dt = 0.2
+		self.shut_down = False
+		#self.world = WorldModel()
+		#res = self.world.readFile(model_name)
+		#if not res:
+		#	raise RuntimeError("unable to load model")
+		#self.robot = self.world.robot(0)
 
+		#print("init complete")
+	def _visualUpdateLoop(self):
+		while not self.shut_down:
+			q = self.getKlamptSensedPosition()
+			self.robot.setConfig(q)
+			time.sleep(self.dt)
 	def startup(self):
-		return self.s.startup()
+		res = self.s.startup()
+		#print("startup called")
+		#controlThread = threading.Thread(target = self._visualUpdateLoop)
+		#controlThread.start()
+		#print("sending startup")
+		return res
 
 	def setPosition(self,q):
 		return 0
@@ -110,10 +135,14 @@ class MotionClient:
 		return self.s.getKlamptSensedPosition()
 
 	def shutdown(self):
+		self.shut_down = True
 		self.s.shutdown()
 
 	def isStarted(self):
 		return self.s.isStarted()
+
+	def isShutDown(self):
+		return self.s.isShutDown()
 
 	def moving(self):
 		"""Returns true if the robot is currently moving."""
@@ -132,7 +161,7 @@ class MotionClient:
 		return self.s.mirror_arm_config(config)
 
 	def getWorld(self):
-		return self.s.getWorld()
+		return self.world
 
 	def cartesianDriveFail(self):
 		return self.s.cartesianDriveFail()

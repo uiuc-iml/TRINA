@@ -60,7 +60,6 @@ class KinematicController:
         self.controlLoopLock = Lock()
 
     def start(self):
-        controlThread = threading.Thread(target = self._controlLoop)
         self.left_limb_state.commandedq = self.left_limb_state.sensedq
         self.left_limb_state.commandType = 0
         self.right_limb_state.commandedq = self.right_limb_state.sensedq

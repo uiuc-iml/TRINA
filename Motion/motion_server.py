@@ -116,6 +116,9 @@ def _shutdown():
 def _isStarted():
 	return robot.isStarted()
 
+def _isShutDown():
+	return robot.isShutDown()
+
 def _moving():
 	return robot.moving()
 
@@ -181,6 +184,7 @@ server.register_function(_mirror_arm_config,'mirror_arm_config')
 server.register_function(_getWorld,'getWorld')
 server.register_function(_cartesianDriveFail,'cartesianDriveFail')
 server.register_function(_startup,'startup')
+server.register_function(_isShutDown,'isShutDown')
 
 
 ##

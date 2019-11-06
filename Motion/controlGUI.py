@@ -22,19 +22,7 @@ else:
     from PyQt5.QtOpenGL import *
 
 import os
-#api_root = os.environ.setdefault("RS_DUKE_API_PATH",os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..')))
-#if __name__ == '__main__':
-#    import sys
-#    sys.path.append(api_root)
 
-##import lcm
-#import lcmwidget
-#from RS import rsinter
-
-#from Motion import motion
-#from Config import system_config
-#from Calibration import ft_calibration
-#from Control import utilities
 
 VIEWER_MIN_SIZE = (640,480) # width,height
 VIEWER_MAX_SIZE = (QWIDGETSIZE_MAX,QWIDGETSIZE_MAX)

@@ -45,9 +45,9 @@ class Motion:
                 self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
                 self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
             self.base = BaseController()
-            self.left_gripper = GripperController()
+            #self.left_gripper = GripperController()
             self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
-            self.torso = TorsoController()
+            #self.torso = TorsoController()
             ##TODO: Add other components
         else:
             raise RuntimeError('Wrong mode specified')
@@ -65,7 +65,7 @@ class Motion:
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
-        self.torso_state = TorsoState()
+        #self.torso_state = TorsoState()
         self.left_gripper_state = GripperState()
         self.startTime = time.time()
         self.t = 0 #time since startup
@@ -91,53 +91,55 @@ class Motion:
     def startup(self):
         """Starts up all the individual components and the main control thread"""
         """After starting, all components stay where they are and update their positions immediately"""
+        if not self.startUp:
+            if self.mode == "Kinematic":
+                self.simulated_robot.start()
+            elif self.mode == "Physical":
+            #Set the correct gravity vector on startup....
+                if armFlag:
+                    tilt_angle = 0.0
+                    R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
+                    R_local_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
+                    R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)
+                    #gravity_left = so3.apply(so3.inv(R_local_global_left),[0,0,-9.81])
+                    #gravity_right = so3.apply(so3.inv(R_local_global_right),[0,0,-9.81])
+                    #self.left_limb.setGravity(gravity_left)
+                    #self.right_limb.setGravity(gravity_right)
 
-        if self.mode == "Kinematic":
-            self.simulated_robot.start()
-        elif self.mode == "Physical":
-        #Set the correct gravity vector on startup....
-            if armFlag:
-                tilt_angle = 0.0
-                R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
-                R_local_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
-                R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)
-                #gravity_left = so3.apply(so3.inv(R_local_global_left),[0,0,-9.81])
-                #gravity_right = so3.apply(so3.inv(R_local_global_right),[0,0,-9.81])
-                #self.left_limb.setGravity(gravity_left)
-                #self.right_limb.setGravity(gravity_right)
+                    res = self.left_limb.start()
+                    time.sleep(1)
+                    if res == False:
+                        #better to replace this with logger
+                        print("motion.startup(): ERROR, left limb start failure.")
+                        return False
+                    else:
+                        print("motion.startup(): left limb started.")
+                        self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
+                        self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
+                        self.left_limb_state.sensedWrench =self.left_limb.getWrench()
 
-                res = self.left_limb.start()
-                time.sleep(1)
-                if res == False:
-                    #better to replace this with logger
-                    print("motion.startup(): ERROR, left limb start failure.")
-                    return False
-                else:
-                    print("motion.startup(): left limb started.")
-                    self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
-                    self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
-                    self.left_limb_state.sensedWrench =self.left_limb.getWrench()
+                    res = self.right_limb.start()
+                    time.sleep(1)
+                    if res == False:
+                        #better to replace this with logger
+                        print("motion.startup(): ERROR, right limb start failure.")
+                        return False
+                    else:
+                        print("motion.startup(): right limb started.")
+                        self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
+                        self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
+                        self.right_limb_state.sensedWrench = self.right_limb.getWrench()
+                # start the other components
+                self.base.start()
+                #self.left_gripper.start()
+                # TODO: add more components...
 
-                res = self.right_limb.start()
-                time.sleep(1)
-                if res == False:
-                    #better to replace this with logger
-                    print("motion.startup(): ERROR, right limb start failure.")
-                    return False
-                else:
-                    print("motion.startup(): right limb started.")
-                    self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
-                    self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
-                    self.right_limb_state.sensedWrench = self.right_limb.getWrench()
-            # start the other components
-            self.base.start()
-            self.left_gripper.start()
-            # TODO: add more components...
-
-        controlThread = threading.Thread(target = self._controlLoop)
-        controlThread.start()
-        print("motion.startup():robot started")
-        self.startUp = True
+            controlThread = threading.Thread(target = self._controlLoop)
+            controlThread.start()
+            print("motion.startup():robot started")
+            self.startUp = True
+        else:
+            print("Already started")
         return self.startUp
 
     def _controlLoop(self):
@@ -166,11 +168,11 @@ class Motion:
                         self.base_state.measuredPos = self.base.getPosition()
                         self.base.markRead()
 
-                    if self.torso.newState():
-                        tilt, height, _, _ = self.torso.getStates()
-                        self.torso_state.measuredTilt = tilt
-                        self.torso_state.measuredHeight = height
-                        self.torso.markRead()
+                    #if self.torso.newState():
+                        #tilt, height, _, _ = self.torso.getStates()
+                        #self.torso_state.measuredTilt = tilt
+                        #self.torso_state.measuredHeight = height
+                        #self.torso.markRead()
 
                     if armFlag:
                         if self.left_limb.newState():
@@ -184,9 +186,9 @@ class Motion:
                             self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                             self.right_limb.markRead()
 
-                    if self.left_gripper.new_state():
-                       self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
-                       self.left_gripper.mark_read()
+                    #if self.left_gripper.new_state():
+                    #   self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
+                    #   self.left_gripper.mark_read()
                     ###send commands
                     if armFlag:
 
@@ -237,14 +239,14 @@ class Motion:
                         self.base_state.commandSent = True
                         self.base.setTargetPosition(self.base_state.commandedVel)
 
-                    if not self.torso_state.commandSent:
-                        self.torso_state.commandSent = True
-                        self.torso.setTargetPositions(self.torso_state.commandedHeight, self.torso_state.commandedTilt)
+                    #if not self.torso_state.commandSent:
+                    #    self.torso_state.commandSent = True
+                    #    self.torso.setTargetPositions(self.torso_state.commandedHeight, self.torso_state.commandedTilt)
 
-                    if self.left_gripper_state.commandType == 0:
-                       self.left_gripper.setPose(self.left_gripper_state.command_finger_set)
-                    elif self.left_gripper_state.commandType == 1:
-                       self.left_gripper.setVelocity(self.left_gripper_state.command_finger_set)
+                    #if self.left_gripper_state.commandType == 0:
+                    #   self.left_gripper.setPose(self.left_gripper_state.command_finger_set)
+                    #elif self.left_gripper_state.commandType == 1:
+                    #   self.left_gripper.setVelocity(self.left_gripper_state.command_finger_set)
 
                     ###TODO: add the other components here
 
@@ -267,7 +269,7 @@ class Motion:
                         self.right_limb_state.sensedWrench = []
                         self.base_state.measuredVel = self.simulated_robot.getBaseVelocity()
                         self.base_state.measuredPos = self.simulated_robot.getBaseConfig()
-                        self.left_gripper_state.sense_finger_set = self.simulated_robot.getLeftGripperPosition()
+                        #self.left_gripper_state.sense_finger_set = self.simulated_robot.getLeftGripperPosition()
                         ##Add other components...
                         self.simulated_robot.markRead()
 
@@ -727,14 +729,17 @@ class Motion:
                 self.right_limb.stop()
             #stop other components
             self.base.shutdown()
-            self.left_gripper.shutDown()
-            self.torso.shutdown()
+            #self.left_gripper.shutDown()
+            #self.torso.shutdown()
         elif self.mode == "Kinematic":
             self.simulated_robot.shutdown()
         return 0
 
     def isStarted(self):
         return self.startUp
+
+    def isShutDown(self):
+        return self.shut_down_flag
 
     def moving(self):
         """Returns true if the robot is currently moving."""
