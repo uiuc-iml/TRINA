@@ -43,8 +43,6 @@ void loop() {
   send_message(current_loc, moving); //send current state to python
   //send_message(target, moving);
   int good_message = poll_message(target);
-  current_loc = (float)(analogRead(potPin) / (117.0));
-  pidCalc(current_loc, target);
   
   if (good_message != 0){
     //send_message(good_message, moving);
@@ -59,6 +57,8 @@ void loop() {
     return;
 }
   
+  current_loc = (float)(analogRead(potPin) / (117.0));
+  pidCalc(current_loc, target);
   //runMotor(2- current_loc);
  // target = 2*sin(0.5*currentTime);
  // delay(10);
@@ -102,8 +102,8 @@ float pidCalc(double current_pos, double target){
 //}
 
 void stopActuator(){
-  digitalWrite(dir, LOW);
-  analogWrite(pwm, 0);
+  //digitalWrite(dir, LOW);
+  //analogWrite(pwm, 0);
 }
 //void extend(double velocity){
 //  digitalWrite(dir, LOW);
@@ -131,7 +131,7 @@ void runMotor(double pid){
   if(fabs(pid) < (1.0/117.0)){
         digitalWrite(dir, LOW);
         analogWrite(pwm, 0);
-        reachedTarget=true;
+        //reachedTarget=true;
         
     return;
     }else{
