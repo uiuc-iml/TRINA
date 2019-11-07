@@ -713,12 +713,12 @@ class Motion:
         ###using attached grippers as reflex grippers ###
 
         if self.left_limb_state.commandedq and self.right_limb_state.commandedq:
-            return [0]*10 + self.left_limb_state.commandedq + [0]*19 + self.right_limb_state.commandedq + [0]*18
+            return self.base_state.measuredPos + [0]*7 + self.left_limb_state.commandedq + [0]*19 + self.right_limb_state.commandedq + [0]*18
         else:
             return self.getKlamptSensedPosition()
 
     def getKlamptSensedPosition(self):
-        return [0]*10 + self.left_limb_state.sensedq + [0]*19 + self.right_limb_state.sensedq + [0]*18
+        return self.base_state.measuredPos + [0]*7 + self.left_limb_state.sensedq + [0]*19 + self.right_limb_state.sensedq + [0]*18
 
     def shutdown(self):
         """shutdown the componets... """
