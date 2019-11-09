@@ -1,131 +1,286 @@
-//Height String Potentiometer Setup
+//Height Potentiometer Setup (String potentiometer)
 #define Height_PotPin    A2     // Analog pin 2 for the potentiometer
 
 //Height Motor Setup
 #define dtPulseWidth     10000  //Time between pulses: 10ms (2.9~100ms)
 #define Height_PWMPin    6      //Digital pin 6 for motor driver
+#define baudRate        115200     //Need faster baudrate to prevent miss counting turns
+bool stop_height = false;
 
 //Tilt Motor Setup
-#define Tilt_PWMPin      5
+#define Tilt_PWMPin_1  3  //PWM
+#define Tilt_PWMPin_2  13 //direction
+double speed = 20;
+int loop1 = 0;
+bool stop_tilt = false;
 
-//Tilt Potentiometer Setup
+//Tilt Potentiometer Setup (AMT23 Encoder)
+//Define special ascii characters
+#define carriageReturn  0x0D
+#define newLine         0x0A
+#define tab             0x09
+#define NOP __asm__ __volatile__ ("nop\n\t")
+#define SSI_CS          7  //SSI Chip Select: Pin 7
+#define SSI_SCK         10 //SSI Clock (SCK): Pin 10
+#define SSI_SDO         11 //SSI Data (SDO):  Pin 11
+#define res14           14
+#define res12           12
+uint16_t encoderPosition; //holder for encoder position
+uint8_t attempts; //we can use this for making sure position is valid
+double encoderPosition_Float = 0;
+double encoderPosition_Float_Old = 0;
+double turn_count = 0.0;
+int read_count = 0;
+/* 
+ * AMT23 Pin Connections
+ * Vdd (5V):              Pin 1
+ * SSI DATA (SDO):        Pin 2
+ * SSI CLOCK (SCK):       Pin 3
+ * GND:                   Pin 4
+ * Mode (unconnnected:    Pin 5
+ * SSI Chip Select:       Pin 6
+*/
 
 //Python Communication Setup
-#define target_height_max    0.4
-#define target_height_min    0.2
+//For Height
+#define target_height_max    0.47
+#define target_height_min    0.05
 #define height_error_range   0.01
-double target_height = 0.25; //set target height here between 0.2 and 0.4
-double target_tilt = 0;
+#define height_error_coeff   3
+double target_height = 0.47; //set target height here between 0.05 and 0.47
 double current_height = 0;
-double current_tilt = 0;
 bool lift_moving = false;
+//For Tilt
+#define target_tilt_max    265 //Lowest point 
+#define target_tilt_min    235 //Highest point (perpendicular)
+#define tilt_error_range   1   //unit: degrees
+#define tilt_error_coeff   3
+#define lowest_tilt_pwm    20  //lowest PWM signal
+double target_tilt = 265;
+double current_tilt = 0;
 bool tilt_moving = false;
 bool tilt_limit_switch = false;
-float encoderPosition_Float = 0;// input from tilt encoder
 
-//PID setup
+//Height PID setup
 #define height_kp   80 
 #define height_ki   5
 #define height_kd   0             // PID parameters for height
-double height_e_last, tilt_e_last, dt;
-double previous_time = millis(); //initialize previous time to current time
+double height_e_last, dt_height;
+double previous_time_height = millis(); //initialize previous time to current time
+
+//Tilt PID setup
+#define tilt_kp   10 
+#define tilt_ki   0
+#define tilt_kd   0             // PID parameters for tilt
+double tilt_e_last, dt_tilt;
+double previous_time_tilt = millis(); //initialize previous time to current time
 
 void setup()
 {
+  Serial.begin(baudRate);
   pinMode(Height_PWMPin, OUTPUT);
   pinMode(Height_PotPin, INPUT);
-  Serial.begin(9600);
+  pinMode(Tilt_PWMPin_1, OUTPUT);
+  pinMode(Tilt_PWMPin_2, OUTPUT);
+  pinMode(SSI_SCK, OUTPUT);
+  pinMode(SSI_CS, OUTPUT);
+  pinMode(SSI_SDO, INPUT);
+  digitalWrite(Tilt_PWMPin_1, LOW);
+  digitalWrite(Tilt_PWMPin_2, LOW);
 }
 
 void loop()
 {
-  //read in sensors values, receive target and send current states
-  double current_height = analogRead(Height_PotPin) * 25.0 * 0.0254 / 1024.0;
-  Serial.println(current_height);
+  bool good_message = false;
+  height_position_read();
+  tilt_position_read();
 
+  //bool for new_target status
+  //initial condition: new_target status = false
+  //replace coeff_error with new_target status
+  
   /*
+  good_message = python_communication();
+  if(good_message == 0){
+    return;
+  }
+  python_communication();
+  */
+  
+  height_validation_execution();
+  Serial.print(current_height);
+  Serial.write("\t");
+  Serial.print(target_height);
+  Serial.write("\t");
+  tilt_validation_execution();
+  Serial.print(current_tilt);
+  Serial.write("\t");
+  Serial.print(target_tilt);
+  Serial.write("\n");
+}
+
+int python_communication(){
   int good_message = poll_message(target_height, target_tilt);
 
   send_message(current_height, current_tilt, lift_moving, tilt_moving, tilt_limit_switch); //send current state to python
 
   if (good_message != 0){
-    stop_motor_lift();
-    return;
+    stop_motor_height();
+    stop_motor_tilt();
+    return 0;
   }
 
   // check if this is a special "handshake" message from the python side
   if (target_height == 0xDEAD && target_tilt == 0xBEEF){
     send_message(0xFACE, 0xB00C, lift_moving, tilt_moving, tilt_limit_switch);
     target_height = 0.25;
-    target_tilt = 0;
-    stop_motor_lift();
-    return;
+    target_tilt = 250;
+    stop_motor_height();
+    stop_motor_tilt();
+    return 0;
   }
-*/
-  
-  //current_tilt = encoderPosition_Float;    // input from tilt encoder (add ANT23 code to this)
-  
-  dt = millis() - previous_time;
-  previous_time = millis();
-    
-  if(target_height > target_height_min && target_height < target_height_max){ //check if the target height is within range
-    if(abs(current_height-target_height)<height_error_range){
-      stop_motor_lift();
-    }else{
-      height_pid_control(current_height, target_height); 
+}
+
+void height_position_read(){
+  current_height = analogRead(Height_PotPin) * 25.0 * 0.0254 / 1024.0;
+}
+
+void tilt_position_read(){
+  attempts = 0; //set attemps counter at 0 so we can try again if we get bad position  
+  encoderPosition = getPositionSSI_efficient(res14); 
+
+  while (encoderPosition == 0xFFFF && attempts++ < 3)
+  {
+    delay(10); //important for reading correct data, 1ms doesn't work
+    encoderPosition = getPositionSSI_efficient(res14); //try again
+  }
+
+  if(encoderPosition == 0xFFFF){
+    encoderPosition_Float = encoderPosition_Float_Old;
+    Serial.print("encoderPosition == 0xFFFF");
+    Serial.write("\n");
+  }
+
+  encoderPosition_Float = encoderPosition*0.021974; //turn the encoder's value in degrees
+
+  //if the encoder turns more than 1 loop
+  /*
+  if(read_count == 0 && encoderPosition == 0xFFFF){ //first time reading in values
+  }else if(read_count == 0){//first time reading in valid values
+    read_count++;
+  }else{
+    if(encoderPosition_Float_Old > (encoderPosition_Float+350.0)){// going from 360 to 1. add 1 turn
+      turn_count++;
+    }else if(encoderPosition_Float_Old < (encoderPosition_Float-350.0)){ // going from 1 to 360. subtract 1 turn
+      turn_count--;
     }
-  }  
+  }
+  */
+  
+  current_tilt = encoderPosition_Float + 360.0*turn_count; 
+  encoderPosition_Float_Old = encoderPosition_Float; 
+}
+
+void height_validation_execution(){
+  dt_height = millis() - previous_time_height;
+  previous_time_height = millis();
+  
+  if(target_height >= target_height_min && target_height <= target_height_max && current_height >= target_height_min && current_height <= target_height_max ){ //check if the target height is within range
+   if(abs(current_height-target_height)<height_error_range){
+      stop_motor_height();
+      stop_height = true;  
+    }else if(stop_height == false && abs(current_height-target_height)>height_error_range){
+      height_pid_control(current_height, target_height); 
+    }else{
+      if(abs(current_height-target_height)>(height_error_range*height_error_coeff)){ //eliminate small offset fixing
+        stop_height = false;
+        Serial.println("Large error");
+      }
+    }
+  } 
+}
+
+void tilt_validation_execution(){
+  dt_tilt = millis() - previous_time_tilt;
+  previous_time_tilt = millis();
+  
+  if(target_tilt >= target_tilt_min && target_tilt <= target_tilt_max && current_tilt >= target_tilt_min && current_tilt <= target_tilt_max ){ //check if the target height is within range
+   if(abs(current_tilt-target_tilt)<tilt_error_range){
+      stop_motor_tilt();
+      stop_tilt = true;  
+    }else if(stop_tilt == false && abs(current_tilt-target_tilt)>tilt_error_range){
+      tilt_pid_control(current_tilt, target_tilt); 
+    }else{
+      if(abs(current_tilt-target_tilt)>(tilt_error_range*tilt_error_coeff)){ //eliminate small offset fixing
+        stop_tilt = false;
+        Serial.print("Large error");
+      }
+    }
+  } 
 }
 
 float height_pid_control(double current_height, double target_height) {
   double e, de, ie;
   e = target_height - current_height;
-  de = (e - height_e_last) / dt;
-  ie = ie + e * dt;
+  de = (e - height_e_last) / dt_height;
+  ie = ie + e * dt_height;
   height_e_last = e;
-  double u = height_kp * e + height_ki * ie + height_kd * de;
-
-  /*
-  double print_target = target_height*100;
-  double print_current = current_height*100;
-  //print to plotter
-  Serial.print(print_target);
-  Serial.print(" ");
-  Serial.println(print_current);
-  */
-  
-  run_motor_lift(u); //power the motor
+  double u = height_kp * e + height_ki * ie + height_kd * de;  
+  run_motor_height(u); //power the motor
   return 0;
 }
 
-/*
 float tilt_pid_control(double current_tilt, double target_tilt) { 
   double e, de, ie;
-  e = target_height - current_height;
-  de = (e - height_e_last) / dt;
-  ie = ie + e * dt;
-  height_e_last = e;
-  double u = height_kp * e + height_ki * ie + height_kd * de;
-  
-  double print_target = target_height*100;
-  double print_current = current_height*100;
-  run_motor_tilt(u);       
+  e = target_tilt - current_tilt;
+  de = (e - tilt_e_last) / dt_tilt;
+  ie = ie + e * dt_tilt;
+  tilt_e_last = e;
+  double u = tilt_kp * e + tilt_ki * ie + tilt_kd * de;
+  run_motor_tilt(u);
+  return 0;
 }
-*/
 
-void run_motor_lift(double u) {
+void run_motor_height(double u) {
   lift_moving = true; //shows that the lift motor is moving
   if (u > 3)u = 3;
   if (u < -3)u = -3;
-  double height_pwm = mapfloat(u, -3.0, 3.0, 1400, 1600); //1000us = clockwise, 2000us = counter-clockwise, map [-1000, 1000] to [1000, 2000]
+  double height_pwm = mapfloat(u, -3.0, 3.0, 1300, 1700); //1000us = clockwise, 2000us = counter-clockwise, map [-1000, 1000] to [1000, 2000]
   int height_pwm_int = (int)height_pwm;
+  Serial.println(height_pwm_int);
   digitalWrite(Height_PWMPin, HIGH);
   delayMicroseconds(height_pwm_int); //Pulse width: 2ms (0.6~2.4ms)
   digitalWrite(Height_PWMPin, LOW);
   delayMicroseconds(dtPulseWidth - height_pwm_int);
 }
 
-void stop_motor_lift(){
+void run_motor_tilt(double u) {
+  tilt_moving = true; //shows that the lift motor is moving
+  
+  if (u > 100) { //cap value of u
+    u = 100;
+  } else if (u < -100) {
+    u = -100;
+  }
+  
+  double tilt_pwm = mapfloat(u, -100, 100, -255, 255); //1000us = clockwise, 2000us = counter-clockwise, map [-1000, 1000] to [1000, 2000]
+  if(tilt_pwm <= lowest_tilt_pwm && tilt_pwm >0){ //cap lowest speed
+    tilt_pwm = lowest_tilt_pwm;
+  }else if(tilt_pwm >= -lowest_tilt_pwm && tilt_pwm < 0){
+    tilt_pwm = -lowest_tilt_pwm;    
+  }
+  
+  // Set the speed and direction.
+  if (tilt_pwm <= 0) { //go up
+    analogWrite(Tilt_PWMPin_1, -tilt_pwm);
+    digitalWrite(Tilt_PWMPin_2, HIGH);
+  } else { //go down
+    analogWrite(Tilt_PWMPin_1, tilt_pwm);
+    digitalWrite(Tilt_PWMPin_2, LOW);
+  }
+}
+
+void stop_motor_height(){
   lift_moving = false; //shows that the lift motor is not moving
   digitalWrite(Height_PWMPin, HIGH);
   delayMicroseconds(1500); //Pulse width: 1.5ms to stop
@@ -133,22 +288,70 @@ void stop_motor_lift(){
   delayMicroseconds(dtPulseWidth - 1500);
 }
 
-/*
-void run_motor_tilt(double u) {
-  if (u > 3)u = 3;
-  if (u < -3)u = -3;
-  double height_pwm = mapfloat(u, -3.0, 3.0, 1400, 1600); //1000us = clockwise, 2000us = counter-clockwise, map [-1000, 1000] to [1000, 2000]
-  int height_pwm_int = (int)height_pwm;
-  digitalWrite(Height_PWMPin, HIGH);
-  delayMicroseconds(height_pwm_int); //Pulse width: 2ms (0.6~2.4ms)
-  digitalWrite(Height_PWMPin, LOW);
-  delayMicroseconds(dtPulseWidth - height_pwm_int);
+void stop_motor_tilt(){
+  tilt_moving = false; //shows that the lift motor is not moving
+  analogWrite(Tilt_PWMPin_1, 0);
+  digitalWrite(Tilt_PWMPin_2, HIGH);
 }
- */
 
 float mapfloat(float x, float in_min, float in_max, float out_min, float out_max)
 {
  return (float)(x - in_min) * (out_max - out_min) / (float)(in_max - in_min) + out_min;
+}
+
+uint16_t getPositionSSI_efficient(uint8_t resolution)
+{
+  uint8_t i, j; //we'll use these incrementers
+  uint8_t odd, even; //bit parity counters
+  uint16_t currentPosition = 0;
+  uint8_t _clockCounts = resolution + 2; //the AMT23 includes 2 additional bits in the response that are used as checkbits
+  uint8_t checkBit1, checkBit0; //the frist two bits in the position response are checkbits used to check the validity of the position response
+
+  //drop cs low and wait the minimum required time. This is done with NOPs
+  digitalWrite(SSI_CS, LOW);
+  for (i = 0; i < 5; i++) NOP;
+
+  //We will clock the encoder the number of times (resolution + 2), incrementing with 'j'
+  //note that this method of bit-banging doesn't give a reliable clock speed.
+  //in applications where datarate is important, the Arduino is not the best solution unless you
+  //can find a way to make the SPI interface work for this protocol format.
+  for (j = 0; j < _clockCounts; j++)
+  {
+    //first we lower the clock line and wait until the pin state has fully changed
+    digitalWrite(SSI_SCK, LOW);
+    for (i = 0; i < 10; i++) NOP;
+
+    //now we go high with the clock. no need to wait with NOPs because the pin read we'll do next times sufficient time
+    digitalWrite(SSI_SCK, HIGH);
+    
+    //throw the pin value into the position, note that it's reversing it as well
+    currentPosition |= (digitalRead(SSI_SDO) << (_clockCounts - j - 1));
+  }
+  //release cs line, position has been fully received
+  digitalWrite(SSI_CS, HIGH);
+
+
+  //grab the highest two bits and put them into the checkbit holders
+  checkBit1 = (currentPosition >> (_clockCounts - 1)) & 0x01;
+  checkBit0 = (currentPosition >> (_clockCounts - 2)) & 0x01;
+
+  //at this point currentPosition still holds the checkbits. So if we're in 14 bit mode, there's 16 bits
+  //we only move up 14 bits here (resolution) because we're only tallying up the 1's in the position
+  //we're counting the bits in even slots and the ones in odd slots
+  for (uint8_t i = 0; i < resolution; i++) (i % 2 == 0) ? even += ((currentPosition >> i) & 0x01) : odd += ((currentPosition >> i) & 0x01);
+
+  //check the counts against the checkbits
+  if ((checkBit1 == odd % 2) || (checkBit0 == even % 2)) currentPosition = 0xFFFF;
+  else 
+  {
+    //this isn't the 'fastest' since we're introducting an if/else but doing
+    // currentPosition &= 2^resolution; doesn't work because arduino has a problem with
+    // powers.
+    if (resolution == res12) currentPosition &= 0xFFF;
+    else if (resolution == res14) currentPosition &= 0x3FFF;
+  }
+
+  return currentPosition;
 }
 
 void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool tilt_limit_switch){
