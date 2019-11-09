@@ -99,6 +99,7 @@ class BaseControlMode(Enum):
     NOTHING = 0
     VELOCITY = 1
     PATH_FOLLOWING = 2
+    VELOCITY_RAMPED = 3
 
 class BaseController:
 
@@ -132,6 +133,15 @@ class BaseController:
                 self.cmd_pub.publish(cmd)
                 self.prev_angle = curr_angle
                 self.curr_path_point += 1
+            elif self.control_mode == BaseControlMode.VELOCITY_RAMPED:
+                if self.v_queue is not None and self.w_queue is not None and self.queue_idx < len(self.v_queue):
+                    self.cmd_pub.publish(create_twist([self.v_queue[self.queue_idx], self.w_queue[self.queue_idx]]))
+                    self.queue_idx += 1
+                else:
+                    self.v_queue = None
+                    self.w_queue = None
+                    self.setCommandedVelocity(self.commanded_vel)
+
             rate.sleep()
         print("BaseController:controlloop ended")
         self.cmd_pub.publish(create_twist((0, 0)))
@@ -174,6 +184,36 @@ class BaseController:
             return
         if self.control_mode != BaseControlMode.VELOCITY:
             self.control_mode = BaseControlMode.VELOCITY
+        self.commanded_vel = deepcopy(cmd_vel)
+
+    def setCommandedVelocityRamped(self, cmd_vel, v_ramp_time = 2.0):
+        if not self.enabled:
+            return
+        if self.control_mode != BaseControlMode.VELOCITY_RAMPED:
+            self.control_mode = BaseControlMode.VELOCITY_RAMPED
+        else:
+            if cmd_vel == self.commanded_vel:
+                return
+            else:
+                print("resetting ramped velocity...")
+
+        target_v, target_w = cmd_vel
+        curr_v, curr_w = self.measured_vel
+        delta_v = target_v - curr_v
+        N = int(abs(delta_v/self.dt * v_ramp_time))
+
+        v_queue = []
+        for i in range(N):
+            delta = float(i)/float(N)*target_v
+            v_queue.append(curr_v + delta)
+        w_queue = []
+        for i in range(N):
+            delta = float(i)/float(N)*target_w
+            w_queue.append(curr_w + delta)
+
+        self.v_queue = v_queue
+        self.w_queue = w_queue
+        self.queue_idx = 0
         self.commanded_vel = deepcopy(cmd_vel)
 
     # target_position = (x, y, theta) - relative to the robot's current position

@@ -2,7 +2,8 @@ from motion import *
 from klampt.math import vectorops,so3
 import math
 import time
-
+""" Home the robot"""
+"""should combine the convenience functions into one file at some point"""
 robot = Motion(mode = 'Physical')
 robot.startup()
 time.sleep(0.2)
