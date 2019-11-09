@@ -1,3 +1,9 @@
+//Program setup
+int initial_loop_count = 0;
+double loop_time = millis();
+double previous_loop_time = 0;
+double loop_frequency = 0;
+
 //Height Potentiometer Setup (String potentiometer)
 #define Height_PotPin    A2     // Analog pin 2 for the potentiometer
 
@@ -42,14 +48,17 @@ int read_count = 0;
 */
 
 //Python Communication Setup
+bool tilt_lift_goals_reached = false;
 //For Height
 #define target_height_max    0.47
 #define target_height_min    0.05
 #define height_error_range   0.01
 #define height_error_coeff   3
 double target_height = 0.47; //set target height here between 0.05 and 0.47
+double previous_target_height = 0.3;
 double current_height = 0;
 bool lift_moving = false;
+bool lift_goal_reached = false;
 //For Tilt
 #define target_tilt_max    265 //Lowest point 
 #define target_tilt_min    235 //Highest point (perpendicular)
@@ -57,9 +66,10 @@ bool lift_moving = false;
 #define tilt_error_coeff   3
 #define lowest_tilt_pwm    20  //lowest PWM signal
 double target_tilt = 265;
+double previous_target_tilt = 250;
 double current_tilt = 0;
 bool tilt_moving = false;
-bool tilt_limit_switch = false;
+bool tilt_goal_reached = false;
 
 //Height PID setup
 #define height_kp   80 
@@ -90,54 +100,62 @@ void setup()
 }
 
 void loop()
-{
-  bool good_message = false;
+{  
+  //loop_frequency_check(); //use this function to check thie Arduino loop frequency
   height_position_read();
   tilt_position_read();
 
-  //bool for new_target status
-  //initial condition: new_target status = false
-  //replace coeff_error with new_target status
-  
-  /*
-  good_message = python_communication();
-  if(good_message == 0){
-    return;
+  if(initial_loop_count == 0){ //make robot stay at it's initial position
+    target_height = current_height;
+    target_tilt = current_tilt;
+    initial_loop_count++;
   }
-  python_communication();
-  */
-  
+
+  //for handshake
+  int good_message = python_communication();
+  if(good_message == 0){
+    return; //does not move motor unless receive good message
+  }
+
+  goals_status_update();
+  python_communication(); //input from python limit: height between 0.47 and 0.05, tilt between 0 and 30 degrees
   height_validation_execution();
-  Serial.print(current_height);
-  Serial.write("\t");
-  Serial.print(target_height);
-  Serial.write("\t");
   tilt_validation_execution();
-  Serial.print(current_tilt);
-  Serial.write("\t");
-  Serial.print(target_tilt);
-  Serial.write("\n");
+}
+
+void loop_frequency_check(){
+  previous_loop_time = loop_time;
+  loop_time = millis();
+  loop_frequency = 1/(loop_time-previous_loop_time); //can use printf() to print out Arduino's loop frequency
+}
+
+void goals_status_update(){
+  if(tilt_goal_reached == true && lift_goal_reached == true){
+    tilt_lift_goals_reached == true;
+  }else{
+    tilt_lift_goals_reached == false;    
+  }
 }
 
 int python_communication(){
-  int good_message = poll_message(target_height, target_tilt);
+  int good_message = poll_message(target_height, target_tilt);//0 if succeeded, -1 if no serial, 1 for bad
 
-  send_message(current_height, current_tilt, lift_moving, tilt_moving, tilt_limit_switch); //send current state to python
+  send_message(current_height, current_tilt, lift_moving, tilt_moving, tilt_lift_goals_reached); //send current state to python
 
   if (good_message != 0){
     stop_motor_height();
     stop_motor_tilt();
-    return 0;
+    return 1;
   }
 
   // check if this is a special "handshake" message from the python side
   if (target_height == 0xDEAD && target_tilt == 0xBEEF){
-    send_message(0xFACE, 0xB00C, lift_moving, tilt_moving, tilt_limit_switch);
+    send_message(0xFACE, 0xB00C, lift_moving, tilt_moving, tilt_lift_goals_reached);
     target_height = 0.25;
     target_tilt = 250;
     stop_motor_height();
     stop_motor_tilt();
-    return 0;
+    return 1;
   }
 }
 
@@ -176,7 +194,6 @@ void tilt_position_read(){
     }
   }
   */
-  
   current_tilt = encoderPosition_Float + 360.0*turn_count; 
   encoderPosition_Float_Old = encoderPosition_Float; 
 }
@@ -186,16 +203,19 @@ void height_validation_execution(){
   previous_time_height = millis();
   
   if(target_height >= target_height_min && target_height <= target_height_max && current_height >= target_height_min && current_height <= target_height_max ){ //check if the target height is within range
-   if(abs(current_height-target_height)<height_error_range){
+    if(abs(current_height-target_height)==0){
       stop_motor_height();
       stop_height = true;  
-    }else if(stop_height == false && abs(current_height-target_height)>height_error_range){
+      lift_goal_reached = true;
+    }else if(stop_height == false && abs(current_height-target_height)>0){
       height_pid_control(current_height, target_height); 
-    }else{
-      if(abs(current_height-target_height)>(height_error_range*height_error_coeff)){ //eliminate small offset fixing
-        stop_height = false;
-        Serial.println("Large error");
-      }
+      previous_target_height = target_height;
+      lift_goal_reached = false;
+    }
+    
+    if(stop_height == true && (target_height != previous_target_height)){
+      stop_height = false;
+      lift_goal_reached = false;
     }
   } 
 }
@@ -204,18 +224,21 @@ void tilt_validation_execution(){
   dt_tilt = millis() - previous_time_tilt;
   previous_time_tilt = millis();
   
-  if(target_tilt >= target_tilt_min && target_tilt <= target_tilt_max && current_tilt >= target_tilt_min && current_tilt <= target_tilt_max ){ //check if the target height is within range
-   if(abs(current_tilt-target_tilt)<tilt_error_range){
+  if(target_tilt >= target_tilt_min && target_tilt <= target_tilt_max && current_tilt >= target_tilt_min && current_tilt <= target_tilt_max ){ //check if the target tilt is within range
+   if(abs(current_tilt-target_tilt)==0){
       stop_motor_tilt();
       stop_tilt = true;  
-    }else if(stop_tilt == false && abs(current_tilt-target_tilt)>tilt_error_range){
+      tilt_goal_reached = true;
+    }else if(stop_tilt == false && abs(current_tilt-target_tilt)>0){
       tilt_pid_control(current_tilt, target_tilt); 
-    }else{
-      if(abs(current_tilt-target_tilt)>(tilt_error_range*tilt_error_coeff)){ //eliminate small offset fixing
-        stop_tilt = false;
-        Serial.print("Large error");
-      }
+      previous_target_tilt = target_tilt;
+      tilt_goal_reached = false;
     }
+
+    if(stop_tilt == true && (target_tilt != previous_target_tilt)){
+      stop_tilt = false;
+      tilt_goal_reached = false;
+    }    
   } 
 }
 
@@ -354,7 +377,7 @@ uint16_t getPositionSSI_efficient(uint8_t resolution)
   return currentPosition;
 }
 
-void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool tilt_limit_switch){
+void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool tilt_lift_goals_reached){
   // serialized data format: "TRINA\t[tilt]\t[height]\t[tilt_limit_switch]\t[lift_limit_switch]\tTRINA\n"
   
   Serial.print("TRINA\t");
@@ -366,7 +389,7 @@ void send_message(double height, double tilt, bool lift_moving, bool tilt_moving
   Serial.print("\t");
   Serial.print(lift_moving);
   Serial.print("\t");
-  Serial.print(tilt_limit_switch);
+  Serial.print(tilt_lift_goals_reached);
   Serial.println("\tTRINA");
   
 }
@@ -392,7 +415,7 @@ int poll_message(double &target_height, double &target_tilt){
   height_str.toCharArray(height_buf, N);
   target_height = atof(height_buf);
   tilt_str.toCharArray(tilt_buf, N);
-  target_tilt = atof(tilt_buf);
+  target_tilt = (atof(tilt_buf)+235.0);
   
   return 0;
 }
