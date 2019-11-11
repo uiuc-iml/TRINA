@@ -107,7 +107,7 @@ class TorsoController:
 
         parsed_message = message[header_idx+6 : footer_idx]
         vals = parsed_message.split("\t")
-        if len(vals) != 5:
+        if len(vals) != 4:
             return
 
         try:
@@ -115,7 +115,6 @@ class TorsoController:
             self.height = float(vals[1])
             self.tilt_moving = vals[2] != '0'
             self.lift_moving = vals[3] != '0'
-            self.tilt_limit_switch = vals[4] != '0'
         except:
             pass
 
