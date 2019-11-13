@@ -1,12 +1,11 @@
 import json
 from SimpleWebSocketServer import SimpleWebSocketServer,WebSocket
 import time,math
-from UIController import UIController
-
-
+import pickle
 
 robot_ip = '130.126.139.236'
 ws_port = 1234
+
 
 
 class UIStateReciever(WebSocket) : 
@@ -22,6 +21,8 @@ class UIStateReciever(WebSocket) :
             return
 
         self.UI_state = obj
+        print(self.UI_state)
+
         try:
             self.printState()
         except:
@@ -30,9 +31,7 @@ class UIStateReciever(WebSocket) :
 
     def handleConnected(self) : 
         print(self.address, 'connected')
-        print(self.UIController)
-        if not self.UIController:
-            self.UIController = UIController()
+
 
 
 
@@ -44,10 +43,12 @@ class UIStateReciever(WebSocket) :
         if not self.UI_state["title"] == "UI Outputs" :
             print("UI state object INVALID")
             return
-        self.UIController.updateState(self.UI_state)
 
-        # base_velocity = [0.1*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.1*(self.UI_state["controllerButtonState"]["leftController"]["thumbstickMovement"][0])]
-        # self.robot.setBaseVelocity(base_velocity)
+        outputFile = 'UIOutputs.data'
+        fw = open(outputFile, 'wb')
+        pickle.dump(self.UI_state, fw)
+        fw.close()
+
        
 
     def printState(self):

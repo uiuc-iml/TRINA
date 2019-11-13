@@ -533,11 +533,13 @@ class Motion:
             target_config = self.robot_model.getConfig()
             print("motion.setLeftEEInertialTransform():IK solve successful")
         else:
+            self._controlLoopLock.release()
             print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
             return
         res = self._check_collision_linear(self.robot_model,initial,target_config,15)
         #print(res)
         if res:
+            self._controlLoopLock.release()
             print('motion.setLeftEEInertialtransform():Self-collision midway')
             return
         else:
@@ -592,11 +594,13 @@ class Motion:
             target_config = self.robot_model.getConfig()
             print("motion.setRightEEInertialTransform():IK solve successful")
         else:
+            self._controlLoopLock.release()
             print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
             return
         res = self._check_collision_linear(self.robot_model,initial,target_config,15)
         #print(res)
         if res:
+            self._controlLoopLock.release()
             print('motion.setRighttEEInertialtransform():Self-collision midway')
             return
         else:
@@ -942,9 +946,10 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Kinematic')
+    robot = Motion(mode = 'Physical')
     robot.startup()
     print('Robot start() called')
+    '''	
     leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
     leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
     rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
@@ -985,4 +990,5 @@ if __name__=="__main__":
         # print(time.time()-startTime)
 
     vis.kill()
+    '''
     robot.shutdown()
