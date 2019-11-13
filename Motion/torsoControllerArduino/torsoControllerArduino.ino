@@ -1,3 +1,6 @@
+#include <Servo.h> 
+Servo myservo;
+
 //Program setup
 int initial_loop_count = 0;
 double loop_time = millis();
@@ -8,7 +11,7 @@ double loop_frequency = 0;
 #define Height_PotPin    A2     // Analog pin 2 for the potentiometer
 
 //Height Motor Setup
-#define dtPulseWidth     10000  //Time between pulses: 10ms (2.9~100ms)
+#define dtPulseWidth     4600  //Time between pulses: 10ms (2.9~100ms)
 #define Height_PWMPin    6      //Digital pin 6 for motor driver
 #define baudRate        115200     //Need faster baudrate to prevent miss counting turns
 bool stop_height = false;
@@ -48,17 +51,16 @@ int read_count = 0;
 */
 
 //Python Communication Setup
-bool tilt_lift_goals_reached = false;
 //For Height
-#define target_height_max    0.47
+#define target_height_max    0.47 //0.47
 #define target_height_min    0.05
 #define height_error_range   0.01
 #define height_error_coeff   3
-double target_height = 0.47; //set target height here between 0.05 and 0.47
+double target_height = 0.25; //set target height here between 0.05 and 0.47
 double previous_target_height = 0.3;
 double current_height = 0;
 bool lift_moving = false;
-bool lift_goal_reached = false;
+bool lift_goal_reached = true;
 //For Tilt
 #define target_tilt_max    265 //Lowest point 
 #define target_tilt_min    235 //Highest point (perpendicular)
@@ -68,8 +70,8 @@ bool lift_goal_reached = false;
 double target_tilt = 265;
 double previous_target_tilt = 250;
 double current_tilt = 0;
-bool tilt_moving = false;
-bool tilt_goal_reached = false;
+bool tilt_moving = true;
+bool tilt_goal_reached = true;
 
 //Height PID setup
 #define height_kp   80 
@@ -79,16 +81,20 @@ double height_e_last, dt_height;
 double previous_time_height = millis(); //initialize previous time to current time
 
 //Tilt PID setup
-#define tilt_kp   10 
+#define tilt_kp   10  
 #define tilt_ki   0
 #define tilt_kd   0             // PID parameters for tilt
 double tilt_e_last, dt_tilt;
 double previous_time_tilt = millis(); //initialize previous time to current time
 
+
+int count = 0;
+
 void setup()
 {
   Serial.begin(baudRate);
-  pinMode(Height_PWMPin, OUTPUT);
+  myservo.attach(Height_PWMPin);
+  //pinMode(Height_PWMPin, OUTPUT);
   pinMode(Height_PotPin, INPUT);
   pinMode(Tilt_PWMPin_1, OUTPUT);
   pinMode(Tilt_PWMPin_2, OUTPUT);
@@ -104,21 +110,26 @@ void loop()
   //loop_frequency_check(); //use this function to check thie Arduino loop frequency
   height_position_read();
   tilt_position_read();
-
+  
   if(initial_loop_count == 0){ //make robot stay at it's initial position
     target_height = current_height;
     target_tilt = current_tilt;
     initial_loop_count++;
   }
-
+  /*
   //for handshake
   int good_message = python_communication();
-  if(good_message == 0){
+  if(good_message != 0){
+    count++;
+    if(count>10){
+      stop_motor_height();
+      stop_motor_tilt();   
+    }
     return; //does not move motor unless receive good message
+  }else{
+    count = 0;
   }
-
-  goals_status_update();
-  python_communication(); //input from python limit: height between 0.47 and 0.05, tilt between 0 and 30 degrees
+  */
   height_validation_execution();
   tilt_validation_execution();
 }
@@ -129,18 +140,10 @@ void loop_frequency_check(){
   loop_frequency = 1/(loop_time-previous_loop_time); //can use printf() to print out Arduino's loop frequency
 }
 
-void goals_status_update(){
-  if(tilt_goal_reached == true && lift_goal_reached == true){
-    tilt_lift_goals_reached == true;
-  }else{
-    tilt_lift_goals_reached == false;    
-  }
-}
-
 int python_communication(){
   int good_message = poll_message(target_height, target_tilt);//0 if succeeded, -1 if no serial, 1 for bad
 
-  send_message(current_height, current_tilt, lift_moving, tilt_moving, tilt_lift_goals_reached); //send current state to python
+  send_message(current_height, current_tilt, lift_moving, tilt_moving, lift_goal_reached, tilt_goal_reached); //send current state to python
 
   if (good_message != 0){
     stop_motor_height();
@@ -150,13 +153,14 @@ int python_communication(){
 
   // check if this is a special "handshake" message from the python side
   if (target_height == 0xDEAD && target_tilt == 0xBEEF){
-    send_message(0xFACE, 0xB00C, lift_moving, tilt_moving, tilt_lift_goals_reached);
+    send_message(0xFACE, 0xB00C, lift_moving, tilt_moving, lift_goal_reached, tilt_goal_reached);
     target_height = 0.25;
     target_tilt = 250;
     stop_motor_height();
     stop_motor_tilt();
     return 1;
   }
+  return 0;
 }
 
 void height_position_read(){
@@ -175,8 +179,6 @@ void tilt_position_read(){
 
   if(encoderPosition == 0xFFFF){
     encoderPosition_Float = encoderPosition_Float_Old;
-    Serial.print("encoderPosition == 0xFFFF");
-    Serial.write("\n");
   }
 
   encoderPosition_Float = encoderPosition*0.021974; //turn the encoder's value in degrees
@@ -217,7 +219,9 @@ void height_validation_execution(){
       stop_height = false;
       lift_goal_reached = false;
     }
-  } 
+  }else{     
+  }
+  
 }
 
 void tilt_validation_execution(){
@@ -270,11 +274,14 @@ void run_motor_height(double u) {
   if (u < -3)u = -3;
   double height_pwm = mapfloat(u, -3.0, 3.0, 1300, 1700); //1000us = clockwise, 2000us = counter-clockwise, map [-1000, 1000] to [1000, 2000]
   int height_pwm_int = (int)height_pwm;
-  Serial.println(height_pwm_int);
+  myservo.writeMicroseconds(height_pwm_int);
+  
+  /*
   digitalWrite(Height_PWMPin, HIGH);
   delayMicroseconds(height_pwm_int); //Pulse width: 2ms (0.6~2.4ms)
   digitalWrite(Height_PWMPin, LOW);
   delayMicroseconds(dtPulseWidth - height_pwm_int);
+  */
 }
 
 void run_motor_tilt(double u) {
@@ -304,11 +311,14 @@ void run_motor_tilt(double u) {
 }
 
 void stop_motor_height(){
+  myservo.writeMicroseconds(1500);
   lift_moving = false; //shows that the lift motor is not moving
+  /*
   digitalWrite(Height_PWMPin, HIGH);
   delayMicroseconds(1500); //Pulse width: 1.5ms to stop
   digitalWrite(Height_PWMPin, LOW);
   delayMicroseconds(dtPulseWidth - 1500);
+  */
 }
 
 void stop_motor_tilt(){
@@ -377,7 +387,7 @@ uint16_t getPositionSSI_efficient(uint8_t resolution)
   return currentPosition;
 }
 
-void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool tilt_lift_goals_reached){
+void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool lift_goal_reached, bool tilt_goal_reached){
   // serialized data format: "TRINA\t[tilt]\t[height]\t[tilt_limit_switch]\t[lift_limit_switch]\tTRINA\n"
   
   Serial.print("TRINA\t");
@@ -388,8 +398,11 @@ void send_message(double height, double tilt, bool lift_moving, bool tilt_moving
   Serial.print(tilt_moving);
   Serial.print("\t");
   Serial.print(lift_moving);
+  /*Serial.print("\t");
+  Serial.print(tilt_goal_reached);
   Serial.print("\t");
-  Serial.print(tilt_lift_goals_reached);
+  Serial.print(lift_goal_reached);
+  */
   Serial.println("\tTRINA");
   
 }
@@ -415,7 +428,7 @@ int poll_message(double &target_height, double &target_tilt){
   height_str.toCharArray(height_buf, N);
   target_height = atof(height_buf);
   tilt_str.toCharArray(tilt_buf, N);
-  target_tilt = (atof(tilt_buf)+235.0);
+  target_tilt = (atof(tilt_buf));
   
   return 0;
 }
