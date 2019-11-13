@@ -5,20 +5,19 @@ const int dir = 4; //pin mumber direction
 const int potPin = A0; //potentiometer feedback read pin
 //-----------Changing Values -----------------------------
 int potVal = 0; //potentiometer value
-//int target = 1 * 125; //in inch
 double current_pos = potVal / 125; // 1inch = potVal of 125 
 boolean ext = false;
 boolean ret = false;
 //-----------PID------------------------------------------
 //param
-double kp = 0.35, ki = 0.1, kd = 0.0035; 
+double kp = 0.355, ki = 0.05, kd = 0.0042; 
 double error, de, ie; //param
 double error_last;
 double dt = 0.01;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
-double target = 2.0;
+double target = 1.5; //******************************************************************************
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
 double target_max = 0;
@@ -89,51 +88,23 @@ float pidCalc(double current_pos, double target){
     }
   return 0;
 }
-//void moveActuator(double error){ //change error to 
-//  if(error > 0){
-//    extend(234-analogRead(potPin));
-//  }
-//  if (error < 0){
-//    retract(analogRead(potPin));
-//  }
-//  if (error == 0){
-//    stopActuator();
-//  }
-//}
 
 void stopActuator(){
-  //digitalWrite(dir, LOW);
-  //analogWrite(pwm, 0);
+  digitalWrite(dir, LOW);
+  analogWrite(pwm, 0);
 }
-//void extend(double velocity){
-//  digitalWrite(dir, LOW);
-//  analogWrite(pwm, velocity); //max speed at default
-//  potVal = analogRead(potPin);
-//  Serial.print("extended value is: ");
-//  Serial.println(potVal);
-//                  
-//}
-//void retract(double velocity){
-//  digitalWrite(dir, HIGH);
-//  analogWrite(pwm, velocity); //max speed at default
-//  potVal = analogRead(potPin);
-//  Serial.print("retracted value is: ");
-//  Serial.println(potVal);
-//}
 
 void runMotor(double pid){
   if(pid > 2){
     pid = 2;   
  }if(pid < -2){
   pid = -2;
-  }
-
-  if(fabs(pid) < (1.0/117.0)){
-        digitalWrite(dir, LOW);
-        analogWrite(pwm, 0);
-        //reachedTarget=true;
-        
-    return;
+ }
+ if(fabs(pid) < (1.0/117.0)){
+   digitalWrite(dir, LOW);
+   analogWrite(pwm, 0);
+   //reachedTarget=true;       
+   return;
     }else{
 
   double pwm_double =  mapValues(fabs(pid), 0, 2.0, 0, 255.0);
@@ -152,34 +123,31 @@ void runMotor(double pid){
         analogWrite(5, 255);
         //delayMicroseconds(pwm_int);
 
-}
-  
     }
- 
   }
+}
 
 void home(double cur_pos){
   if(cur_pos > 0){
     digitalWrite(dir, HIGH);
     analogWrite(pwm, 235);
-    }
   }
+}
 
-  float mapValues(double value, double fromLow, double fromHigh, double toLow, double toHigh){
+float mapValues(double value, double fromLow, double fromHigh, double toLow, double toHigh){
     
     float f = (value-fromLow) * (toHigh - toLow) / (float)((fromHigh - fromLow) + toLow);
     return f;
-
-    }
+}
 
 void extendMaximum(double cur_pos){
   if(cur_pos < 2){
     digitalWrite(dir, LOW);
     analogWrite(pwm, 235);
-    }
   }
+}
 
- void send_message(double current_pos, bool moving){
+void send_message(double current_pos, bool moving){
   // serialized data format: "TRINA\t[loc]\tTRINA\n"
   Serial.print("TRINA\t");
   Serial.print(current_pos);
