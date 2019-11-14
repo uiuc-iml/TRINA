@@ -43,20 +43,23 @@ void loop() {
   //send_message(target, moving);
   int good_message = poll_message(target);
   
-  // check if this is a special "handshake" message from the python side
-  if (target == 0xDEAD){
+  if (good_message == 0){
+    //send_message(good_message, moving);
+    //stopActuator();
+    // check if this is a special "handshake" message from the python side
+    if (target == 0xDEAD){
     send_message(0xFACE, moving);
     target = 0;
     stopActuator();
-    return;
-}
-  
+    //return;
+  }
   current_loc = (float)(analogRead(potPin) / (117.0));
   pidCalc(current_loc, target);
   //runMotor(2- current_loc);
- // target = 2*sin(0.5*currentTime);
- // delay(10);
- // currentTime += 0.01;
+  // target = 2*sin(0.5*currentTime);
+  // delay(10);
+  // currentTime += 0.01;
+  }
 }
 
 void runMotorTest()
