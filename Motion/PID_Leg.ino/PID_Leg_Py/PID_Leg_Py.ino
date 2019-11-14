@@ -62,6 +62,7 @@ void loop() {
   }
 }
 
+
 void runMotorTest()
 {
   digitalWrite(dir,LOW);
