@@ -17,7 +17,7 @@ double dt = 0.01;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
-double target = 1.5; //******************************************************************************
+double target = 1.0; //******************************************************************************
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
 double target_max = 0;
@@ -43,11 +43,6 @@ void loop() {
   //send_message(target, moving);
   int good_message = poll_message(target);
   
-  if (good_message != 0){
-    //send_message(good_message, moving);
-    //stopActuator();
-    return;
-  }
   // check if this is a special "handshake" message from the python side
   if (target == 0xDEAD){
     send_message(0xFACE, moving);
@@ -103,7 +98,7 @@ void runMotor(double pid){
  if(fabs(pid) < (1.0/117.0)){
    digitalWrite(dir, LOW);
    analogWrite(pwm, 0);
-   //reachedTarget=true;       
+   reachedTarget=true;       
    return;
     }else{
 
