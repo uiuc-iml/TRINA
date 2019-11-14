@@ -43,17 +43,20 @@ void loop() {
   //send_message(target, moving);
   int good_message = poll_message(target);
   
-  if (good_message == 0){
+  if(good_message != 0){
     //send_message(good_message, moving);
     //stopActuator();
+  }
+  if(good_message == 0){
     // check if this is a special "handshake" message from the python side
     if (target == 0xDEAD){
     send_message(0xFACE, moving);
     target = 0;
     stopActuator();
-    //return;
+    return;
   }
   current_loc = (float)(analogRead(potPin) / (117.0));
+  Serial.print(target);
   pidCalc(current_loc, target);
   //runMotor(2- current_loc);
   // target = 2*sin(0.5*currentTime);
