@@ -45,6 +45,7 @@ class PID_Leg_Controller:
             self._updateSensorFeedback()
             if self.current_loc == 0xface:
                self.connected = True
+            print("attempting handshake")
         self.current_loc = None
         self.moving = False
 
@@ -123,7 +124,7 @@ if __name__ == "__main__":
 
     start_time = time.time()
     while(time.time() - start_time < 20):
-        t.sendTargetPositions(0.7)
+        t.sendTargetPositions(1.5)
         print(t.getStates())
         time.sleep(0.1)
     print("shutting down...")

@@ -17,7 +17,7 @@ double dt = 0.01;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
-double target = 1.0; //******************************************************************************
+double target = 0.5; //******************************************************************************
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
 double target_max = 0;
@@ -38,31 +38,27 @@ float potPosition_Float = 0;// input from tilt encoder
   digitalWrite(dir,LOW);
 }
 void loop() {
-  
+
   send_message(current_loc, moving); //send current state to python
   //send_message(target, moving);
-  int good_message = poll_message(target);
-  
-  if(good_message != 0){
-    //send_message(good_message, moving);
-    //stopActuator();
-  }
+  int good_message = poll_message(target);  
+  current_loc = (float)(analogRead(potPin) / (117.0));
+
   if(good_message == 0){
     // check if this is a special "handshake" message from the python side
     if (target == 0xDEAD){
     send_message(0xFACE, moving);
-    target = 0;
-    stopActuator();
+    reachedTarget = false;
     return;
   }
-  current_loc = (float)(analogRead(potPin) / (117.0));
-  Serial.print(target);
+
   pidCalc(current_loc, target);
   //runMotor(2- current_loc);
   // target = 2*sin(0.5*currentTime);
   // delay(10);
   // currentTime += 0.01;
   }
+  delay(10);
 }
 
 
@@ -126,7 +122,9 @@ void runMotor(double pid){
         //delayMicroseconds(pwm_int);
 
     }
+ Serial.print(pwm_int);    
   }
+  
 }
 
 void home(double cur_pos){
