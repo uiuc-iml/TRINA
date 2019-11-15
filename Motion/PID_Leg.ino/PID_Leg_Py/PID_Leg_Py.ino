@@ -1,29 +1,29 @@
 //potentiometer min = 0 && max = 234
 //-----------Pin No.-------------------------------------
-const int pwm = 3; //pin number_PWM
-const int dir = 4; //pin mumber direction
-const int potPin = A0; //potentiometer feedback read pin
+const int leg_pwm = 3; //pin number_leg_pwm
+const int leg_dir = 4; //pin mumber leg_direction
+const int leg_potPin = A0; //potentiometer feedback read pin
 //-----------Changing Values -----------------------------
-int potVal = 0; //potentiometer value
-double current_pos = potVal / 125; // 1inch = potVal of 125 
+int leg_potVal = 0; //potentiometer value
+double current_pos = leg_potVal / 125; // 1inch = leg_potVal of 125 
 boolean ext = false;
 boolean ret = false;
 //-----------PID------------------------------------------
 //param
-double kp = 0.355, ki = 0.05, kd = 0.0042; 
-double error, de, ie; //param
-double error_last;
+double leg_kp = 0.355, leg_ki = 0.05, leg_kd = 0.0042; 
+double leg_error, leg_de, leg_ie; //param
+double leg_error_last;
 double dt = 0.01;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
-double target = 0.5; //******************************************************************************
+double leg_target = 0.3; //******************************************************************************
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
-double target_max = 0;
-double target_min = 2;
-double error_range = 0.01;
-double current_loc = 0;
+double leg_target_max = 0;
+double leg_target_min = 2;
+double leg_error_range = 0.01;
+double leg_current_loc = 0;
 bool moving = false;
 float potPosition_Float = 0;// input from tilt encoder
 //float loc_calibration = 140; //value = loc input - actual loc
@@ -32,28 +32,28 @@ float potPosition_Float = 0;// input from tilt encoder
  void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  pinMode(pwm, OUTPUT);
-  pinMode(dir, OUTPUT);
+  pinMode(leg_pwm, OUTPUT);
+  pinMode(leg_dir, OUTPUT);
   pinMode(5, OUTPUT);
-  digitalWrite(dir,LOW);
+  digitalWrite(leg_dir,LOW);
 }
 void loop() {
 
-  send_message(current_loc, moving); //send current state to python
-  //send_message(target, moving);
-  int good_message = poll_message(target);  
-  current_loc = (float)(analogRead(potPin) / (117.0));
+  send_message(leg_current_loc, moving); //send current state to python
+  //send_message(leg_target, moving);
+  int good_message = poll_message(leg_target);  
+  leg_current_loc = (float)(analogRead(leg_potPin) / (117.0));
 
   if(good_message == 0){
     // check if this is a special "handshake" message from the python side
-    if (target == 0xDEAD){
+    if (leg_target == 0xDEAD){
     send_message(0xFACE, moving);
     reachedTarget = false;
     return;
   }
 
-  pidCalc(current_loc, target);
-  //runMotor(2- current_loc);
+  leg_pidCalc(leg_current_loc, leg_target);
+  //runMotor(2- leg_current_loc);
   // target = 2*sin(0.5*currentTime);
   // delay(10);
   // currentTime += 0.01;
@@ -64,73 +64,73 @@ void loop() {
 
 void runMotorTest()
 {
-  digitalWrite(dir,LOW);
-  digitalWrite(pwm,HIGH);
+  digitalWrite(leg_dir,LOW);
+  digitalWrite(leg_pwm,HIGH);
   delayMicroseconds(100);
-  digitalWrite(pwm,LOW);
+  digitalWrite(leg_pwm,LOW);
   delayMicroseconds(100);
   
 }
-float pidCalc(double current_pos, double target){
+float leg_pidCalc(double current_pos, double leg_target){
   //dt = micros() - previous_time;
   //previous_time = micros(); //reset the previous time
-  error = target - current_pos; 
-  de = (error - error_last) / dt;
-  ie = ie + error * dt;
-  error_last = error;
-  double pid = (kp*error) + (ki * ie) + (kd * de);
+  leg_error = leg_target - current_pos; 
+  leg_de = (leg_error - leg_error_last) / dt;
+  leg_ie = leg_ie + leg_error * dt;
+  leg_error_last = leg_error;
+  double leg_pid = (leg_kp*leg_error) + (leg_ki * leg_ie) + (leg_kd * leg_de);
   if(reachedTarget){
-     runMotor(0);
+     leg_runMotor(0);
     }else{
-  runMotor(pid);
+  leg_runMotor(leg_pid);
     }
   return 0;
 }
 
 void stopActuator(){
-  digitalWrite(dir, LOW);
-  analogWrite(pwm, 0);
+  digitalWrite(leg_dir, LOW);
+  analogWrite(leg_pwm, 0);
 }
 
-void runMotor(double pid){
-  if(pid > 2){
-    pid = 2;   
- }if(pid < -2){
-  pid = -2;
+void leg_runMotor(double leg_pid){
+  if(leg_pid > 2){
+    leg_pid = 2;   
+ }if(leg_pid < -2){
+  leg_pid = -2;
  }
- if(fabs(pid) < (1.0/117.0)){
-   digitalWrite(dir, LOW);
-   analogWrite(pwm, 0);
+ if(fabs(leg_pid) < (1.0/117.0)){
+   digitalWrite(leg_dir, LOW);
+   analogWrite(leg_pwm, 0);
    reachedTarget=true;       
    return;
     }else{
 
-  double pwm_double =  mapValues(fabs(pid), 0, 2.0, 0, 255.0);
-  int pwm_int = (int)pwm_double;
+  double leg_pwm_double =  mapValues(fabs(leg_pid), 0, 2.0, 0, 255.0);
+  int leg_pwm_int = (int)leg_pwm_double;
   
-    if(pid < 0){
-       digitalWrite(dir, HIGH);
-       analogWrite(pwm, 255);
+    if(leg_pid < 0){
+       digitalWrite(leg_dir, HIGH);
+       analogWrite(leg_pwm, 255);
        analogWrite(5, 255);
-       //delayMicroseconds(pwm_int);
+       //delayMicroseconds(leg_pwm_int);
 
 
       }else {
-        digitalWrite(dir, LOW);
-        analogWrite(pwm, 255);
+        digitalWrite(leg_dir, LOW);
+        analogWrite(leg_pwm, 255);
         analogWrite(5, 255);
-        //delayMicroseconds(pwm_int);
+        //delayMicroseconds(leg_pwm_int);
 
     }
- Serial.print(pwm_int);    
+ Serial.print(leg_pwm_int);    
   }
   
 }
 
 void home(double cur_pos){
   if(cur_pos > 0){
-    digitalWrite(dir, HIGH);
-    analogWrite(pwm, 235);
+    digitalWrite(leg_dir, HIGH);
+    analogWrite(leg_pwm, 235);
   }
 }
 
@@ -142,8 +142,8 @@ float mapValues(double value, double fromLow, double fromHigh, double toLow, dou
 
 void extendMaximum(double cur_pos){
   if(cur_pos < 2){
-    digitalWrite(dir, LOW);
-    analogWrite(pwm, 235);
+    digitalWrite(leg_dir, LOW);
+    analogWrite(leg_pwm, 235);
   }
 }
 
@@ -156,7 +156,7 @@ void send_message(double current_pos, bool moving){
   Serial.println("\tTRINA");
 }
 
-int poll_message(double &target){
+int poll_message(double &leg_target){
   if (!(Serial.available() > 0)){
     return -1;
   }
@@ -180,7 +180,7 @@ int poll_message(double &target){
   }
   
   position_str.toCharArray(buf, N);
-  target = atof(buf);
+  leg_target = atof(buf);
 
   return 0;
 }
