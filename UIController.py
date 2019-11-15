@@ -50,9 +50,8 @@ class UIController:
             try:
                 q = self.robot.getKlamptSensedPosition()
             except:
-                print(" setBaseVelocity not successful")
+                print(" getKlamptSensedPosition not successful")
                 continue
-            print(q)
             self.vis_robot.setConfig(q)
             time.sleep(self.dt)
 
@@ -63,7 +62,6 @@ class UIController:
             dataset = pickle.load(fd)
             self.UI_state = dataset
             self.UIStateLogic()
-            time.sleep(self.dt)
 
 
     def moveRobotTest(self):
@@ -71,11 +69,14 @@ class UIController:
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
         init_leftUntuckedConfig = [0,0,0,0,0,0] #motionAPI format
         self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+        self.robot.setBaseTargetPosition([0,0,0],[0.5,0.5])
         # self.robot.setLeftLimbPositionLinear(init_leftUntuckedConfig,5)
 
     def UIStateLogic(self):
         base_velocity = [0.2*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.2*(-self.UI_state["controllerButtonState"]["leftController"]["thumbstickMovement"][0])]
         try:
+            print(" setBaseVelocity successful")
+            print(base_velocity)
             self.robot.setBaseVelocity(base_velocity)
         except:
             print(" setBaseVelocity not successful")

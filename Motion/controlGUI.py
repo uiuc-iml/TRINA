@@ -111,11 +111,11 @@ class MyGLViewer(GLWidgetProgram):
         glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,[0,1,0,0.5])
         q = robot.getKlamptCommandedPosition()
         currentTime = datetime.datetime.utcnow()
+        self.leftEE = robot.sensedLeftEETransform()
+        self.rightEE = robot.sensedRightEETransform()
+        self.leftq = self.robot.sensedLeftLimbPosition()
+        self.rightq = self.robot.sensedRightLimbPosition()
         if currentTime >= self.saveStartTime and currentTime <= self.saveEndTime:
-            self.leftEE = robot.sensedLeftEETransform()
-            self.rightEE = robot.sensedRightEETransform()
-            self.leftq = self.robot.sensedLeftLimbPosition()
-            self.rightq = self.robot.sensedRightLimbPosition()
             self.saveMotionToCVS()
         robotModel.setConfig(q)
         robotModel.drawGL(False)
@@ -176,9 +176,14 @@ class MyGLViewer(GLWidgetProgram):
         return
 
     def getSensedEETransform(self):
+        msgBox = QMessageBox()
+        msgBox.setWindowTitle("robot Current EE transform")
+        msgBox.setStandardButtons(QMessageBox.Ok)
+        msgBox.setText("left EE transform + right EE transform")
+        msgBox.setInformativeText(("left R \n"+str(self.leftEE[0])+"\n\n"+"left T \n"+str(self.leftEE[1])+"\n\n"+"right R \n"+ str(self.rightEE[0])+"\n\n"+"right T \n"+str(self.rightEE[1])))
+        msgBox.setStandardButtons(QMessageBox.Ok)
+        msgBox.exec_()
         print("robot Current EE transform")
-        self.leftEE = self.robot.sensedLeftEETransform()
-        self.rightEE = self.robot.sensedRightEETransform()
         print("----------------left EE transform---------------------")
         print(self.leftEE)
         print("----------------right EE transform---------------------")
@@ -204,6 +209,33 @@ class MyGLViewer(GLWidgetProgram):
     def resetPoser(self):
         self.robotPoser.set(self.robot.getKlamptSensedPosition())
         print("resetPoser command")
+
+    def leftTCPPosControl(self,direction,delta):
+        newT = [float(i) for i in  self.leftEE[1]]
+        if direction is 'x':
+            newT[0] = newT[0] + delta
+        elif direction is 'y':
+            newT[1] = newT[1] + delta
+        elif direction is 'z':
+            newT[2] = newT[2] + delta
+        self.robot.setLeftEEInertialTransform([self.leftEE[0],newT],0.1)
+        print("change left arm " + direction + " by" + str(delta))
+
+
+    def rightTCPPosControl(self,direction,delta):
+        newT = [float(i) for i in  self.rightEE[1]]
+        if direction is 'x':
+            newT[0] = newT[0] + delta
+        elif direction is 'y':
+            newT[1] = newT[1] + delta
+        elif direction is 'z':
+            newT[2] = newT[2] + delta
+        self.robot.setRightEEInertialTransform([self.rightEE[0],newT],0.1)
+        print("change right arm " + direction + " by" + str(delta))
+        
+
+
+
 
 
 
@@ -241,7 +273,7 @@ class ControlWidget(QWidget):
         hbox.addWidget(self.start_button)
         vbox.addLayout(hbox)
         self.setLayout(vbox)
-        self.setMinimumSize(QSize(760,760))
+        self.setMinimumSize(QSize(860,960))
         #QMetaObject.invokeMethod(self.start_button, "clicked")
 
     def startMotionAPI(self):
@@ -264,6 +296,7 @@ class ControlWidget(QWidget):
         viewer_window = self.qtbackend.createWindow("Control widget",self)
         self.viewer.window = viewer_window
         viewer_window.program = self.viewer
+        viewer_window.setMaximumWidth(860)
         self.layout().addWidget(viewer_window)
 
         self.createDisplays()
@@ -298,17 +331,97 @@ class ControlWidget(QWidget):
         ResetPoserButton.resize(ResetPoserButton.sizeHint())
 
         ToEETransformButton = QPushButton("To EE Transform",self)
-        ToEETransformButton.clicked.connect(self.settoEETransform)
+        ToEETransformButton.clicked.connect(self.toEETransform)
         ToEETransformButton.resize(ToEETransformButton.sizeHint())
 
-        hbox = QHBoxLayout()
-        hbox.addWidget(PoseButton)
-        hbox.addWidget(LogButton)
-        hbox.addWidget(EEbutton)
-        hbox.addWidget(DefualtButton)
-        hbox.addWidget(ResetPoserButton)
-        hbox.addWidget(ToEETransformButton)
-        self.layout().addLayout(hbox)
+        LeftPosPlusXButton = QPushButton("+x",self)
+        LeftPosPlusXButton.clicked.connect(self.leftPosPlusX)
+        LeftPosPlusYButton = QPushButton("+y",self)
+        LeftPosPlusYButton.clicked.connect(self.leftPosPlusY)
+        LeftPosPlusZButton = QPushButton("+z",self)
+        LeftPosPlusZButton.clicked.connect(self.leftPosPlusZ)
+        LeftPosMinusXButton = QPushButton("-x",self)
+        LeftPosMinusXButton.clicked.connect(self.leftPosMinusX)
+        LeftPosMinusYButton = QPushButton("-y",self)
+        LeftPosMinusYButton.clicked.connect(self.leftPosMinusY)
+        LeftPosMinusZButton = QPushButton("-z",self)
+        LeftPosMinusZButton.clicked.connect(self.leftPosMinusZ)
+
+        LeftRotPlusXButton = QPushButton("+x",self)
+        LeftRotPlusYButton = QPushButton("+y",self)
+        LeftRotPlusZButton = QPushButton("+z",self)
+        LeftRotMinusXButton = QPushButton("-x",self)
+        LeftRotMinusYButton = QPushButton("-y",self)
+        LeftRotMinusZButton = QPushButton("-z",self)
+
+
+
+        RightPosPlusXButton = QPushButton("+x",self)
+        RightPosPlusXButton.clicked.connect(self.rightPosPlusX)
+        RightPosPlusYButton = QPushButton("+y",self)
+        RightPosPlusYButton.clicked.connect(self.rightPosPlusY)
+        RightPosPlusZButton = QPushButton("+z",self)
+        RightPosPlusZButton.clicked.connect(self.rightPosPlusZ)
+        RightPosMinusXButton = QPushButton("-x",self)
+        RightPosMinusXButton.clicked.connect(self.rightPosMinusX)
+        RightPosMinusYButton = QPushButton("-y",self)
+        RightPosMinusYButton.clicked.connect(self.rightPosMinusY)
+        RightPosMinusZButton = QPushButton("-z",self)
+        RightPosMinusZButton.clicked.connect(self.rightPosMinusZ)
+
+        RightRotPlusXButton = QPushButton("+x",self)
+        RightRotPlusYButton = QPushButton("+y",self)
+        RightRotPlusZButton = QPushButton("+z",self)
+        RightRotMinusXButton = QPushButton("-x",self)
+        RightRotMinusYButton = QPushButton("-y",self)
+        RightRotMinusZButton = QPushButton("-z",self)
+
+
+        LeftTCPBox = QGridLayout()
+        LeftTCPBox.addWidget(QLabel("Left Arm"),1,1)
+        LeftTCPBox.addWidget(QLabel("TCP Position Ctrl"),1,2)
+        LeftTCPBox.addWidget(QLabel("TCP Rotation Ctrl"),1,5)
+        LeftTCPBox.addWidget(LeftPosPlusZButton,2,1)
+        LeftTCPBox.addWidget(LeftPosMinusXButton,2,2)
+        LeftTCPBox.addWidget(LeftPosMinusZButton,2,3)
+        LeftTCPBox.addWidget(LeftPosMinusYButton,3,1)
+        LeftTCPBox.addWidget(LeftPosPlusYButton,3,3)
+        LeftTCPBox.addWidget(LeftPosPlusXButton,4,2)
+        LeftTCPBox.addWidget(LeftRotPlusZButton,2,4)
+        LeftTCPBox.addWidget(LeftRotMinusXButton,2,5)
+        LeftTCPBox.addWidget(LeftRotMinusZButton,2,6)
+        LeftTCPBox.addWidget(LeftRotMinusYButton,3,4)
+        LeftTCPBox.addWidget(LeftRotPlusYButton,3,6)
+        LeftTCPBox.addWidget(LeftRotPlusXButton,4,5)
+        self.layout().addLayout(LeftTCPBox)
+
+
+        RightTCPBox = QGridLayout()
+        RightTCPBox.addWidget(QLabel("Right Arm"),1,1)
+        RightTCPBox.addWidget(QLabel("TCP Position Ctrl"),1,2)
+        RightTCPBox.addWidget(QLabel("TCP Rotation Ctrl"),1,5)
+        RightTCPBox.addWidget(RightPosPlusZButton,2,1)
+        RightTCPBox.addWidget(RightPosMinusXButton,2,2)
+        RightTCPBox.addWidget(RightPosMinusZButton,2,3)
+        RightTCPBox.addWidget(RightPosMinusYButton,3,1)
+        RightTCPBox.addWidget(RightPosPlusYButton,3,3)
+        RightTCPBox.addWidget(RightPosPlusXButton,4,2)
+        RightTCPBox.addWidget(RightRotPlusZButton,2,4)
+        RightTCPBox.addWidget(RightRotMinusXButton,2,5)
+        RightTCPBox.addWidget(RightRotMinusZButton,2,6)
+        RightTCPBox.addWidget(RightRotMinusYButton,3,4)
+        RightTCPBox.addWidget(RightRotPlusYButton,3,6)
+        RightTCPBox.addWidget(RightRotPlusXButton,4,5)
+        self.layout().addLayout(RightTCPBox)
+
+        buttonBox = QGridLayout()
+        buttonBox.addWidget(PoseButton,1,1)
+        buttonBox.addWidget(LogButton,1,2)
+        buttonBox.addWidget(EEbutton,1,3)
+        buttonBox.addWidget(DefualtButton,1,4)
+        buttonBox.addWidget(ResetPoserButton,2,1)
+        buttonBox.addWidget(ToEETransformButton,2,2)
+        self.layout().addLayout(buttonBox)
 
         return
 
@@ -331,9 +444,11 @@ class ControlWidget(QWidget):
             print str(err)
 
 
-    def settoEETransform(self):
-        leftR = [0.9996524663245526, 0.018497438182217656, 0.018265385647972483, -0.025855527200083765, 0.6346667994564419, 0.7723531256831561, 0.002694120347130487, -0.772558288058844, 0.6349231724662359]
-        rightR = [0.9996524662307528, -0.018497444626183916, 0.018265384255842784, 0.025855530204947425, 0.6346667962295197, -0.7723531282342159, 0.0026941263138154643, 0.7725582905555143, 0.6349231694030447]
+    def toEETransform(self):
+
+        leftR = self.viewer.leftEE[0]
+        rightR = self.viewer.rightEE[0]
+        
         input1, done1 = QInputDialog.getText( 
             self,'Left Arm Cartesian Operation', 'Enter x,y,z seperated by comma:')  
         leftT = input1.split(",")
@@ -347,6 +462,42 @@ class ControlWidget(QWidget):
         if done2:
             self.robot.setRightEEInertialTransform([rightR,[float(i) for i in  rightT]],3)
         print("settoEETransform")
+    
+    def leftPosPlusZ(self):
+        self.viewer.leftTCPPosControl('z',0.02)
+    
+    def leftPosMinusZ(self):
+        self.viewer.leftTCPPosControl('z',-0.02)
+
+    def leftPosPlusX(self):
+        self.viewer.leftTCPPosControl('x',0.02)
+    
+    def leftPosMinusX(self):
+        self.viewer.leftTCPPosControl('x',-0.02)
+    
+    def leftPosPlusY(self):
+        self.viewer.leftTCPPosControl('y',0.02)
+
+    def leftPosMinusY(self):
+        self.viewer.leftTCPPosControl('y',-0.02)
+    
+    def rightPosPlusZ(self):
+        self.viewer.rightTCPPosControl('z',0.02)
+    
+    def rightPosMinusZ(self):
+        self.viewer.rightTCPPosControl('z',-0.02)
+    
+    def rightPosPlusX(self):
+        self.viewer.rightTCPPosControl('x',0.02)
+    
+    def rightPosMinusX(self):
+        self.viewer.rightTCPPosControl('x',-0.02)
+    
+    def rightPosPlusY(self):
+        self.viewer.rightTCPPosControl('y',0.02)
+
+    def rightPosMinusY(self):
+        self.viewer.rightTCPPosControl('y',-0.02)
 
 def main():
     qapp = QApplication(sys.argv) ## this along with qapp will keep the GUI running after main is exited..
