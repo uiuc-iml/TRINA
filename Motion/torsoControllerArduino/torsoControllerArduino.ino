@@ -152,8 +152,8 @@ void loop()
     count = 0;
   }
   */
-  height_validation_execution();
-  tilt_validation_execution();
+  //height_validation_execution();
+  //tilt_validation_execution();
   leg_pidCalc(leg_current_loc, leg_target);
 }
 
