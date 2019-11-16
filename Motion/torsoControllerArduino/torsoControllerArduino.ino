@@ -34,7 +34,8 @@ double dt = 0.01;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
-double leg_target = 0.3; //******************************************************************************
+double leg_target = 0.1; //******************************************************************************
+//minimum = 0.35 
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
 double leg_target_max = 0;
@@ -154,6 +155,9 @@ void loop()
   */
   //height_validation_execution();
   //tilt_validation_execution();
+  if (leg_target < 0.35){
+    leg_target = 0.35;
+  }
   leg_pidCalc(leg_current_loc, leg_target);
 }
 
