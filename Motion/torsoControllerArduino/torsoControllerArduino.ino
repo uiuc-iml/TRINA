@@ -34,7 +34,7 @@ double dt = 0.01;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
-double leg_target = 0.3; //******************************************************************************
+double leg_target = 0.35; //******************************************************************************
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
 double leg_target_max = 0;
@@ -128,8 +128,8 @@ void setup()
 void loop()
 {  
   //loop_frequency_check(); //use this function to check thie Arduino loop frequency
-  height_position_read();
-  tilt_position_read();
+  //height_position_read();
+  //tilt_position_read();
   leg_current_loc = (float)(analogRead(leg_potPin) / (117.0));
 
   
@@ -138,22 +138,31 @@ void loop()
     target_tilt = current_tilt;
     initial_loop_count++;
   }
-  /*
+  
+  
   //for handshake
   int good_message = python_communication();
+  
+  /*
   if(good_message != 0){
     count++;
-    if(count>10){
+    if(count>1000){
       stop_motor_height();
       stop_motor_tilt();   
     }
     return; //does not move motor unless receive good message
   }else{
     count = 0;
-  }
-  */
-  height_validation_execution();
-  tilt_validation_execution();
+  }*/
+
+  
+  //height_validation_execution();
+  //tilt_validation_execution();
+
+  //if (leg_target < 0.35){
+  //  leg_target = 0.35;
+  //}
+  
   leg_pidCalc(leg_current_loc, leg_target);
 }
 
@@ -164,20 +173,21 @@ void loop_frequency_check(){
 }
 
 int python_communication(){
-  int good_message = poll_message(target_height, target_tilt);//0 if succeeded, -1 if no serial, 1 for bad
+  int good_message = poll_message(target_height, target_tilt, leg_target);//0 if succeeded, -1 if no serial, 1 for bad
 
-  send_message(current_height, current_tilt, lift_moving, tilt_moving, lift_goal_reached, tilt_goal_reached); //send current state to python
+  send_message(leg_target, leg_target, lift_moving, tilt_moving, lift_goal_reached, tilt_goal_reached); //send current state to python
 
+  /*
   if (good_message != 0){
     stop_motor_height();
     stop_motor_tilt();
     return 1;
-  }
+  }*/
 
   // check if this is a special "handshake" message from the python side
   if (target_height == 0xDEAD && target_tilt == 0xBEEF){
     send_message(0xFACE, 0xB00C, lift_moving, tilt_moving, lift_goal_reached, tilt_goal_reached);
-    target_height = 0.25;
+    target_height = 0.25; // change this
     target_tilt = 250;
     stop_motor_height();
     reachedTarget=false;
@@ -463,7 +473,7 @@ void leg_runMotor(double leg_pid){
         //delayMicroseconds(leg_pwm_int);
 
     }
- Serial.print(leg_pwm_int);    
+ //Serial.print(leg_pwm_int);    
   }
   
 }
@@ -498,12 +508,12 @@ void send_message(double height, double tilt, bool lift_moving, bool tilt_moving
   
 }
 
-int poll_message(double &target_height, double &target_tilt){
+int poll_message(double &target_height, double &target_tilt, double &target_leg){
   if (!(Serial.available() > 0)){
     return -1;
   }
   int N = 100;
-  char height_buf[N], tilt_buf[N];
+  char height_buf[N], tilt_buf[N], leg_buf[N];
   
   String header_str = Serial.readStringUntil('\t');
   if (header_str != "TRINA"){
@@ -511,6 +521,7 @@ int poll_message(double &target_height, double &target_tilt){
   }
   String height_str = Serial.readStringUntil('\t');
   String tilt_str = Serial.readStringUntil('\t');
+  String leg_str = Serial.readStringUntil('\t');
   String footer_str = Serial.readStringUntil('\t');
   if (footer_str != "TRINA"){
     return 1;
@@ -520,6 +531,8 @@ int poll_message(double &target_height, double &target_tilt){
   target_height = atof(height_buf);
   tilt_str.toCharArray(tilt_buf, N);
   target_tilt = (atof(tilt_buf));
+  leg_str.toCharArray(leg_buf, N);
+  target_leg = atof(leg_buf);
   
   return 0;
 }

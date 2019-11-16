@@ -9,7 +9,7 @@ Class to interface between a python script and an Arduino microcontroller
 """
 class ArduinoBridge:
 
-    def __init__(self, port_addr = "/dev/ttyACM0", baud = 9600):
+    def __init__(self, port_addr = "/dev/ttyACM0", baud = 115200):
         self.port_addr = port_addr
         self.baud = baud
         self.port = serial.Serial(port_addr, baud)
@@ -23,17 +23,19 @@ class ArduinoBridge:
 
 class TorsoController:
 
-    def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 9600, dt = 0.01):
+    def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 115200, dt = 0.01):
         self.arduino = ArduinoBridge(arduino_port_addr, arduino_baud)
         self.message_header = "TRINA\t"
         self.message_footer = "\tTRINA"
+
         self.target_tilt = 0
         self.target_height = 0
+        self.target_leg = 0
+
         self.height = 0
         self.tilt = 0
         self.lift_moving = False
         self.tilt_moving = False
-        self.tilt_limit_switch = False
         self.control_thread = Thread(target = self._controlLoop)
         self.enabled = False
         self.dt = dt
@@ -45,7 +47,7 @@ class TorsoController:
     def sendHandshake(self):
         # wait for the arduino's message
         while not self.connected:
-            self.sendTargetPositions(0xdead, 0xbeef)
+            self.sendTargetPositions(0xdead, 0xbeef, 0)
             self._updateSensorFeedback()
             if self.height == 0xface and self.tilt == 0xb00c:
                 self.connected = True
@@ -54,11 +56,12 @@ class TorsoController:
         self.lift_moving = False
         self.tilt_moving = False
 
-    def sendTargetPositions(self, height, tilt):
+    def sendTargetPositions(self, height, tilt, leg):
         self.target_height = height
         self.target_tilt = tilt
+        self.target_leg = leg
 
-        message = self.message_header + str(height) + "\t" + str(tilt) + self.message_footer + "\t"
+        message = self.message_header + str(height) + "\t" + str(tilt) + "\t" + str(leg) + self.message_footer + "\t"
         self.arduino.send_message(message) 
 
     def start(self):
@@ -98,6 +101,7 @@ class TorsoController:
 
     def _updateSensorFeedback(self):
         message = self.arduino.read_message()
+        #print(message)
 
         header_idx = message.find(self.message_header)
         footer_idx = message.find(self.message_footer)
@@ -121,14 +125,17 @@ class TorsoController:
         self.stateRead = False
 
 if __name__ == "__main__":
-    t = TorsoController()
+    t = TorsoController(arduino_port_addr = "/dev/ttyACM0", dt = 0.01)
     t.start()
 
-    t.sendTargetPositions(0.35, 0)
-
     start_time = time.time()
+    i=0
+
     while(time.time() - start_time < 20):
-        print(t.getStates())
-        time.sleep(0.1)
+        t.sendTargetPositions(0.29, 39, 1.5)
+        print(i, t.getStates())
+        time.sleep(0.01)
+        i += 1
+
     print("shutting down...")
     t.shutdown()
