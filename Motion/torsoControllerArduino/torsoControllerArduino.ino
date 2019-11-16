@@ -30,7 +30,7 @@ const int leg_potPin = A0;
 double leg_kp = 0.355, leg_ki = 0.05, leg_kd = 0.0042; 
 double leg_error, leg_de, leg_ie; //param
 double leg_error_last;
-double dt = 0.01;
+double dt = 0.025;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
@@ -144,27 +144,29 @@ void loop()
   //for handshake
   int good_message = python_communication();
   
-  /*
+  
   if(good_message != 0){
     count++;
-    if(count>1000){
+    if(count>100){
       stop_motor_height();
       stop_motor_tilt();   
+      return; //does not move motor unless receive good message
     }
-    return; //does not move motor unless receive good message
   }else{
     count = 0;
-  }*/
+  }
 
   
   //height_validation_execution();
   //tilt_validation_execution();
 
-  //if (leg_target < 0.35){
-  //  leg_target = 0.35;
-  //}
+  if (leg_target < 0.35){
+    leg_target = 0.35;
+  }
   
   leg_pidCalc(leg_current_loc, leg_target);
+  
+  delay (25);
 }
 
 void loop_frequency_check(){
@@ -178,12 +180,12 @@ int python_communication(){
 
   send_message(leg_target, leg_target, lift_moving, tilt_moving, lift_goal_reached, tilt_goal_reached); //send current state to python
 
-  /*
+  
   if (good_message != 0){
-    stop_motor_height();
-    stop_motor_tilt();
+    //stop_motor_height();
+    //stop_motor_tilt();
     return 1;
-  }*/
+  }
 
   // check if this is a special "handshake" message from the python side
   if (target_height == 0xDEAD && target_tilt == 0xBEEF){
@@ -492,7 +494,7 @@ float mapValues(double value, double fromLow, double fromHigh, double toLow, dou
 void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool lift_goal_reached, bool tilt_goal_reached){
   // serialized data format: "TRINA\t[tilt]\t[height]\t[tilt_limit_switch]\t[lift_limit_switch]\tTRINA\n"
   
-  Serial.print("TRINA\t");
+  Serial.print("T\t");
   Serial.print(tilt);
   Serial.print("\t");
   Serial.print(height);
@@ -505,7 +507,7 @@ void send_message(double height, double tilt, bool lift_moving, bool tilt_moving
   Serial.print("\t");
   Serial.print(lift_goal_reached);
   */
-  Serial.println("\tTRINA");
+  Serial.println("\tT");
   
 }
 
@@ -517,16 +519,21 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
   char height_buf[N], tilt_buf[N], leg_buf[N];
   
   String header_str = Serial.readStringUntil('\t');
-  if (header_str != "TRINA"){
+  if (header_str != "T"){
+    Serial.print("000000000000000000000000000000badmesage");
     return 1;
   }
   String height_str = Serial.readStringUntil('\t');
   String tilt_str = Serial.readStringUntil('\t');
   String leg_str = Serial.readStringUntil('\t');
   String footer_str = Serial.readStringUntil('\t');
-  if (footer_str != "TRINA"){
+  
+  if (footer_str != "T"){
+     Serial.println(leg_str);
+     Serial.println(footer_str);
     return 1;
   }
+  
   
   height_str.toCharArray(height_buf, N);
   target_height = atof(height_buf);

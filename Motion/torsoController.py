@@ -23,10 +23,10 @@ class ArduinoBridge:
 
 class TorsoController:
 
-    def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 115200, dt = 0.01):
+    def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 115200, dt = 0.025):
         self.arduino = ArduinoBridge(arduino_port_addr, arduino_baud)
-        self.message_header = "TRINA\t"
-        self.message_footer = "\tTRINA"
+        self.message_header = "T\t"
+        self.message_footer = "\tT"
 
         self.target_tilt = 0
         self.target_height = 0
@@ -101,7 +101,7 @@ class TorsoController:
 
     def _updateSensorFeedback(self):
         message = self.arduino.read_message()
-        #print(message)
+        print(message)
 
         header_idx = message.find(self.message_header)
         footer_idx = message.find(self.message_footer)
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     i=0
 
     while(time.time() - start_time < 20):
-        t.sendTargetPositions(0.29, 39, 1.5)
+        t.sendTargetPositions(0.29, 39, 1.0)
         print(i, t.getStates())
         time.sleep(0.01)
         i += 1
