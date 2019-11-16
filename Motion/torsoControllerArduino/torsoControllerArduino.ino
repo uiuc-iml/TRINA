@@ -35,6 +35,7 @@ double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
 double leg_target = 0.35; //******************************************************************************
+//minimum = 0.35 
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
 double leg_target_max = 0;
