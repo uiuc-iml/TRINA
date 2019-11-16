@@ -23,6 +23,26 @@ double speed = 20;
 int loop1 = 0;
 bool stop_tilt = false;
 
+//Support Leg Setup
+const int leg_potPin = A0;
+#define leg_dir 4 //DIR
+#define leg_pwm 3 //PWM
+double leg_kp = 0.355, leg_ki = 0.05, leg_kd = 0.0042; 
+double leg_error, leg_de, leg_ie; //param
+double leg_error_last;
+double dt = 0.01;
+double currentTime = 0.0;
+double previous_time = micros(); //previous time var. Default set to current time
+int dtpulsewidth = 1000;
+double leg_target = 0.3; //******************************************************************************
+boolean reachedTarget=false;
+//-----------------------Python Comm Setup-------------------
+double leg_target_max = 0;
+double leg_target_min = 2;
+double leg_error_range = 0.01;
+double leg_current_loc = 0;
+bool moving = false;
+
 //Tilt Potentiometer Setup (AMT23 Encoder)
 //Define special ascii characters
 #define carriageReturn  0x0D
@@ -110,6 +130,8 @@ void loop()
   //loop_frequency_check(); //use this function to check thie Arduino loop frequency
   height_position_read();
   tilt_position_read();
+  leg_current_loc = (float)(analogRead(leg_potPin) / (117.0));
+
   
   if(initial_loop_count == 0){ //make robot stay at it's initial position
     target_height = current_height;
@@ -132,6 +154,7 @@ void loop()
   */
   height_validation_execution();
   tilt_validation_execution();
+  leg_pidCalc(leg_current_loc, leg_target);
 }
 
 void loop_frequency_check(){
@@ -157,6 +180,7 @@ int python_communication(){
     target_height = 0.25;
     target_tilt = 250;
     stop_motor_height();
+    reachedTarget=false;
     stop_motor_tilt();
     return 1;
   }
@@ -386,6 +410,73 @@ uint16_t getPositionSSI_efficient(uint8_t resolution)
 
   return currentPosition;
 }
+
+float leg_pidCalc(double current_pos, double leg_target){
+  //dt = micros() - previous_time;
+  //previous_time = micros(); //reset the previous time
+  leg_error = leg_target - current_pos; 
+  leg_de = (leg_error - leg_error_last) / dt;
+  leg_ie = leg_ie + leg_error * dt;
+  leg_error_last = leg_error;
+  double leg_pid = (leg_kp*leg_error) + (leg_ki * leg_ie) + (leg_kd * leg_de);
+  if(reachedTarget){
+     leg_runMotor(0);
+    }else{
+  leg_runMotor(leg_pid);
+    }
+  return 0;
+}
+
+
+void stopActuator(){
+  digitalWrite(leg_dir, LOW);
+  analogWrite(leg_pwm, 0);
+}
+
+void leg_runMotor(double leg_pid){
+  if(leg_pid > 2){
+    leg_pid = 2;   
+ }if(leg_pid < -2){
+  leg_pid = -2;
+ }
+ if(fabs(leg_pid) < (1.0/117.0)){
+   digitalWrite(leg_dir, LOW);
+   analogWrite(leg_pwm, 0);
+   reachedTarget=true;       
+   return;
+    }else{
+
+  double leg_pwm_double =  mapValues(fabs(leg_pid), 0, 2.0, 0, 255.0);
+  int leg_pwm_int = (int)leg_pwm_double;
+  
+    if(leg_pid < 0){
+       digitalWrite(leg_dir, HIGH);
+       analogWrite(leg_pwm, 255);
+       analogWrite(5, 255);
+       //delayMicroseconds(leg_pwm_int);
+
+
+      }else {
+        digitalWrite(leg_dir, LOW);
+        analogWrite(leg_pwm, 255);
+        analogWrite(5, 255);
+        //delayMicroseconds(leg_pwm_int);
+
+    }
+ Serial.print(leg_pwm_int);    
+  }
+  
+}
+
+
+float mapValues(double value, double fromLow, double fromHigh, double toLow, double toHigh){
+    
+    float f = (value-fromLow) * (toHigh - toLow) / (float)((fromHigh - fromLow) + toLow);
+    return f;
+}
+
+
+
 
 void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool lift_goal_reached, bool tilt_goal_reached){
   // serialized data format: "TRINA\t[tilt]\t[height]\t[tilt_limit_switch]\t[lift_limit_switch]\tTRINA\n"
