@@ -1,5 +1,7 @@
 import serial
+import math
 import signal
+import struct
 import sys
 import time
 from threading import Thread
@@ -27,8 +29,8 @@ class TorsoController:
 
     def __init__(self, arduino_port_addr = "/dev/ttyACM0", arduino_baud = 115200, dt = 0.025):
         self.arduino = ArduinoBridge(arduino_port_addr, arduino_baud)
-        self.message_header = "T\t"
-        self.message_footer = "\tR"
+        self.message_header = "T"
+        self.message_footer = "R"
 
         self.target_tilt = 0
         self.target_height = 0
@@ -47,13 +49,12 @@ class TorsoController:
     def sendHandshake(self):
         # wait for the arduino's message
         while not self.connected:
-            message = self.message_header + "Hi" + self.message_footer
-            print("sending", message)
+            message = "Hi"
             self.arduino.send_message(message)
 
             msg = self.arduino.read_message()
-            print("rec", msg)
-            if msg == "yo\r\n":
+            print(msg)
+            if msg == "yo\n":
                 self.connected = True
 
             time.sleep(0.1)
@@ -90,24 +91,18 @@ class TorsoController:
 
     def _controlLoop(self):
         while self.enabled:
-            rv = self._updateSensorFeedback()
-            if not rv:
-                time.sleep(self.dt)
-                continue
 
-            message = self.message_header + str(self.target_height) + "\t" + str(self.target_tilt) + "\t" + str(self.target_leg) + self.message_footer + "\t"
+            message = self.message_header + "\t" + str(self.target_height) + "\t" + str(self.target_tilt) + "\t" + str(self.target_leg) + "\t" + self.message_footer
             self.arduino.send_message(message) 
+
+            rv = self._updateSensorFeedback()
+
             time.sleep(self.dt)
 
     def _updateSensorFeedback(self):
         message = self.arduino.read_message()
-        print("received", message)
-        """
         if "bad" in message:
-            print("bad")
-        else:
-            print("good")
-        """
+            print("BAD")
 
         header_idx = message.find(self.message_header)
         footer_idx = message.find(self.message_footer)
@@ -115,17 +110,22 @@ class TorsoController:
         if header_idx == -1 or footer_idx == -1:
             return False
 
-        parsed_message = message[header_idx+len(self.message_header) + 1 : footer_idx]
+        parsed_message = message[header_idx+len(self.message_header) + 1 : footer_idx - 1]
         vals = parsed_message.split("\t")
         if len(vals) != 3:
+            print("hi")
             return False
 
         try:
-            self.tilt = float(vals[0])
-            self.height = float(vals[1])
-            self.leg = float(vals[2])
+            t = float(vals[0])
+            h = float(vals[1])
+            l = float(vals[2])
         except:
             return False
+
+        self.tilt = t
+        self.height = h
+        self.leg = l
 
         self.stateRead = False
         return True
@@ -140,6 +140,7 @@ if __name__ == "__main__":
     t.sendTargetPositions(0.2, 0.3, 0.4)
 
     while(time.time() - start_time < 20):
+        t.sendTargetPositions(math.sin(time.time()), 0.3, 0.4)
         print(t.getStates())
         time.sleep(0.1)
         i += 1
