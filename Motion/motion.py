@@ -529,7 +529,8 @@ class Motion:
         self._controlLoopLock.acquire()
         initial = self.robot_model.getConfig()
         goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
-        if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
+	if ik.solve(goal,activeDofs = self.left_active_Dofs):
+        #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
             target_config = self.robot_model.getConfig()
             print("motion.setLeftEEInertialTransform():IK solve successful")
         else:
@@ -590,7 +591,8 @@ class Motion:
         self._controlLoopLock.acquire()
         initial = self.robot_model.getConfig()
         goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
-        if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
+	if ik.solve(goal,activeDofs = self.right_active_Dofs):
+        #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
             target_config = self.robot_model.getConfig()
             print("motion.setRightEEInertialTransform():IK solve successful")
         else:

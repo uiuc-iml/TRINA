@@ -4,7 +4,7 @@ import sys
 from motion import Motion
 
 ##global variable
-robot = Motion(mode = "Kinematic")
+robot = Motion(mode = "Physical")
 def sigint_handler(signum,frame):
 	robot.shutdown()
 	sys.exit(0)
