@@ -1,0 +1,14 @@
+<!DOCTYPE MeshLabDocument>
+<MeshLabProject>
+ <MeshGroup>
+  <MLMesh filename="Fetch_base.off" label="Fetch_base.STL">
+   <MLMatrix44>
+1 0 0 -0.298213 
+0 -0.000203176 -1 0.252622 
+0 1 -0.000203176 0 
+0 0 0 1 
+</MLMatrix44>
+  </MLMesh>
+ </MeshGroup>
+ <RasterGroup/>
+</MeshLabProject>
