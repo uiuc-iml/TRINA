@@ -32,12 +32,12 @@ double dt = 0.025;
 double currentTime = 0.0;
 double previous_time = micros(); //previous time var. Default set to current time
 int dtpulsewidth = 1000;
-double leg_target = 0.35;
+double target_leg = 0.35;
 //minimum = 0.35 
 boolean reachedTarget=false;
 //-----------------------Python Comm Setup-------------------
-double leg_target_max = 0;
-double leg_target_min = 2;
+double target_leg_max = 0;
+double target_leg_min = 2;
 double leg_error_range = 0.01;
 double leg_current_loc = 0;
 bool moving = false;
@@ -138,19 +138,25 @@ void loop()
         initial_loop_count++;
     }
 
+    int rv = poll_message(target_height, target_tilt, target_leg);
+  
+    // check if this is a special "handshake" message from the python side
+    if (rv == 1){
+      Serial.print("yo\n");
+    } else if (rv == 0){
+      send_message(target_height, target_tilt, target_leg);
+    } else {
+      Serial.print("BAD\n");
+    }
 
-    //for handshake
-    int good_message = python_communication();
-
-
-    if(good_message != 0){
+    if(rv != 0){
         count++;
-        if(count>100){
+        if(count>10){
             stop_motor_height();
             stop_motor_tilt();   
             return; //does not move motor unless receive good message
         }
-    }else{
+    } else {
         count = 0;
     }
 
@@ -158,44 +164,19 @@ void loop()
     //height_validation_execution();
     //tilt_validation_execution();
 
-    if (leg_target < 0.35){
-        leg_target = 0.35;
+    if (target_leg < 0.35){
+        target_leg = 0.35;
     }
 
-    leg_pidCalc(leg_current_loc, leg_target);
+    leg_pidCalc(leg_current_loc, target_leg);
 
-    delay (25);
+    delay(10);
 }
 
 void loop_frequency_check(){
     previous_loop_time = loop_time;
     loop_time = millis();
     loop_frequency = 1/(loop_time-previous_loop_time); //can use printf() to print out Arduino's loop frequency
-}
-
-int python_communication(){
-    int good_message = poll_message(target_height, target_tilt, leg_target);//0 if succeeded, -1 if no serial, 1 for bad
-
-    send_message(leg_target, leg_target, lift_moving, tilt_moving, lift_goal_reached, tilt_goal_reached); //send current state to python
-
-
-    if (good_message != 0){
-        //stop_motor_height();
-        //stop_motor_tilt();
-        return 1;
-    }
-
-    // check if this is a special "handshake" message from the python side
-    if (target_height == 0xDEAD && target_tilt == 0xBEEF){
-        send_message(0xFACE, 0xB00C, lift_moving, tilt_moving, lift_goal_reached, tilt_goal_reached);
-        target_height = 0.25; // change this
-        target_tilt = 250;
-        stop_motor_height();
-        reachedTarget=false;
-        stop_motor_tilt();
-        return 1;
-    }
-    return 0;
 }
 
 void height_position_read(){
@@ -403,10 +384,10 @@ uint16_t getPositionSSI_efficient(uint8_t resolution) {
     return currentPosition;
 }
 
-float leg_pidCalc(double current_pos, double leg_target){
+float leg_pidCalc(double current_pos, double target_leg){
     //dt = micros() - previous_time;
     //previous_time = micros(); //reset the previous time
-    leg_error = leg_target - current_pos; 
+    leg_error = target_leg - current_pos; 
     leg_de = (leg_error - leg_error_last) / dt;
     leg_ie = leg_ie + leg_error * dt;
     leg_error_last = leg_error;
@@ -461,53 +442,79 @@ float map_values(double value, double input_low, double input_high, double outpu
     return f;
 }
 
-void send_message(double height, double tilt, bool lift_moving, bool tilt_moving, bool lift_goal_reached, bool tilt_goal_reached){
-    // serialized data format: "TRINA\t[tilt]\t[height]\t[tilt_limit_switch]\t[lift_limit_switch]\tTRINA\n"
-
-    Serial.print("T\t");
-    Serial.print(tilt);
-    Serial.print("\t");
-    Serial.print(height);
-    Serial.print("\t");
-    Serial.print(tilt_moving);
-    Serial.print("\t");
-    Serial.print(lift_moving);
-    Serial.println("\tT");
+void send_message(double height, double tilt, double leg){
+  Serial.print("T\t");
+  Serial.print(tilt);
+  Serial.print("\t");
+  Serial.print(height);
+  Serial.print("\t");
+  Serial.print(leg);
+  Serial.print("\tR");
+  Serial.print("\n");
 }
 
 int poll_message(double &target_height, double &target_tilt, double &target_leg){
-    if (!(Serial.available() > 0)){
-        return -1;
+  int i=0;
+
+  static char buf[200];
+  memset(buf, 0, 200);
+  
+  while (Serial.available() > 0 && i < 200){
+    buf[i++] = Serial.read();
+  }
+
+  if (i > 190){
+    while (Serial.available() > 0){
+      Serial.read();
     }
-    int N = 100;
-    char height_buf[N], tilt_buf[N], leg_buf[N];
+  }
 
-    String header_str = Serial.readStringUntil('\t');
-    if (header_str != "T"){
-        Serial.print("000000000000000000000000000000badmesage");
-        return 1;
-    }
-    String height_str = Serial.readStringUntil('\t');
-    String tilt_str = Serial.readStringUntil('\t');
-    String leg_str = Serial.readStringUntil('\t');
-    String footer_str = Serial.readStringUntil('\t');
+  if (buf[0] == 'H' && buf[1] == 'i'){
+    return 1;
+  }
+  
+  if (buf[0] != 'T' && buf[1] != '\t'){
+    return -1;
+  }
 
-    if (footer_str != "T"){
-        Serial.println(leg_str);
-        Serial.println(footer_str);
-        return 1;
-    }
+  String height_str = "", tilt_str = "", leg_str =" ";
 
-    height_str.toCharArray(height_buf, N);
-    target_height = atof(height_buf);
-    tilt_str.toCharArray(tilt_buf, N);
-    target_tilt = (atof(tilt_buf));
-    leg_str.toCharArray(leg_buf, N);
-    target_leg = atof(leg_buf);
+  int cnt = 2;
+  
+  while(buf[cnt] != '\t' && cnt < 199){
+    height_str += buf[cnt++]; 
+  }
+  cnt++;
 
-    return 0;
+  while(buf[cnt] != '\t' && cnt < 199){
+    tilt_str += buf[cnt++]; 
+  }
+  cnt++;
+
+  while(buf[cnt] != '\t' && cnt < 199){
+    leg_str += buf[cnt++]; 
+  }
+  cnt++;
+
+  if (buf[cnt] != 'R'){
+    return -2;
+  }
+
+  int N = 10;
+  char height_buf[N], tilt_buf[N], leg_buf[N];
+
+  height_str.toCharArray(height_buf, N);
+  target_height = atof(height_buf);
+  tilt_str.toCharArray(tilt_buf, N);
+  target_tilt = (atof(tilt_buf));
+  leg_str.toCharArray(leg_buf, N);
+  target_leg = atof(leg_buf);
+  
+  return 0;
 }
 
+//TODO: use the PIDController class instead of writing the same PID calculation multiple times.
+/*
 class PIDController{
   private:
     double kP, kI, kD;
@@ -569,3 +576,4 @@ class PIDController{
     }
 
 };
+*/
