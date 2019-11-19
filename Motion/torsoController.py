@@ -114,8 +114,11 @@ class TorsoController:
 
     def _updateSensorFeedback(self):
         message = self.arduino.read_message()
-        if "bad" in message:
-            print("bad")
+        if "BAD" in message:
+            print("BAD")
+            return False
+        if "pwm" in message:
+            print(message)
             return False
 
         header_idx = message.find(self.message_header)
@@ -150,10 +153,9 @@ if __name__ == "__main__":
     start_time = time.time()
     i=0
 
-    t.sendTargetPositions(0.29, 39, 1.0)
+    t.sendTargetPositions(0, 260, 0)
 
-    while(time.time() - start_time < 20):
-        t.sendTargetPositions(math.sin(time.time()), 0.3, 0.4)
+    while(time.time() - start_time < 30):
         print(t.getStates())
         time.sleep(0.1)
         i += 1
