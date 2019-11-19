@@ -14,7 +14,7 @@ double loop_frequency = 0;
 #define kTiltDirectionPin   13
 #define kLegPotPin          A0
 #define kLegDirectionPin    4
-#define kLegPwmPin          3
+#define kLegPwmPin          9
 
 #define kBaudRate        115200     //Need faster kBaudRate to prevent miss counting turns
 bool stop_height = false;
@@ -25,7 +25,7 @@ int loop1 = 0;
 bool stop_tilt = false;
 
 //Support Leg Setup
-double leg_kp = 1.0, leg_ki = 0.0, leg_kd = 0.0042;
+double leg_kp = 3.0, leg_ki = 0.0, leg_kd = 0.0042;
 double leg_error, leg_de, leg_ie; //param
 double leg_error_last;
 double dt = 0.025;
@@ -101,7 +101,7 @@ double previous_time_height = millis(); //initialize previous time to current ti
 
 //Tilt PID setup
 #define tilt_kp   10
-#define tilt_ki   0
+#define tilt_ki   0.5
 #define tilt_kd   0             // PID parameters for tilt
 double tilt_e_last, dt_tilt;
 double previous_time_tilt = millis(); //initialize previous time to current time
@@ -126,7 +126,6 @@ void setup()
 
 void loop()
 {
-  //loop_frequency_check(); //use this function to check thie Arduino loop frequency
   height_position_read();
   tilt_position_read();
   leg_current_loc = (float)(analogRead(kLegPotPin) / (117.0));
@@ -135,6 +134,7 @@ void loop()
   if (initial_loop_count == 0) { //make robot stay at it's initial position
     target_height = current_height;
     target_tilt = current_tilt;
+    target_leg = leg_current_loc;
     initial_loop_count++;
   }
 
@@ -144,7 +144,7 @@ void loop()
   if (rv == 1) {
     Serial.print("yo\n");
   } else if (rv == 0) {
-    send_message(target_tilt, current_tilt, 0);
+    send_message(current_height, current_tilt, leg_current_loc);
   } else {
     Serial.print("BAD\n");
   }
@@ -158,13 +158,12 @@ void loop()
     }
   } else {
     count = 0;
-    //height_validation_execution();
+    height_validation_execution();
     tilt_validation_execution();
-
     leg_pidCalc(leg_current_loc, target_leg);
   }
 
-  //delay(10);
+  delay(10);
 }
 
 void loop_frequency_check() {
@@ -183,8 +182,8 @@ void tilt_position_read() {
 
   while (encoderPosition == 0xFFFF && attempts++ < 3)
   {
-    Serial.print("");
-    delay(10); //important for reading correct data, 1ms doesn't work
+    //Serial.print("");
+    //delay(10); //important for reading correct data, 1ms doesn't work
     encoderPosition = getPositionSSI_efficient(res14); //try again
   }
 
@@ -194,7 +193,10 @@ void tilt_position_read() {
 
   encoderPosition_Float = encoderPosition * 0.021974; //turn the encoder's value in degrees
 
-  current_tilt = encoderPosition_Float + 360.0 * turn_count;
+  double val = encoderPosition_Float + 360.0 * turn_count;
+  if (val < 280){
+    current_tilt = val;
+  }
   encoderPosition_Float_Old = encoderPosition_Float;
 }
 
@@ -203,11 +205,11 @@ void height_validation_execution() {
   previous_time_height = millis();
 
   if (target_height >= target_height_min && target_height <= target_height_max && current_height >= target_height_min && current_height <= target_height_max ) { //check if the target height is within range
-    if (abs(current_height - target_height) == 0) {
+    if (abs(current_height - target_height) < height_error_range) {
       stop_motor_height();
       stop_height = true;
       lift_goal_reached = true;
-    } else if (stop_height == false && abs(current_height - target_height) > 0) {
+    } else if (stop_height == false && abs(current_height - target_height) >= height_error_range) {
       height_pid_control(current_height, target_height);
       previous_target_height = target_height;
       lift_goal_reached = false;
@@ -227,11 +229,11 @@ void tilt_validation_execution() {
   previous_time_tilt = millis();
 
   if (target_tilt >= target_tilt_min && target_tilt <= target_tilt_max && current_tilt >= target_tilt_min && current_tilt <= target_tilt_max ) { //check if the target tilt is within range
-    if (abs(current_tilt - target_tilt) == 0) {
+    if (abs(current_tilt - target_tilt) < tilt_error_range) {
       stop_motor_tilt();
       stop_tilt = true;
       tilt_goal_reached = true;
-    } else if (stop_tilt == false && abs(current_tilt - target_tilt) > 0) {
+    } else if (stop_tilt == false && abs(current_tilt - target_tilt) >= tilt_error_range) {
       tilt_pid_control(current_tilt, target_tilt);
       previous_target_tilt = target_tilt;
       tilt_goal_reached = false;
@@ -255,9 +257,9 @@ float height_pid_control(double current_height, double target_height) {
   return 0;
 }
 
-float tilt_pid_control(double current_tilt, double target_tilt) {
+float tilt_pid_control(double current_t, double target_t) {
   double e, de, ie;
-  e = target_tilt - current_tilt;
+  e = target_t - current_t;
   de = (e - tilt_e_last) / dt_tilt;
   ie = ie + e * dt_tilt;
   tilt_e_last = e;
@@ -495,6 +497,7 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
 
   while (buf[cnt] != '\t' && cnt < 199) {
     leg_str += buf[cnt++];
+    reachedTarget = false;
   }
   cnt++;
 
@@ -509,7 +512,7 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
   height_str.toCharArray(height_buf, N);
   target_height = atof(height_buf);
   tilt_str.toCharArray(tilt_buf, N);
-  target_tilt = (atof(tilt_buf));
+  target_tilt = atof(tilt_buf);
   leg_str.toCharArray(leg_buf, N);
   target_leg = atof(leg_buf);
   
