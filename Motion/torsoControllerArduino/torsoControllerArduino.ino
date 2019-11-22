@@ -40,6 +40,8 @@ double target_leg_max = 0;
 double target_leg_min = 2;
 double leg_error_range = 0.01;
 double leg_current_loc = 0;
+enum states{Closed, Moving, Open} leg_states;
+double leg_soft_limit = 0.35;
 bool moving = false;
 
 //Tilt Potentiometer Setup (AMT23 Encoder)
@@ -92,6 +94,7 @@ double current_tilt = 0;
 bool tilt_moving = true;
 bool tilt_goal_reached = true;
 
+
 //Height PID setup
 #define height_kp   80
 #define height_ki   5
@@ -105,6 +108,7 @@ double previous_time_height = millis(); //initialize previous time to current ti
 #define tilt_kd   0             // PID parameters for tilt
 double tilt_e_last, dt_tilt;
 double previous_time_tilt = millis(); //initialize previous time to current time
+
 
 
 int count = 0;
@@ -129,6 +133,11 @@ void loop()
   height_position_read();
   tilt_position_read();
   leg_current_loc = (float)(analogRead(kLegPotPin) / (117.0));
+  if((2-leg_current_loc) <= (1/117)){
+    leg_states = Open;
+    }else if((leg_current_loc - leg_soft_limit) <= (1/117)){
+      leg_states = Closed;
+      }else leg_states = Moving;
 
 
   if (initial_loop_count == 0) { //make robot stay at it's initial position
@@ -144,7 +153,7 @@ void loop()
   if (rv == 1) {
     Serial.print("yo\n");
   } else if (rv == 0) {
-    send_message(current_height, current_tilt, leg_current_loc);
+    send_message(current_height, current_tilt, leg_states);
   } else {
     Serial.print("BAD\n");
   }
@@ -160,6 +169,9 @@ void loop()
     count = 0;
     height_validation_execution();
     tilt_validation_execution();
+    if(target_leg <= leg_soft_limit){
+      target_leg = leg_soft_limit;
+      }
     leg_pidCalc(leg_current_loc, target_leg);
   }
 
@@ -439,7 +451,7 @@ double map_values(double value, double input_low, double input_high, double outp
   return f;
 }
 
-void send_message(double height, double tilt, double leg) {
+void send_message(double height, double tilt, states leg) {
   Serial.print("T\t");
   Serial.print(tilt);
   Serial.print("\t");
@@ -513,7 +525,6 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
   target_height = atof(height_buf);
   tilt_str.toCharArray(tilt_buf, N);
   target_tilt = atof(tilt_buf);
-  leg_str.toCharArray(leg_buf, N);
   target_leg = atof(leg_buf);
   
   if (target_leg < 0.35) {
