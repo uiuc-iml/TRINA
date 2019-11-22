@@ -49,7 +49,7 @@ void* controller_thread_func(void* vdata)
     double dt = mytimer.ElapsedTime() - data->t;
 
     if(dt < 0.005)
-      ThreadSleep(0.005);
+      ThreadSleep(0.005); // should be ThreadSleep(0.005-dt)
     else
       ThreadYield();
   }
@@ -911,7 +911,6 @@ BOOL isEndEffectorDriveEnabled(int limb)
 }
 
 ////// GRIPPER ///////
-
 ///Returns true the gripper is enabled
 BOOL isGripperEnabled(int limb)
 {

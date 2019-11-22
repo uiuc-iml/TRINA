@@ -283,7 +283,6 @@ class EndEffector:
         else:
             return motion_lib.sendEndEffectorPositionDrive(self.limb,self.tempp_p)
 
-
 class Gripper:
     def __init__(self,limb):
         self.limb = limb
