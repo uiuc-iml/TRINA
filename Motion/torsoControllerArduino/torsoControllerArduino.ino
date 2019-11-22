@@ -19,14 +19,13 @@ double loop_frequency = 0;
 #define kBaudRate        115200     //Need faster kBaudRate to prevent miss counting turns
 bool stop_height = false;
 
-
 //Tilt Motor Setup
 double speed = 20;
 int loop1 = 0;
 bool stop_tilt = false;
 
 //Support Leg Setup
-double leg_kp = 9.0, leg_ki = 0.0, leg_kd = 0.0042;
+double leg_kp = 3.0, leg_ki = 0.0, leg_kd = 0.0042;
 double leg_error, leg_de, leg_ie; //param
 double leg_error_last;
 double dt = 0.025;
@@ -95,7 +94,6 @@ double current_tilt = 0;
 bool tilt_moving = true;
 bool tilt_goal_reached = true;
 
-
 //Height PID setup
 #define height_kp   80
 #define height_ki   5
@@ -109,7 +107,6 @@ double previous_time_height = millis(); //initialize previous time to current ti
 #define tilt_kd   0             // PID parameters for tilt
 double tilt_e_last, dt_tilt;
 double previous_time_tilt = millis(); //initialize previous time to current time
-
 
 
 int count = 0;
@@ -136,15 +133,9 @@ void loop()
   leg_current_loc = (float)(analogRead(kLegPotPin) / (117.0));
   if((2-leg_current_loc) <= (1/117)){
     leg_states = Open;
-<<<<<<< HEAD
   }else if((leg_current_loc - leg_soft_limit) <= (1/117)){
     leg_states = Closed;
   }else leg_states = Moving;
-=======
-    }else if((leg_current_loc - leg_soft_limit) <= (1/117)){
-      leg_states = Closed;
-      }else leg_states = Moving;
->>>>>>> 95ce7e30dbac68d977fd0d3252dd3686c49e11db
 
 
   if (initial_loop_count == 0) { //make robot stay at it's initial position
@@ -178,11 +169,7 @@ void loop()
     tilt_validation_execution();
     if(target_leg <= leg_soft_limit){
       target_leg = leg_soft_limit;
-<<<<<<< HEAD
     }
-=======
-      }
->>>>>>> 95ce7e30dbac68d977fd0d3252dd3686c49e11db
     leg_pidCalc(leg_current_loc, target_leg);
   }
 
@@ -536,6 +523,7 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
   target_height = atof(height_buf);
   tilt_str.toCharArray(tilt_buf, N);
   target_tilt = atof(tilt_buf);
+  leg_str.toCharArray(leg_buf, N);
   target_leg = atof(leg_buf);
   
   if (target_leg < 0.35) {

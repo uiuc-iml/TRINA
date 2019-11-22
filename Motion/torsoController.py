@@ -148,7 +148,7 @@ class TorsoController:
         return True
 
 if __name__ == "__main__":
-    t = TorsoController(arduino_port_addr = "/dev/ttyACM1", dt = 0.001)
+    t = TorsoController(arduino_port_addr = "/dev/ttyACM0", dt = 0.001)
     t.start()
 
     start_time = time.time()
