@@ -69,19 +69,22 @@ class MotionClient:
 		return
 
 	def setLeftEEInertialTransform(self,Ttarget,duration):
-		self.s.setLeftEEInertialTransform(Ttarget,duration)
-		return
+		return self.s.setLeftEEInertialTransform(Ttarget,duration)
+		
 
-	def setLeftEEVelocity(self,v = None,w = None, tool = [0,0,0]):
-		self.s.setLeftEEVelocity(v = v,w = w, tool = tool)
+	def setLeftEEVelocity(self,v,tool):
+		if not tool:
+			tool = [0,0,0]		
+		self.s.setLeftEEVelocity(v,tool)
 
 	def setRightEEInertialTransform(self,Ttarget,duration):
-		self.s.setRightEEInertialTransform(Ttarget,duration)
-		return
+		return self.s.setRightEEInertialTransform(Ttarget,duration)
+		
 
-	def setRightEEVelocity(self,v = None,w = None, tool = [0,0,0]):
-		self.s.setRightEEVelocity(v = v,w = w, tool = tool)
-
+	def setRightEEVelocity(self, v ,tool):
+		if not tool:
+			tool = [0,0,0]		
+		self.s.setRightEEVelocity(v,tool)
 
 	def sensedLeftEETransform(self):
 		"""Return the transform w.r.t. the base frame"""
@@ -169,5 +172,10 @@ class MotionClient:
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startup()
-	print(motion.sensedLeftLimbPosition())
+	while (1==1):
+		time.sleep(0.02)
+		try:
+			motion.getKlamptSensedPosition()
+		except:
+			print("except")
 	motion.shutdown()

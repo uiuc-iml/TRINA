@@ -529,20 +529,20 @@ class Motion:
         self._controlLoopLock.acquire()
         initial = self.robot_model.getConfig()
         goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
-	if ik.solve(goal,activeDofs = self.left_active_Dofs):
+        if ik.solve(goal,activeDofs = self.left_active_Dofs):
         #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
             target_config = self.robot_model.getConfig()
             print("motion.setLeftEEInertialTransform():IK solve successful")
         else:
             self._controlLoopLock.release()
             print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
-            return
+            return 'motion.setLeftEEInertialtransform():IK solve failure: no IK solution found'
         res = self._check_collision_linear(self.robot_model,initial,target_config,15)
         #print(res)
         if res:
             self._controlLoopLock.release()
             print('motion.setLeftEEInertialtransform():Self-collision midway')
-            return
+            return 'motion.setLeftEEInertialtransform():Self-collision midway'
         else:
             print("motion.setLeftEEInertialTransform():No collisoin")
 
@@ -550,10 +550,10 @@ class Motion:
         self._controlLoopLock.release()
         self.setLeftLimbPositionLinear(target_config[10:16],duration)
 
-        return
+        return ''
 
-    def setLeftEEVelocity(self,v = None,w = None, tool = [0,0,0]):
-        """set the ee to translate at v and rotate at w for a specific amount of duration of time"""
+    def setLeftEEVelocity(self,v, tool = [0,0,0]):
+        """set the ee to translate at v[0:3] and rotate at v[3:6] for a specific amount of duration of time"""
         """implemented using position control"""
         """collision detection not implemented rn..."""
         self._controlLoopLock.acquire()
@@ -563,20 +563,17 @@ class Motion:
         self.left_limb_state.commandQueue = False
         self.cartesian_drive_failure = False
         ##cartesian velocity drive
-        if v:
+        if len(v) == 3:
             self.left_limb_state.cartesianDriveV = deepcopy(v)
-        if w:
-            self.left_limb_state.cartesianDriveW = deepcopy(w)
-        if v and w:
+            self.left_limb_state.cartesianMode = 1
+
+        elif len(v) == 6:
+            self.left_limb_state.cartesianDriveV = deepcopy(v[0:3])
+            self.left_limb_state.cartesianDriveW = deepcopy(v[3:6])
             self.left_limb_state.cartesianMode = 0
         else:
-            if v:
-                self.left_limb_state.cartesianMode = 1
-            elif w:
-                #self.left_limb_state.cartesianMode = 2
-                print("motion.setLeftEEVelocity(): wrong input, can't specify w alone")
-            else:
-                print("motion.setLeftEEVelocity(): wrong input")
+            print("motion.setRightEEVelocity(): wrong input")
+
         self.left_limb_state.cartesianDrive = True
         (R,t) = self.left_EE_link.getTransform()
         self.left_limb_state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
@@ -585,26 +582,28 @@ class Motion:
         self.left_limb_state.toolCenter = deepcopy(tool)
         self._controlLoopLock.release()
 
+        return ''
+
     def setRightEEInertialTransform(self,Ttarget,duration):
         """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
         #print("motion.setLeftEEInertialTransform():started..")
         self._controlLoopLock.acquire()
         initial = self.robot_model.getConfig()
         goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
-	if ik.solve(goal,activeDofs = self.right_active_Dofs):
+        if ik.solve(goal,activeDofs = self.right_active_Dofs):
         #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
             target_config = self.robot_model.getConfig()
             print("motion.setRightEEInertialTransform():IK solve successful")
         else:
             self._controlLoopLock.release()
             print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
-            return
+            return 'motion.setRightEEInertialtransform():IK solve failure: no IK solution found'
         res = self._check_collision_linear(self.robot_model,initial,target_config,15)
         #print(res)
         if res:
             self._controlLoopLock.release()
             print('motion.setRighttEEInertialtransform():Self-collision midway')
-            return
+            return 'motion.setRighttEEInertialtransform():Self-collision midway'
         else:
             print("motion.setRightEEInertialTransform():No collisoin")
 
@@ -612,10 +611,10 @@ class Motion:
         self._controlLoopLock.release()
         self.setRightLimbPositionLinear(target_config[27:33],duration)
 
-        return
+        return ''
 
-    def setRightEEVelocity(self,v = None,w = None, tool = [0,0,0]):
-        """set the ee to translate at v and rotate at w for a specific amount of duration of time"""
+    def setRightEEVelocity(self,v, tool = [0,0,0]):
+        """set the ee to translate at v[0:3] and rotate at v[3:6] for a specific amount of duration of time"""
         """implemented using position control"""
         """collision detection not implemented rn..."""
         self._controlLoopLock.acquire()
@@ -625,20 +624,17 @@ class Motion:
         self.right_limb_state.commandQueue = False
         self.cartesian_drive_failure = False
         ##cartesian velocity drive
-        if v:
+        if len(v) == 3:
             self.right_limb_state.cartesianDriveV = deepcopy(v)
-        if w:
-            self.right_limb_state.cartesianDriveW = deepcopy(w)
-        if v and w:
+            self.right_limb_state.cartesianMode = 1
+
+        elif len(v) == 6:
+            self.right_limb_state.cartesianDriveV = deepcopy(v[0:3])
+            self.right_limb_state.cartesianDriveW = deepcopy(v[3:6])
             self.right_limb_state.cartesianMode = 0
         else:
-            if v:
-                self.right_limb_state.cartesianMode = 1
-            elif w:
-                #self.right_limb_state.cartesianMode = 2
-                print("motion.setRightEEVelocity(): wrong input, can't specify w alone")
-            else:
-                print("motion.setRightEEVelocity(): wrong input")
+            print("motion.setRightEEVelocity(): wrong input")
+            
         self.right_limb_state.cartesianDrive = True
         (R,t) = self.right_EE_link.getTransform()
         self.right_limb_state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
@@ -646,7 +642,7 @@ class Motion:
         self.right_limb_state.driveSpeedAdjustment = 1.0
         self.right_limb_state.toolCenter = deepcopy(tool)
         self._controlLoopLock.release()
-
+        return ''
 
     def sensedLeftEETransform(self):
         """Return the transform w.r.t. the base frame"""
@@ -792,6 +788,13 @@ class Motion:
     def cartesianDriveFail(self):
         return self.cartesian_drive_failure
 
+
+    def setRobotToDefualt(self):
+        leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+        rightUntuckedConfig = self.mirror_arm_config(leftUntuckedConfig)
+        self.setLeftLimbPositionLinear(leftUntuckedConfig,1)
+        self.setRightLimbPositionLinear(rightUntuckedConfig,1)
+
     ###Below are internal helper functions
     def _check_collision_linear(self,robot,q1,q2,disrectization):
         #print('_check_collision_linear():started')
@@ -908,7 +911,7 @@ class Motion:
             TRINAConfig.limb_velocity_limits,self.dt))
         joint_lower_limits = vectorops.add(self.right_limb_state.sensedq,vectorops.mul(\
             TRINAConfig.limb_velocity_limits,-self.dt))
-        if self.left_limb_state.cartesianMode == 0:
+        if self.right_limb_state.cartesianMode == 0:
             goal = ik.objective(self.right_EE_link,R=target_transform[0],\
                 t = vectorops.sub(target_transform[1],so3.apply(target_transform[0],self.right_limb_state.toolCenter)))
         elif self.right_limb_state.cartesianMode == 1:
@@ -919,7 +922,7 @@ class Motion:
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.right_active_Dofs,tol=0.000001)
         failFlag = False
         if res:
-            if self._arm_is_in_limit(self.robot_model.getConfig()[10:16],joint_upper_limits,joint_lower_limits):
+            if self._arm_is_in_limit(self.robot_model.getConfig()[27:33],joint_upper_limits,joint_lower_limits):
                 pass
             else:
                 failFlag = True
@@ -948,10 +951,10 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Physical')
+    robot = Motion(mode = 'Kinematic')
     robot.startup()
     print('Robot start() called')
-    '''	
+    
     leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
     leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
     rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
@@ -966,31 +969,36 @@ if __name__=="__main__":
     vis.show()
     while (time.time()-startTime < 5):
         vis.lock()
-        robot.setBaseVelocity([0.5,0.1])
+        #robot.setBaseVelocity([0.5,0.1])
         vis.unlock()
         time.sleep(0.02)
 
-        print(time.time()-startTime)
-    robot.setBaseVelocity([0,0])
-    robot.setGripperPosition([1,1,1,0])
+    #     print(time.time()-startTime)
+    # robot.setBaseVelocity([0,0])
+    # robot.setGripperPosition([1,1,1,0])
+    # startTime = time.time()
+    # while (time.time()-startTime < 5):
+    #     vis.lock()
+    #     #robot.setBaseVelocity([0.5,0.1])
+    #     vis.unlock()
+    #     time.sleep(0.02)
+    ##cartesian drive...
     startTime = time.time()
+    # [0.0,-0.05,0],[0,0,0]
+    robot.setRightEEVelocity(v = [0.0,-0.05,0],tool = [0,0,0])
     while (time.time()-startTime < 5):
         vis.lock()
         #robot.setBaseVelocity([0.5,0.1])
         vis.unlock()
         time.sleep(0.02)
-    ##cartesian drive...
-    #startTime = time.time()
-    #robot.setLeftEEVelocity(v = [0.0,0,0], w = [0,0,0.2],tool = [0.1,0,0])
-    #while (time.time()-startTime < 5):
-    #    vis.lock()
-        # #robot.setBaseVelocity([0.5,0.1])
-        # vis.unlock()
-        # time.sleep(0.02)
-        # if robot.cartesian_drive_fail():
-        #     break
-        # print(time.time()-startTime)
+        try:
+            robot.getKlamptSensedPosition()
+        except:
+            print("except")
+        if robot.cartesianDriveFail():
+            break
+        print(time.time()-startTime)
 
     vis.kill()
-    '''
+    
     robot.shutdown()
