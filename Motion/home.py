@@ -22,8 +22,8 @@ downConfig = [-0.27958604012970756, -2.6317944630573606, -0.4794259718505932, 3.
 startTime = time.time()
 #print(robot.sensedRightLimbPosition())
 #robot.setRightLimbPositionLinear(rightDownConfig,5)
-robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
-robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-time.sleep(5)
+robot.setRightLimbPositionLinear(rightUntuckedConfig,10)
+robot.setLeftLimbPositionLinear(leftUntuckedConfig,10)
+time.sleep(12)
 
 robot.shutdown()

@@ -3,7 +3,7 @@ from SimpleWebSocketServer import SimpleWebSocketServer,WebSocket
 import time,math
 import pickle
 
-robot_ip = '130.126.139.236'
+robot_ip = '192.168.0.110'
 ws_port = 1234
 
 
