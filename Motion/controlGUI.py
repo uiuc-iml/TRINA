@@ -234,6 +234,8 @@ class MyGLViewer(GLWidgetProgram):
         print("change right arm " + direction + " by" + str(delta))
         
 
+    def leftTCPRotControl(self,direction,delta):
+        pass
 
 
 
@@ -458,9 +460,11 @@ class ControlWidget(QWidget):
         rightT = input2.split(",")
 
         if done1:
-            self.robot.setLeftEEInertialTransform([leftR,[float(i) for i in  leftT]],3)
+            msg_left = self.robot.setLeftEEInertialTransform([leftR,[float(i) for i in  leftT]],3)
+            print(msg_left)
         if done2:
-            self.robot.setRightEEInertialTransform([rightR,[float(i) for i in  rightT]],3)
+            msg_right = self.robot.setRightEEInertialTransform([rightR,[float(i) for i in  rightT]],3)
+            print(msg_right)
         print("settoEETransform")
     
     def leftPosPlusZ(self):
@@ -498,6 +502,44 @@ class ControlWidget(QWidget):
 
     def rightPosMinusY(self):
         self.viewer.rightTCPPosControl('y',-0.02)
+
+
+
+    def leftRotPlusZ(self):
+        self.viewer.leftTCPRotControl('z',0.02)
+    
+    def leftRotMinusZ(self):
+        self.viewer.leftTCPRotControl('z',-0.02)
+
+    def leftRotPlusX(self):
+        self.viewer.leftTCPRotControl('x',0.02)
+    
+    def leftRotMinusX(self):
+        self.viewer.leftTCPRotControl('x',-0.02)
+    
+    def leftRotPlusY(self):
+        self.viewer.leftTCPRotControl('y',0.02)
+
+    def leftRotMinusY(self):
+        self.viewer.leftTCPRotControl('y',-0.02)
+    
+    def rightRotPlusZ(self):
+        self.viewer.rightTCPRotControl('z',0.02)
+    
+    def rightRotMinusZ(self):
+        self.viewer.rightTCPRotControl('z',-0.02)
+    
+    def rightRotPlusX(self):
+        self.viewer.rightTCPRotControl('x',0.02)
+    
+    def rightRotMinusX(self):
+        self.viewer.rightTCPRotControl('x',-0.02)
+    
+    def rightRotPlusY(self):
+        self.viewer.rightTCPRotControl('y',0.02)
+
+    def rightRotMinusY(self):
+        self.viewer.rightTCPRotControl('y',-0.02)
 
 def main():
     qapp = QApplication(sys.argv) ## this along with qapp will keep the GUI running after main is exited..
