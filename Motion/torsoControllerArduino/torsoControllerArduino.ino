@@ -19,6 +19,7 @@ double loop_frequency = 0;
 #define kBaudRate        115200     //Need faster kBaudRate to prevent miss counting turns
 bool stop_height = false;
 
+
 //Tilt Motor Setup
 double speed = 20;
 int loop1 = 0;
