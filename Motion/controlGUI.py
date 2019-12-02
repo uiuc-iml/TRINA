@@ -516,20 +516,20 @@ class ControlWidget(QWidget):
     def toJointAngles(self):
 
         input1, done1 = QInputDialog.getText( 
-            self,'Left Arm joint angles', 'Enter q0,q1,q2,q3,q4,q5 seperated by comma:')  
+            self,'Left Arm joint angles', 'Enter q0,q1,q2,q3,q4,q5 in degrees seperated by comma:')  
         leftQ = input1.split(",")
         print(leftQ)
 
         input2,  done2 = QInputDialog.getText( 
-            self,'Right Arm joint angles', 'Enter q0,q1,q2,q3,q4,q5 seperated by comma:')  
+            self,'Right Arm joint angles', 'Enter q0,q1,q2,q3,q4,q5 in degrees seperated by comma:')  
         rightQ = input2.split(",")
         print(rightQ)
 
         if done1:
-            msg_left = self.robot.setLeftLimbPositionLinear([float(i) for i in leftQ],3)
+            msg_left = self.robot.setLeftLimbPositionLinear([math.radians(float(i)) for i in leftQ],3)
             print(msg_left)
         if done2:
-            msg_right = self.robot.setRightLimbPositionLinear([float(i) for i in rightQ],3)
+            msg_right = self.robot.setRightLimbPositionLinear([math.radians(float(i)) for i in rightQ],3)
             print(msg_right)
         
         print("settoJointAngles")
