@@ -4,8 +4,8 @@ import sys
 from motion import Motion
 
 ##global variable
-robot = Motion(mode = "Physical")
-# robot.setRobotToDefualt()
+robot = Motion(mode = "Kinematic")
+robot.setRobotToDefualt()
 
 
 
