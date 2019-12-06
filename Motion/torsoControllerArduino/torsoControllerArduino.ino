@@ -161,6 +161,7 @@ void loop()
     if (count > 20) {
       stop_motor_height();
       stop_motor_tilt();
+      stopActuator();
       return; //does not move motor unless receive good message
     }
   } else {
@@ -418,6 +419,7 @@ void leg_runMotor(double leg_pid) {
     digitalWrite(kLegDirectionPin, LOW);
     analogWrite(kLegPwmPin, 0);
     reachedTarget = true;
+    stopActuator();
     return;
   } else {
     double kLegPwmPin_double =  map_values(fabs(leg_pid), 0, 2.0, 0, 255.0);
