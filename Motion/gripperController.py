@@ -27,17 +27,18 @@ MIN_MOTOR_TRAVEL = 0
 
 class GripperController:
     def __init__(self):
-        self.command_pub = rospy.Publisher('/reflex_takktile2/command', Command, queue_size=10)
-        self.pos_pub = rospy.Publisher('/reflex_takktile2/command_position', PoseCommand, queue_size=10)
-        self.vel_pub = rospy.Publisher('/reflex_takktile2/command_velocity', VelocityCommand, queue_size=10)
+        self.command_pub = rospy.Publisher('/reflex_takktile2/command', Command, queue_size=1)
+        self.pos_pub = rospy.Publisher('/reflex_takktile2/command_position', PoseCommand, queue_size=1)
+        self.vel_pub = rospy.Publisher('/reflex_takktile2/command_velocity', VelocityCommand, queue_size=1)
         self.sub = rospy.Subscriber('/reflex_takktile2/hand_state', Hand, self.callback)
+        # rospy.init_node('gripperController')
 
         self.dt = 0.01
 
         self.sense_finger_set = [0.0, 0.0, 0.0, 0.0]
         self.command_finger_set = [0.0, 0.0, 0.0, 0.0]
 
-        self.command_type = NULL
+        self.command_type = None
         self.contact = False
 
         self.enable = False
@@ -49,28 +50,32 @@ class GripperController:
 
     def start(self):
         self.enable = True
-        rospy.init_node('gripperController')
+        # rospy.init_node('gripperController')
         controlThread = threading.Thread(target = self.controlLoop)
         controlThread.start()
 
     def controlLoop(self):
+
         now = rospy.get_rostime()
+        print("if thread is start")
         self.lastStateTime = float(now.secs) + 1e-9*float(now.nsecs) #get the ros time for each robot state msg
         rate = rospy.Rate(1.0/self.dt)
 
-        self.calibrate()
+        # self.calibrate()
         while not rospy.is_shutdown() and (not self.exit):
+            print(self.command_type)
             if self.stop:
                 self.pos_pub.publish(VelocityCommand(f1 = 0.0, f2 = 0.0, f3 = 0.0, preshape = 0.0))
             if self.command_type == "pose":
                 self.pos_pub.publish(PoseCommand(f1 = self.command_finger_set[0], f2 = self.command_finger_set[1], f3 = self.command_finger_set[2], preshape = self.command_finger_set[3]))
-                self.command_type = NULL
+                print("if loop is running")
+                # self.command_type = None
             elif self.command_type == "velocity":
                 self.vel_pub.publish(VelocityCommand(f1 = self.command_finger_set[0], f2 = self.command_finger_set[1], f3 = self.command_finger_set[2], preshape = self.command_finger_set[3]))
-                self.command_type = NULL
+                self.command_type = None
 
             rate.sleep()
-
+        print("if finished")
     def callback(self, data):
         self.lastStateTime = float(data.header.stamp.secs)+1e-9*float(data.header.stamp.nsecs)
         self.sense_finger_set[0] = data.motor[0].joint_angle
@@ -88,7 +93,7 @@ class GripperController:
 
 
 
-    def regPose(position):
+    def regPose(self, position):
         for i in range(len(position)):
             if position[i] > MAX_MOTOR_TRAVEL:
                 print("command position for gripper is too far, set to max position")
@@ -97,7 +102,7 @@ class GripperController:
                 print("command position for gripper is too far, set to max position")
                 position[i] = MIN_MOTOR_TRAVEL
 
-    def regVelocity(velocity):
+    def regVelocity(self, velocity):
         for i in range(len(velocity)):
             if velocity[i] > MAX_MOTOR_SPEED:
                 print("command velocity for gripper is too fast, set to max velocity")
@@ -109,9 +114,9 @@ class GripperController:
 
 
     def setPose(self, position):
-        now = rospy.get_rostime()
-        currentTime = float(now.secs) + 1e-9*float(now.nsecs)
-        regPose(position)
+        # now = rospy.get_rostime()
+        # currentTime = float(now.secs) + 1e-9*float(now.nsecs)
+        self.regPose(position)
         self.command_finger_set[0] = position[0]
         self.command_finger_set[1] = position[1]
         self.command_finger_set[2] = position[2]
@@ -119,9 +124,9 @@ class GripperController:
         self.command_type = "pose"
 
     def setVelocity(self, velocity):
-        now = rospy.get_rostime()
-        currentTime = float(now.secs) + 1e-9*float(now.nsecs)
-        regVelocity(velocity)
+        # now = rospy.get_rostime()
+        # currentTime = float(now.secs) + 1e-9*float(now.nsecs)
+        self.regVelocity(velocity)
         self.command_finger_set[0] = velocity[0]
         self.command_finger_set[0] = velocity[1]
         self.command_finger_set[0] = velocity[2]
@@ -132,14 +137,14 @@ class GripperController:
         self.command_finger_set[0] = 3.5
         self.command_finger_set[1] = 3.5
         self.command_finger_set[2] = 3.5
-        self.command_finger_set[3] = 0
+        self.command_finger_set[3] = 2.0
         self.command_type = "pose"
 
     def open(self):
         self.command_finger_set[0] = 0.0
         self.command_finger_set[1] = 0.0
         self.command_finger_set[2] = 0.0
-        self.command_finger_set[3] = 0.0
+        self.command_finger_set[3] = 2.0
         self.command_type = "pose"
 
 
@@ -195,3 +200,8 @@ class GripperController:
 
     def new_state(self):
         return self.new_state
+
+# if __name__ == "__main__":
+#     con = GripperController()
+#     con.pos_pub.publish(PoseCommand(f1 = 0.0, f2 = 0.0, f3 = 0.0, preshape = 0.0))
+#     # con.start()
