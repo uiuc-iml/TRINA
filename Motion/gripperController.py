@@ -31,7 +31,6 @@ class GripperController:
         self.pos_pub = rospy.Publisher('/reflex_takktile2/command_position', PoseCommand, queue_size=1)
         self.vel_pub = rospy.Publisher('/reflex_takktile2/command_velocity', VelocityCommand, queue_size=1)
         self.sub = rospy.Subscriber('/reflex_takktile2/hand_state', Hand, self.callback)
-        # rospy.init_node('gripperController')
 
         self.dt = 0.01
 
@@ -48,36 +47,37 @@ class GripperController:
 
 
 
+
     def start(self):
         self.enable = True
-        # rospy.init_node('gripperController')
+        rospy.init_node('gripperController')
         controlThread = threading.Thread(target = self.controlLoop)
         controlThread.start()
 
     def controlLoop(self):
 
         now = rospy.get_rostime()
-        print("if thread is start")
+
         self.lastStateTime = float(now.secs) + 1e-9*float(now.nsecs) #get the ros time for each robot state msg
         rate = rospy.Rate(1.0/self.dt)
 
         # self.calibrate()
         while not rospy.is_shutdown() and (not self.exit):
-            print(self.command_type)
+
             if self.stop:
                 self.pos_pub.publish(VelocityCommand(f1 = 0.0, f2 = 0.0, f3 = 0.0, preshape = 0.0))
             if self.command_type == "pose":
+                print(self.command_finger_set[0])
                 self.pos_pub.publish(PoseCommand(f1 = self.command_finger_set[0], f2 = self.command_finger_set[1], f3 = self.command_finger_set[2], preshape = self.command_finger_set[3]))
-                print("if loop is running")
-                # self.command_type = None
+                print("why it doesn't publish")
+                self.command_type = None
             elif self.command_type == "velocity":
                 self.vel_pub.publish(VelocityCommand(f1 = self.command_finger_set[0], f2 = self.command_finger_set[1], f3 = self.command_finger_set[2], preshape = self.command_finger_set[3]))
                 self.command_type = None
 
             rate.sleep()
-        print("if finished")
     def callback(self, data):
-        self.lastStateTime = float(data.header.stamp.secs)+1e-9*float(data.header.stamp.nsecs)
+        # self.lastStateTime = float(data.header.stamp.secs)+1e-9*float(data.header.stamp.nsecs)
         self.sense_finger_set[0] = data.motor[0].joint_angle
         self.sense_finger_set[1] = data.motor[1].joint_angle
         self.sense_finger_set[2] = data.motor[2].joint_angle
@@ -200,8 +200,10 @@ class GripperController:
 
     def new_state(self):
         return self.new_state
-
+# 
 # if __name__ == "__main__":
 #     con = GripperController()
-#     con.pos_pub.publish(PoseCommand(f1 = 0.0, f2 = 0.0, f3 = 0.0, preshape = 0.0))
+#
 #     # con.start()
+#     con.pos_pub.publish(PoseCommand(f1 = 0.0, f2 = 0.0, f3 = 0.0, preshape = 2.0))
+#     # con.setPose((1.0, 1.0,1.0,1.0))
