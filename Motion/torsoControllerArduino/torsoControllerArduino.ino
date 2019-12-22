@@ -4,11 +4,10 @@ class PIDController {
   private:
     double kP, kI, kD;
     double integral_error, prev_error;
-    double target;
     double min_output, max_output;
     double tol;
-    double curr_millis, prev_millis;
-    bool has_target, at_target;
+    double prev_millis;
+    bool at_target;
 
   public:
     PIDController(double kP, double kI, double kD);
@@ -492,6 +491,9 @@ PIDController::PIDController(double kP, double kI, double kD) {
   this->kI = kI;
   this->kD = kD;
   this->tol = 0.1;
+  this->prev_millis = -1;
+  this->integral_error = 0;
+  this->prev_error = 0;
 }
 
 double PIDController::set_tolerance(double tol) {
@@ -499,13 +501,18 @@ double PIDController::set_tolerance(double tol) {
 }
 
 double PIDController::update(double current, double target) {
+  // if prev_millis is still -1, this is the first loop iteration. Update the previous time and skip.
+  if (prev_millis == -1){
+    prev_millis = millis();
+    return 0;
+  }
+  
   double now = millis();
   double dt = prev_millis - now;
   prev_millis = now;
   double e = target - current;
   if (fabs(e) < tol) {
     at_target = true;
-    has_target = false;
     return 0;
   }
   double d_e = (e - prev_error) / dt;
