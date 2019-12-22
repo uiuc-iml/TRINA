@@ -12,71 +12,113 @@ from kinematicController import KinematicController
 from torsoController import TorsoController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
-#import convenienceFunctions
 from copy import deepcopy
 from klampt.math import vectorops,so3
 from klampt import vis
 from klampt.model import ik, collide
 import numpy as np
 from klampt import WorldModel
-##Two different modes:
-#"Physical" == actual robot
-#"Kinematic" == Klampt model
-
 import os
 dirname = os.path.dirname(__file__)
 #getting absolute model name
 model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 
-armFlag = True
+
 class Motion:
 
-    def __init__(self,  mode = 'Kinematic', model_path = model_name):
+    def __init__(self,  mode = 'Kinematic', model_path = model_name, components = ['left_limb','right_limb'] ):
+        """  
+        This class provides a low-level controller to the TRINA robot.
+
+        Parameters
+        ------------
+        mode: The 'Kinematic' mode starts a kinematic simlation of the robot. The 'Physical' mode interfaces with
+            the robotic hardware directly.
+        model_path: The TRINA robot model path.
+        components: In the physical mode, we would like to have the option of starting only a subset of the components.
+            It is a list of component names, including: left_limb, right_limb, base, torso (including the support legs.),
+            left_gripper, right_gripper.
+        """
         self.mode = mode
         self.model_path = model_path
         self.computation_model_path = "data/TRINA_world.xml"
-        if self.mode == "Kinematic":
-            print("initiating Kinematic controller")
-            self.simulated_robot = KinematicController(model_path)
-            print("initiated Kinematic controller")
-        elif self.mode == "Physical":
-            ##The individual components
-            if armFlag:
-                self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
-                self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
-            self.base = BaseController()
-            #self.left_gripper = GripperController()
-            self.currentGravityVector = [0,0,-9.81]  ##expressed in the robot base local frame, with x pointint forward and z up
-            #self.torso = TorsoController()
-            ##TODO: Add other components
-        else:
-            raise RuntimeError('Wrong mode specified')
+        
+        #Klampt world and robot and  used for computation
         self.world = WorldModel()
         res = self.world.readFile(self.computation_model_path)
         if not res:
             raise RuntimeError("unable to load model")
+        #Initialize collision detection
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
+        #End-effector links and active dofs used for arm cartesian control and IK
         self.left_EE_link = self.robot_model.link(16)
         self.left_active_Dofs = [10,11,12,13,14,15]
         self.right_EE_link = self.robot_model.link(33)
         self.right_active_Dofs = [27,28,29,30,31,32]
+        #UR5 arms need correct gravity vector
+        self.currentGravityVector = [0,0,-9.81] 
 
+        #Enable some components of the robot
+        self.left_limb_enabled = False
+        self.right_limb_enaled = False
+        self.base_enabled = False
+        self.torso_enabled = False
+        self.left_gripper_enabled = False
+        self.right_gripper_enabled = False 
+        #Initialize components
+        if self.mode == "Kinematic":
+            self.left_limb_enabled = True
+            self.right_limb_enaled = True
+            self.base_enabled = True
+            print("initiating Kinematic controller")
+            self.simulated_robot = KinematicController(model_path)
+            print("initiated Kinematic controller")
+
+        elif self.mode == "Physical":
+            for component in components:
+                if component == 'left_limb':
+                    self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
+                    self.left_limb_enabled = True
+                elif component == 'right_limb':
+                    self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
+                    self.right_limb_enabled = True
+                elif component == 'base':
+                    self.base = BaseController()
+                    self.base_enabled = True
+                elif component == 'torso':
+                    self.torso = TorsoController()
+                    self.torso_enabled = True
+                elif component == 'left_gripper':
+                    self.left_gripper = GripperController()
+                    self.left_gripper_enabled = True
+                elif component == 'right_gripper':
+                    self.right_gripper = GripperController()
+                    self.right_gripper_enabled = True
+                else:
+                    print('Motion: wrong component name specified')
+            raise RuntimeError('Wrong Mode specified')
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
-        #self.torso_state = TorsoState()
+        self.left_limb_state = LimbState()
+        self.right_limb_state = LimbState()
+        self.base_state = BaseState()
+        self.torso_state = TorsoState()
         self.left_gripper_state = GripperState()
+
         self.startTime = time.time()
-        self.t = 0 #time since startup
+        #time since startup
+        self.t = 0 
         self.startUp = False
         self.dt = 0.002
-        self.automatic_mode = False #if in this mode, a planner or recorded motion can take over. Can be interruped by stopMotion()
+        #automatic mode for future
+        self.automatic_mode = False 
         self.stop_motion_flag = False
         self.stop_motion_sent = False
         self.shut_down_flag = False
-        self._controlLoopLock = Lock()
         self.cartedian_drive_failure = False
+        self._controlLoopLock = Lock()
         signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
 
     def sigint_handler(self, signum, frame):
@@ -85,12 +127,21 @@ class Motion:
         self.shutdown()
 
     def time(self):
-        """Returns the time since robot startup, in s"""
+        """Time since the controller has started
+
+        return:
+        ---------------
+        float: time since the controller has started in secs
+
+        """
         return self.t
 
     def startup(self):
-        """Starts up all the individual components and the main control thread"""
-        """After starting, all components stay where they are and update their positions immediately"""
+        """ Starts up all the individual components and the main control thread.
+        
+        Each component is started sequentially. After starting, all components stay where they are and 
+        start updating their states immediately.
+        """
         if not self.startUp:
             if self.mode == "Kinematic":
                 self.simulated_robot.start()
@@ -139,7 +190,7 @@ class Motion:
             print("motion.startup():robot started")
             self.startUp = True
         else:
-            print("Already started")
+            print("motion.startup():Already started")
         return self.startUp
 
     def _controlLoop(self):

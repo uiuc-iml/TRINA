@@ -55,3 +55,5 @@ class TorsoState:
         self.commandedTilt = 0.0
 
         self.commandSent = False
+        self.leftLeg = 0
+        self.rightLeg = 0
