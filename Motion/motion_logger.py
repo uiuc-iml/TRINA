@@ -19,6 +19,7 @@ from klampt import vis
 from klampt.model import ik, collide
 import numpy as np
 from klampt import WorldModel
+
 ##Two different modes:
 #"Physical" == actual robot
 #"Kinematic" == Klampt model
@@ -28,6 +29,24 @@ dirname = os.path.dirname(__file__)
 #getting absolute model name
 model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 
+import logging
+logger = logging.getLogger(__name__)
+
+# Create handlers
+c_handler = logging.StreamHandler()
+f_handler = logging.FileHandler('/temp/logFile.log')
+c_handler.setLevel(logging.DEBUG)
+f_handler.setLevel(logging.INFO)
+# Create formatters and add it to handlers
+c_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
+f_format = logging.Formatter('%(asctime)s - %(name)s - %(funcName)s() - %(levelname)s - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
+c_handler.setFormatter(c_format)
+f_handler.setFormatter(f_format)
+# Add handlers to the logger
+logger.addHandler(c_handler)
+logger.addHandler(f_handler)
+
+
 armFlag = True
 class Motion:
 
@@ -36,8 +55,10 @@ class Motion:
         self.model_path = model_path
         self.computation_model_path = "data/TRINA_world.xml"
         if self.mode == "Kinematic":
+            logger.info('initiating Kinematic controller')
             print("initiating Kinematic controller")
             self.simulated_robot = KinematicController(model_path)
+            logger.info('initiating Kinematic controller')
             print("initiated Kinematic controller")
         elif self.mode == "Physical":
             ##The individual components
@@ -50,10 +71,12 @@ class Motion:
             #self.torso = TorsoController()
             ##TODO: Add other components
         else:
+            logger.error('Wrong mode specified')
             raise RuntimeError('Wrong mode specified')
         self.world = WorldModel()
         res = self.world.readFile(self.computation_model_path)
         if not res:
+            logger.error('unable to load model')
             raise RuntimeError("unable to load model")
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
@@ -81,6 +104,7 @@ class Motion:
 
     def sigint_handler(self, signum, frame):
         assert(signum == signal.SIGINT)
+        logger.error('SIGINT caught...shutting down the api!')
         print("SIGINT caught...shutting down the api!")
         self.shutdown()
 
@@ -110,9 +134,11 @@ class Motion:
                     time.sleep(1)
                     if res == False:
                         #better to replace this with logger
+                        logger.error('left limb start failure.')
                         print("motion.startup(): ERROR, left limb start failure.")
                         return False
                     else:
+                        logger.info('left limb started.')
                         print("motion.startup(): left limb started.")
                         self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
                         self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
@@ -122,9 +148,11 @@ class Motion:
                     time.sleep(1)
                     if res == False:
                         #better to replace this with logger
+                        logger.error('right limb start failure.')
                         print("motion.startup(): ERROR, right limb start failure.")
                         return False
                     else:
+                        logger.info('right limb started.')
                         print("motion.startup(): right limb started.")
                         self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                         self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
@@ -136,9 +164,11 @@ class Motion:
 
             controlThread = threading.Thread(target = self._controlLoop)
             controlThread.start()
+            logger.info('robot started.')
             print("motion.startup():robot started")
             self.startUp = True
         else:
+            logger.info('robot started.')
             print("Already started")
         return self.startUp
 
@@ -146,6 +176,7 @@ class Motion:
         """main control thread, synchronizing all components"""
         """in each loop,states are updated and new commands are issued"""
         self.robot_start_time = time.time()
+        logger.info('controlLoop started.')
         print("motion.controlLoop(): controlLoop started.")
         while not self.shut_down_flag:
             loopStartTime = time.time()
@@ -312,7 +343,7 @@ class Motion:
 
                             #print(res)
                         #print("CartesianDrive IK took",time.time() - clock1, "secs")
-                    ####                           
+                    ####
 
                     else:
                         if not self.left_limb_state.commandSent:
@@ -355,7 +386,7 @@ class Motion:
                                 flag = 1
                             elif res == 2:
                                 flag = 0
-                                self.simulated_robot.setRightLimbConfig(target_config)              
+                                self.simulated_robot.setRightLimbConfig(target_config)
                     else:
                         if not self.right_limb_state.commandSent:
                             ###setting position will clear velocity commands
@@ -375,18 +406,19 @@ class Motion:
                     self.simulated_robot.setLeftGripperPosition(self.left_gripper_state.command_finger_set)
                     robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
                     self.robot_model.setConfig(robot_model_Q)
-            
+
 
             elapsedTime = time.time() - loopStartTime
             self.t = time.time() - self.startTime
             if elapsedTime < self.dt:
-                #print("before sleep",time.time() - self.robot_start_time)        
+                #print("before sleep",time.time() - self.robot_start_time)
                 time.sleep(self.dt-elapsedTime)
                 #print("after sleep", time.time() - self.robot_start_time)
             else:
                 pass
             self._controlLoopLock.release()
             #print("main",time.time() - robotStartTime)
+        logger.info('exited')
         print("motion.controlThread: exited")
     ###TODO
     def setPosition(self,q):
@@ -532,19 +564,25 @@ class Motion:
         if ik.solve(goal,activeDofs = self.left_active_Dofs):
         #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
             target_config = self.robot_model.getConfig()
+            logger.info('IK solve successful')
             print("motion.setLeftEEInertialTransform():IK solve successful")
         else:
             self._controlLoopLock.release()
+            ##
+            logger.error('IK solve failure: no IK solution found')
+            ##
             print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
             return 'motion.setLeftEEInertialtransform():IK solve failure: no IK solution found'
         res = self._check_collision_linear(self.robot_model,initial,target_config,15)
         #print(res)
         if res:
             self._controlLoopLock.release()
+            logger.info('Self-collision midway')
             print('motion.setLeftEEInertialtransform():Self-collision midway')
             return 'motion.setLeftEEInertialtransform():Self-collision midway'
         else:
-            print("motion.setLeftEEInertialTransform():No collisoin")
+            logger.info('No collision')
+            print("motion.setLeftEEInertialTransform():No collision")
 
         self.robot_model.setConfig(initial)
         self._controlLoopLock.release()
@@ -572,6 +610,7 @@ class Motion:
             self.left_limb_state.cartesianDriveW = deepcopy(v[3:6])
             self.left_limb_state.cartesianMode = 0
         else:
+            logger.error('wrong input')
             print("motion.setRightEEVelocity(): wrong input")
 
         self.left_limb_state.cartesianDrive = True
@@ -593,18 +632,26 @@ class Motion:
         if ik.solve(goal,activeDofs = self.right_active_Dofs):
         #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
             target_config = self.robot_model.getConfig()
+            ##
+            logger.info('IK solve successful')
+            ##
             print("motion.setRightEEInertialTransform():IK solve successful")
         else:
             self._controlLoopLock.release()
+            logger.error('IK solve failure: no IK solution found')
             print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
             return 'motion.setRightEEInertialtransform():IK solve failure: no IK solution found'
         res = self._check_collision_linear(self.robot_model,initial,target_config,15)
         #print(res)
         if res:
             self._controlLoopLock.release()
+            ##
+            logger.info('Self-collision midway')
+            ##
             print('motion.setRighttEEInertialtransform():Self-collision midway')
             return 'motion.setRighttEEInertialtransform():Self-collision midway'
         else:
+            logger.error('No collisoin')
             print("motion.setRightEEInertialTransform():No collisoin")
 
         self.robot_model.setConfig(initial)
@@ -633,8 +680,9 @@ class Motion:
             self.right_limb_state.cartesianDriveW = deepcopy(v[3:6])
             self.right_limb_state.cartesianMode = 0
         else:
+            logger.error('wrong input')
             print("motion.setRightEEVelocity(): wrong input")
-            
+
         self.right_limb_state.cartesianDrive = True
         (R,t) = self.right_EE_link.getTransform()
         self.right_limb_state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
@@ -778,10 +826,11 @@ class Motion:
 
         for ele in RConfig:
             if ele >= 2*math.pi or ele <= -2*math.pi:
+                logger.warning('out of range..')
                 print('out of range..')
                 return []
         return RConfig
-    
+
     def getWorld(self):
         return self.simulated_robot.getWorld()
 
@@ -859,7 +908,7 @@ class Motion:
                 world = vectorops.sub(target_transform[1],so3.apply(target_transform[0],self.left_limb_state.toolCenter)))
         #elif self.left_limb_state.cartesianMode == 2:
         #                goal = ik.objective(self.left_EE_link,R=target_transform[0])
-        
+
         initialConfig = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.000001)
         failFlag = False
@@ -880,6 +929,7 @@ class Motion:
             self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment - 0.1
             if self.left_limb_state.driveSpeedAdjustment < 0.001:
                 self.left_limb_state.cartesianDrive = False
+                logger.error('CartesianDrive IK has failed completely,exited..')
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
                 return 0,0 # 0 means the IK has failed completely
             else:
@@ -888,10 +938,10 @@ class Motion:
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
             target_config = self.robot_model.getConfig()[10:16]
-            self.left_limb_state.driveTransform = target_transform    
+            self.left_limb_state.driveTransform = target_transform
             if self.left_limb_state.driveSpeedAdjustment < 1:
                 self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment + 0.1
-    
+
         self.robot_model.setConfig(initialConfig)
 
         return 2,target_config #2 means success..
@@ -933,6 +983,7 @@ class Motion:
             self.right_limb_state.driveSpeedAdjustment = self.right_limb_state.driveSpeedAdjustment - 0.1
             if self.right_limb_state.driveSpeedAdjustment < 0.001:
                 self.right_limb_state.cartesianDrive = False
+                logger.error('CartesianDrive IK has failed completely,exited..')
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
                 return 0,0 # 0 means the IK has failed completely
             else:
@@ -941,10 +992,10 @@ class Motion:
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
             target_config = self.robot_model.getConfig()[27:33]
-            self.right_limb_state.driveTransform = target_transform    
+            self.right_limb_state.driveTransform = target_transform
             if self.right_limb_state.driveSpeedAdjustment < 1:
                 self.right_limb_state.driveSpeedAdjustment = self.right_limb_state.driveSpeedAdjustment + 0.1
-    
+
         self.robot_model.setConfig(initialConfig)
 
         return 2,target_config #2 means success..
@@ -953,8 +1004,9 @@ if __name__=="__main__":
 
     robot = Motion(mode = 'Kinematic')
     robot.startup()
+    logger.info('Robot start() called')
     print('Robot start() called')
-    
+
     leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
     leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
     rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
@@ -994,11 +1046,14 @@ if __name__=="__main__":
         try:
             robot.getKlamptSensedPosition()
         except:
+            ##
+            logger.error('except')
+            ##
             print("except")
         if robot.cartesianDriveFail():
             break
         print(time.time()-startTime)
 
     vis.kill()
-    
+
     robot.shutdown()

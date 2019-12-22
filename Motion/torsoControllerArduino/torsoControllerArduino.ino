@@ -40,6 +40,8 @@ double target_leg_max = 0;
 double target_leg_min = 2;
 double leg_error_range = 0.01;
 double leg_current_loc = 0;
+enum states{Closed, Moving, Open} leg_states;
+double leg_soft_limit = 0.35;
 bool moving = false;
 
 //Tilt Potentiometer Setup (AMT23 Encoder)
@@ -129,6 +131,11 @@ void loop()
   height_position_read();
   tilt_position_read();
   leg_current_loc = (float)(analogRead(kLegPotPin) / (117.0));
+  if((2-leg_current_loc) <= (1/117)){
+    leg_states = Open;
+  }else if((leg_current_loc - leg_soft_limit) <= (1/117)){
+    leg_states = Closed;
+  }else leg_states = Moving;
 
 
   if (initial_loop_count == 0) { //make robot stay at it's initial position
@@ -144,7 +151,7 @@ void loop()
   if (rv == 1) {
     Serial.print("yo\n");
   } else if (rv == 0) {
-    send_message(current_height, current_tilt, leg_current_loc);
+    send_message(current_height, current_tilt, leg_states);
   } else {
     Serial.print("BAD\n");
   }
@@ -154,12 +161,16 @@ void loop()
     if (count > 20) {
       stop_motor_height();
       stop_motor_tilt();
+      stopActuator();
       return; //does not move motor unless receive good message
     }
   } else {
     count = 0;
     height_validation_execution();
     tilt_validation_execution();
+    if(target_leg <= leg_soft_limit){
+      target_leg = leg_soft_limit;
+    }
     leg_pidCalc(leg_current_loc, target_leg);
   }
 
@@ -408,6 +419,7 @@ void leg_runMotor(double leg_pid) {
     digitalWrite(kLegDirectionPin, LOW);
     analogWrite(kLegPwmPin, 0);
     reachedTarget = true;
+    stopActuator();
     return;
   } else {
     double kLegPwmPin_double =  map_values(fabs(leg_pid), 0, 2.0, 0, 255.0);
@@ -439,7 +451,7 @@ double map_values(double value, double input_low, double input_high, double outp
   return f;
 }
 
-void send_message(double height, double tilt, double leg) {
+void send_message(double height, double tilt, states leg) {
   Serial.print("T\t");
   Serial.print(tilt);
   Serial.print("\t");
@@ -534,7 +546,6 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
     double tol;
     double curr_millis, prev_millis;
     bool has_target, at_target;
-
   public:
     PIDController(double kP, double kI, double kD){
       this->kP = kP;
@@ -543,7 +554,6 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
       this->tol = 0.1;
       this->has_target = false;
     }
-
     double set_target(double target){
       has_target = true;
       at_target = false;
@@ -552,38 +562,30 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
       this->target = target;
       prev_millis = millis();
     }
-
     double set_tolerance(double tol){
       this->tol = tol;
     }
-
     double update(double current){
       if (!has_target){
         return 0;
       }
-
       double now = millis();
       double dt = prev_millis - now;
       prev_millis = now;
       double e = target - current;
-
       if (fabs(e) < tol){
         at_target = true;
         has_target = false;
         return 0;
       }
-
       double d_e = (e - prev_error)/dt;
       integral_error += e * dt;
-
       double output = kP * e + kI * integral_error + kD * d_e;
       prev_error = e;
       return output;
     }
-
     bool done(){
       return at_target;
     }
-
   };
 */

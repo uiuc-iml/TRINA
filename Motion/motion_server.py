@@ -4,7 +4,11 @@ import sys
 from motion import Motion
 
 ##global variable
-robot = Motion(mode = "Physical")
+robot = Motion(mode = "Kinematic")
+robot.setRobotToDefualt()
+
+
+
 def sigint_handler(signum,frame):
 	robot.shutdown()
 	sys.exit(0)
@@ -43,19 +47,19 @@ def _setRightLimbVelocity(qdot):
 	return 0
 
 def _setLeftEEInertialTransform(Tgarget,duration):
-	robot.setLeftEEInertialTransform(Tgarget,duration)
-	return 0
+	return robot.setLeftEEInertialTransform(Tgarget,duration)
+
 
 def _setRightEEInertialTransform(Tgarget,duration):
-	robot.setRightEEInertialTransform(Tgarget,duration)
-	return 0
+	return robot.setRightEEInertialTransform(Tgarget,duration)
+	
 
-def _setLeftEEVelocity(v = None,w = None, tool = [0,0,0]):
-    robot.setLeftEEVelocity(v = v,w = w,tool = tool)
+def _setLeftEEVelocity(v, tool):
+    robot.setLeftEEVelocity(v,tool)
     return 0
 
-def _setRightEEVelocity(v = None,w = None, tool = [0,0,0]):
-    robot.setRightEEVelocity(v = v,w = w,tool = tool)
+def _setRightEEVelocity(v, tool):
+    robot.setRightEEVelocity(v,tool)
     return 0
 
 def _sensedLeftEETransform():
@@ -141,7 +145,7 @@ def _cartesianDriveFail():
 
 ip_address = 'localhost'
 port = 8000
-server = SimpleXMLRPCServer((ip_address,port))
+server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()
 signal.signal(signal.SIGINT, sigint_handler)
 
