@@ -6,10 +6,12 @@ from klampt import vis
 from klampt.vis.qtbackend import QtBackend
 from klampt.io import loader
 from motion_client import MotionClient
+import numpy as np
 import math
 import time
 import sys
 from klampt.vis import glinit
+from scipy.spatial.transform import Rotation as R
 if glinit._PyQt4Available:
     from PyQt4.QtGui import *
     from PyQt4.QtCore import *
@@ -42,11 +44,12 @@ class GLWidgetProgram(GLPluginProgram):
         self.widgetPlugin.addWidget(widget)
 
 class MyGLViewer(GLWidgetProgram):
-    def __init__(self, world, parent,robot):
+    def __init__(self, world, parent,robot,robot_info):
         GLWidgetProgram.__init__(self,"Manual poser")
         self.setParent(parent)
         self.world = world
         self.robot = robot
+        self.robot_info = robot_info
         self.leftEE = []
         self.rightEE = []
         self.saveStartTime = datetime.datetime(2000, 5, 3) 
@@ -69,15 +72,11 @@ class MyGLViewer(GLWidgetProgram):
         """
         window = self.window
         window.setFocusPolicy(Qt.StrongFocus)
-        #window.setMinimumSize(*VIEWER_MIN_SIZE)
-        #window.setMaximumSize(*VIEWER_MAX_SIZE)
         window.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Expanding)
         window.idleTimer = QTimer()
         window.idleTimer.timeout.connect(lambda: self.idlefunc())
         window.idleTimer.start(0)
         window.setMouseTracking(True)
-        # window.initialize()
-        # window.initialized = True
 
     def run(self, parent=None):
         """ overrides the GLProgram run method to avoid using visualization.run """
@@ -120,6 +119,11 @@ class MyGLViewer(GLWidgetProgram):
         robotModel.setConfig(q)
         robotModel.drawGL(False)
         glDisable(GL_BLEND)
+        self.robot_info.setText(
+            'Left Joint Anles: (%f : %f : %f : %f : %f : %f)' % (self.leftq[0], self.leftq[1],self.leftq[2],self.leftq[3],self.leftq[4],self.leftq[5]) 
+            + "\nLeft positions: (%f : %f : %f)" % (self.leftEE[1][0], self.leftEE[1][1],self.leftEE[1][2]) 
+            +'\nRight Joint Anles: (%f : %f : %f : %f : %f : %f)' % (self.rightq[0], self.rightq[1],self.rightq[2],self.rightq[3],self.rightq[4],self.rightq[5]) 
+            + "\nRight positions: (%f : %f : %f)" % (self.rightEE[1][0], self.rightEE[1][1],self.rightEE[1][2]) )
 
         ##not needed for now 
         # qdes = self.robotPoser.get()
@@ -234,6 +238,32 @@ class MyGLViewer(GLWidgetProgram):
         print("change right arm " + direction + " by" + str(delta))
         
 
+    def leftTCPRotControl(self,direction,delta):
+        delta = math.radians(delta)
+        newR = R.from_dcm(np.array(self.leftEE[0]).reshape((3,3)))
+
+        if direction is 'x':
+            newR = newR * R.from_dcm([[1,0,0],[0,math.cos(delta),math.sin(delta)],[0, -math.sin(delta), math.cos(delta)]])
+        elif direction is 'y':
+            newR = newR * R.from_dcm([[math.cos(delta),0,-math.sin(delta)],[0,1,0],[math.sin(delta),0,math.cos(delta)]])
+        elif direction is 'z':
+            newR = newR * R.from_dcm([[math.cos(delta),math.sin(delta),0],[-math.sin(delta),math.cos(delta),0],[0,0,1]])
+        self.robot.setLeftEEInertialTransform([newR.as_dcm().flatten().tolist(),self.leftEE[1]],0.1)
+        pass
+
+
+    def rightTCPRotControl(self,direction,delta):
+        delta = math.radians(delta)
+        newR = R.from_dcm(np.array(self.rightEE[0]).reshape((3,3)))
+
+        if direction is 'x':
+            newR = newR * R.from_dcm([[1,0,0],[0,math.cos(delta),math.sin(delta)],[0, -math.sin(delta), math.cos(delta)]])
+        elif direction is 'y':
+            newR = newR * R.from_dcm([[math.cos(delta),0,-math.sin(delta)],[0,1,0],[math.sin(delta),0,math.cos(delta)]])
+        elif direction is 'z':
+            newR = newR * R.from_dcm([[math.cos(delta),math.sin(delta),0],[-math.sin(delta),math.cos(delta),0],[0,0,1]])
+        self.robot.setRightEEInertialTransform([newR.as_dcm().flatten().tolist(),self.rightEE[1]],0.1)
+        pass    
 
 
 
@@ -274,7 +304,6 @@ class ControlWidget(QWidget):
         vbox.addLayout(hbox)
         self.setLayout(vbox)
         self.setMinimumSize(QSize(860,960))
-        #QMetaObject.invokeMethod(self.start_button, "clicked")
 
     def startMotionAPI(self):
         self.robot = MotionClient()
@@ -288,8 +317,8 @@ class ControlWidget(QWidget):
             raise RuntimeError("Unable to load Klamp't model "+klampt_model_local)
 
         self.start_button.hide()
-
-        self.viewer = MyGLViewer(world,self,self.robot)
+        self.robot_info = QLabel(self)
+        self.viewer = MyGLViewer(world,self,self.robot,self.robot_info)
         self.qtbackend = QtBackend() #klampt vis stuff for handing the poser
 
         self.qtbackend.app = QApplication.instance()
@@ -312,27 +341,25 @@ class ControlWidget(QWidget):
     def createDisplays(self):
         PoseButton = QPushButton("Send pose", self)
         PoseButton.clicked.connect(self.viewer.sendPose)
-        PoseButton.resize(PoseButton.sizeHint())
 
         LogButton = QPushButton("Send and log pose", self)
         LogButton.clicked.connect(self.viewer.logPoseTrajectory)
-        LogButton.resize(LogButton.sizeHint())
 
         EEbutton = QPushButton("Get current EE transform", self)
         EEbutton.clicked.connect(self.viewer.getSensedEETransform)
-        EEbutton.resize(EEbutton.sizeHint())
 
         DefualtButton = QPushButton("Home position",self)
         DefualtButton.clicked.connect(self.viewer.setRobotToDefualt)
-        DefualtButton.resize(DefualtButton.sizeHint())
 
         ResetPoserButton = QPushButton("Reset poser",self)
         ResetPoserButton.clicked.connect(self.viewer.resetPoser)
-        ResetPoserButton.resize(ResetPoserButton.sizeHint())
 
         ToEETransformButton = QPushButton("To EE Transform",self)
         ToEETransformButton.clicked.connect(self.toEETransform)
-        ToEETransformButton.resize(ToEETransformButton.sizeHint())
+
+
+        ToJointAnglesButton = QPushButton("To Joint Angles",self)
+        ToJointAnglesButton.clicked.connect(self.toJointAngles)
 
         LeftPosPlusXButton = QPushButton("+x",self)
         LeftPosPlusXButton.clicked.connect(self.leftPosPlusX)
@@ -348,11 +375,17 @@ class ControlWidget(QWidget):
         LeftPosMinusZButton.clicked.connect(self.leftPosMinusZ)
 
         LeftRotPlusXButton = QPushButton("+x",self)
+        LeftRotPlusXButton.clicked.connect(self.leftRotPlusX)
         LeftRotPlusYButton = QPushButton("+y",self)
+        LeftRotPlusYButton.clicked.connect(self.leftRotPlusY)
         LeftRotPlusZButton = QPushButton("+z",self)
+        LeftRotPlusZButton.clicked.connect(self.leftRotPlusZ)
         LeftRotMinusXButton = QPushButton("-x",self)
+        LeftRotMinusXButton.clicked.connect(self.leftRotMinusX)
         LeftRotMinusYButton = QPushButton("-y",self)
+        LeftRotMinusYButton.clicked.connect(self.leftRotMinusY)
         LeftRotMinusZButton = QPushButton("-z",self)
+        LeftRotMinusZButton.clicked.connect(self.leftRotMinusZ)
 
 
 
@@ -369,13 +402,26 @@ class ControlWidget(QWidget):
         RightPosMinusZButton = QPushButton("-z",self)
         RightPosMinusZButton.clicked.connect(self.rightPosMinusZ)
 
-        RightRotPlusXButton = QPushButton("+x",self)
-        RightRotPlusYButton = QPushButton("+y",self)
-        RightRotPlusZButton = QPushButton("+z",self)
-        RightRotMinusXButton = QPushButton("-x",self)
-        RightRotMinusYButton = QPushButton("-y",self)
-        RightRotMinusZButton = QPushButton("-z",self)
 
+        RightRotPlusXButton = QPushButton("+x",self)
+        RightRotPlusXButton.clicked.connect(self.rightRotPlusX)
+        RightRotPlusYButton = QPushButton("+y",self)
+        RightRotPlusYButton.clicked.connect(self.rightRotPlusY)
+        RightRotPlusZButton = QPushButton("+z",self)
+        RightRotPlusZButton.clicked.connect(self.rightRotPlusZ)
+        RightRotMinusXButton = QPushButton("-x",self)
+        RightRotMinusXButton.clicked.connect(self.rightRotMinusX)
+        RightRotMinusYButton = QPushButton("-y",self)
+        RightRotMinusYButton.clicked.connect(self.rightRotMinusY)
+        RightRotMinusZButton = QPushButton("-z",self)
+        RightRotMinusZButton.clicked.connect(self.rightRotMinusZ)
+
+
+
+        self.robot_info.setText("hello!")
+        infoBox = QVBoxLayout()
+        infoBox.addWidget(self.robot_info)
+        self.layout().addLayout(infoBox)
 
         LeftTCPBox = QGridLayout()
         LeftTCPBox.addWidget(QLabel("Left Arm"),1,1)
@@ -421,6 +467,7 @@ class ControlWidget(QWidget):
         buttonBox.addWidget(DefualtButton,1,4)
         buttonBox.addWidget(ResetPoserButton,2,1)
         buttonBox.addWidget(ToEETransformButton,2,2)
+        buttonBox.addWidget(ToJointAnglesButton,2,3)
         self.layout().addLayout(buttonBox)
 
         return
@@ -458,10 +505,34 @@ class ControlWidget(QWidget):
         rightT = input2.split(",")
 
         if done1:
-            self.robot.setLeftEEInertialTransform([leftR,[float(i) for i in  leftT]],3)
+            msg_left = self.robot.setLeftEEInertialTransform([leftR,[float(i) for i in  leftT]],3)
+            print(msg_left)
         if done2:
-            self.robot.setRightEEInertialTransform([rightR,[float(i) for i in  rightT]],3)
+            msg_right = self.robot.setRightEEInertialTransform([rightR,[float(i) for i in  rightT]],3)
+            print(msg_right)
+
         print("settoEETransform")
+
+    def toJointAngles(self):
+
+        input1, done1 = QInputDialog.getText( 
+            self,'Left Arm joint angles', 'Enter q0,q1,q2,q3,q4,q5 in degrees seperated by comma:')  
+        leftQ = input1.split(",")
+        print(leftQ)
+
+        input2,  done2 = QInputDialog.getText( 
+            self,'Right Arm joint angles', 'Enter q0,q1,q2,q3,q4,q5 in degrees seperated by comma:')  
+        rightQ = input2.split(",")
+        print(rightQ)
+
+        if done1:
+            msg_left = self.robot.setLeftLimbPositionLinear([math.radians(float(i)) for i in leftQ],3)
+            print(msg_left)
+        if done2:
+            msg_right = self.robot.setRightLimbPositionLinear([math.radians(float(i)) for i in rightQ],3)
+            print(msg_right)
+        
+        print("settoJointAngles")
     
     def leftPosPlusZ(self):
         self.viewer.leftTCPPosControl('z',0.02)
@@ -498,6 +569,47 @@ class ControlWidget(QWidget):
 
     def rightPosMinusY(self):
         self.viewer.rightTCPPosControl('y',-0.02)
+
+
+
+    def leftRotPlusZ(self):
+        self.viewer.leftTCPRotControl('z',5)
+    
+    def leftRotMinusZ(self):
+        self.viewer.leftTCPRotControl('z',-5)
+
+    def leftRotPlusX(self):
+        self.viewer.leftTCPRotControl('x',5)
+    
+    def leftRotMinusX(self):
+        self.viewer.leftTCPRotControl('x',-5)
+    
+    def leftRotPlusY(self):
+        self.viewer.leftTCPRotControl('y',5)
+
+    def leftRotMinusY(self):
+        self.viewer.leftTCPRotControl('y',-5)
+    
+
+
+
+    def rightRotPlusZ(self):
+        self.viewer.rightTCPRotControl('z',5)
+    
+    def rightRotMinusZ(self):
+        self.viewer.rightTCPRotControl('z',-5)
+    
+    def rightRotPlusX(self):
+        self.viewer.rightTCPRotControl('x',5)
+    
+    def rightRotMinusX(self):
+        self.viewer.rightTCPRotControl('x',-5)
+    
+    def rightRotPlusY(self):
+        self.viewer.rightTCPRotControl('y',5)
+
+    def rightRotMinusY(self):
+        self.viewer.rightTCPRotControl('y',-5)
 
 def main():
     qapp = QApplication(sys.argv) ## this along with qapp will keep the GUI running after main is exited..
