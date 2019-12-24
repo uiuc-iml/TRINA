@@ -111,6 +111,7 @@ class Motion:
         #time since startup
         self.t = 0 
         self.startUp = False
+        #Control loop rate
         self.dt = 0.002
         #automatic mode for future
         self.automatic_mode = False 
@@ -122,6 +123,9 @@ class Motion:
         signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
 
     def sigint_handler(self, signum, frame):
+        """ Catch Ctrl+C tp shutdown the robot
+
+        """
         assert(signum == signal.SIGINT)
         print("SIGINT caught...shutting down the api!")
         self.shutdown()
@@ -146,9 +150,17 @@ class Motion:
             if self.mode == "Kinematic":
                 self.simulated_robot.start()
             elif self.mode == "Physical":
-            #Set the correct gravity vector on startup....
-                if armFlag:
-                    tilt_angle = 0.0
+                if self.torso_enabled:
+                    self.torso.start()
+                if self.base_enabled:
+                    self.base.start()
+                    print("Motion: base started")
+                if self.left_limb_enabled or self.right_limb_enaled:
+                    if torso_enabled:
+                        #TODO read torso position
+                        #tilt_angle = 
+                    else:
+                        tilt_angle = 0.0
                     R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
                     R_local_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
                     R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)
@@ -156,7 +168,7 @@ class Motion:
                     #gravity_right = so3.apply(so3.inv(R_local_global_right),[0,0,-9.81])
                     #self.left_limb.setGravity(gravity_left)
                     #self.right_limb.setGravity(gravity_right)
-
+                if self.left_limb_enabled:
                     res = self.left_limb.start()
                     time.sleep(1)
                     if res == False:
@@ -168,7 +180,7 @@ class Motion:
                         self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
                         self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
                         self.left_limb_state.sensedWrench =self.left_limb.getWrench()
-
+                if self.right_limb_enabled:
                     res = self.right_limb.start()
                     time.sleep(1)
                     if res == False:
@@ -180,10 +192,11 @@ class Motion:
                         self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                         self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
                         self.right_limb_state.sensedWrench = self.right_limb.getWrench()
-                # start the other components
-                self.base.start()
-                #self.left_gripper.start()
-                # TODO: add more components...
+                if self.left_gripper_enabled:
+                    self.left_gripper.start()
+                if self.right_gripper_enabled:
+                    self.right_gripper.start()
+
 
             controlThread = threading.Thread(target = self._controlLoop)
             controlThread.start()
@@ -194,8 +207,9 @@ class Motion:
         return self.startUp
 
     def _controlLoop(self):
-        """main control thread, synchronizing all components"""
-        """in each loop,states are updated and new commands are issued"""
+        """main control thread, synchronizing all components
+        in each loop,states are updated and new commands are issued
+        """
         self.robot_start_time = time.time()
         print("motion.controlLoop(): controlLoop started.")
         while not self.shut_down_flag:
@@ -206,43 +220,48 @@ class Motion:
             if self.mode == "Physical":
                 if self.stop_motion_flag:
                     if not self.stop_motion_sent: #send only once to avoid drifting...
-                        if armFlag:
+                        if self.torso_enabled:
+                            self.torso.stopMotion()
+                        if self.base_enabled:
+                            self.base.stopMotion()
+                        if self.left_limb_enabled:
                             self.left_limb.stopMotion()
+                        if self.right_limb_enabled:
                             self.right_limb.stopMotion()
-                        self.base.stopMotion()
-                        self.left_gripper.stop()
+                        if self.left_gripper_enabled:
+                            self.left_gripper.stopMotion()
+                        if self.right_gripper_enabled:
+                            self.right_gripper.stopMotion()
                         self.stop_motion_sent = True #unused
                 else:
-                    ###update current state
-                    if self.base.newState():
+                    #Update current state. Only read state if a new one has been posted
+                    if self.base_enabled and self.base.newState():
                         self.base_state.measuredVel = self.base.getMeasuredVelocity()
                         self.base_state.measuredPos = self.base.getPosition()
                         self.base.markRead()
 
-                    #if self.torso.newState():
-                        #tilt, height, _, _ = self.torso.getStates()
-                        #self.torso_state.measuredTilt = tilt
-                        #self.torso_state.measuredHeight = height
-                        #self.torso.markRead()
+                    if self.torso_enabled and self.torso.newState():
+                        tilt, height, _, _ = self.torso.getStates()
+                        self.torso_state.measuredTilt = tilt
+                        self.torso_state.measuredHeight = height
+                        self.torso.markRead()
 
-                    if armFlag:
-                        if self.left_limb.newState():
-                            self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
-                            self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
-                            self.left_limb_state.sensedWrench =self.left_limb.getWrench()
-                            self.left_limb.markRead()
-                        if self.right_limb.newState():
-                            self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
-                            self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
-                            self.right_limb_state.sensedWrench = self.right_limb.getWrench()
-                            self.right_limb.markRead()
+                    if self.left_limb_enabled and self.left_limb.newState():
+                        self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
+                        self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
+                        self.left_limb_state.sensedWrench =self.left_limb.getWrench()
+                        self.left_limb.markRead()
+                    if self.right_limb_enabled and self.right_limb.newState():
+                        self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
+                        self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
+                        self.right_limb_state.sensedWrench = self.right_limb.getWrench()
+                        self.right_limb.markRead()
 
-                    #if self.left_gripper.new_state():
-                    #   self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
-                    #   self.left_gripper.mark_read()
-                    ###send commands
-                    if armFlag:
-
+                    if self.gripper_enabled and self.left_gripper.new_state():
+                       self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
+                       self.left_gripper.mark_read()
+                    #Send Commands
+                    if left_limb_enabled:
                         if self.left_limb_state.commandQueue:
                             if self.left_limb_state.commandType == 0:
                                 if len(self.left_limb_state.commandedqQueue) > 0:
@@ -254,6 +273,29 @@ class Motion:
                                     if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
                                         self.left_limb.setVelocity(self.left_limb_state.commandeddqQueue.pop(0) + [0.0])
                                         self.left_limb_state.lastCommandQueueTime = time.time()
+                        #### cartesian drive mode
+                        elif self.left_limb_state.cartesianDrive:
+                            flag = 1
+                            while flag:
+                                res, target_config = self._left_limb_cartesian_drive(self.left_limb_state.driveTransform)
+                                if res == 0:
+                                    #res = 0 means IK has failed completely, 1 means keep trying smaller steps, 2 means success
+                                    #set to position mode...
+                                    self.cartesian_drive_failure = True
+                                    self.left_limb_state.commandSent = False
+                                    self.left_limb_state.commandedq = deepcopy(self.sensedLeftLimbPosition())
+                                    self.left_limb_state.commandeddq = []
+                                    self.left_limb_state.commandType = 0
+                                    self.left_limb_state.commandQueue = False
+                                    self.left_limb_state.commandedqQueue = []
+                                    self.left_limb_state.cartesianDrive = False
+                                    break
+                                elif res == 1:
+                                    flag = 1
+                                elif res == 2:
+                                    flag = 0
+                                    self.left_limb.setConfig(target_config)         
+
                         else:
                             if not self.left_limb_state.commandSent:
                                 ###setting position will clear velocity commands
@@ -262,7 +304,7 @@ class Motion:
                                 elif self.left_limb_state.commandType == 1:
                                     self.left_limb.setVelocity(self.left_limb_state.commandeddq + [0.0])
                                 self.left_limb_state.commandSent = True
-
+                    if right_arm_enabled:
                         if self.right_limb_state.commandQueue:
                             if self.right_limb_state.commandType == 0:
                                 if len(self.right_limb_state.commandedqQueue) > 0:
@@ -274,6 +316,27 @@ class Motion:
                                     if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
                                         self.right_limb.setVelocity(self.right_limb_state.commandeddqQueue.pop(0) + [0.0])
                                         self.right_limb_state.lastCommandQueueTime = time.time()
+                        elif self.right_limb_state.cartesianDrive:
+                            flag = 1
+                            while flag:
+                                #res = 0 means IK has failed completely, 1 means keep trying smaller steps, 2 means success
+                                res, target_config = self._right_limb_cartesian_drive(self.right_limb_state.driveTransform)
+                                if res == 0:
+                                    #set to position mode...
+                                    self.cartesian_drive_failure = True
+                                    self.right_limb_state.commandSent = False
+                                    self.right_limb_state.commandedq = deepcopy(self.sensedRightLimbPosition())
+                                    self.right_limb_state.commandeddq = []
+                                    self.right_limb_state.commandType = 0
+                                    self.right_limb_state.commandQueue = False
+                                    self.right_limb_state.commandedqQueue = []
+                                    self.right_limb_state.cartesianDrive = False
+                                    break
+                                elif res == 1:
+                                    flag = 
+                                elif res == 2:
+                                    flag = 0
+                                    self.simulated_robot.setRightLimbConfig(target_config)              
                         else:
                             if not self.right_limb_state.commandSent:
                                 ###setting position will clear velocity commands
@@ -283,26 +346,26 @@ class Motion:
                                     self.right_limb.setVelocity(self.right_limb_state.commandeddq + [0.0])
                                 self.right_limb_state.commandSent = True
 
-                    ##Base:add set path later
-                    if self.base_state.commandType == 1:
-                        self.base.setCommandedVelocity(self.base_state.commandedVel)
-                    elif self.base_state.commandType == 0 and not base_state.commandSent:
-                        self.base_state.commandSent = True
-                        self.base.setTargetPosition(self.base_state.commandedVel)
+                    #TODO:Base add set path later
+                    if self.base_enabled:
+                        if self.base_state.commandType == 1:
+                            self.base.setCommandedVelocity(self.base_state.commandedVel)
+                        elif self.base_state.commandType == 0 and not base_state.commandSent:
+                            self.base_state.commandSent = True
+                            self.base.setTargetPosition(self.base_state.commandedVel)
+                    if self.torso_enabled:
+                        if not self.torso_state.commandSent:
+                           self.torso_state.commandSent = True
+                           self.torso.setTargetPositions(self.torso_state.commandedHeight, self.torso_state.commandedTilt)
 
-                    #if not self.torso_state.commandSent:
-                    #    self.torso_state.commandSent = True
-                    #    self.torso.setTargetPositions(self.torso_state.commandedHeight, self.torso_state.commandedTilt)
+                    if self.left_gripper_enabled:
+                        if self.left_gripper_state.commandType == 0:
+                          self.left_gripper.setPose(self.left_gripper_state.command_finger_set)
+                        elif self.left_gripper_state.commandType == 1:
+                          self.left_gripper.setVelocity(self.left_gripper_state.command_finger_set)
 
-                    #if self.left_gripper_state.commandType == 0:
-                    #   self.left_gripper.setPose(self.left_gripper_state.command_finger_set)
-                    #elif self.left_gripper_state.commandType == 1:
-                    #   self.left_gripper.setVelocity(self.left_gripper_state.command_finger_set)
-
-                    ###TODO: add the other components here
-
-                    ##update internal robot model, does not use the base's position and orientation
-                    ##basically assumes that the world frame is the frame centered at the base local frame, on the floor.
+                    #update internal robot model, does not use the base's position and orientation
+                    #basically assumes that the world frame is the frame centered at the base local frame, on the floor.
                     #robot_modelQ = self.base_state.sensedq + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
                     robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
                     self.robot_model.setConfig(robot_model_Q)
@@ -338,7 +401,6 @@ class Motion:
                                     self.simulated_robot.setLeftLimbVelocity(self.left_limb_state.commandeddqQueue.pop(0))
                                     self.left_limb_state.lastCommandQueueTime = time.time()
                     #### cartesian drive mode
-                    ####
                     elif self.left_limb_state.cartesianDrive:
                         #clock1 = time.time()
                         flag = 1
@@ -390,6 +452,7 @@ class Motion:
                         #clock1 = time.time()
                         flag = 1
                         while flag:
+                            #res = 0 means IK has failed completely, 1 means keep trying smaller steps, 2 means success
                             res, target_config = self._right_limb_cartesian_drive(self.right_limb_state.driveTransform)
                             if res == 0:
                                 #set to position mode...
@@ -403,7 +466,7 @@ class Motion:
                                 self.right_limb_state.cartesianDrive = False
                                 break
                             elif res == 1:
-                                flag = 1
+                                flag = 
                             elif res == 2:
                                 flag = 0
                                 self.simulated_robot.setRightLimbConfig(target_config)              
@@ -430,386 +493,648 @@ class Motion:
 
             elapsedTime = time.time() - loopStartTime
             self.t = time.time() - self.startTime
-            if elapsedTime < self.dt:
-                #print("before sleep",time.time() - self.robot_start_time)        
+            if elapsedTime < self.dt:       
                 time.sleep(self.dt-elapsedTime)
-                #print("after sleep", time.time() - self.robot_start_time)
             else:
                 pass
             self._controlLoopLock.release()
-            #print("main",time.time() - robotStartTime)
         print("motion.controlThread: exited")
-    ###TODO
+
+    #TODO: finish setting the entire robot
     def setPosition(self,q):
-        """set the position of the entire robot"""
-        """under development rn"""
-        """q is a list of [left limb, right limb, base] 6+6+3"""
-        assert len(q) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
-        self.setLeftLimbPosition(q[0:6])
-        self.setRightLimbPosition(q[6:12])
+        """set the position of the entire robot
+
+        Parameter:
+        ---------------
+        q: a merged list of joint positions, in the order of torso,base,left limb, right limb, left gripper...
+        """
+        #assert len(q) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
+        #self.setLeftLimbPosition(q[0:6])
+        #self.setRightLimbPosition(q[6:12])
+        pass
         return
     def setLeftLimbPosition(self,q):
-        """set the left limb joint position, and the robot moves as fast as possible"""
-        """q should be a list of 6 elements"""
-        """This will clear the motion queue"""
+        """Set the left limb joint positions, and the limb moves as fast as possible
+
+        This will clear the motion queue.
+
+        Parameter:
+        --------------
+        q: a list of 6 doubles. The desired joint positions.
+        """
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
-        self._controlLoopLock.acquire()
-        self.left_limb_state.commandSent = False
-        self.left_limb_state.commandedq = deepcopy(q)
-        self.left_limb_state.commandeddq = []
-        self.left_limb_state.commandType = 0
-        self.left_limb_state.commandQueue = False
-        self.left_limb_state.commandedqQueue = []
-        self.left_limb_state.cartesianDrive = False
-        self._controlLoopLock.release()
+        if self.left_limb_enabled:
+            self._controlLoopLock.acquire()
+            self.left_limb_state.commandSent = False
+            self.left_limb_state.commandedq = deepcopy(q)
+            self.left_limb_state.commandeddq = []
+            self.left_limb_state.commandType = 0
+            self.left_limb_state.commandQueue = False
+            self.left_limb_state.commandedqQueue = []
+            self.left_limb_state.cartesianDrive = False
+            self._controlLoopLock.release()
+        else:
+            print("motion.setLeftLimbPosition():Left limb not enabled")
         return
 
     def setRightLimbPosition(self,q):
-        """set the right limb joint sposition, and the robot moves as fast as possible"""
-        """q should be a list of 6 elements"""
+        """Set the right limb joint positions, and the limb moves as fast as possible
+
+        This will clear the motion queue.
+        
+        Parameter:
+        --------------
+        q: a list of 6 doubles. The desired joint positions.
+        """
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
-        self._controlLoopLock.acquire()
-        self.right_limb_state.commandSent = False
-        self.right_limb_state.commandedq = deepcopy(q)
-        self.right_limb_state.commandeddq = []
-        self.right_limb_state.commandType = 0
-        self.right_limb_state.commandQueue = False
-        self.right_limb_state.commandedqQueue = []
-        self.right_limb_state.cartesianDrive = False
-        self._controlLoopLock.release()
+        if self.right_limb_enabled:
+            self._controlLoopLock.acquire()
+            self.right_limb_state.commandSent = False
+            self.right_limb_state.commandedq = deepcopy(q)
+            self.right_limb_state.commandeddq = []
+            self.right_limb_state.commandType = 0
+            self.right_limb_state.commandQueue = False
+            self.right_limb_state.commandedqQueue = []
+            self.right_limb_state.cartesianDrive = False
+            self._controlLoopLock.release()
+        else:
+            print("motion.setRightLimbPosition():Right limb not enabled")
         return
 
     def setLeftLimbPositionLinear(self,q,duration):
-        """left limb moves to q in duration time"""
-        """set a motion queue, this will clear the setPosition() commands"""
+        """Set Left limb to moves to a configuration in a certain amount of time at constant speed
+        
+        Set a motion queue, this will clear the setPosition() commands
+        
+        Parameters:
+        ----------------
+        q: a list of 6 doubles. The desired joint positions.
+        duration: double. The desired duration.
+        """
         assert len(q) == 6, "motion.setLeftLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setLeftLimbPositionLinear(): Duration needs to be a positive number"
         #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
-        #Also collision checks
-        planningTime = 0.0 + TRINAConfig.ur5e_control_rate
-        positionQueue = []
-        currentq = self.left_limb_state.sensedq
-        difference = vectorops.sub(q,currentq)
-        while planningTime < duration:
-            positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
-            planningTime = planningTime + TRINAConfig.ur5e_control_rate
-        positionQueue.append(q)
+        #TODO:Also collision checks
+        if self.left_limb_enabled:
+            planningTime = 0.0 + TRINAConfig.ur5e_control_rate
+            positionQueue = []
+            currentq = self.left_limb_state.sensedq
+            difference = vectorops.sub(q,currentq)
+            while planningTime < duration:
+                positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
+                planningTime = planningTime + TRINAConfig.ur5e_control_rate
+            positionQueue.append(q)
 
-        #print("motion.setLeftLimbPositionLinear")
-        self._controlLoopLock.acquire()
-        self.left_limb_state.commandSent = False
-        self.left_limb_state.commandType = 0
-        self.left_limb_state.commandedqQueue = positionQueue
-        self.left_limb_state.commandQueue = True
-        self.left_limb_state.commandedq = []
-        self.left_limb_state.commandeddq = []
-        self.left_limb_state.cartesianDrive = False
-        self._controlLoopLock.release()
+            self._controlLoopLock.acquire()
+            self.left_limb_state.commandSent = False
+            self.left_limb_state.commandType = 0
+            self.left_limb_state.commandedqQueue = positionQueue
+            self.left_limb_state.commandQueue = True
+            self.left_limb_state.commandedq = []
+            self.left_limb_state.commandeddq = []
+            self.left_limb_state.cartesianDrive = False
+            self._controlLoopLock.release()
+        else:
+            print("motion.setLeftLimbPosition():Left limb not enabled")
 
     def setRightLimbPositionLinear(self,q,duration):
-        """limb moves to q in duration time"""
-        """set a motion queue, this will clear the setPosition() commands"""
+        """Set right limb to moves to a configuration in a certain amount of time at constant speed
+        
+        Set a motion queue, this will clear the setPosition() commands
+        
+        Parameters:
+        ----------------
+        q: a list of 6 doubles. The desired joint positions.
+        duration: double. The desired duration.
+        """
         assert len(q) == 6, "motion.setRightLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setRightLimbPositionLinear(): Duration needs to be a positive number"
         #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
         #Also collision checks
-        planningTime = 0.0 + TRINAConfig.ur5e_control_rate
-        positionQueue = []
-        currentq = self.right_limb_state.sensedq
-        difference = vectorops.sub(q,currentq)
-        while planningTime < duration:
-            positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
-            planningTime = planningTime + TRINAConfig.ur5e_control_rate
-        positionQueue.append(q)
+        if self.right_limb_enabled:
+            planningTime = 0.0 + TRINAConfig.ur5e_control_rate
+            positionQueue = []
+            currentq = self.right_limb_state.sensedq
+            difference = vectorops.sub(q,currentq)
+            while planningTime < duration:
+                positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
+                planningTime = planningTime + TRINAConfig.ur5e_control_rate
+            positionQueue.append(q)
 
-        self._controlLoopLock.acquire()
-        self.right_limb_state.commandSent = False
-        self.right_limb_state.commandType = 0
-        self.right_limb_state.commandedqQueue = positionQueue
-        self.right_limb_state.commandQueue = True
-        self.right_limb_state.commandedq = []
-        self.right_limb_state.commandeddq = []
-        self.right_limb_state.cartesianDrive = False
-        self._controlLoopLock.release()
+            self._controlLoopLock.acquire()
+            self.right_limb_state.commandSent = False
+            self.right_limb_state.commandType = 0
+            self.right_limb_state.commandedqQueue = positionQueue
+            self.right_limb_state.commandQueue = True
+            self.right_limb_state.commandedq = []
+            self.right_limb_state.commandeddq = []
+            self.right_limb_state.cartesianDrive = False
+            self._controlLoopLock.release()
+        else:
+            print("motion.setRightLimbPosition():Right limb not enabled")
         return
 
     def sensedLeftLimbPosition(self):
-        return self.left_limb_state.sensedq
+        """The current joint positions of the left limb
+
+        Return:
+        --------------
+        A list of 6 doubles. The limb configuration.
+        """
+        if self.left_limb_enabled:
+            return self.left_limb_state.sensedq
+        else:
+            print("motion().sensedLeftLimbPosition: left limb not enabled")
+            return
 
     def sensedRightLimbPosition(self):
-        return self.right_limb_state.sensedq
+        """The current joint positions of the right limb
 
+        Return:
+        --------------
+        A list of 6 doubles. The limb configuration.
+        """
+        if self.right_limb_enabled:
+            return self.right_limb_state.sensedq
+        else:
+            print("motion().sensedRightLimbPosition: right limb not enabled")
+            return
     def setVelocity(self,qdot):
-        """set the velocity of the entire robot, under development rn"""
-        assert len(qdot) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
-        self.setLeftLimbVelocity(qdot[0:6])
-        self.setRightLimbVelcity(qdot[6:12])
+        """set the velocity of the entire robot, under development rn
+
+        """
+        #assert len(qdot) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
+        #self.setLeftLimbVelocity(qdot[0:6])
+        #self.setRightLimbVelcity(qdot[6:12])
+        pass
         return
 
     def setLeftLimbVelocity(self,qdot):
-        """set limb joint velocities"""
-        assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
-        self._controlLoopLock.acquire()
-        self.left_limb_state.commandSent = False
-        self.left_limb_state.commandeddq = deepcopy(qdot)
-        self.left_limb_state.commandedq = []
-        self.left_limb_state.commandType = 1
-        self.left_limb_state.commandQueue = False
-        self.left_limb_state.commandedqQueue = []
-        self.left_limb_state.cartesianDrive = False
-        self._controlLoopLock.release()
+        """Set the left limb joint velocities
+
+        Parameter:
+        ----------------
+        qdot: a list of 6 doubles. Joint velocities
+        """
+        if self.left_limb_enabled:
+            assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
+            self._controlLoopLock.acquire()
+            self.left_limb_state.commandSent = False
+            self.left_limb_state.commandeddq = deepcopy(qdot)
+            self.left_limb_state.commandedq = []
+            self.left_limb_state.commandType = 1
+            self.left_limb_state.commandQueue = False
+            self.left_limb_state.commandedqQueue = []
+            self.left_limb_state.cartesianDrive = False
+            self._controlLoopLock.release()
+        else:
+            print("Left limb not enabled")
+
         return
 
     def setRightLimbVelocity(self,qdot):
-        """set limb joint velocities"""
-        assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
-        self._controlLoopLock.acquire()
-        self.right_limb_state.commandSent = False
-        self.right_limb_state.commandeddq = deepcopy(qdot)
-        self.right_limb_state.commandedq = []
-        self.right_limb_state.commandType = 1
-        self.right_limb_state.commandQueue = False
-        self.right_limb_state.commandedqQueue = []
-        self.right_limb_state.cartesianDrive = False
-        self._controlLoopLock.release()
+        """Set the right limb joint velocities
+
+        Parameter:
+        ----------------
+        qdot: a list of 6 doubles. Joint velocities
+        """
+        if self.right_limb_enabled:
+            assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
+            self._controlLoopLock.acquire()
+            self.right_limb_state.commandSent = False
+            self.right_limb_state.commandeddq = deepcopy(qdot)
+            self.right_limb_state.commandedq = []
+            self.right_limb_state.commandType = 1
+            self.right_limb_state.commandQueue = False
+            self.right_limb_state.commandedqQueue = []
+            self.right_limb_state.cartesianDrive = False
+            self._controlLoopLock.release()
+        else:
+            print("Right limb not enabled.")
         return
 
     def setLeftEEInertialTransform(self,Ttarget,duration):
-        """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
-        #print("motion.setLeftEEInertialTransform():started..")
-        self._controlLoopLock.acquire()
-        initial = self.robot_model.getConfig()
-        goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
-        if ik.solve(goal,activeDofs = self.left_active_Dofs):
-        #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
-            target_config = self.robot_model.getConfig()
-            print("motion.setLeftEEInertialTransform():IK solve successful")
-        else:
-            self._controlLoopLock.release()
-            print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
-            return 'motion.setLeftEEInertialtransform():IK solve failure: no IK solution found'
-        res = self._check_collision_linear(self.robot_model,initial,target_config,15)
-        #print(res)
-        if res:
-            self._controlLoopLock.release()
-            print('motion.setLeftEEInertialtransform():Self-collision midway')
-            return 'motion.setLeftEEInertialtransform():Self-collision midway'
-        else:
-            print("motion.setLeftEEInertialTransform():No collisoin")
+        """Set the trasform of the arm w.r.t. the base frame, movement complete in a certain amount of time
 
-        self.robot_model.setConfig(initial)
-        self._controlLoopLock.release()
-        self.setLeftLimbPositionLinear(target_config[10:16],duration)
+        This current version assmumes that the torso is at zero position.
+        #TODO: implement version with torso not at zero.
+
+        Parameter:
+        ---------------
+        Ttarget: A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list
+        duration: double. The duration of the movement
+        """
+        if self.left_ilimb_enabled:
+            self._controlLoopLock.acquire()
+            initial = self.robot_model.getConfig()
+            goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
+            if ik.solve(goal,activeDofs = self.left_active_Dofs):
+            #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
+                target_config = self.robot_model.getConfig()
+                print("motion.setLeftEEInertialTransform():IK solve successful")
+            else:
+                self._controlLoopLock.release()
+                print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
+                return 'motion.setLeftEEInertialtransform():IK solve failure: no IK solution found'
+            res = self._check_collision_linear(self.robot_model,initial,target_config,15)
+            #print(res)
+            if res:
+                self._controlLoopLock.release()
+                print('motion.setLeftEEInertialtransform():Self-collision midway')
+                return 'motion.setLeftEEInertialtransform():Self-collision midway'
+            else:
+                print("motion.setLeftEEInertialTransform():No collisoin")
+
+            self.robot_model.setConfig(initial)
+            self._controlLoopLock.release()
+            self.setLeftLimbPositionLinear(target_config[10:16],duration)
+        else:
+            print("Left limb not enabled.")
 
         return ''
 
     def setLeftEEVelocity(self,v, tool = [0,0,0]):
-        """set the ee to translate at v[0:3] and rotate at v[3:6] for a specific amount of duration of time"""
-        """implemented using position control"""
-        """collision detection not implemented rn..."""
-        self._controlLoopLock.acquire()
-        self.left_limb_state.commandedq = []
-        self.left_limb_state.commandedqQueue = []
-        self.left_limb_state.commandeddq = []
-        self.left_limb_state.commandQueue = False
-        self.cartesian_drive_failure = False
-        ##cartesian velocity drive
-        if len(v) == 3:
-            self.left_limb_state.cartesianDriveV = deepcopy(v)
-            self.left_limb_state.cartesianMode = 1
+        """Set the end-effect cartesian velocity, in the base frame.
 
-        elif len(v) == 6:
-            self.left_limb_state.cartesianDriveV = deepcopy(v[0:3])
-            self.left_limb_state.cartesianDriveW = deepcopy(v[3:6])
-            self.left_limb_state.cartesianMode = 0
+        Implemented using position control and IK. Will keep moving until infeasible.
+        TODO: implement collision detection
+
+        Parameter:
+        --------------
+        v: A list of 6 doubled. v[0:3] is the desired cartesian position velocities and v[3:6] is the desired rotational velocity
+
+        """
+        if self.left_limb_enabled:
+            self._controlLoopLock.acquire()
+            self.left_limb_state.commandedq = []
+            self.left_limb_state.commandedqQueue = []
+            self.left_limb_state.commandeddq = []
+            self.left_limb_state.commandQueue = False
+            self.cartesian_drive_failure = False
+            ##cartesian velocity drive
+            if len(v) == 3:
+                self.left_limb_state.cartesianDriveV = deepcopy(v)
+                self.left_limb_state.cartesianMode = 1
+
+            elif len(v) == 6:
+                self.left_limb_state.cartesianDriveV = deepcopy(v[0:3])
+                self.left_limb_state.cartesianDriveW = deepcopy(v[3:6])
+                self.left_limb_state.cartesianMode = 0
+            else:
+                print("motion.setRightEEVelocity(): wrong input")
+
+            self.left_limb_state.cartesianDrive = True
+            (R,t) = self.left_EE_link.getTransform()
+            self.left_limb_state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
+            self.left_limb_state.driveTransform = (R,vectorops.add(so3.apply(R,tool),t))
+            self.left_limb_state.driveSpeedAdjustment = 1.0
+            self.left_limb_state.toolCenter = deepcopy(tool)
+            self._controlLoopLock.release()
         else:
-            print("motion.setRightEEVelocity(): wrong input")
-
-        self.left_limb_state.cartesianDrive = True
-        (R,t) = self.left_EE_link.getTransform()
-        self.left_limb_state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
-        self.left_limb_state.driveTransform = (R,vectorops.add(so3.apply(R,tool),t))
-        self.left_limb_state.driveSpeedAdjustment = 1.0
-        self.left_limb_state.toolCenter = deepcopy(tool)
-        self._controlLoopLock.release()
+            print("Left limb not enabled.")
 
         return ''
 
     def setRightEEInertialTransform(self,Ttarget,duration):
-        """Set the trasform of the arm w.r.t. the base frame. Assmume that the torso are not moving"""
-        #print("motion.setLeftEEInertialTransform():started..")
-        self._controlLoopLock.acquire()
-        initial = self.robot_model.getConfig()
-        goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
-        if ik.solve(goal,activeDofs = self.right_active_Dofs):
-        #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
-            target_config = self.robot_model.getConfig()
-            print("motion.setRightEEInertialTransform():IK solve successful")
-        else:
-            self._controlLoopLock.release()
-            print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
-            return 'motion.setRightEEInertialtransform():IK solve failure: no IK solution found'
-        res = self._check_collision_linear(self.robot_model,initial,target_config,15)
-        #print(res)
-        if res:
-            self._controlLoopLock.release()
-            print('motion.setRighttEEInertialtransform():Self-collision midway')
-            return 'motion.setRighttEEInertialtransform():Self-collision midway'
-        else:
-            print("motion.setRightEEInertialTransform():No collisoin")
+        """Set the trasform of the arm w.r.t. the base frame, movement complete in a certain amount of time
 
-        self.robot_model.setConfig(initial)
-        self._controlLoopLock.release()
-        self.setRightLimbPositionLinear(target_config[27:33],duration)
+        This current version assmumes that the torso is at zero position.
+        #TODO: implement version with torso not at zero.
+
+        Parameter:
+        ---------------
+        Ttarget: A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list
+        duration: double. The duration of the movement
+        """
+        if self.right_limb_enaled:
+            self._controlLoopLock.acquire()
+            initial = self.robot_model.getConfig()
+            goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
+            if ik.solve(goal,activeDofs = self.right_active_Dofs):
+            #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
+                target_config = self.robot_model.getConfig()
+                print("motion.setRightEEInertialTransform():IK solve successful")
+            else:
+                self._controlLoopLock.release()
+                print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
+                return 'motion.setRightEEInertialtransform():IK solve failure: no IK solution found'
+            res = self._check_collision_linear(self.robot_model,initial,target_config,15)
+            #print(res)
+            if res:
+                self._controlLoopLock.release()
+                print('motion.setRighttEEInertialtransform():Self-collision midway')
+                return 'motion.setRighttEEInertialtransform():Self-collision midway'
+            else:
+                print("motion.setRightEEInertialTransform():No collisoin")
+
+            self.robot_model.setConfig(initial)
+            self._controlLoopLock.release()
+            self.setRightLimbPositionLinear(target_config[27:33],duration)
+        else:
+            print("Right limb not enabled. ")
 
         return ''
 
     def setRightEEVelocity(self,v, tool = [0,0,0]):
-        """set the ee to translate at v[0:3] and rotate at v[3:6] for a specific amount of duration of time"""
-        """implemented using position control"""
-        """collision detection not implemented rn..."""
-        self._controlLoopLock.acquire()
-        self.right_limb_state.commandedq = []
-        self.right_limb_state.commandedqQueue = []
-        self.right_limb_state.commandeddq = []
-        self.right_limb_state.commandQueue = False
-        self.cartesian_drive_failure = False
-        ##cartesian velocity drive
-        if len(v) == 3:
-            self.right_limb_state.cartesianDriveV = deepcopy(v)
-            self.right_limb_state.cartesianMode = 1
+        """Set the end-effect cartesian velocity, in the base frame.
 
-        elif len(v) == 6:
-            self.right_limb_state.cartesianDriveV = deepcopy(v[0:3])
-            self.right_limb_state.cartesianDriveW = deepcopy(v[3:6])
-            self.right_limb_state.cartesianMode = 0
+        Implemented using position control and IK. Will keep moving until infeasible.
+        TODO: implement collision detection
+
+        Parameter:
+        --------------
+        v: A list of 6 doubled. v[0:3] is the desired cartesian position velocities and v[3:6] is the desired rotational velocity
+
+        """
+        if self.right_limb_enabled:
+            self._controlLoopLock.acquire()
+            self.right_limb_state.commandedq = []
+            self.right_limb_state.commandedqQueue = []
+            self.right_limb_state.commandeddq = []
+            self.right_limb_state.commandQueue = False
+            self.cartesian_drive_failure = False
+            ##cartesian velocity drive
+            if len(v) == 3:
+                self.right_limb_state.cartesianDriveV = deepcopy(v)
+                self.right_limb_state.cartesianMode = 1
+
+            elif len(v) == 6:
+                self.right_limb_state.cartesianDriveV = deepcopy(v[0:3])
+                self.right_limb_state.cartesianDriveW = deepcopy(v[3:6])
+                self.right_limb_state.cartesianMode = 0
+            else:
+                print("motion.setRightEEVelocity(): wrong input")
+                
+            self.right_limb_state.cartesianDrive = True
+            (R,t) = self.right_EE_link.getTransform()
+            self.right_limb_state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
+            self.right_limb_state.driveTransform = (R,vectorops.add(so3.apply(R,tool),t))
+            self.right_limb_state.driveSpeedAdjustment = 1.0
+            self.right_limb_state.toolCenter = deepcopy(tool)
+            self._controlLoopLock.release()
         else:
-            print("motion.setRightEEVelocity(): wrong input")
-            
-        self.right_limb_state.cartesianDrive = True
-        (R,t) = self.right_EE_link.getTransform()
-        self.right_limb_state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
-        self.right_limb_state.driveTransform = (R,vectorops.add(so3.apply(R,tool),t))
-        self.right_limb_state.driveSpeedAdjustment = 1.0
-        self.right_limb_state.toolCenter = deepcopy(tool)
-        self._controlLoopLock.release()
+            print("Right limb not enabled.")
         return ''
 
     def sensedLeftEETransform(self):
-        """Return the transform w.r.t. the base frame"""
-        return self.left_EE_link.getTransform()
+        """Return the transform w.r.t. the base frame
+
+        Return:
+        -------------
+        (R,t)
+        """
+        if self.left_limb_enabled:
+            return self.left_EE_link.getTransform()
+        else:
+            print("Left limb not enabled.")
+            return 
 
     def sensedRightEETransform(self):
-        """Return the transform w.r.t. the base frame"""
-        return self.right_EE_link.getTransform()
+        """Return the transform w.r.t. the base frame
 
+        Return:
+        -------------
+        (R,t)
+        """
+        if self.right_limb_enabled:
+            return self.right_EE_link.getTransform()
+        else:
+            print("Right limb not enabled.")
+            return 
 
     def sensedLeftLimbVelocity(self):
-        return self.left_limb_state.senseddq()
+        """ Return the current limb joint velocities
+
+        Return:
+        ---------------
+        A list of 6 doubles. The joint velocities.
+        """
+        if self.left_limb_enabled:
+            return self.left_limb_state.senseddq()
+        else:
+            print("Left limb not enabled.")
+            return 
 
     def sensedRightLimbVelocity(self):
-        return self.right_limb_state.senseddq()
+        """ Return the current limb joint velocities
+
+        Return:
+        ---------------
+        A list of 6 doubles. The joint velocities.
+        """
+        if self.right_limb_enabled:
+            return self.right_limb_state.senseddq()
+        else:
+            print('Right limb not enabled.')
+            return
 
     def setBaseTargetPosition(self, q, vel):
-        """set the local target position of the base"""
-        """base constructs a path to go to the desired position"""
-        assert len(q) == 3, "motion.setBaseTargetPosition(): wrong dimensions"
-        self._controlLoopLock.acquire()
-        self.base_state.commandType = 0
-        self.base_state.commandedTargetPosition = deepcopy(q)
-        self.base_state.pathFollowingVel = vel
-        self.base_state.commandSent = False
-        self._controlLoopLock.release()
+        """Set the local target position of the base.
+
+        The base constructs a path to go to the desired position, following the desired speed along the path
+        Parameter:
+        ---------------
+        q: a list of 3 doubles. The desired x,y position and rotation. 
+        Vel: double. Desired speed along the path.
+        """
+        if self.base_enabled:
+            assert len(q) == 3, "motion.setBaseTargetPosition(): wrong dimensions"
+            self._controlLoopLock.acquire()
+            self.base_state.commandType = 0
+            self.base_state.commandedTargetPosition = deepcopy(q)
+            self.base_state.pathFollowingVel = vel
+            self.base_state.commandSent = False
+            self._controlLoopLock.release()
+        else:
+            print('Base not enabled.')
 
     def setBaseVelocity(self, q):
-        """set the velocity of the base relative to the local base frame"""
-        assert len(q) == 2 ,"motion.setBaseVelocity(): wrong dimensions"
-        self._controlLoopLock.acquire()
-        self.base_state.commandType = 1
-        self.base_state.commandedVel = deepcopy(q)
-        self.base_state.commandSent = False
-        self._controlLoopLock.release()
+        """Set the velocity of the base relative to the local base frame
+
+        Parameter:
+        ---------------
+        q: a list of 2 doubles. The linear and rotational velocites.
+        """
+        if self.base_enabled:
+            assert len(q) == 2 ,"motion.setBaseVelocity(): wrong dimensions"
+            self._controlLoopLock.acquire()
+            self.base_state.commandType = 1
+            self.base_state.commandedVel = deepcopy(q)
+            self.base_state.commandSent = False
+            self._controlLoopLock.release()
+        else:
+            print('Base not enabled.')
+
     def setTorsoTargetPosition(self, q):
-        assert len(q) == 2, "mtion.SetTorsoTargetPosition(): wrong dimensions"
-        height, tilt = q
-        self._controlLoopLock.acquire()
-        self.torso_state.commandedHeight = height
-        self.torso_state.commandedTilt = tilt
-        self.torso_state.commandSent = False
-        self._controlLoopLock.release()
+        """Set the torso target position. 
 
-    # returns [v, w]
+        Moves to the target as fast as possible.
+
+        Parameter:
+        --------------
+        q: a list of 2 doubles. The lift and tilt positions.
+        """
+        if self.torso_enabled:
+            assert len(q) == 2, "motion.SetTorsoTargetPosition(): wrong dimensions"
+            height, tilt = q
+            self._controlLoopLock.acquire()
+            self.torso_state.commandedHeight = height
+            self.torso_state.commandedTilt = tilt
+            self.torso_state.commandSent = False
+            self._controlLoopLock.release()
+        else:
+            print('Base not enabled.')
+
     def sensedBaseVelocity(self):
-        return self.base_state.measuredVel
+        """Returns the current base velocity
 
-    # returns [x, y, theta]
+        Return:
+        -----------
+        A list of 2 doubles. Linear and Rotational velocities.
+        """
+        if self.base_enabled:
+            return self.base_state.measuredVel
+        else:
+            print('Base not enabled')
+
     def sensedBasePosition(self):
-        return self.base_state.measuredPos
+        """Returns the current base position. Zero position is the position when the base is started.
 
-    # returns [height, tilt]
+        Return:
+        -------------
+        A list of 3 doubles. Position and rotation.
+
+        """
+        if self.base_enabled:
+            return self.base_state.measuredPos
+        else:
+            print('Base not enabled')
+
     def sensedTorsoPosition(self):
-        return [self.torso_state.measuredHeight, self.torso_state.measuredTilt]
+        """Returns the current torso position
+
+        Return:
+        -------------
+        A list of 2 doubles. The positions.
+        """
+        if self.torso_enabled:
+            return [self.torso_state.measuredHeight, self.torso_state.measuredTilt]
+        else:
+            print('Torso not enabled.')
 
     def setGripperPosition(self, position):
+        """Set the position of the gripper. Moves as fast as possible.
+        #TODO
+        ###Under development
+        """
         self._controlLoopLock.acquire()
         self.left_gripper_state.commandType = 0
         self.left_gripper_state.command_finger_set = deepcopy(position)
         self._controlLoopLock.release()
+
     def setGripperVelocity(self,velocity):
+        """Set the velocity of the gripper. Moves as fast as possible.
+        #TODO
+        ###Under development
+        """
         self.left_gripper_state.commandType = 1
         self.left_gripper_state.command_finger_set = deepcopy(velocity)
 
     def sensedGripperPosition(self):
+        """Return the current positions of the fingers.
+        #TODO
+        ###Under development
+        """
         return self.left_gripper_state.sense_finger_set
 
     def getKlamptCommandedPosition(self):
+        """Return the entire commanded position, in Klampt format.
         ###using attached grippers as reflex grippers ###
-
+        """
         if self.left_limb_state.commandedq and self.right_limb_state.commandedq:
             return self.base_state.measuredPos + [0]*7 + self.left_limb_state.commandedq + [0]*19 + self.right_limb_state.commandedq + [0]*18
         else:
             return self.getKlamptSensedPosition()
 
     def getKlamptSensedPosition(self):
+        """Return the entire sensed Klampt position, in Klampt format.
+        ###using attached grippers as reflex grippers ###
+        """
         return self.base_state.measuredPos + [0]*7 + self.left_limb_state.sensedq + [0]*19 + self.right_limb_state.sensedq + [0]*18
 
     def shutdown(self):
-        """shutdown the componets... """
+        """Shutdown the componets.
+
+        """
         self.shut_down_flag = True
         if self.mode == "Physical":
-            if armFlag:
+            if self.base_enabled:
+                self.base.shutdown()
+            if self.torso_enabled:
+                self.torso.shutdown()
+            if self.left_limb_enabled:
                 self.left_limb.stop()
+            if self.right_limb_enaled:
                 self.right_limb.stop()
-            #stop other components
-            self.base.shutdown()
-            #self.left_gripper.shutDown()
-            #self.torso.shutdown()
+            #TODO: integrate gripper code
+            if self.left_gripper_enabled:
+                pass
+
         elif self.mode == "Kinematic":
             self.simulated_robot.shutdown()
         return 0
 
     def isStarted(self):
+        """Return whether the robot has started
+
+        Return:
+        ------------
+        bool
+        """
         return self.startUp
 
     def isShutDown(self):
+        """Return whether the robot is shutdown
+
+        Return:
+        ------------
+        bool
+        """
         return self.shut_down_flag
 
     def moving(self):
-        """Returns true if the robot is currently moving."""
+        """Returns true if the robot is currently moving.
+
+        Return:
+        ------------
+        bool
+        """
         return self.left_limb.moving() or self.right_limb.moving() or self.base.moving() or self.left_gripper.moving() or self.torso.moving()
 
     def mode(self):
+        """Returns the current mode. "Kinematic" or "Physical"
+
+        Return:
+        ------------
+        string
+        """
         return self.mode
 
     def stopMotion(self):
-        """Stops all motion"""
-        self.base.stopMotion()
-        self.left_gripper.stop()
+        """Pause the motion of the robot, starting from the next control loop.
+
+        This is not shutdown. Just a pause.
+        """
         self.stop_motion_flag = True
         self.stop_motion_sent = False
-        ##TODO: purge commands
-
+        self._purge_commands()
         return
+
+
+
+    ### ------------------------- ###
+    ###current change up to here#######    
     def resumeMotion(self):
         """The robot is ready to take more commands"""
         self.base.startMotion()
@@ -847,6 +1172,39 @@ class Motion:
         self.setRightLimbPositionLinear(rightUntuckedConfig,1)
 
     ###Below are internal helper functions
+    def _purge_commands(self):
+        """Clear all the motion commands
+        """
+        self._controlLoopLock.acquire()
+        if self.left_limb_enabled:
+            self.left_limb_state.commandedq = []
+            self.left_limb_state.commandedqQueue = []
+            self.left_limb_state.commandSent = True
+            self.left_limb_state.commandQueue = False
+            self.left_limb_state.commandeddq = []
+            self.left_limb_state.cartesianDrive = False
+        if self.right_limb_enabled:
+            self.right_limb_state.commandedq = []
+            self.right_limb_state.commandedqQueue = []
+            self.right_limb_state.commandSent = True
+            self.right_limb_state.commandQueue = False
+            self.right_limb_state.commandeddq = []
+            self.right_limb_state.cartesianDrive = False        
+        if self.base_enabled:
+            self.base_state.commandedVel = [0.0, 0.0]
+            self.base_state.commandedTargetPosition = [] #[x, y, theta]
+            self.base_state.commandSent = True
+        if self.left_gripper_enabled:
+            self.left_gripper_state.command_finger_set = [0.0, 0.0, 0.0, 0.0]
+        if self.torso_enabled:
+            self.torso_state.commandedHeight = 0.0
+            self.torso_state.commandedTilt = 0.0
+            self.torso_state.commandSent = True
+            self.torso_state.leftLeg = 0
+            self.torso_state.rightLeg = 0
+
+        self._controlLoopLock.release()
+
     def _check_collision_linear(self,robot,q1,q2,disrectization):
         #print('_check_collision_linear():started')
         lin = np.linspace(0,1,disrectization)
