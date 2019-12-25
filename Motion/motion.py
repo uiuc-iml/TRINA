@@ -1136,14 +1136,26 @@ class Motion:
     ### ------------------------- ###
     ###current change up to here#######    
     def resumeMotion(self):
-        """The robot is ready to take more commands"""
+        """Unpause the robot.
+
+        After unpausing, the robot is still stationery until some new commands is added
+        """
         self.base.startMotion()
         self.startMotionFlag = False
         self.left_gripper.resume()
         return
 
     def mirror_arm_config(self,config):
-        """given the Klampt config of the left or right arm, return the other"""
+        """given the Klampt config of the left or right arm, return the other
+
+        Paremeters:
+        ---------------
+        A list of 6 doubles. Limb configuration.
+
+        Return:
+        ---------------
+        A list of 6 doubles. Limb configuration.
+        """
         RConfig = []
         RConfig.append(-config[0])
         RConfig.append(-config[1]-math.pi)
@@ -1159,13 +1171,29 @@ class Motion:
         return RConfig
     
     def getWorld(self):
-        return self.simulated_robot.getWorld()
+        """ Return the simulated robot 
+        
+        Return:
+        -------------
+        The Klampt world of the simulated robot.
+        """
+        if self.mode == "Kinematic":
+            return self.simulated_robot.getWorld()
+        else:
+            print("wrong robot mode.")
 
     def cartesianDriveFail(self):
+        """ Return if cartedian drive has failed or not 
+
+        Return:
+        ----------------
+        bool
+        """
         return self.cartesian_drive_failure
 
 
     def setRobotToDefualt(self):
+        """ Some helper function when debugging"""
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
         rightUntuckedConfig = self.mirror_arm_config(leftUntuckedConfig)
         self.setLeftLimbPositionLinear(leftUntuckedConfig,1)
@@ -1206,7 +1234,20 @@ class Motion:
         self._controlLoopLock.release()
 
     def _check_collision_linear(self,robot,q1,q2,disrectization):
-        #print('_check_collision_linear():started')
+        """ Check collision between 2 robot configurations
+
+        Parameters:
+        -----------------
+        robot: klampt robot model
+        q1: a list of 6 doubles
+        q2: a list of 6 doubles
+        discretization: integers, the number of collision checks
+
+        Return:
+        -----------------
+        bool
+        """
+
         lin = np.linspace(0,1,disrectization)
         initialConfig = robot.getConfig()
         diff = vectorops.sub(q2,q1)
@@ -1228,6 +1269,16 @@ class Motion:
         return False
 
     def _limit_arm_position(self,config):
+        """Modify the arm configuration to be within joint position limits
+        
+        Parameters:
+        ---------------
+        config: a list of 6 doubles
+
+        Return:
+        ---------------
+        a list of 6 doubles
+        """
         modified = []
         for i in range(6):
             if config[i] > TRINAConfig.limb_position_upper_limits[i]:
@@ -1239,6 +1290,16 @@ class Motion:
         return modified
 
     def _arm_is_in_limit(self,config,upper,lower):
+        """Check if the config is within the limits
+
+        Parameters:
+        ---------------
+        Lists of same length
+
+        Return:
+        ---------------
+        bool
+        """
         for [q,qu,ql] in zip(config,upper,lower):
             if q > qu or q < ql:
                 return False
@@ -1246,6 +1307,18 @@ class Motion:
         return True
 
     def _left_limb_cartesian_drive(self,current_transform):
+        """ Calculate the next position command for cartedian velocity drive 
+
+        Parameters:
+        -------------
+        current_transform: klampt rigid transform. 
+
+        Return:
+        -------------
+        result flag
+        target_configuration, a list of 6 doubles
+
+        """
         v = self.left_limb_state.cartesianDriveV
         w = self.left_limb_state.cartesianDriveW
         amount = self.dt * self.left_limb_state.driveSpeedAdjustment
@@ -1306,6 +1379,18 @@ class Motion:
         return 2,target_config #2 means success..
 
     def _right_limb_cartesian_drive(self,current_transform):
+        """ Calculate the next position command for cartedian velocity drive 
+
+        Parameters:
+        -------------
+        current_transform: klampt rigid transform. 
+
+        Return:
+        -------------
+        result flag
+        target_configuration, a list of 6 doubles
+
+        """        
         v = self.right_limb_state.cartesianDriveV
         w = self.right_limb_state.cartesianDriveW
         amount = self.dt * self.right_limb_state.driveSpeedAdjustment
