@@ -69,7 +69,7 @@ class Motion:
         #Initialize components
         if self.mode == "Kinematic":
             self.left_limb_enabled = True
-            self.right_limb_enaled = True
+            self.right_limb_enabled = True
             self.base_enabled = True
             print("initiating Kinematic controller")
             self.simulated_robot = KinematicController(model_path)
@@ -158,7 +158,8 @@ class Motion:
                 if self.left_limb_enabled or self.right_limb_enaled:
                     if torso_enabled:
                         #TODO read torso position
-                        #tilt_angle = 
+                        #tilt_angle =
+                        pass 
                     else:
                         tilt_angle = 0.0
                     R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
@@ -333,7 +334,7 @@ class Motion:
                                     self.right_limb_state.cartesianDrive = False
                                     break
                                 elif res == 1:
-                                    flag = 
+                                    flag = 1
                                 elif res == 2:
                                     flag = 0
                                     self.simulated_robot.setRightLimbConfig(target_config)              
@@ -466,7 +467,7 @@ class Motion:
                                 self.right_limb_state.cartesianDrive = False
                                 break
                             elif res == 1:
-                                flag = 
+                                flag = 1
                             elif res == 2:
                                 flag = 0
                                 self.simulated_robot.setRightLimbConfig(target_config)              
@@ -725,7 +726,7 @@ class Motion:
         Ttarget: A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list
         duration: double. The duration of the movement
         """
-        if self.left_ilimb_enabled:
+        if self.left_limb_enabled:
             self._controlLoopLock.acquire()
             initial = self.robot_model.getConfig()
             goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
@@ -807,7 +808,7 @@ class Motion:
         Ttarget: A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list
         duration: double. The duration of the movement
         """
-        if self.right_limb_enaled:
+        if self.right_limb_enabled:
             self._controlLoopLock.acquire()
             initial = self.robot_model.getConfig()
             goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])

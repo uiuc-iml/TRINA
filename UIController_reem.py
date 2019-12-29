@@ -177,7 +177,7 @@ class UIController:
         '''
         self.positionControlArm('left')
         self.positionControlArm('right')
-        print('\n\n\n\n\n',self.robot.sensedLeftLimbPosition(),type(self.robot.sensedLeftLimbPosition()),'\n\n\n\n\n\n')
+        # print('\n\n\n\n\n',self.robot.sensedLeftLimbPosition(),type(self.robot.sensedLeftLimbPosition()),'\n\n\n\n\n\n')
         self.server['robotTelemetry'] = {'leftArm':(np.array(self.robot.sensedLeftLimbPosition())*(180/np.pi)).tolist(),
             'rightArm':(np.array(self.robot.sensedRightLimbPosition())*(180/np.pi)).tolist()}
 
@@ -186,8 +186,10 @@ class UIController:
         assert (side in ['left','right']), "invalid arm selection"
         R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
         joystick = side+"Controller"
+        # print("{} button pushed".format(side),self.UI_state["controllerButtonState"][joystick])
         if self.UI_state["controllerButtonState"][joystick]["squeeze"][0] > 0.5 :
-            print('moving arm')
+            # print("{} button pushed".format(side))
+            # print('moving arm')
             if(side == 'right'):
                 [RR_rw_rh,RT_rw_rh] = self.init_pos_right
             else:
@@ -226,12 +228,11 @@ class UIController:
             RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
             
             if(side == 'right'):
-                print('moving right arm\n\n\n')
+                # print('moving right arm\n\n\n')
                 self.robot.setRightEEInertialTransform([RR_final,RT_final],0.025)
-                # self.robot.setRightEEInertialTransform([RR_cw_cc.as_dcm().flatten().tolist(),RT_final],0.025)
-                # self.robot.setRightEEInertialTransform([RR_final.as_dcm().flatten().tolist(),RT_final],0.025)
+
             else:
-                print('moving left arm \n\n\n')
+                # print('moving left arm \n\n\n')
                 self.robot.setLeftEEInertialTransform([RR_final,RT_final],0.025)
 
 

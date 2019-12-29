@@ -20,6 +20,7 @@ def on_message(ws, message):
     global is_closed
     global server
     global UI_STATE
+    global counter
     # print("Received ::::::: '%s'" % message)
     mjson = json.loads(unidecode(message))
 
@@ -70,17 +71,28 @@ def on_message(ws, message):
             # print('This is MJSON \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
             # print(mjson["p"]["p"])
             #saving the UI_STATE to reem
+            
             server["UI_STATE"] = mjson['p']['p']
-            robot_telemetry = server['robotTelemetry'].read()
-            if(type(robot_telemetry) != int):
-                robotrec["currentConfig"]["rightArm"] = robot_telemetry['rightArm']
-                robotrec["currentConfig"]["leftArm"] = robot_telemetry['leftArm']
-                robotrec["targetConfig"]["rightArm"] = robot_telemetry['rightArm']
-                robotrec["targetConfig"]["leftArm"] = robot_telemetry['leftArm']
-                a = {"a": 7, "c": 0, "p": {"t": 0, "r": roomId,
-                                           "u": userId, "m": "robot_telemetry", "p": robotrec}}
-                b = json.dumps(a).encode('utf-8')
-                ws.send(b)
+            try:
+                robot_telemetry = server['robotTelemetry'].read()
+
+                if(type(robot_telemetry) != int):
+                    a = 0
+                    # robotrec["currentConfig"]["rightArm"] = robot_telemetry['rightArm']
+                    # robotrec["currentConfig"]["leftArm"] = robot_telemetry['leftArm']
+                    # robotrec["targetConfig"]["rightArm"] = robot_telemetry['rightArm']
+                    # robotrec["targetConfig"]["leftArm"] = robot_telemetry['leftArm']
+                # robotrec["currentConfig"]["rightArm"] = [0.0+counter*0.03,0.0,0.0,0.0,0.0,0.0]
+                # robotrec["currentConfig"]["leftArm"] = [0.0+counter*0.03,0.0,0.0,0.0,0.0,0.0]
+                # robotrec["targetConfig"]["rightArm"] = [0.0+counter*0.03,0.0,0.0,0.0,0.0,0.0]
+                # robotrec["targetConfig"]["leftArm"] = [0.0+counter*0.03,0.0,0.0,0.0,0.0,0.0]
+                # a = {"a": 7, "c": 0, "p": {"t": 0, "r": roomId,
+                #                             "u": userId, "m": "robot_telemetry", "p": robotrec}}
+                # b = json.dumps(a).encode('utf-8')
+                # ws.send(b)
+            except xception as e:
+                print('could not read robotTelemetry',e)
+
 
 
 
@@ -118,6 +130,7 @@ def on_open(ws):
 
 
 if __name__ == "__main__":
+    counter = 0
     interface = RedisInterface(host="localhost")
     interface.initialize()
     server = KeyValueStore(interface)

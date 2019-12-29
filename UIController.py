@@ -1,11 +1,12 @@
 import time,math
 from klampt import vis
 from klampt import WorldModel
+from klampt.model.trajectory import Trajectory
 import threading
 from Motion.motion_client import MotionClient
 from Motion.motion import Motion
 import json
-from multiprocessing import Process, Manager
+from multiprocessing import Process, Manager, Pipe
 from SimpleWebSocketServer import SimpleWebSocketServer,WebSocket
 from UIStateReciever import UIStateReciever
 import pickle
@@ -24,14 +25,15 @@ ws_port = 1234
 
 model_name = "Motion/data/TRINA_world_reflex.xml"
 
-class UIController:
+cla]
+
     """handles UI_state and motion controller logic
     """
     def __init__(self):
         self.init_UI_state = {}
         self.dt = 0.02
         self.robot = MotionClient()
-        self.robot_clent = MotionClient()
+        self.robot_client = MotionClient()
         self.UI_state = {}
         self.init_pos_left = {}
         self.cur_pos_left = {}
@@ -58,11 +60,16 @@ class UIController:
     def _visualUpdateLoop(self):
         while True:
             try:
-                q = self.robot_clent.getKlamptSensedPosition()
+                q = self.robot_client.getKlamptSensedPosition()
             except:
                 print("getKlamptSensedPosition failed")
                 pass
             self.vis_robot.setConfig(q)
+            EndLink = self.vis_robot.link(42)           # This link number should be the end effector link number
+            Tlink = EndLink.getTransform()
+            vis.add("Frame",Tlink)
+
+
             time.sleep(self.dt)
 
     def _serveStateReciever(self):
@@ -83,7 +90,7 @@ class UIController:
                 dataset = pickle.load(fd)
                 self.UI_state = dataset
                 self.UIStateLogic()
-                time.sleep(0.2)
+                time.sleep(0.025)
             except:
                 pass
 
@@ -96,18 +103,21 @@ class UIController:
         self.robot.setBaseTargetPosition([0,0,0],[0.5,0.5])
         self.robot.setLeftLimbPositionLinear(init_leftUntuckedConfig,5)
 
-    def setRobotToDefualt(self):
-        # leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-        # rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
-        # self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,1)
-        # self.robot.setRightLimbPositionLinear(rightUntuckedConfig,1)
-        self.robot.setRightEEInertialTransform([[[1,0,0],[0,1,0],[0,0,1]], self.init_pos_right],3)
+    def setRobotToDefault(self):
+        leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+        rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
+        self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,3)
+        self.robot.setRightLimbPositionLinear(rightUntuckedConfig,3)
+        #self.robot.setRightEEInertialTransform([[[1,0,0],[0,1,0],[0,0,1]], self.init_pos_right],3)
 
     def UIStateLogic(self):
         if self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True :
-            self.setRobotToDefualt()
+            self.setRobotToDefault()
+        if (self.UI_state["controllerButtonState"]["leftController"]["press"][2] == True):
+            self.init_UI_state = self.UI_state
         self.baseControl()
         self.positionControl()
+        #self.logTeleoperation('test')
 
 
 
@@ -138,18 +148,18 @@ class UIController:
             rh------robot home
         '''
         R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
-        # try:
-        #     if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
-        #         [leftR,leftT] = self.init_pos_left
-        #         newR = R.from_quat(self.UI_state["controllerPositionState"]["leftController"]["controllerOrientation"])
-        #         newR = newR.as_dcm().flatten().tolist()
-        #         newT = self.UI_state["controllerPositionState"]["leftController"]["controllerPosition"]
-        #         orgT = self.init_UI_state["controllerPositionState"]["leftController"]["controllerPosition"]
-        #         T = [leftT[0]+(newT[2]-orgT[2]),leftT[1]-(newT[0]-orgT[0]),leftT[2]+(newT[1]-orgT[1])]
-        #         self.robot.setLeftEEInertialTransform([leftR,T],0.02)
-        # except Exception as e: 
-        #     print(e)
-        #     pass
+        try:
+            if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
+                [leftR,leftT] = self.init_pos_left
+                newR = R.from_quat(self.UI_state["controllerPositionState"]["leftController"]["controllerOrientation"])
+                newR = newR.as_dcm().flatten().tolist()
+                newT = self.UI_state["controllerPositionState"]["leftController"]["controllerPosition"]
+                orgT = self.init_UI_state["controllerPositionState"]["leftController"]["controllerPosition"]
+                T = [leftT[0]+(newT[2]-orgT[2]),leftT[1]-(newT[0]-orgT[0]),leftT[2]+(newT[1]-orgT[1])]
+                self.robot.setLeftEEInertialTransform([leftR,T],0.02)
+        except Exception as e: 
+            print(e)
+            pass
            
         try:
             if self.UI_state["controllerButtonState"]["rightController"]["press"][0] == True :
@@ -170,15 +180,23 @@ class UIController:
                 # RR_cw_cc = R.from_quat(self.UI_state["controllerPositionState"]["rightController"]["controllerOrientation"])
                 # RR_cw_cc = R.from_dcm(RR_cw_cc.as_dcm())
                 # Transforming from left handed to right handed
-                init_quat = self.init_UI_state["      "]["rightController"]["controllerOrientation"]
-                right_handed_init_quat = np.array([-init_quat[2],init_quat[0],-init_quat[1],init_quat[3]])
+                # we first read the quaternion
+                init_quat = self.init_UI_state["controllerPositionState"]["rightController"]["controllerOrientation"]
+                # turn it into a left handed rotation vector
+                right_handed_init_quat = np.array([-init_quat[2],init_quat[0],init_quat[1],init_quat[3]])
+                #transform it to right handed:
+
                 curr_quat = self.UI_state["controllerPositionState"]["rightController"]["controllerOrientation"]
-                right_handed_curr_quat = np.array([-curr_quat[2],curr_quat[0],-curr_quat[1],curr_quat[3]])
+
+                right_handed_curr_quat = np.array([-curr_quat[2],curr_quat[0],curr_quat[1],curr_quat[3]])
+                #transform it to right handed:
+                #right_handed_curr_rotvec =  np.array([-left_handed_curr_rotvec[2],left_handed_curr_rotvec[0],-left_handed_curr_rotvec[1]])
+                #Print(right_handed_curr_rotvec)
                 #RR_cw_ch = R.from_quat(self.init_UI_state["controllerPositionState"]["rightController"]["controllerOrientation"])
                 RR_cw_ch = R.from_quat(right_handed_init_quat)
-                RR_cw_ch_T = R.from_dcm(np.transpose(RR_cw_ch.as_dcm()))
+                RR_cw_ch_T = R.from_dcm(RR_cw_ch.as_dcm().transpose())
                 RR_cw_cc = R.from_quat(right_handed_curr_quat)
-                print(self.init_UI_state["controllerPositionState"]["rightController"]["controllerOrientation"],'\n\n\n\n\n\n')
+                #print(self.init_UI_state["controllerPositionState"]["rightController"]["controllerOrientation"],'\n\n\n\n\n\n')
 
                 """ 
                 if self.UI_state["controllerButtonState"]["rightController"]["press"][1] == True :
@@ -189,10 +207,10 @@ class UIController:
                     RR_cw_cc = RR_cw_ch*RR_unit_z
                 else:
                     return """
-
-                RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
+                # print((RR_cw_ch_T*RR_cw_cc).as_rotvec())
+                RR_final = (RR_cw_ch_T*RR_cw_cc*RR_rw_rh).as_dcm().flatten().tolist()
                 self.robot.setRightEEInertialTransform([RR_cw_cc.as_dcm().flatten().tolist(),RT_final],0.025)
-        
+                #self.robot.setRightEEInertialTransform([RR_rw_rh.as_dcm().flatten().tolist(),RT_final],0.025)
 
         
 

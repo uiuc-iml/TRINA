@@ -1,12 +1,18 @@
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 import signal
 import sys
+# from motion_logger import Motion #testing logs for motion.py
 from motion import Motion
+
+import logging
+from datetime import datetime
+filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
+logging.basicConfig(filename=filename,filemode='a',level=logging.DEBUG, format='motion_server: %(asctime)s - %(message)s',datefmt='%H:%M:%S')
+
 
 ##global variable
 robot = Motion(mode = "Kinematic")
-robot.setRobotToDefualt()
-
+logging.info("%s mode is activated",robot.mode)
 
 
 def sigint_handler(signum,frame):
@@ -194,6 +200,7 @@ server.register_function(_isShutDown,'isShutDown')
 ##
 print('#######################')
 print('#######################')
+logging.info("Server Started")
 print('Server Started')
 ##run server
 server.serve_forever()
