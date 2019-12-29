@@ -789,11 +789,6 @@ class Motion:
         return self.cartesian_drive_failure
 
 
-    def setRobotToDefualt(self):
-        leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-        rightUntuckedConfig = self.mirror_arm_config(leftUntuckedConfig)
-        self.setLeftLimbPositionLinear(leftUntuckedConfig,1)
-        self.setRightLimbPositionLinear(rightUntuckedConfig,1)
 
     ###Below are internal helper functions
     def _check_collision_linear(self,robot,q1,q2,disrectization):
