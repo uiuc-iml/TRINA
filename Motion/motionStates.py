@@ -39,7 +39,7 @@ class BaseState():
         self.commandedTargetPosition = [] #[x, y, theta]
 
         self.commandType = 1 # 0 is position, 1 is velocity, 2 is path
-        self.commandSent = False
+        self.commandSent = True
 
 class GripperState:
     def __init__(self):
@@ -54,4 +54,6 @@ class TorsoState:
         self.commandedHeight = 0.0
         self.commandedTilt = 0.0
 
-        self.commandSent = False
+        self.commandSent = True
+        self.leftLeg = 0
+        self.rightLeg = 0
