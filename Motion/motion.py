@@ -7,7 +7,6 @@ from threading import Thread, Lock
 import threading
 from limbController import LimbController
 from baseController import BaseController
-#from gripperController import GripperController
 from kinematicController import KinematicController
 from torsoController import TorsoController
 import TRINAConfig #network configs and other configs
@@ -76,6 +75,7 @@ class Motion:
             print("initiated Kinematic controller")
 
         elif self.mode == "Physical":
+            from gripperController import GripperController
             for component in components:
                 if component == 'left_limb':
                     self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
