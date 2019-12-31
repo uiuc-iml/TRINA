@@ -7,7 +7,7 @@ from threading import Thread, Lock
 import threading
 from limbController import LimbController
 from baseController import BaseController
-from gripperController import GripperController
+#from gripperController import GripperController
 from kinematicController import KinematicController
 from torsoController import TorsoController
 import TRINAConfig #network configs and other configs
