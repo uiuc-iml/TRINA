@@ -1,5 +1,5 @@
 echo heading to home directory
-cd
+cd ~/
 echo redis startup procedure
 cd database-server/
 echo "starting redis server"
