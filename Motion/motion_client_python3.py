@@ -9,8 +9,8 @@ dirname = os.path.dirname(__file__)
 model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 
 class MotionClient:
-	def __init__(self, address = 'http://localhost:8000'):
-		self.s = ServerProxy('http://localhost:8000')
+	def __init__(self, address = 'http://127.0.0.1:8000'):
+		self.s = ServerProxy('http://127.0.0.1:8000')
 		self.dt = 0.2
 		self.shut_down = False
 		# self.world = WorldModel()

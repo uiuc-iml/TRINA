@@ -3,13 +3,11 @@ import signal
 import sys
 import time
 import math
-from threading import Thread, Lock
+from threading import Thread, Lock, RLock
 import threading
-from limbController import LimbController
-from baseController import BaseController
-from gripperController import GripperController
+import numpy as np
+# from gripperController import GripperController
 from kinematicController import KinematicController
-from torsoController import TorsoController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
 from copy import deepcopy
@@ -26,7 +24,7 @@ model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 
 class Motion:
 
-    def __init__(self,  mode = 'Kinematic', model_path = model_name, components = ['left_limb','right_limb'] ):
+    def __init__(self,  mode = 'Kinematic', model_path = model_name, components = ['left_limb','right_limb'], debug_logging = True):
         """  
         This class provides a low-level controller to the TRINA robot.
 
@@ -42,7 +40,19 @@ class Motion:
         self.mode = mode
         self.model_path = model_path
         self.computation_model_path = "data/TRINA_world.xml"
-        
+        self.debug_logging = debug_logging
+        if(self.debug_logging):
+            self.logging_filename = time.time()
+            self.logging_file = 'teleoperation_log/log_file_' + time.strftime('%Y')+'_'+time.strftime('%M')+'_'+time.strftime('%d')+'_'+time.strftime('%H')+'_'+time.strftime('%M')+'_'+time.strftime('%S')
+
+            if(os.path.exists(self.logging_file)):
+                pass
+            else:
+                with open(self.logging_file,'w') as f:
+                    f.write('arm|ik_time|collision_check_time|current_position|target_position|iterations|condition_number\r\n')
+                    f.close()
+
+            self.log_file = open(self.logging_file,'a')
         #Klampt world and robot and  used for computation
         self.world = WorldModel()
         res = self.world.readFile(self.computation_model_path)
@@ -76,6 +86,9 @@ class Motion:
             print("initiated Kinematic controller")
 
         elif self.mode == "Physical":
+            from limbController import LimbController
+            from baseController import BaseController
+            from torsoController import TorsoController
             for component in components:
                 if component == 'left_limb':
                     self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
@@ -119,7 +132,7 @@ class Motion:
         self.stop_motion_sent = False
         self.shut_down_flag = False
         self.cartedian_drive_failure = False
-        self._controlLoopLock = Lock()
+        self._controlLoopLock = RLock()
         signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
 
     def sigint_handler(self, signum, frame):
@@ -585,7 +598,6 @@ class Motion:
                 positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
                 planningTime = planningTime + TRINAConfig.ur5e_control_rate
             positionQueue.append(q)
-
             self._controlLoopLock.acquire()
             self.left_limb_state.commandSent = False
             self.left_limb_state.commandType = 0
@@ -621,7 +633,7 @@ class Motion:
                 positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
                 planningTime = planningTime + TRINAConfig.ur5e_control_rate
             positionQueue.append(q)
-
+            timer2 = time.time()
             self._controlLoopLock.acquire()
             self.right_limb_state.commandSent = False
             self.right_limb_state.commandType = 0
@@ -726,33 +738,50 @@ class Motion:
         Ttarget: A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list
         duration: double. The duration of the movement
         """
+        start_time = time.time()
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
             initial = self.robot_model.getConfig()
             goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
-            if ik.solve(goal,activeDofs = self.left_active_Dofs):
-            #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
+            solver = ik.solver(objectives = goal)
+            solver.setActiveDofs(self.left_active_Dofs)
+            result = solver.solve()
+            iterations = solver.lastSolveIters()
+            #if ik.solve(goal,activeDofs = self.left_active_Dofs):
+            # if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
+            if result:
                 target_config = self.robot_model.getConfig()
                 print("motion.setLeftEEInertialTransform():IK solve successful")
             else:
                 self._controlLoopLock.release()
                 print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
                 return 'motion.setLeftEEInertialtransform():IK solve failure: no IK solution found'
+            ik_solve_time = time.time() -start_time
+            # print("Solving IK takes", time.time() -start_time,' and {} iterations'.format(iterations))
+            start_time_2 = time.time()
             res = self._check_collision_linear(self.robot_model,initial,target_config,15)
+            col_check_time = time.time()-start_time_2
+            # print("collision checking takes", time.time() - start_time_2)
             #print(res)
             if res:
                 self._controlLoopLock.release()
                 print('motion.setLeftEEInertialtransform():Self-collision midway')
                 return 'motion.setLeftEEInertialtransform():Self-collision midway'
             else:
-                print("motion.setLeftEEInertialTransform():No collisoin")
+                print("motion.setLeftEEInertialTransform():No collision")
 
             self.robot_model.setConfig(initial)
             self._controlLoopLock.release()
+            start_time = time.time()
             self.setLeftLimbPositionLinear(target_config[10:16],duration)
+            # print("setting linear position takes", time.time() - start_time)
         else:
             print("Left limb not enabled.")
-
+        # self.motion_log = pd.DataFrame({'arm':['left'],'execution_time':[time.time() - start_time_2],'current_position':[initial],'target_position':[target_config],'iterations':[iterations]})
+        # self.motion_log.to_csv('current_log.csv', sep = '|',mode = 'a',header = False)
+        cond_num = np.linalg.cond(solver.getJacobian())
+        if(self.debug_logging):
+            self.log_file.write('{}|{}|{}|{}|{}|{}|{}\r\n'.format('left',ik_solve_time,col_check_time,initial[10:16],target_config[10:16],iterations,cond_num))
         return ''
 
     def setLeftEEVelocity(self,v, tool = [0,0,0]):
@@ -808,11 +837,22 @@ class Motion:
         Ttarget: A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list
         duration: double. The duration of the movement
         """
+        start_time = time.time()
+
         if self.right_limb_enabled:
             self._controlLoopLock.acquire()
             initial = self.robot_model.getConfig()
             goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
-            if ik.solve(goal,activeDofs = self.right_active_Dofs):
+            ## this is for debugging purposes only 
+            solver = ik.solver(objectives = goal)
+            solver.setActiveDofs(self.right_active_Dofs)
+            result = solver.solve()
+            ik_solve_time = time.time() -start_time
+
+            iterations = solver.lastSolveIters()
+            # this is for debugging purposes only
+            # if ik.solve(goal,activeDofs = self.right_active_Dofs):
+            if result:
             #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
                 target_config = self.robot_model.getConfig()
                 print("motion.setRightEEInertialTransform():IK solve successful")
@@ -820,21 +860,28 @@ class Motion:
                 self._controlLoopLock.release()
                 print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
                 return 'motion.setRightEEInertialtransform():IK solve failure: no IK solution found'
+            start_time_2 = time.time()
             res = self._check_collision_linear(self.robot_model,initial,target_config,15)
+            col_check_time = time.time()-start_time_2
+
             #print(res)
             if res:
                 self._controlLoopLock.release()
                 print('motion.setRighttEEInertialtransform():Self-collision midway')
                 return 'motion.setRighttEEInertialtransform():Self-collision midway'
             else:
-                print("motion.setRightEEInertialTransform():No collisoin")
+                print("motion.setRightEEInertialTransform():No collision")
 
             self.robot_model.setConfig(initial)
             self._controlLoopLock.release()
             self.setRightLimbPositionLinear(target_config[27:33],duration)
         else:
             print("Right limb not enabled. ")
-
+        ## This is for debugging purposes only
+        cond_num = np.linalg.cond(solver.getJacobian())
+        if(self.debug_logging):
+            self.log_file.write('{}|{}|{}|{}|{}|{}|{}\r\n'.format('right',ik_solve_time,col_check_time,initial[27:33],target_config[27:33],iterations,cond_num))      
+         ## This section is for debugging purposes only
         return ''
 
     def setRightEEVelocity(self,v, tool = [0,0,0]):
@@ -912,7 +959,7 @@ class Motion:
         A list of 6 doubles. The joint velocities.
         """
         if self.left_limb_enabled:
-            return self.left_limb_state.senseddq()
+            return self.left_limb_state.senseddq
         else:
             print("Left limb not enabled.")
             return 
@@ -925,7 +972,7 @@ class Motion:
         A list of 6 doubles. The joint velocities.
         """
         if self.right_limb_enabled:
-            return self.right_limb_state.senseddq()
+            return self.right_limb_state.senseddq
         else:
             print('Right limb not enabled.')
             return
@@ -1341,10 +1388,11 @@ class Motion:
             goal = ik.objective(self.left_EE_link,local = [0,0,0], \
                 world = vectorops.sub(target_transform[1],so3.apply(target_transform[0],self.left_limb_state.toolCenter)))
         #elif self.left_limb_state.cartesianMode == 2:
-        #                goal = ik.objective(self.left_EE_link,R=target_transform[0])
-        
+        #                goal = ik.objective(self.left_EE_link,R=target_transform[0])        
         initialConfig = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.000001)
+        
+        # print("\n\n\n number of iterations: ",ik.)
         failFlag = False
         if res:
             if self._arm_is_in_limit(self.robot_model.getConfig()[10:16],joint_upper_limits,joint_lower_limits):

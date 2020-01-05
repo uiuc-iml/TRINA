@@ -1,12 +1,12 @@
 echo heading to home directory
-cd /home/dactl
+cd
 echo redis startup procedure
 cd database-server/
 echo "starting redis server"
-/home/dactl/database-server/redis-5.0.4/src/redis-server redis.conf & sleep 2
+~/database-server/redis-5.0.4/src/redis-server redis.conf & sleep 2
 echo "redis server started!"
 pkill -9 python
-cd /home/dactl/TRINA/
+cd ~/TRINA/
 echo 'starting server'
 cd Motion
 python2 motion_server.py & sleep 5

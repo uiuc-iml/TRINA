@@ -31,18 +31,20 @@ zonename = "BasicExamples"
 userId=0
 roomId=-1
 is_closed=0
-dt = 1/15
+dt = 1.0/15.0
 
 robot = MotionClient()
 
 def visualUpdateLoop():
     while True:
         try:
+            vis.lock()
             q = robot.getKlamptSensedPosition()
             vis_robot.setConfig(q)
             EndLink = vis_robot.link(42)           # This link number should be the end effector link number
             Tlink = EndLink.getTransform()
             vis.add("Frame",Tlink)
+            vis.unlock()
             time.sleep(dt)
         except Exception as e:
             print(e)

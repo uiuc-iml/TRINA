@@ -1,9 +1,10 @@
 import time,math
-from klampt import vis
-from klampt import WorldModel
-from klampt.model.trajectory import Trajectory
+# from klampt import vis
+# from klampt import WorldModel
+# from klampt.model.trajectory import Trajectory
 import threading
 from Motion.motion_client_python3 import MotionClient
+# from Motion.motion import Motion
 # from Motion.motion import Motion
 import json
 from multiprocessing import Process, Manager, Pipe
@@ -44,7 +45,8 @@ class UIController:
         self.init_UI_state = {}
         self.dt = 0.1
         self.robot = MotionClient()
-        self.robot_client = MotionClient()
+        # self.robot_client = MotionClient()
+        # self.robot = Motion()
         self.UI_state = {}
         self.init_pos_left = {}
         self.cur_pos_left = {}
@@ -72,19 +74,19 @@ class UIController:
         # vis.show()        
 
 
-    def _visualUpdateLoop(self):
-        while True:
-            try:
-                q = self.robot_client.getKlamptSensedPosition()
-            except:
-                print("getKlamptSensedPosition failed")
-                pass
-            self.vis_robot.setConfig(q)
-            EndLink = self.vis_robot.link(42)           # This link number should be the end effector link number
-            Tlink = EndLink.getTransform()
-            vis.add("Frame",Tlink)
+    # def _visualUpdateLoop(self):
+    #     while True:
+    #         try:
+    #             q = self.robot_client.getKlamptSensedPosition()
+    #         except:
+    #             print("getKlamptSensedPosition failed")
+    #             pass
+    #         self.vis_robot.setConfig(q)
+    #         EndLink = self.vis_robot.link(42)           # This link number should be the end effector link number
+    #         Tlink = EndLink.getTransform()
+    #         vis.add("Frame",Tlink)
 
-            time.sleep(self.dt)
+    #         time.sleep(self.dt)
 
     def _serveStateReciever(self):
 
@@ -177,6 +179,7 @@ class UIController:
         '''
         self.positionControlArm('left')
         self.positionControlArm('right')
+        # print('final_time =',time.time() - start_time)
         # print('\n\n\n\n\n',self.robot.sensedLeftLimbPosition(),type(self.robot.sensedLeftLimbPosition()),'\n\n\n\n\n\n')
         self.server['robotTelemetry'] = {'leftArm':(np.array(self.robot.sensedLeftLimbPosition())*(180/np.pi)).tolist(),
             'rightArm':(np.array(self.robot.sensedRightLimbPosition())*(180/np.pi)).tolist()}
@@ -223,17 +226,20 @@ class UIController:
             RR_cw_ch_T = R.from_dcm(RR_cw_ch.as_dcm().transpose())
             RR_cw_cc = R.from_rotvec(right_handed_curr_quat[0:3]*right_handed_curr_quat[3])
 
-            print((RR_cw_ch_T*RR_cw_cc).as_rotvec(),'\n\n\n')
+            # print((RR_cw_ch_T*RR_cw_cc).as_rotvec(),'\n\n\n')
             # RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
             RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
-            
+            start_time = time.process_time()
             if(side == 'right'):
                 # print('moving right arm\n\n\n')
+
                 self.robot.setRightEEInertialTransform([RR_final,RT_final],0.025)
+
 
             else:
                 # print('moving left arm \n\n\n')
                 self.robot.setLeftEEInertialTransform([RR_final,RT_final],0.025)
+            # print('operation_time =',time.process_time() - start_time)
 
 
 
