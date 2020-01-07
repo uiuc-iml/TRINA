@@ -31,7 +31,7 @@ zonename = "BasicExamples"
 userId=0
 roomId=-1
 is_closed=0
-dt = 1.0/15.0
+dt = 1.0/30.0
 
 robot = MotionClient()
 
@@ -39,6 +39,7 @@ def visualUpdateLoop():
     while True:
         try:
             vis.lock()
+            
             q = robot.getKlamptSensedPosition()
             vis_robot.setConfig(q)
             EndLink = vis_robot.link(42)           # This link number should be the end effector link number
@@ -50,8 +51,10 @@ def visualUpdateLoop():
             print(e)
             pass
 
-
+print(robot.isStarted())
 res = robot.startup()
+print(robot.isStarted())
+
 world = WorldModel()
 res = world.readFile(model_name)
 if not res:
