@@ -4,8 +4,6 @@ import time,math
 # from klampt.model.trajectory import Trajectory
 import threading
 from Motion.motion_client_python3 import MotionClient
-# from Motion.motion import Motion
-# from Motion.motion import Motion
 import json
 from multiprocessing import Process, Manager, Pipe
 import pickle
@@ -22,7 +20,6 @@ import json
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
-
 
 robot_ip = '130.126.139.236'
 ws_port = 1234
@@ -42,6 +39,8 @@ class UIController:
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
+        self.server["UI_STATE"] = 0
+
         self.init_UI_state = {}
         self.dt = 0.1
         self.robot = MotionClient()
@@ -139,14 +138,15 @@ class UIController:
         #self.robot.setRightEEInertialTransform([[[1,0,0],[0,1,0],[0,0,1]], self.init_pos_right],3)
 
     def UIStateLogic(self):
-        if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
-            self.setRobotToDefault()
-        if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True):
-            print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
-            self.init_UI_state = self.UI_state
-        self.baseControl()
-        self.positionControl()
-        #self.logTeleoperation('test')
+        if(type(self.UI_state)!= int):
+            if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
+                self.setRobotToDefault()
+            if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True):
+                print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
+                self.init_UI_state = self.UI_state
+            self.baseControl()
+            self.positionControl()
+            #self.logTeleoperation('test')
 
 
 
@@ -181,8 +181,8 @@ class UIController:
         self.positionControlArm('right')
         # print('final_time =',time.time() - start_time)
         # print('\n\n\n\n\n',self.robot.sensedLeftLimbPosition(),type(self.robot.sensedLeftLimbPosition()),'\n\n\n\n\n\n')
-        self.server['robotTelemetry'] = {'leftArm':(np.array(self.robot.sensedLeftLimbPosition())*(180/np.pi)).tolist(),
-            'rightArm':(np.array(self.robot.sensedRightLimbPosition())*(180/np.pi)).tolist()}
+        self.server['robotTelemetry'] = {'leftArm':self.robot.sensedLeftLimbPosition(),
+            'rightArm':self.robot.sensedRightLimbPosition()}
 
         
     def positionControlArm(self,side):
@@ -214,12 +214,12 @@ class UIController:
 
             # Transforming from left handed to right handed
             # we first read the quaternion
-            init_quat = self.init_UI_state["controllerPositionState"][joystick]['controller Rotation']
+            init_quat = self.init_UI_state["controllerPositionState"][joystick]['controllerRotation']
             # turn it into a left handed rotation vector
             right_handed_init_quat = np.array([-init_quat[2],init_quat[0],-init_quat[1],-(np.pi/180)*init_quat[3]])
             #transform it to right handed:
 
-            curr_quat = self.UI_state["controllerPositionState"][joystick]['controller Rotation']
+            curr_quat = self.UI_state["controllerPositionState"][joystick]['controllerRotation']
 
             right_handed_curr_quat = np.array([-curr_quat[2],curr_quat[0],-curr_quat[1],-(np.pi/180)*curr_quat[3]])
             RR_cw_ch = R.from_rotvec(right_handed_init_quat[0:3]*right_handed_init_quat[3])

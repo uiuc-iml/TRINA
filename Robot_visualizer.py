@@ -20,6 +20,8 @@ from threading import Thread
 import time
 import sys
 import json
+import pdb
+from klampt.math import so3
 
 robot_ip = '130.126.139.236'
 ws_port = 1234
@@ -36,24 +38,40 @@ dt = 1.0/30.0
 robot = MotionClient()
 
 def visualUpdateLoop():
-    while True:
-        try:
-            vis.lock()
-            
-            q = robot.getKlamptSensedPosition()
-            vis_robot.setConfig(q)
-            EndLink = vis_robot.link(42)           # This link number should be the end effector link number
-            Tlink = EndLink.getTransform()
-            vis.add("Frame",Tlink)
-            vis.unlock()
-            time.sleep(dt)
-        except Exception as e:
-            print(e)
-            pass
 
-print(robot.isStarted())
+    while True:
+        # try:
+        # pdb.set_trace()
+
+        vis.lock()
+        sensed_position = robot.getKlamptSensedPosition()
+        vis_robot.setConfig(sensed_position)
+        ## end effector is 42
+        EndLink = vis_robot.link(3)           # This link number should be the end effector link number
+        Tlink = EndLink.getTransform()
+        # vis.add("Frame",Tlink)
+        rot_link = so3.from_matrix(so3.matrix(Tlink[0]))
+        rot_view = so3.from_matrix(so3.matrix(so3.from_axis_angle([[0,1,0],-np.pi/4])))
+        inter_view = so3.mul(rot_link,rot_view)
+        rot_view_2 = so3.from_matrix(so3.matrix(so3.from_axis_angle([[0,0,1],-np.pi/2])))
+        final_view = so3.mul(inter_view,rot_view_2)
+        intermediate_dist = so3.apply(Tlink[0],[-3.05,0,3.6])
+        # final_dist = (np.array(Tlink[1]) + np.array([-3.05,0,3.6])).tolist()
+        final_dist = (np.array(Tlink[1]) + np.array(intermediate_dist)).tolist()
+        
+        # final_dist = so3.apply(final_view,new_dist)
+        print(final_dist)
+        vp = vis.getViewport()
+        camera = vp.camera
+        camera.set_matrix([final_view,final_dist]) 
+
+        # pdb.set_trace()
+        vis.unlock()
+
+        time.sleep(dt)
+
+
 res = robot.startup()
-print(robot.isStarted())
 
 world = WorldModel()
 res = world.readFile(model_name)
@@ -63,6 +81,29 @@ vis_robot = world.robot(0)
 
 vis.add("world",world)
 vis.show()
+
+
+
+def translate_camera(linknum):
+    vis.lock()
+    link = vis_robot.link(linknum)           # This link number should be the end effector link number
+    Tlink = link.getTransform()
+    camera.set_matrix(Tlink)
+    vis.unlock()
+    return Tlink
+# while(True):#     print('\n\n {} \n\n'.format(i))tra
+#     try:
+#         vis.lock()
+#         link = vis_robot.link(i)           # This link number should be the end effector link number
+#         Tlink = link.getTransform()
+#         camera.set_matrix(Tlink)
+#         vis.unlock()
+#         time.sleep(1)
+#         i+=1
+#         print(i)
+#     except:
+#         print('error occured!!!!!')
+#         break
 while True:
+    time.sleep(0.5)
     visualUpdateLoop()
-    print('a')
