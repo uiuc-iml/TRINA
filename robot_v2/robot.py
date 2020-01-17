@@ -80,17 +80,17 @@ def on_message(ws, message):
                     a = 0
                     # robotrec["currentConfig"]["rightArm"] = robot_telemetry['rightArm']
                     # robotrec["currentConfig"]["leftArm"] = robot_telemetry['leftArm']
-                    # robotrec["targetConfig"]["rightArm"] = robot_telemetry['rightArm']
-                    # robotrec["targetConfig"]["leftArm"] = robot_telemetry['leftArm']
+                    robotrec["targetConfig"]["rightArm"] = robot_telemetry['rightArm']
+                    robotrec["targetConfig"]["leftArm"] = robot_telemetry['leftArm']
                 # robotrec["currentConfig"]["rightArm"] = [0.0+counter*0.03,0.0,0.0,0.0,0.0,0.0]
                 # robotrec["currentConfig"]["leftArm"] = [0.0+counter*0.03,0.0,0.0,0.0,0.0,0.0]
                 # robotrec["targetConfig"]["rightArm"] = [0.0+counter*0.03,0.0,0.0,0.0,0.0,0.0]
                 # robotrec["targetConfig"]["leftArm"] = [0.0+counter*0.03,0.0,0.0,0.0,0.0,0.0]
-                # a = {"a": 7, "c": 0, "p": {"t": 0, "r": roomId,
-                #                             "u": userId, "m": "robot_telemetry", "p": robotrec}}
-                # b = json.dumps(a).encode('utf-8')
-                # ws.send(b)
-            except xception as e:
+                    a = {"a": 7, "c": 0, "p": {"t": 0, "r": roomId,
+                                                "u": userId, "m": "robot_telemetry", "p": robotrec}}
+                    b = json.dumps(a).encode('utf-8')
+                    ws.send(b)
+            except Exception as e:
                 print('could not read robotTelemetry',e)
 
 
