@@ -67,7 +67,6 @@ def visualUpdateLoop():
         
         # final_dist = so3.apply(final_view,new_dist)
         # apply the new camera view
-        print(final_dist)
         vp = vis.getViewport()
         camera = vp.camera
         camera.set_matrix([final_view,final_dist]) 
