@@ -206,8 +206,8 @@ class MyGLViewer(GLWidgetProgram):
     def setRobotToDefualt(self):
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
         rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
-        self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,3)
-        self.robot.setRightLimbPositionLinear(rightUntuckedConfig,3)
+        self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,10)
+        self.robot.setRightLimbPositionLinear(rightUntuckedConfig,10)
         print("setRobotToDefualt command")
 
     def resetPoser(self):

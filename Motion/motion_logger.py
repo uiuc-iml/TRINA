@@ -19,6 +19,7 @@ from klampt import vis
 from klampt.model import ik, collide
 import numpy as np
 from klampt import WorldModel
+from datetime import datetime
 
 ##Two different modes:
 #"Physical" == actual robot
@@ -34,12 +35,13 @@ logger = logging.getLogger(__name__)
 
 # Create handlers
 c_handler = logging.StreamHandler()
-f_handler = logging.FileHandler('/temp/logFile.log')
+filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
+f_handler = logging.FileHandler(filename)
 c_handler.setLevel(logging.DEBUG)
 f_handler.setLevel(logging.INFO)
 # Create formatters and add it to handlers
-c_format = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
-f_format = logging.Formatter('%(asctime)s - %(name)s - %(funcName)s() - %(levelname)s - %(message)s',datefmt='%d-%b-%y %H:%M:%S')
+c_format = logging.Formatter('%(asctime)s %(levelname)s-%(message)s',datefmt='%H:%M:%S')
+f_format = logging.Formatter('%(asctime)s %(name)s-%(funcName)s():%(levelname)s- %(message)s',datefmt='%H:%M:%S')
 c_handler.setFormatter(c_format)
 f_handler.setFormatter(f_format)
 # Add handlers to the logger
