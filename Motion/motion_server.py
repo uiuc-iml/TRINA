@@ -10,15 +10,19 @@ filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
 logging.basicConfig(filename=filename,filemode='a',level=logging.DEBUG, format='motion_server: %(asctime)s - %(message)s',datefmt='%H:%M:%S')
 
 global robot
-
+global server_started
+server_started = False
 def _startServer(mode = "Kinematic", components = []):
 	##global variable
 	robot = Motion(mode = mode,components = components)
 	logging.info("%s mode is activated",robot.mode)
+	server_started = True
+	print("server started")
 	return 0
 
 def sigint_handler(signum,frame):
-	robot.shutdown()
+	if server_started:
+		robot.shutdown()
 	sys.exit(0)
 
 def _startup():
@@ -151,8 +155,10 @@ def _getWorld():
 def _cartesianDriveFail():
 	return robot.cartesianDriveFail()
 
-ip_address = 'localhost'
-port = 8000
+#ip_address = 'localhost'
+ip_address = '172.16.187.91'
+#ip_address = '72.36.119.129'
+port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()
 signal.signal(signal.SIGINT, sigint_handler)
@@ -202,7 +208,7 @@ server.register_function(_isShutDown,'isShutDown')
 ##
 print('#######################')
 print('#######################')
-logging.info("Server Started")
-print('Server Started')
+logging.info("Server Created")
+print('Server Created')
 ##run server
 server.serve_forever()

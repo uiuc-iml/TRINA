@@ -217,13 +217,15 @@ def hand_state_cb(data):
 if __name__ == "__main__":
     con = GripperController()
     con.start()
-    while True:
-        con.close()
-        rospy.sleep(2)
-        con.open()
-        rospy.sleep(2)
-        print(con.is_open())
-    # con.setPose([0.0, 0.0, 0.0, 0.0])
+    # while True:
+    #     con.close()
+    #     rospy.sleep(2)
+    #     con.open()
+    #     rospy.sleep(2)
+    #     print(con.is_open())
+    con.setPose([0.0, 0.0, 0.0, 0.0])
+    con.sleep(1)
+    con.shutDown()
     # con.setPose([1.0, 1.0, 1.0, 1.0])
     # rospy.init_node('ExampleHandNode')
     #
