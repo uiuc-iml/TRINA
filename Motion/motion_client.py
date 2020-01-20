@@ -25,6 +25,10 @@ class MotionClient:
 			q = self.getKlamptSensedPosition()
 			self.robot.setConfig(q)
 			time.sleep(self.dt)
+
+	def startServer(self,mode,components):
+		self.s.startServer(mode,components)
+
 	def startup(self):
 		res = self.s.startup()
 		#print("startup called")
@@ -70,20 +74,20 @@ class MotionClient:
 
 	def setLeftEEInertialTransform(self,Ttarget,duration):
 		return self.s.setLeftEEInertialTransform(Ttarget,duration)
-		
+
 
 	def setLeftEEVelocity(self,v,tool):
 		if not tool:
-			tool = [0,0,0]		
+			tool = [0,0,0]
 		self.s.setLeftEEVelocity(v,tool)
 
 	def setRightEEInertialTransform(self,Ttarget,duration):
 		return self.s.setRightEEInertialTransform(Ttarget,duration)
-		
+
 
 	def setRightEEVelocity(self, v ,tool):
 		if not tool:
-			tool = [0,0,0]		
+			tool = [0,0,0]
 		self.s.setRightEEVelocity(v,tool)
 
 	def sensedLeftEETransform(self):
@@ -122,14 +126,14 @@ class MotionClient:
 	def sensedTorsoPosition(self):
 		return self.s.sensedTorsoPosition()
 
-	def setGripperPosition(self, position):
-		self.s.setGripperPosition(position)
+	def setLeftGripperPosition(self, position):
+		self.s.setLeftGripperPosition(position)
 
-	def setGripperVelocity(self,velocity):
-		self.s.setGripperVelocity(velocity)
+	def setLeftGripperVelocity(self,velocity):
+		self.s.setLeftGripperVelocity(velocity)
 
-	def sensedGripperPosition(self):
-		return self.s.sensedGripperPosition()
+	def sensedLeftGripperPosition(self):
+		return self.s.sensedLeftGripperPosition()
 
 	def getKlamptCommandedPosition(self):
 		return self.s.getKlamptCommandedPosition()
@@ -171,6 +175,7 @@ class MotionClient:
 
 if __name__=="__main__":
 	motion = MotionClient()
+	motion.startServer(mode = "Kinematic", components = ['left_limb'])
 	motion.startup()
 	while (1==1):
 		time.sleep(0.02)

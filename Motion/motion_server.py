@@ -9,11 +9,13 @@ from datetime import datetime
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
 logging.basicConfig(filename=filename,filemode='a',level=logging.DEBUG, format='motion_server: %(asctime)s - %(message)s',datefmt='%H:%M:%S')
 
+global robot
 
-##global variable
-robot = Motion(mode = "Kinematic")
-logging.info("%s mode is activated",robot.mode)
-
+def _startServer(mode = "Kinematic", components = []):
+	##global variable
+	robot = Motion(mode = mode,components = components)
+	logging.info("%s mode is activated",robot.mode)
+	return 0
 
 def sigint_handler(signum,frame):
 	robot.shutdown()
@@ -58,7 +60,7 @@ def _setLeftEEInertialTransform(Tgarget,duration):
 
 def _setRightEEInertialTransform(Tgarget,duration):
 	return robot.setRightEEInertialTransform(Tgarget,duration)
-	
+
 
 def _setLeftEEVelocity(v, tool):
     robot.setLeftEEVelocity(v,tool)
@@ -101,16 +103,16 @@ def _sensedBasePosition():
 def _sensedTorsoPosition():
     return robot.sensedTorsoPosition()
 
-def _setGripperPosition(position):
-    robot.setGripperPosition(position)
+def _setLeftGripperPosition(position):
+    robot.setLeftGripperPosition(position)
     return 0
 
-def _setGripperVelocity(velocity):
-	robot.setGripperVelocity(velocity)
+def _setLeftGripperVelocity(velocity):
+	robot.setLeftGripperVelocity(velocity)
 	return 0
 
-def _sensedGripperPosition():
-    return robot.sensedGripperPosition()
+def _sensedLeftGripperPosition():
+    return robot.sensedLeftGripperPosition()
 
 def _getKlamptCommandedPosition():
 	return robot.getKlamptSensedPosition()
@@ -155,7 +157,7 @@ server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()
 signal.signal(signal.SIGINT, sigint_handler)
 
-
+server.register_function(_startServer,'startServer')
 ##add functions...
 server.register_function(_startup,'startup')
 server.register_function(_setLeftLimbPosition,'setLeftLimbPosition')
@@ -180,9 +182,9 @@ server.register_function(_setTorsoTargetPosition,'setTorsoTargetPosition')
 server.register_function(_sensedBaseVelocity,'sensedBaseVelocity')
 server.register_function(_sensedBasePosition,'sensedBasePosition')
 server.register_function(_sensedTorsoPosition,'sensedTorsoPosition')
-server.register_function(_setGripperPosition,'setGripperPosition')
-server.register_function(_setGripperVelocity,'setGripperVelocity')
-server.register_function(_sensedGripperPosition,'sensedGripperPosition')
+server.register_function(_setLeftGripperPosition,'setLeftGripperPosition')
+server.register_function(_setLeftGripperVelocity,'setLeftGripperVelocity')
+server.register_function(_sensedLeftGripperPosition,'sensedLeftGripperPosition')
 server.register_function(_getKlamptCommandedPosition,'getKlamptCommandedPosition')
 server.register_function(_getKlamptSensedPosition,'getKlamptSensedPosition')
 server.register_function(_shutdown,'shutdown')
@@ -204,6 +206,3 @@ logging.info("Server Started")
 print('Server Started')
 ##run server
 server.serve_forever()
-	
-
-

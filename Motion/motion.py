@@ -25,7 +25,7 @@ model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 class Motion:
 
     def __init__(self,  mode = 'Kinematic', model_path = model_name, components = ['left_limb','right_limb'], debug_logging = False):
-        """  
+        """
         This class provides a low-level controller to the TRINA robot.
 
         Parameters
@@ -67,7 +67,7 @@ class Motion:
         self.right_EE_link = self.robot_model.link(33)
         self.right_active_Dofs = [27,28,29,30,31,32]
         #UR5 arms need correct gravity vector
-        self.currentGravityVector = [0,0,-9.81] 
+        self.currentGravityVector = [0,0,-9.81]
 
         #Enable some components of the robot
         self.left_limb_enabled = False
@@ -75,7 +75,7 @@ class Motion:
         self.base_enabled = False
         self.torso_enabled = False
         self.left_gripper_enabled = False
-        self.right_gripper_enabled = False 
+        self.right_gripper_enabled = False
         #Initialize components
         if self.mode == "Kinematic":
             self.left_limb_enabled = True
@@ -122,12 +122,12 @@ class Motion:
 
         self.startTime = time.time()
         #time since startup
-        self.t = 0 
+        self.t = 0
         self.startUp = False
         #Control loop rate
         self.dt = 0.002
         #automatic mode for future
-        self.automatic_mode = False 
+        self.automatic_mode = False
         self.stop_motion_flag = False
         self.stop_motion_sent = False
         self.shut_down_flag = False
@@ -155,8 +155,8 @@ class Motion:
 
     def startup(self):
         """ Starts up all the individual components and the main control thread.
-        
-        Each component is started sequentially. After starting, all components stay where they are and 
+
+        Each component is started sequentially. After starting, all components stay where they are and
         start updating their states immediately.
         """
         if not self.startUp:
@@ -172,7 +172,7 @@ class Motion:
                     if torso_enabled:
                         #TODO read torso position
                         #tilt_angle =
-                        pass 
+                        pass
                     else:
                         tilt_angle = 0.0
                     R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
@@ -273,7 +273,7 @@ class Motion:
                         self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                         self.right_limb.markRead()
 
-                    if self.gripper_enabled and self.left_gripper.new_state():
+                    if self.left_gripper_enabled and self.left_gripper.new_state():
                        self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
                        self.left_gripper.mark_read()
                     #Send Commands
@@ -310,7 +310,7 @@ class Motion:
                                     flag = 1
                                 elif res == 2:
                                     flag = 0
-                                    self.left_limb.setConfig(target_config)         
+                                    self.left_limb.setConfig(target_config)
 
                         else:
                             if not self.left_limb_state.commandSent:
@@ -352,7 +352,7 @@ class Motion:
                                     flag = 1
                                 elif res == 2:
                                     flag = 0
-                                    self.simulated_robot.setRightLimbConfig(target_config)              
+                                    self.simulated_robot.setRightLimbConfig(target_config)
                         else:
                             if not self.right_limb_state.commandSent:
                                 ###setting position will clear velocity commands
@@ -441,7 +441,7 @@ class Motion:
 
                             #print(res)
                         #print("CartesianDrive IK took",time.time() - clock1, "secs")
-                    ####                           
+                    ####
 
                     else:
                         if not self.left_limb_state.commandSent:
@@ -485,7 +485,7 @@ class Motion:
                                 flag = 1
                             elif res == 2:
                                 flag = 0
-                                self.simulated_robot.setRightLimbConfig(target_config)              
+                                self.simulated_robot.setRightLimbConfig(target_config)
                     else:
                         if not self.right_limb_state.commandSent:
                             ###setting position will clear velocity commands
@@ -508,11 +508,11 @@ class Motion:
             self._controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
             self.t = time.time() - self.startTime
-            if elapsedTime < self.dt:       
+            if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
-            
+
             #print("Elapsed Time:", time.time() - loopStartTime)
         print("motion.controlThread: exited")
 
@@ -559,7 +559,7 @@ class Motion:
         """Set the right limb joint positions, and the limb moves as fast as possible
 
         This will clear the motion queue.
-        
+
         Parameter:
         --------------
         q: a list of 6 doubles. The desired joint positions.
@@ -583,9 +583,9 @@ class Motion:
 
     def setLeftLimbPositionLinear(self,q,duration):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
-        
+
         Set a motion queue, this will clear the setPosition() commands
-        
+
         Parameters:
         ----------------
         q: a list of 6 doubles. The desired joint positions.
@@ -620,9 +620,9 @@ class Motion:
 
     def setRightLimbPositionLinear(self,q,duration):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
-        
+
         Set a motion queue, this will clear the setPosition() commands
-        
+
         Parameters:
         ----------------
         q: a list of 6 doubles. The desired joint positions.
@@ -746,7 +746,7 @@ class Motion:
             initial = self.robot_model.getConfig()
             #initial = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
             #self.robot_model.setConfig(initial)
-            
+
             goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
             # solver = ik.solver(objectives = goal)
             # solver.setActiveDofs(self.left_active_Dofs)
@@ -785,7 +785,7 @@ class Motion:
         # self.motion_log = pd.DataFrame({'arm':['left'],'execution_time':[time.time() - start_time_2],'current_position':[initial],'target_position':[target_config],'iterations':[iterations]})
         # self.motion_log.to_csv('current_log.csv', sep = '|',mode = 'a',header = False)
         if(self.debug_logging):
-            cond_num = np.linalg.cond(solver.getJacobian())       
+            cond_num = np.linalg.cond(solver.getJacobian())
             self.log_file.write('{}|{}|{}|{}|{}|{}|{}\r\n'.format('left',ik_solve_time,col_check_time,initial[10:16],target_config[10:16],iterations,cond_num))
         return ''
 
@@ -852,7 +852,7 @@ class Motion:
             #self.robot_model.setConfig(initial)
 
             goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
-            ## this is for debugging purposes only 
+            ## this is for debugging purposes only
             # solver = ik.solver(objectives = goal)
             # solver.setActiveDofs(self.right_active_Dofs)
             # result = solver.solve()
@@ -886,10 +886,10 @@ class Motion:
             self.setRightLimbPositionLinear(target_config[27:33],duration)
         else:
             print("Right limb not enabled. ")
-        ## This is for debugging purposes only 
+        ## This is for debugging purposes only
         if(self.debug_logging):
             cond_num = np.linalg.cond(solver.getJacobian())
-            self.log_file.write('{}|{}|{}|{}|{}|{}|{}\r\n'.format('right',ik_solve_time,col_check_time,initial[27:33],target_config[27:33],iterations,cond_num))      
+            self.log_file.write('{}|{}|{}|{}|{}|{}|{}\r\n'.format('right',ik_solve_time,col_check_time,initial[27:33],target_config[27:33],iterations,cond_num))
          ## This section is for debugging purposes only
         return ''
 
@@ -922,7 +922,7 @@ class Motion:
                 self.right_limb_state.cartesianMode = 0
             else:
                 print("motion.setRightEEVelocity(): wrong input")
-                
+
             self.right_limb_state.cartesianDrive = True
             (R,t) = self.right_EE_link.getTransform()
             self.right_limb_state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
@@ -945,7 +945,7 @@ class Motion:
             return self.left_EE_link.getTransform()
         else:
             print("Left limb not enabled.")
-            return 
+            return
 
     def sensedRightEETransform(self):
         """Return the transform w.r.t. the base frame
@@ -958,7 +958,7 @@ class Motion:
             return self.right_EE_link.getTransform()
         else:
             print("Right limb not enabled.")
-            return 
+            return
 
     def sensedLeftLimbVelocity(self):
         """ Return the current limb joint velocities
@@ -971,7 +971,7 @@ class Motion:
             return self.left_limb_state.senseddq
         else:
             print("Left limb not enabled.")
-            return 
+            return
 
     def sensedRightLimbVelocity(self):
         """ Return the current limb joint velocities
@@ -992,7 +992,7 @@ class Motion:
         The base constructs a path to go to the desired position, following the desired speed along the path
         Parameter:
         ---------------
-        q: a list of 3 doubles. The desired x,y position and rotation. 
+        q: a list of 3 doubles. The desired x,y position and rotation.
         Vel: double. Desired speed along the path.
         """
         if self.base_enabled:
@@ -1024,7 +1024,7 @@ class Motion:
             print('Base not enabled.')
 
     def setTorsoTargetPosition(self, q):
-        """Set the torso target position. 
+        """Set the torso target position.
 
         Moves to the target as fast as possible.
 
@@ -1080,8 +1080,12 @@ class Motion:
         else:
             print('Torso not enabled.')
 
-    def setGripperPosition(self, position):
+    def setLeftGripperPosition(self, position):
         """Set the position of the gripper. Moves as fast as possible.
+
+        Parameters:
+        -----------------
+        position: a list of 4 doubles
         #TODO
         ###Under development
         """
@@ -1090,7 +1094,7 @@ class Motion:
         self.left_gripper_state.command_finger_set = deepcopy(position)
         self._controlLoopLock.release()
 
-    def setGripperVelocity(self,velocity):
+    def setLeftGripperVelocity(self,velocity):
         """Set the velocity of the gripper. Moves as fast as possible.
         #TODO
         ###Under development
@@ -1098,7 +1102,7 @@ class Motion:
         self.left_gripper_state.commandType = 1
         self.left_gripper_state.command_finger_set = deepcopy(velocity)
 
-    def sensedGripperPosition(self):
+    def sensedLeftGripperPosition(self):
         """Return the current positions of the fingers.
         #TODO
         ###Under development
@@ -1191,7 +1195,7 @@ class Motion:
 
 
     ### ------------------------- ###
-    ###current change up to here#######    
+    ###current change up to here#######
     def resumeMotion(self):
         """Unpause the robot.
 
@@ -1226,10 +1230,10 @@ class Motion:
                 print('out of range..')
                 return []
         return RConfig
-    
+
     def getWorld(self):
-        """ Return the simulated robot 
-        
+        """ Return the simulated robot
+
         Return:
         -------------
         The Klampt world of the simulated robot.
@@ -1240,7 +1244,7 @@ class Motion:
             print("wrong robot mode.")
 
     def cartesianDriveFail(self):
-        """ Return if cartedian drive has failed or not 
+        """ Return if cartedian drive has failed or not
 
         Return:
         ----------------
@@ -1274,7 +1278,7 @@ class Motion:
             self.right_limb_state.commandSent = True
             self.right_limb_state.commandQueue = False
             self.right_limb_state.commandeddq = []
-            self.right_limb_state.cartesianDrive = False        
+            self.right_limb_state.cartesianDrive = False
         if self.base_enabled:
             self.base_state.commandedVel = [0.0, 0.0]
             self.base_state.commandedTargetPosition = [] #[x, y, theta]
@@ -1327,7 +1331,7 @@ class Motion:
 
     def _limit_arm_position(self,config):
         """Modify the arm configuration to be within joint position limits
-        
+
         Parameters:
         ---------------
         config: a list of 6 doubles
@@ -1366,11 +1370,11 @@ class Motion:
     def _left_limb_cartesian_drive(self,current_transform):
         ###TODO: robot_model config is no longer updated in the main loop ....
 
-        """ Calculate the next position command for cartedian velocity drive 
+        """ Calculate the next position command for cartedian velocity drive
 
         Parameters:
         -------------
-        current_transform: klampt rigid transform. 
+        current_transform: klampt rigid transform.
 
         Return:
         -------------
@@ -1399,10 +1403,10 @@ class Motion:
             goal = ik.objective(self.left_EE_link,local = [0,0,0], \
                 world = vectorops.sub(target_transform[1],so3.apply(target_transform[0],self.left_limb_state.toolCenter)))
         #elif self.left_limb_state.cartesianMode == 2:
-        #                goal = ik.objective(self.left_EE_link,R=target_transform[0])        
+        #                goal = ik.objective(self.left_EE_link,R=target_transform[0])
         initialConfig = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.000001)
-        
+
         # print("\n\n\n number of iterations: ",ik.)
         failFlag = False
         if res:
@@ -1430,27 +1434,27 @@ class Motion:
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
             target_config = self.robot_model.getConfig()[10:16]
-            self.left_limb_state.driveTransform = target_transform    
+            self.left_limb_state.driveTransform = target_transform
             if self.left_limb_state.driveSpeedAdjustment < 1:
                 self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment + 0.1
-    
+
         self.robot_model.setConfig(initialConfig)
 
         return 2,target_config #2 means success..
 
     def _right_limb_cartesian_drive(self,current_transform):
-        """ Calculate the next position command for cartedian velocity drive 
+        """ Calculate the next position command for cartedian velocity drive
 
         Parameters:
         -------------
-        current_transform: klampt rigid transform. 
+        current_transform: klampt rigid transform.
 
         Return:
         -------------
         result flag
         target_configuration, a list of 6 doubles
 
-        """        
+        """
         v = self.right_limb_state.cartesianDriveV
         w = self.right_limb_state.cartesianDriveW
         amount = self.dt * self.right_limb_state.driveSpeedAdjustment
@@ -1495,10 +1499,10 @@ class Motion:
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
             target_config = self.robot_model.getConfig()[27:33]
-            self.right_limb_state.driveTransform = target_transform    
+            self.right_limb_state.driveTransform = target_transform
             if self.right_limb_state.driveSpeedAdjustment < 1:
                 self.right_limb_state.driveSpeedAdjustment = self.right_limb_state.driveSpeedAdjustment + 0.1
-    
+
         self.robot_model.setConfig(initialConfig)
 
         return 2,target_config #2 means success..
@@ -1508,7 +1512,7 @@ if __name__=="__main__":
     robot = Motion(mode = 'Kinematic')
     robot.startup()
     print('Robot start() called')
-    
+
     leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
     leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
     rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
@@ -1554,5 +1558,5 @@ if __name__=="__main__":
         print(time.time()-startTime)
 
     vis.kill()
-    
+
     robot.shutdown()

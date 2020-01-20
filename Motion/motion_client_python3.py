@@ -1,4 +1,4 @@
-from xmlrpc.client import ServerProxy 
+from xmlrpc.client import ServerProxy
 from threading import Thread, Lock
 import threading
 import time
@@ -20,11 +20,10 @@ class MotionClient:
 		# self.robot = self.world.robot(0)
 
 		print("init complete")
-	# def _visualUpdateLoop(self):
-	# 	while not self.shut_down:
-	# 		q = self.getKlamptSensedPosition()
-	# 		self.robot.setConfig(q)
-	# 		time.sleep(self.dt)
+
+	def startServer(self,mode,components):
+		self.s.startServer(mode,components)
+
 	def startup(self):
 		res = self.s.startup()
 		print("startup called")
@@ -70,20 +69,20 @@ class MotionClient:
 
 	def setLeftEEInertialTransform(self,Ttarget,duration):
 		return self.s.setLeftEEInertialTransform(Ttarget,duration)
-		
+
 
 	def setLeftEEVelocity(self,v,tool):
 		if not tool:
-			tool = [0,0,0]		
+			tool = [0,0,0]
 		self.s.setLeftEEVelocity(v,tool)
 
 	def setRightEEInertialTransform(self,Ttarget,duration):
 		return self.s.setRightEEInertialTransform(Ttarget,duration)
-		
+
 
 	def setRightEEVelocity(self, v ,tool):
 		if not tool:
-			tool = [0,0,0]		
+			tool = [0,0,0]
 		self.s.setRightEEVelocity(v,tool)
 
 	def sensedLeftEETransform(self):
