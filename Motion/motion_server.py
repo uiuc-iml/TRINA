@@ -12,8 +12,12 @@ logging.basicConfig(filename=filename,filemode='a',level=logging.DEBUG, format='
 global robot
 global server_started
 server_started = False
+
+
 def _startServer(mode = "Kinematic", components = []):
 	##global variable
+	global robot
+	global server_started
 	robot = Motion(mode = mode,components = components)
 	logging.info("%s mode is activated",robot.mode)
 	server_started = True
@@ -21,138 +25,177 @@ def _startServer(mode = "Kinematic", components = []):
 	return 0
 
 def sigint_handler(signum,frame):
+	global robot
+	global server_started
 	if server_started:
 		robot.shutdown()
 	sys.exit(0)
 
 def _startup():
+	global robot
 	return robot.startup()
 
 def _setLeftLimbPosition(q):
+	global robot
 	robot.setLeftLimbPosition(q)
 	return 0
 
 def _setRightLimbPosition(q):
+	global robot
 	robot.setRightLimbPosition(q)
 	return 0
 
 def _setLeftLimbPositionLinear(q,duration):
+	global robot
 	robot.setLeftLimbPositionLinear(q,duration)
 	return 0
 
 def _setRightLimbPositionLinear(q,duration):
+	global robot
 	robot.setRightLimbPositionLinear(q,duration)
 	return 0
 
 def _sensedLeftLimbPosition():
+	global robot
 	return robot.sensedLeftLimbPosition()
 
 def _sensedRightLimbPosition():
+	global robot
 	return robot.sensedRightLimbPosition()
 
 def _setLeftLimbVelocity(qdot):
+	global robot
 	robot.setLeftLimbVelocity(qdot)
 	return 0
 
 def _setRightLimbVelocity(qdot):
+	global robot
 	robot.setRightLimbVelocity(qdot)
 	return 0
 
 def _setLeftEEInertialTransform(Tgarget,duration):
+	global robot
 	return robot.setLeftEEInertialTransform(Tgarget,duration)
 
 
 def _setRightEEInertialTransform(Tgarget,duration):
+	global robot
 	return robot.setRightEEInertialTransform(Tgarget,duration)
 
 
 def _setLeftEEVelocity(v, tool):
-    robot.setLeftEEVelocity(v,tool)
-    return 0
+	global robot
+	robot.setLeftEEVelocity(v,tool)
+	return 0
 
 def _setRightEEVelocity(v, tool):
-    robot.setRightEEVelocity(v,tool)
-    return 0
+	global robot
+	robot.setRightEEVelocity(v,tool)
+	return 0
 
 def _sensedLeftEETransform():
+	global robot
 	return robot.sensedLeftEETransform()
 
 def _sensedRightEETransform():
+	global robot
 	return robot.sensedRightEETransform()
 
 def _sensedLeftLimbVelocity():
-    return robot.sensedLeftLimbVelocity()
+	global robot
+	return robot.sensedLeftLimbVelocity()
 
 def _sensedRightLimbVelocity():
-    return robot.sensedRightLimbVelocity()
+	global robot
+	return robot.sensedRightLimbVelocity()
 
 def _setBaseTargetPosition(q, vel):
+	global robot
 	robot.setBaseTargetPosition(q,vel)
 	return 0
 
 def _setBaseVelocity(q):
+	global robot
 	robot.setBaseVelocity(q)
 	return 0
 
 def _setTorsoTargetPosition(q):
+	global robot
 	robot.setTorsoTargetPosition(q)
 	return 0
 
 def _sensedBaseVelocity():
-    return robot.sensedBaseVelocity()
+	global robot
+	return robot.sensedBaseVelocity()
 
 def _sensedBasePosition():
-    return robot.sensedBasePosition()
+	global robot
+	return robot.sensedBasePosition()
 
 def _sensedTorsoPosition():
-    return robot.sensedTorsoPosition()
+	global robot
+	return robot.sensedTorsoPosition()
 
 def _setLeftGripperPosition(position):
-    robot.setLeftGripperPosition(position)
-    return 0
+	global robot
+	robot.setLeftGripperPosition(position)
+	return 0
 
 def _setLeftGripperVelocity(velocity):
+	global robot
 	robot.setLeftGripperVelocity(velocity)
 	return 0
 
 def _sensedLeftGripperPosition():
-    return robot.sensedLeftGripperPosition()
+	global robot
+	return robot.sensedLeftGripperPosition()
 
 def _getKlamptCommandedPosition():
+	global robot
 	return robot.getKlamptSensedPosition()
 
 def _getKlamptSensedPosition():
-    return robot.getKlamptSensedPosition()
+	global robot
+	return robot.getKlamptSensedPosition()
 
 
 def _shutdown():
+	global robot
 	robot.shutdown()
 	return 0
 
 def _isStarted():
+	global robot
 	return robot.isStarted()
 
 def _isShutDown():
+	global robot
 	return robot.isShutDown()
 
 def _moving():
+	global robot
 	return robot.moving()
 
 def _stopMotion():
+	global robot
 	robot.stopMotion()
 	return 0
 
 def _resumeMotion():
+	global robot
 	robot.resumeMotion()
 	return 0
 
 def _mirror_arm_config(config):
+	global robot
 	return robot.mirror_arm_config(config)
 
 def _getWorld():
+	global robot
 	return robot.getWorld()
 
 def _cartesianDriveFail():
+	global robot
 	return robot.cartesianDriveFail()
 
 #ip_address = 'localhost'

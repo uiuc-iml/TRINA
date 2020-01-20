@@ -133,7 +133,7 @@ class Motion:
         self.shut_down_flag = False
         self.cartedian_drive_failure = False
         self._controlLoopLock = RLock()
-        signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
+        #signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
 
     def sigint_handler(self, signum, frame):
         """ Catch Ctrl+C tp shutdown the robot
