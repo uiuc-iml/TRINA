@@ -23,7 +23,8 @@ import json
 import pdb
 from klampt.math import so3
 
-robot_ip = '130.126.139.236'
+# robot_ip = '72.36.119.129:8080'
+robot_ip = 'http://172.16.187.91:8080'
 ws_port = 1234
 
 model_name = "Motion/data/TRINA_world_reflex.xml"
@@ -35,7 +36,8 @@ roomId=-1
 is_closed=0
 dt = 1.0/30.0
 
-robot = MotionClient()
+robot = MotionClient(address = robot_ip)
+robot.startServer(mode = 'Kinematic', components = [])
 
 def visualUpdateLoop():
 
