@@ -197,11 +197,11 @@ def _cartesianDriveFail():
 	global robot
 	return robot.cartesianDriveFail()
 def _sensedLeftEEVelocity(local_pt):
-	global robotic
+	global robot
 	return robot.sensedLeftEEVelcocity(local_pt)
 
 def _sensedRightEEVelocity(local_pt):
-	global robotic
+	global robot
 	return robot.sensedRightEEVelcocity(local_pt)
 
 ip_address = 'localhost'
