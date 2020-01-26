@@ -1,7 +1,6 @@
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 import signal
 import sys
-# from motion_logger import Motion #testing logs for motion.py
 from motion import Motion
 
 import logging
@@ -198,8 +197,8 @@ def _cartesianDriveFail():
 	global robot
 	return robot.cartesianDriveFail()
 
-#ip_address = 'localhost'
-ip_address = '172.16.187.91'
+ip_address = 'localhost'
+# ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
 port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
