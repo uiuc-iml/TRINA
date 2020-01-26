@@ -173,6 +173,12 @@ class MotionClient:
 	def cartesianDriveFail(self):
 		return self.s.cartesianDriveFail()
 
+	def sensedLeftEEVelcocity(self,local_pt = [0,0,0]):
+		return self.s.sensedLeftEEVelcocity(local_pt)
+
+	def sensedRightEEVelcocity(self,local_pt = [0,0,0]):
+		return self.s.sensedRightEEVelcocity(local_pt)
+
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startServer(mode = "Kinematic", components = ['left_limb'])

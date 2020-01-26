@@ -245,7 +245,8 @@ server.register_function(_getWorld,'getWorld')
 server.register_function(_cartesianDriveFail,'cartesianDriveFail')
 server.register_function(_startup,'startup')
 server.register_function(_isShutDown,'isShutDown')
-
+server.register_function(_sensedLeftEEVelocity,'sensedLeftEEVelcocity')
+server.register_function(_sensedRightEEVelocity,'sensedRightEEVelcocity')
 
 ##
 print('#######################')
