@@ -6,7 +6,7 @@ import math
 from threading import Thread, Lock, RLock
 import threading
 import numpy as np
-# from gripperController import GripperController
+from gripperController import GripperController
 from kinematicController import KinematicController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
@@ -137,6 +137,7 @@ class Motion:
                 else:
                     logger.error('Motion: wrong component name specified')
                     raise RuntimeError('Motion: wrong component name specified')
+        else:
             logger.error('Wrong Mode specified')
             raise RuntimeError('Wrong Mode specified')
         self.left_limb_state = LimbState()
@@ -195,13 +196,13 @@ class Motion:
             elif self.mode == "Physical":
                 if self.torso_enabled:
                     self.torso.start()
-                    logger.info('Motoin: torso started')
+                    logger.info('Motion: torso started')
                     print("Motoin: torso started")
                 if self.base_enabled:
                     self.base.start()
-                    logger.info('Motoin: base started')
+                    logger.info('Motion: base started')
                     print("Motion: base started")
-                if self.left_limb_enabled or self.right_limb_enaled:
+                if self.left_limb_enabled or self.right_limb_enabled:
                     if self.torso_enabled:
                         #TODO read torso position
                         #tilt_angle =
@@ -245,8 +246,10 @@ class Motion:
                         self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                 if self.left_gripper_enabled:
                     self.left_gripper.start()
+                    logger.info('left gripper started')
                 if self.right_gripper_enabled:
                     self.right_gripper.start()
+                    logger.info('right gripper started')
 
 
             controlThread = threading.Thread(target = self._controlLoop)
@@ -314,7 +317,7 @@ class Motion:
                         self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                         self.right_limb.markRead()
 
-                    if self.left_gripper_enabled and self.left_gripper.new_state():
+                    if self.left_gripper_enabled and self.left_gripper.newState():
                        self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
                        self.left_gripper.mark_read()
                     #Send Commands
@@ -421,6 +424,11 @@ class Motion:
                         elif self.left_gripper_state.commandType == 1:
                           self.left_gripper.setVelocity(self.left_gripper_state.command_finger_set)
 
+                    if self.right_gripper_enabled:
+                        if self.right_gripper_state.commandType == 0:
+                          self.right_gripper.setPose(self.right_gripper_state.command_finger_set)
+                      elif self.right_gripper_state.commandType == 1:
+                          self.right_gripper.setVelocity(self.right_gripper_state.command_finger_set)
                     #update internal robot model, does not use the base's position and orientation
                     #basically assumes that the world frame is the frame centered at the base local frame, on the floor.
                     #robot_modelQ = self.base_state.sensedq + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
@@ -1204,9 +1212,8 @@ class Motion:
 
         Parameters:
         -----------------
-        position: a list of 4 doubles
-        #TODO
-        ###Under development
+        position: a list of 4 doubles, the angles of finger 1,2 , the angle of the thumb,
+            the rotation of finger 1&2 (they rotate together)
         """
         self._controlLoopLock.acquire()
         self.left_gripper_state.commandType = 0
@@ -1259,7 +1266,7 @@ class Motion:
                 self.right_limb.stop()
             #TODO: integrate gripper code
             if self.left_gripper_enabled:
-                pass
+                self.left_gripper.shutDown()
 
         elif self.mode == "Kinematic":
             self.simulated_robot.shutdown()
@@ -1630,9 +1637,12 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Kinematic')
+    robot = Motion(mode = 'Physical',components = ['left_gripper'])
     robot.startup()
-    print(robot.sensedLeftEEVelcocity(),robot.sensedRightEEVelcocity())
+    time.sleep(1)
+    #print(robot.sensedLeftEEVelcocity(),robot.sensedRightEEVelcocity())
+    robot.setLeftGripperPosition([0,0,0,0])
+    time.sleep(1)
     robot.shutdown()
     # robot.startup()
     # logger.info('Robot start() called')
