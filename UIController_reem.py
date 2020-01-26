@@ -21,7 +21,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 
-robot_ip = '130.126.139.236'
+robot_ip = 'http://172.16.187.91:8080'
 ws_port = 1234
 
 model_name = "Motion/data/TRINA_world_reflex.xml"
@@ -43,7 +43,8 @@ class UIController:
 
         self.init_UI_state = {}
         self.dt = 0.1
-        self.robot = MotionClient()
+        self.robot = MotionClient(address = robot_ip)
+        self.robot.startServer(mode = 'Kinematic', components = [])
         # self.robot_client = MotionClient()
         # self.robot = Motion()
         self.UI_state = {}
