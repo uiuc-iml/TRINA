@@ -196,11 +196,11 @@ class Motion:
             elif self.mode == "Physical":
                 if self.torso_enabled:
                     self.torso.start()
-                    logger.info('Motoin: torso started')
+                    logger.info('Motion: torso started')
                     print("Motoin: torso started")
                 if self.base_enabled:
                     self.base.start()
-                    logger.info('Motoin: base started')
+                    logger.info('Motion: base started')
                     print("Motion: base started")
                 if self.left_limb_enabled or self.right_limb_enabled:
                     if self.torso_enabled:
@@ -246,8 +246,10 @@ class Motion:
                         self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                 if self.left_gripper_enabled:
                     self.left_gripper.start()
+                    logger.info('left gripper started')
                 if self.right_gripper_enabled:
                     self.right_gripper.start()
+                    logger.info('right gripper started')
 
 
             controlThread = threading.Thread(target = self._controlLoop)
@@ -422,6 +424,11 @@ class Motion:
                         elif self.left_gripper_state.commandType == 1:
                           self.left_gripper.setVelocity(self.left_gripper_state.command_finger_set)
 
+                    if self.right_gripper_enabled:
+                        if self.right_gripper_state.commandType == 0:
+                          self.right_gripper.setPose(self.right_gripper_state.command_finger_set)
+                      elif self.right_gripper_state.commandType == 1:
+                          self.right_gripper.setVelocity(self.right_gripper_state.command_finger_set)
                     #update internal robot model, does not use the base's position and orientation
                     #basically assumes that the world frame is the frame centered at the base local frame, on the floor.
                     #robot_modelQ = self.base_state.sensedq + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
