@@ -1014,18 +1014,25 @@ class Motion:
             print("Left limb not enabled.")
             return
 
-    def sensedLeftEEVelcocity(self):
+    def sensedLeftEEVelcocity(self,local_pt = [0,0,0]):
         """Return the EE translational and rotational velocity  w.r.t. the base DataFrame
+
+        Parameter:
+        ----------------
+        local_pt: the local point in the EE local frame.
+
         Return:
         ----------------
         (v,w), a tuple of 2 velocity vectors
 
         """
         if self.left_limb_enabled:
-            position_J = self.left_EE_link.getJacobian([0,0,0])
-            print(np.shape(position_J))
+            position_J = np.array(self.left_EE_link.getJacobian(local_pt))
+            q_dot = np.array([0]*10 + copy(self.left_limb_state.senseddq) + [0]*27)
+            EE_vel = np.dot(position_J,q_dot)
+            return ([EE_vel[3],EE_vel[4],EE_vel[5]],[EE_vel[0],EE_vel[1],EE_vel[2]])
         else:
-
+            return "NA"
 
     def sensedRightEETransform(self):
         """Return the transform w.r.t. the base frame
@@ -1040,6 +1047,26 @@ class Motion:
             logger.warning('Right limb not enabled.')
             print("Right limb not enabled.")
             return
+
+    def sensedRightEEVelcocity(self,local_pt = [0,0,0]):
+        """Return the EE translational and rotational velocity  w.r.t. the base DataFrame
+
+        Parameter:
+        ----------------
+        local_pt: the local point in the EE local frame.
+
+        Return:
+        ----------------
+        (v,w), a tuple of 2 velocity vectors
+
+        """
+        if self.right_limb_enabled:
+            position_J = np.array(self.right_EE_link.getJacobian(local_pt))
+            q_dot = np.array([0]*25 + copy(self.right_limb_state.senseddq) + [0]*12)
+            EE_vel = np.dot(position_J,q_dot)
+            return ([EE_vel[3],EE_vel[4],EE_vel[5]],[EE_vel[0],EE_vel[1],EE_vel[2]])
+        else:
+            return "NA"
 
     def sensedLeftLimbVelocity(self):
         """ Return the current limb joint velocities
@@ -1603,28 +1630,31 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Physical', components = ['left_limb'])
+    robot = Motion(mode = 'Kinematic')
     robot.startup()
-    logger.info('Robot start() called')
-    print('Robot start() called')
-
-    leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
-    leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
-    rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
-    rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
-
-    #move to untucked position
-    robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
-    startTime = time.time()
-    world = robot.getWorld()
-    vis.add("world",world)
-    vis.show()
-    while (time.time()-startTime < 5):
-        vis.lock()
-        #robot.setBaseVelocity([0.5,0.1])
-        vis.unlock()
-        time.sleep(0.02)
+    print(robot.sensedLeftEEVelcocity(),robot.sensedRightEEVelcocity())
+    robot.shutdown()
+    # robot.startup()
+    # logger.info('Robot start() called')
+    # print('Robot start() called')
+    #
+    # leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
+    # leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
+    # rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
+    # rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
+    #
+    # #move to untucked position
+    # robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+    # robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
+    # startTime = time.time()
+    # world = robot.getWorld()
+    # vis.add("world",world)
+    # vis.show()
+    # while (time.time()-startTime < 5):
+    #     vis.lock()
+    #     #robot.setBaseVelocity([0.5,0.1])
+    #     vis.unlock()
+    #     time.sleep(0.02)
 
     #     print(time.time()-startTime)
     # robot.setBaseVelocity([0,0])
@@ -1667,4 +1697,4 @@ if __name__=="__main__":
     #
     # vis.kill()
 
-    robot.shutdown()
+    # robot.shutdown()

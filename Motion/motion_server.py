@@ -198,8 +198,16 @@ def _cartesianDriveFail():
 	global robot
 	return robot.cartesianDriveFail()
 
+def _sensedLeftEEVelocity(local_pt):
+	global robot
+	return robot.sensedLeftEEVelcocity(local_pt)
+
+def _sensedRightEEVelocity(local_pt):
+	global robot
+	return robot.sensedRightEEVelcocity(local_pt)
 #ip_address = 'localhost'
-ip_address = '172.16.187.91'
+ip_address = '10.194.203.22'
+#ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
 port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
@@ -246,7 +254,8 @@ server.register_function(_getWorld,'getWorld')
 server.register_function(_cartesianDriveFail,'cartesianDriveFail')
 server.register_function(_startup,'startup')
 server.register_function(_isShutDown,'isShutDown')
-
+server.register_function(_sensedLeftEEVelocity,'sensedLeftEEVelcocity')
+server.register_function(_sensedRightEEVelocity,'sensedRightEEVelcocity')
 
 ##
 print('#######################')
