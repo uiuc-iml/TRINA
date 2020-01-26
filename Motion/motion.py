@@ -21,6 +21,24 @@ dirname = os.path.dirname(__file__)
 #getting absolute model name
 model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 
+import logging
+from datetime import datetime
+
+logger = logging.getLogger(__name__)
+# Create handlers
+c_handler = logging.StreamHandler()
+filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
+f_handler = logging.FileHandler(filename)
+c_handler.setLevel(logging.WARNING)
+f_handler.setLevel(logging.NOTSET)
+# Create formatters and add it to handlers
+c_format = logging.Formatter('%(asctime)s %(levelname)s-%(message)s',datefmt='%H:%M:%S')
+f_format = logging.Formatter('%(asctime)s %(funcName)s :%(levelname)s- %(message)s',datefmt='%H:%M:%S')
+c_handler.setFormatter(c_format)
+f_handler.setFormatter(f_format)
+# Add handlers to the logger
+logger.addHandler(c_handler)
+logger.addHandler(f_handler)
 
 class Motion:
 
@@ -57,6 +75,7 @@ class Motion:
         self.world = WorldModel()
         res = self.world.readFile(self.computation_model_path)
         if not res:
+            logger.error('unable to load model')
             raise RuntimeError("unable to load model")
         #Initialize collision detection
         self.collider = collide.WorldCollider(self.world)
@@ -93,23 +112,31 @@ class Motion:
                 if component == 'left_limb':
                     self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
                     self.left_limb_enabled = True
+                    logger.debug('left limb enabled')
                 elif component == 'right_limb':
                     self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
                     self.right_limb_enabled = True
+                    logger.debug('right limb enabled')                    
                 elif component == 'base':
                     self.base = BaseController()
                     self.base_enabled = True
+                    logger.debug('base enabled')
                 elif component == 'torso':
                     self.torso = TorsoController()
                     self.torso_enabled = True
+                    logger.debug('torso enabled')
                 elif component == 'left_gripper':
                     self.left_gripper = GripperController()
                     self.left_gripper_enabled = True
+                    logger.debug('left gripper enabled')
                 elif component == 'right_gripper':
                     self.right_gripper = GripperController()
                     self.right_gripper_enabled = True
+                    logger.debug('right gripper enabled')
                 else:
-                    print('Motion: wrong component name specified')
+                    logger.error('Motion: wrong component name specified')
+                    raise RuntimeError('Motion: wrong component name specified')
+            logger.error('Wrong Mode specified')
             raise RuntimeError('Wrong Mode specified')
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
@@ -140,6 +167,7 @@ class Motion:
 
         """
         assert(signum == signal.SIGINT)
+        logger.warning('SIGINT caught...shutting down the api!')
         print("SIGINT caught...shutting down the api!")
         self.shutdown()
 
@@ -165,8 +193,11 @@ class Motion:
             elif self.mode == "Physical":
                 if self.torso_enabled:
                     self.torso.start()
+                    logger.info('Motoin: torso started')
+                    print("Motoin: torso started")
                 if self.base_enabled:
                     self.base.start()
+                    logger.info('Motoin: base started')
                     print("Motion: base started")
                 if self.left_limb_enabled or self.right_limb_enaled:
                     if torso_enabled:
@@ -187,9 +218,11 @@ class Motion:
                     time.sleep(1)
                     if res == False:
                         #better to replace this with logger
+                        logger.error('left limb start failure.')
                         print("motion.startup(): ERROR, left limb start failure.")
                         return False
                     else:
+                        logger.info('left limb started.')
                         print("motion.startup(): left limb started.")
                         self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
                         self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
@@ -199,9 +232,11 @@ class Motion:
                     time.sleep(1)
                     if res == False:
                         #better to replace this with logger
+                        logger.error('right limb start failure.')
                         print("motion.startup(): ERROR, right limb start failure.")
                         return False
                     else:
+                        logger.info('right limb started.')
                         print("motion.startup(): right limb started.")
                         self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                         self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
@@ -214,9 +249,12 @@ class Motion:
 
             controlThread = threading.Thread(target = self._controlLoop)
             controlThread.start()
+            logger.info('robot started.')
             print("motion.startup():robot started")
             self.startUp = True
         else:
+            ##warning
+            logger.warning('Already started.')
             print("motion.startup():Already started")
         return self.startUp
 
@@ -227,6 +265,7 @@ class Motion:
 
 
         self.robot_start_time = time.time()
+        logger.info('controlLoop started.')
         print("motion.controlLoop(): controlLoop started.")
         while not self.shut_down_flag:
             loopStartTime = time.time()
@@ -399,12 +438,7 @@ class Motion:
                         self.right_limb_state.sensedWrench = []
                         self.base_state.measuredVel = self.simulated_robot.getBaseVelocity()
                         self.base_state.measuredPos = self.simulated_robot.getBaseConfig()
-                        #self.left_gripper_state.sense_finger_set = self.simulated_robot.getLeftGripperPosition()
-                        ##Add other components...
-                        self.simulated_robot.markRead()
-
-                    ###send commands
-                    if self.left_limb_state.commandQueue:
+                        #self.left_gripper_state.sense_finger_set = selfprint("motion.controlLoop(): controlLoop started.")
                         if self.left_limb_state.commandType == 0:
                             if len(self.left_limb_state.commandedqQueue) > 0:
                                 if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
@@ -514,6 +548,7 @@ class Motion:
                 pass
 
             #print("Elapsed Time:", time.time() - loopStartTime)
+        logger.info('controlThread exited.')
         print("motion.controlThread: exited")
 
     #TODO: finish setting the entire robot
@@ -538,7 +573,8 @@ class Motion:
         --------------
         q: a list of 6 doubles. The desired joint positions.
         """
-        assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
+        logger.debug('number of joint positions sent : %d', len(q))
+        assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"('controlThread exited.')
         if self.left_limb_enabled:
             #startTime = time.time()
             self._controlLoopLock.acquire()
@@ -552,6 +588,7 @@ class Motion:
             self.left_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
+            logger.warning('Left limb not enabled')
             print("motion.setLeftLimbPosition():Left limb not enabled")
         return
 
@@ -564,6 +601,7 @@ class Motion:
         --------------
         q: a list of 6 doubles. The desired joint positions.
         """
+        logger.debug('number of joint positions sent : %d', len(q))
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
         if self.right_limb_enabled:
             #startTime = time.time()
@@ -578,6 +616,7 @@ class Motion:
             self.right_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
+            logger.warning('Right limb not enabled')
             print("motion.setRightLimbPosition():Right limb not enabled")
         return
 
@@ -591,6 +630,7 @@ class Motion:
         q: a list of 6 doubles. The desired joint positions.
         duration: double. The desired duration.
         """
+        logger.debug('number of joint positions sent : %d and duration is %d', len(q), duration)
         assert len(q) == 6, "motion.setLeftLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setLeftLimbPositionLinear(): Duration needs to be a positive number"
         #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
@@ -616,6 +656,7 @@ class Motion:
             self.left_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
+            logger.warning('Left limb not enabled')
             print("motion.setLeftLimbPosition():Left limb not enabled")
 
     def setRightLimbPositionLinear(self,q,duration):
@@ -628,6 +669,7 @@ class Motion:
         q: a list of 6 doubles. The desired joint positions.
         duration: double. The desired duration.
         """
+        logger.debug('number of joint positions sent : %d and duration is %d', len(q), duration)
         assert len(q) == 6, "motion.setRightLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setRightLimbPositionLinear(): Duration needs to be a positive number"
         #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
@@ -653,6 +695,7 @@ class Motion:
             self.right_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
+            logger.warning('Right limb not enabled')
             print("motion.setRightLimbPosition():Right limb not enabled")
         return
 
@@ -666,6 +709,7 @@ class Motion:
         if self.left_limb_enabled:
             return self.left_limb_state.sensedq
         else:
+            logger.warning('left limb not enabled')
             print("motion().sensedLeftLimbPosition: left limb not enabled")
             return
 
@@ -679,8 +723,10 @@ class Motion:
         if self.right_limb_enabled:
             return self.right_limb_state.sensedq
         else:
+            logger.warning('Right limb not enabled')
             print("motion().sensedRightLimbPosition: right limb not enabled")
             return
+
     def setVelocity(self,qdot):
         """set the velocity of the entire robot, under development rn
 
@@ -699,6 +745,7 @@ class Motion:
         qdot: a list of 6 doubles. Joint velocities
         """
         if self.left_limb_enabled:
+            logger.debug('number of joint velocities sent : %d', len(qdot))
             assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
             self._controlLoopLock.acquire()
             self.left_limb_state.commandSent = False
@@ -710,6 +757,7 @@ class Motion:
             self.left_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
+            logger.warning('Left limb not enabled')
             print("Left limb not enabled")
 
         return
@@ -722,6 +770,7 @@ class Motion:
         qdot: a list of 6 doubles. Joint velocities
         """
         if self.right_limb_enabled:
+            logger.debug('number of joint velocities sent : %d', len(qdot))
             assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
             self._controlLoopLock.acquire()
             self.right_limb_state.commandSent = False
@@ -733,6 +782,7 @@ class Motion:
             self.right_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
+            logger.warning('Right limb not enabled')
             print("Right limb not enabled.")
         return
 
@@ -756,9 +806,12 @@ class Motion:
             # if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
             #if result:
                 target_config = self.robot_model.getConfig()
+                logger.info('IK solve successful')
                 print("motion.setLeftEEInertialTransform():IK solve successful")
             else:
                 self._controlLoopLock.release()
+                #"warning"
+                logger.warning('IK solve failure: no IK solution found')
                 print('motion.setLeftEEInertialtransform():IK solve failure: no IK solution found')
                 return 'motion.setLeftEEInertialtransform():IK solve failure: no IK solution found'
             ik_solve_time = time.time() -start_time
@@ -770,9 +823,11 @@ class Motion:
             #print(res)
             if res:
                 self._controlLoopLock.release()
+                logger.warning('Self-collision midway')
                 print('motion.setLeftEEInertialtransform():Self-collision midway')
                 return 'motion.setLeftEEInertialtransform():Self-collision midway'
             else:
+                logger.info('No collision')
                 print("motion.setLeftEEInertialTransform():No collision")
 
             self.robot_model.setConfig(initial)
@@ -781,6 +836,7 @@ class Motion:
             self.setLeftLimbPositionLinear(target_config[10:16],duration)
             # print("setting linear position takes", time.time() - start_time)
         else:
+            logger.warning('Left limb not enabled')
             print("Left limb not enabled.")
         # self.motion_log = pd.DataFrame({'arm':['left'],'execution_time':[time.time() - start_time_2],'current_position':[initial],'target_position':[target_config],'iterations':[iterations]})
         # self.motion_log.to_csv('current_log.csv', sep = '|',mode = 'a',header = False)
@@ -817,7 +873,10 @@ class Motion:
                 self.left_limb_state.cartesianDriveW = deepcopy(v[3:6])
                 self.left_limb_state.cartesianMode = 0
             else:
+                #error
+                logger.error('wrong input')
                 print("motion.setRightEEVelocity(): wrong input")
+                return
 
             self.left_limb_state.cartesianDrive = True
             (R,t) = self.left_EE_link.getTransform()
@@ -827,6 +886,7 @@ class Motion:
             self.left_limb_state.toolCenter = deepcopy(tool)
             self._controlLoopLock.release()
         else:
+            logger.warning('Left limb not enabled')
             print("Left limb not enabled.")
 
         return ''
@@ -864,9 +924,11 @@ class Motion:
             #if result:
             #if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.right_active_Dofs):
                 target_config = self.robot_model.getConfig()
+                logger.info('IK solve successful')
                 print("motion.setRightEEInertialTransform():IK solve successful")
             else:
                 self._controlLoopLock.release()
+                logger.warning('IK solve failure: no IK solution found')
                 print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
                 return 'motion.setRightEEInertialtransform():IK solve failure: no IK solution found'
             start_time_2 = time.time()
@@ -876,15 +938,18 @@ class Motion:
             #print(res)
             if res:
                 self._controlLoopLock.release()
+                logger.warning('Self-collision midway')
                 print('motion.setRighttEEInertialtransform():Self-collision midway')
                 return 'motion.setRighttEEInertialtransform():Self-collision midway'
             else:
+                logger.info('No collision')
                 print("motion.setRightEEInertialTransform():No collision")
 
             self.robot_model.setConfig(initial)
             self._controlLoopLock.release()
             self.setRightLimbPositionLinear(target_config[27:33],duration)
         else:
+            logger.warning('Right limb not enabled')
             print("Right limb not enabled. ")
         ## This is for debugging purposes only
         if(self.debug_logging):
@@ -921,7 +986,9 @@ class Motion:
                 self.right_limb_state.cartesianDriveW = deepcopy(v[3:6])
                 self.right_limb_state.cartesianMode = 0
             else:
+                logger.error('wrong input')
                 print("motion.setRightEEVelocity(): wrong input")
+                return
 
             self.right_limb_state.cartesianDrive = True
             (R,t) = self.right_EE_link.getTransform()
@@ -931,6 +998,7 @@ class Motion:
             self.right_limb_state.toolCenter = deepcopy(tool)
             self._controlLoopLock.release()
         else:
+            logger.warning('Right limb not enabled.')
             print("Right limb not enabled.")
         return ''
 
@@ -944,6 +1012,7 @@ class Motion:
         if self.left_limb_enabled:
             return self.left_EE_link.getTransform()
         else:
+            logger.warning('Left limb not enabled.')
             print("Left limb not enabled.")
             return
 
@@ -957,6 +1026,7 @@ class Motion:
         if self.right_limb_enabled:
             return self.right_EE_link.getTransform()
         else:
+            logger.warning('Right limb not enabled.')
             print("Right limb not enabled.")
             return
 
@@ -970,6 +1040,7 @@ class Motion:
         if self.left_limb_enabled:
             return self.left_limb_state.senseddq
         else:
+            logger.warning('Left limb not enabled.')
             print("Left limb not enabled.")
             return
 
@@ -983,6 +1054,7 @@ class Motion:
         if self.right_limb_enabled:
             return self.right_limb_state.senseddq
         else:
+            logger.warning('Right limb not enabled.')
             print('Right limb not enabled.')
             return
 
@@ -996,6 +1068,7 @@ class Motion:
         Vel: double. Desired speed along the path.
         """
         if self.base_enabled:
+            logger.debug('dimensions : %d', len(q))
             assert len(q) == 3, "motion.setBaseTargetPosition(): wrong dimensions"
             self._controlLoopLock.acquire()
             self.base_state.commandType = 0
@@ -1004,6 +1077,7 @@ class Motion:
             self.base_state.commandSent = False
             self._controlLoopLock.release()
         else:
+            logger.warning('Base not enabled.')
             print('Base not enabled.')
 
     def setBaseVelocity(self, q):
@@ -1014,6 +1088,7 @@ class Motion:
         q: a list of 2 doubles. The linear and rotational velocites.
         """
         if self.base_enabled:
+            logger.debug('dimensions : %d', len(q))
             assert len(q) == 2 ,"motion.setBaseVelocity(): wrong dimensions"
             self._controlLoopLock.acquire()
             self.base_state.commandType = 1
@@ -1021,6 +1096,7 @@ class Motion:
             self.base_state.commandSent = False
             self._controlLoopLock.release()
         else:
+            logger.warning('Base not enabled.')
             print('Base not enabled.')
 
     def setTorsoTargetPosition(self, q):
@@ -1033,6 +1109,7 @@ class Motion:
         q: a list of 2 doubles. The lift and tilt positions.
         """
         if self.torso_enabled:
+            logger.debug('dimensions : %d', len(q))
             assert len(q) == 2, "motion.SetTorsoTargetPosition(): wrong dimensions"
             height, tilt = q
             self._controlLoopLock.acquire()
@@ -1041,7 +1118,8 @@ class Motion:
             self.torso_state.commandSent = False
             self._controlLoopLock.release()
         else:
-            print('Base not enabled.')
+            logger.warning('Torso not enabled.')
+            print('Torso not enabled.')
 
     def sensedBaseVelocity(self):
         """Returns the current base velocity
@@ -1053,6 +1131,7 @@ class Motion:
         if self.base_enabled:
             return self.base_state.measuredVel
         else:
+            logger.warning('Base not enabled.')
             print('Base not enabled')
 
     def sensedBasePosition(self):
@@ -1066,6 +1145,7 @@ class Motion:
         if self.base_enabled:
             return self.base_state.measuredPos
         else:
+            logger.warning('Base not enabled.')
             print('Base not enabled')
 
     def sensedTorsoPosition(self):
@@ -1078,6 +1158,7 @@ class Motion:
         if self.torso_enabled:
             return [self.torso_state.measuredHeight, self.torso_state.measuredTilt]
         else:
+            logger.warning('Torso not enabled.')
             print('Torso not enabled.')
 
     def setLeftGripperPosition(self, position):
@@ -1426,6 +1507,7 @@ class Motion:
             self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment - 0.1
             if self.left_limb_state.driveSpeedAdjustment < 0.001:
                 self.left_limb_state.cartesianDrive = False
+                logger.error('CartesianDrive IK has failed completely,exited..')
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
                 return 0,0 # 0 means the IK has failed completely
             else:
@@ -1491,6 +1573,7 @@ class Motion:
             self.right_limb_state.driveSpeedAdjustment = self.right_limb_state.driveSpeedAdjustment - 0.1
             if self.right_limb_state.driveSpeedAdjustment < 0.001:
                 self.right_limb_state.cartesianDrive = False
+                logger.error('CartesianDrive IK has failed completely,exited..')
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
                 return 0,0 # 0 means the IK has failed completely
             else:
@@ -1511,6 +1594,7 @@ if __name__=="__main__":
 
     robot = Motion(mode = 'Kinematic')
     robot.startup()
+    logger.info('Robot start() called')
     print('Robot start() called')
 
     leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
