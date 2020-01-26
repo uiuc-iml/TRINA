@@ -10,7 +10,7 @@ import numpy as np
 from kinematicController import KinematicController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
-from copy import deepcopy
+from copy import deepcopy,copy
 from klampt.math import vectorops,so3
 from klampt import vis
 from klampt.model import ik, collide
@@ -71,7 +71,7 @@ class Motion:
 
         #Enable some components of the robot
         self.left_limb_enabled = False
-        self.right_limb_enaled = False
+        self.right_limb_enabled = False
         self.base_enabled = False
         self.torso_enabled = False
         self.left_gripper_enabled = False
@@ -91,7 +91,8 @@ class Motion:
             from torsoController import TorsoController
             for component in components:
                 if component == 'left_limb':
-                    self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright)
+                    self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright,\
+                        payload = TRINAConfig.left_limb_payload,tcp = TRINAConfig.left_limb_TCP)
                     self.left_limb_enabled = True
                 elif component == 'right_limb':
                     self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
@@ -110,6 +111,7 @@ class Motion:
                     self.right_gripper_enabled = True
                 else:
                     print('Motion: wrong component name specified')
+        else:
             raise RuntimeError('Wrong Mode specified')
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
@@ -159,6 +161,7 @@ class Motion:
         Each component is started sequentially. After starting, all components stay where they are and
         start updating their states immediately.
         """
+
         if not self.startUp:
             if self.mode == "Kinematic":
                 self.simulated_robot.start()
@@ -169,7 +172,7 @@ class Motion:
                     self.base.start()
                     print("Motion: base started")
                 if self.left_limb_enabled or self.right_limb_enaled:
-                    if torso_enabled:
+                    if self.torso_enabled:
                         #TODO read torso position
                         #tilt_angle =
                         pass
@@ -225,7 +228,7 @@ class Motion:
         in each loop,states are updated and new commands are issued
         """
 
-
+        counter = 0
         self.robot_start_time = time.time()
         print("motion.controlLoop(): controlLoop started.")
         while not self.shut_down_flag:
@@ -277,12 +280,12 @@ class Motion:
                        self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
                        self.left_gripper.mark_read()
                     #Send Commands
-                    if left_limb_enabled:
+                    if self.left_limb_enabled:
                         if self.left_limb_state.commandQueue:
                             if self.left_limb_state.commandType == 0:
                                 if len(self.left_limb_state.commandedqQueue) > 0:
                                     if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                        self.left_limb.setConfig(self.left_limb_state.commandedqQueue.pop(0) + [0.0])
+                                        self.left_limb.setConfig((self.left_limb_state.commandedqQueue.pop(0) + [0.0]))
                                         self.left_limb_state.lastCommandQueueTime = time.time()
                             elif self.left_limb_state.commandType == 1:
                                 if len(self.left_limb_state.commandeddqQueue) > 0:
@@ -320,7 +323,7 @@ class Motion:
                                 elif self.left_limb_state.commandType == 1:
                                     self.left_limb.setVelocity(self.left_limb_state.commandeddq + [0.0])
                                 self.left_limb_state.commandSent = True
-                    if right_arm_enabled:
+                    if self.right_limb_enabled:
                         if self.right_limb_state.commandQueue:
                             if self.right_limb_state.commandType == 0:
                                 if len(self.right_limb_state.commandedqQueue) > 0:
@@ -408,8 +411,7 @@ class Motion:
                         if self.left_limb_state.commandType == 0:
                             if len(self.left_limb_state.commandedqQueue) > 0:
                                 if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
-                                    tmp = self.left_limb_state.commandedqQueue.pop(0)
-                                    self.simulated_robot.setLeftLimbConfig(tmp)
+                                    self.simulated_robot.setLeftLimbConfig(self.left_limb_state.commandedqQueue.pop(0))
                                     self.left_limb_state.lastCommandQueueTime = time.time()
                         elif self.left_limb_state.commandType == 1:
                             if len(self.left_limb_state.commandeddqQueue) > 0:
@@ -596,20 +598,19 @@ class Motion:
         #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
         #TODO:Also collision checks
         if self.left_limb_enabled:
+            self._controlLoopLock.acquire()
             planningTime = 0.0 + TRINAConfig.ur5e_control_rate
             positionQueue = []
             currentq = self.left_limb_state.sensedq
             difference = vectorops.sub(q,currentq)
             while planningTime < duration:
+                #print(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration))[5])
                 positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
                 planningTime = planningTime + TRINAConfig.ur5e_control_rate
             positionQueue.append(q)
-            #startTime = time.time()
-            self._controlLoopLock.acquire()
-            #print("SetLeftLimbPositionLinear lock takes", time.time() - startTime)
             self.left_limb_state.commandSent = False
             self.left_limb_state.commandType = 0
-            self.left_limb_state.commandedqQueue = positionQueue
+            self.left_limb_state.commandedqQueue = deepcopy(positionQueue)
             self.left_limb_state.commandQueue = True
             self.left_limb_state.commandedq = []
             self.left_limb_state.commandeddq = []
@@ -633,6 +634,7 @@ class Motion:
         #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
         #Also collision checks
         if self.right_limb_enabled:
+            self._controlLoopLock.acquire()
             planningTime = 0.0 + TRINAConfig.ur5e_control_rate
             positionQueue = []
             currentq = self.right_limb_state.sensedq
@@ -641,12 +643,10 @@ class Motion:
                 positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
                 planningTime = planningTime + TRINAConfig.ur5e_control_rate
             positionQueue.append(q)
-            #startTime = time.time()
-            self._controlLoopLock.acquire()
-            #print("SetRightLimbPositionLinear lock takes", time.time() - startTime)
+
             self.right_limb_state.commandSent = False
             self.right_limb_state.commandType = 0
-            self.right_limb_state.commandedqQueue = positionQueue
+            self.right_limb_state.commandedqQueue = deepcopy(positionQueue)
             self.right_limb_state.commandQueue = True
             self.right_limb_state.commandedq = []
             self.right_limb_state.commandeddq = []
@@ -664,10 +664,10 @@ class Motion:
         A list of 6 doubles. The limb configuration.
         """
         if self.left_limb_enabled:
-            return self.left_limb_state.sensedq
+            return copy(self.left_limb_state.sensedq)
         else:
             print("motion().sensedLeftLimbPosition: left limb not enabled")
-            return
+            return [0]*6
 
     def sensedRightLimbPosition(self):
         """The current joint positions of the right limb
@@ -677,10 +677,10 @@ class Motion:
         A list of 6 doubles. The limb configuration.
         """
         if self.right_limb_enabled:
-            return self.right_limb_state.sensedq
+            return copy(self.right_limb_state.sensedq)
         else:
             print("motion().sensedRightLimbPosition: right limb not enabled")
-            return
+            return [0]*6
     def setVelocity(self,qdot):
         """set the velocity of the entire robot, under development rn
 
@@ -947,6 +947,19 @@ class Motion:
             print("Left limb not enabled.")
             return
 
+    def sensedLeftEEVelcocity(self):
+        """Return the EE translational and rotational velocity  w.r.t. the base DataFrame
+        Return:
+        ----------------
+        (v,w), a tuple of 2 velocity vectors
+
+        """
+        if self.left_limb_enabled:
+            position_J = self.left_EE_link.getJacobian([0,0,0])
+            print(np.shape(position_J))
+        else:
+            
+
     def sensedRightEETransform(self):
         """Return the transform w.r.t. the base frame
 
@@ -968,7 +981,7 @@ class Motion:
         A list of 6 doubles. The joint velocities.
         """
         if self.left_limb_enabled:
-            return self.left_limb_state.senseddq
+            return copy(self.left_limb_state.senseddq)
         else:
             print("Left limb not enabled.")
             return
@@ -981,7 +994,7 @@ class Motion:
         A list of 6 doubles. The joint velocities.
         """
         if self.right_limb_enabled:
-            return self.right_limb_state.senseddq
+            return copy(self.right_limb_state.senseddq)
         else:
             print('Right limb not enabled.')
             return
@@ -1051,7 +1064,7 @@ class Motion:
         A list of 2 doubles. Linear and Rotational velocities.
         """
         if self.base_enabled:
-            return self.base_state.measuredVel
+            return copy(self.base_state.measuredVel)
         else:
             print('Base not enabled')
 
@@ -1064,7 +1077,7 @@ class Motion:
 
         """
         if self.base_enabled:
-            return self.base_state.measuredPos
+            return copy(self.base_state.measuredPos)
         else:
             print('Base not enabled')
 
@@ -1076,7 +1089,7 @@ class Motion:
         A list of 2 doubles. The positions.
         """
         if self.torso_enabled:
-            return [self.torso_state.measuredHeight, self.torso_state.measuredTilt]
+            return copy([self.torso_state.measuredHeight, self.torso_state.measuredTilt])
         else:
             print('Torso not enabled.')
 
@@ -1107,14 +1120,14 @@ class Motion:
         #TODO
         ###Under development
         """
-        return self.left_gripper_state.sense_finger_set
+        return copy(self.left_gripper_state.sense_finger_set)
 
     def getKlamptCommandedPosition(self):
         """Return the entire commanded position, in Klampt format.
         ###using attached grippers as reflex grippers ###
         """
         if self.left_limb_state.commandedq and self.right_limb_state.commandedq:
-            return self.base_state.measuredPos + [0]*7 + self.left_limb_state.commandedq + [0]*19 + self.right_limb_state.commandedq + [0]*18
+            return copy(self.base_state.measuredPos + [0]*7 + self.left_limb_state.commandedq + [0]*19 + self.right_limb_state.commandedq + [0]*18)
         else:
             return self.getKlamptSensedPosition()
 
@@ -1122,7 +1135,7 @@ class Motion:
         """Return the entire sensed Klampt position, in Klampt format.
         ###using attached grippers as reflex grippers ###
         """
-        return self.base_state.measuredPos + [0]*7 + self.left_limb_state.sensedq + [0]*19 + self.right_limb_state.sensedq + [0]*18
+        return copy(self.base_state.measuredPos + [0]*7 + self.left_limb_state.sensedq + [0]*19 + self.right_limb_state.sensedq + [0]*18)
 
     def shutdown(self):
         """Shutdown the componets.
@@ -1136,7 +1149,7 @@ class Motion:
                 self.torso.shutdown()
             if self.left_limb_enabled:
                 self.left_limb.stop()
-            if self.right_limb_enaled:
+            if self.right_limb_enabled:
                 self.right_limb.stop()
             #TODO: integrate gripper code
             if self.left_gripper_enabled:
@@ -1509,54 +1522,60 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Kinematic')
+    robot = Motion(mode = 'Physical', components = ['left_limb'])
     robot.startup()
-    print('Robot start() called')
-
-    leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
-    leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
-    rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
-    rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
-
-    #move to untucked position
-    robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
-    startTime = time.time()
-    world = robot.getWorld()
-    vis.add("world",world)
-    vis.show()
-    while (time.time()-startTime < 5):
-        vis.lock()
-        #robot.setBaseVelocity([0.5,0.1])
-        vis.unlock()
-        time.sleep(0.02)
-
-    #     print(time.time()-startTime)
-    # robot.setBaseVelocity([0,0])
-    # robot.setGripperPosition([1,1,1,0])
+    currentq = robot.sensedLeftLimbPosition()
+    print(currentq)
+    currentq[5] = currentq[5] - 0.5
+    robot.setLeftLimbPositionLinear(currentq,10.0)
+    print(currentq)
+    time.sleep(10)
+    # print('Robot start() called')
+    #
+    # leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
+    # leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
+    # rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
+    # rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
+    #
+    # #move to untucked position
+    # robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+    # robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
     # startTime = time.time()
+    # world = robot.getWorld()
+    # vis.add("world",world)
+    # vis.show()
     # while (time.time()-startTime < 5):
     #     vis.lock()
     #     #robot.setBaseVelocity([0.5,0.1])
     #     vis.unlock()
     #     time.sleep(0.02)
-    ##cartesian drive...
-    startTime = time.time()
-    # [0.0,-0.05,0],[0,0,0]
-    robot.setLeftEEInertialTransform([[-0.06720643425243836, -0.7527169832325281, -0.6549047716766548, 0.9749095012575034, -0.18912346734793367, 0.11732283620745665, -0.2121687525365566, -0.6305869228358743, 0.7465423645978749],[0.5536765011424929, 0.10578081079393827, 0.5977151817981915]],3)
-    while (time.time()-startTime < 5):
-        vis.lock()
-        #robot.setBaseVelocity([0.5,0.1])
-        vis.unlock()
-        time.sleep(0.02)
-        try:
-            robot.getKlamptSensedPosition()
-        except:
-            print("except")
-        if robot.cartesianDriveFail():
-            break
-        print(time.time()-startTime)
-
-    vis.kill()
+    #
+    # #     print(time.time()-startTime)
+    # # robot.setBaseVelocity([0,0])
+    # # robot.setGripperPosition([1,1,1,0])
+    # # startTime = time.time()
+    # # while (time.time()-startTime < 5):
+    # #     vis.lock()
+    # #     #robot.setBaseVelocity([0.5,0.1])
+    # #     vis.unlock()
+    # #     time.sleep(0.02)
+    # ##cartesian drive...
+    # startTime = time.time()
+    # # [0.0,-0.05,0],[0,0,0]
+    # robot.setLeftEEInertialTransform([[-0.06720643425243836, -0.7527169832325281, -0.6549047716766548, 0.9749095012575034, -0.18912346734793367, 0.11732283620745665, -0.2121687525365566, -0.6305869228358743, 0.7465423645978749],[0.5536765011424929, 0.10578081079393827, 0.5977151817981915]],3)
+    # while (time.time()-startTime < 5):
+    #     vis.lock()
+    #     #robot.setBaseVelocity([0.5,0.1])
+    #     vis.unlock()
+    #     time.sleep(0.02)
+    #     try:
+    #         robot.getKlamptSensedPosition()
+    #     except:
+    #         print("except")
+    #     if robot.cartesianDriveFail():
+    #         break
+    #     print(time.time()-startTime)
+    #
+    # vis.kill()
 
     robot.shutdown()
