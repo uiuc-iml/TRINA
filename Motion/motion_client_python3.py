@@ -121,11 +121,11 @@ class MotionClient:
 	def sensedTorsoPosition(self):
 		return self.s.sensedTorsoPosition()
 
-	def setGripperPosition(self, position):
-		self.s.setGripperPosition(position)
+	def setLeftGripperPosition(self, position):
+		self.s.setLeftGripperPosition(position)
 
-	def setGripperVelocity(self,velocity):
-		self.s.setGripperVelocity(velocity)
+	def setLeftGripperVelocity(self,velocity):
+		self.s.setLeftGripperVelocity(velocity)
 
 	def sensedGripperPosition(self):
 		return self.s.sensedGripperPosition()
