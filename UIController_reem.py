@@ -21,8 +21,8 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 
-# robot_ip = 'http://10.194.203.22:8080'
-robot_ip = 'http://localhost:8080'
+robot_ip = 'http://10.194.203.22:8080'
+# robot_ip = 'http://localhost:8080'
 ws_port = 1234
 
 model_name = "Motion/data/TRINA_world_reflex.xml"
@@ -41,11 +41,11 @@ class UIController:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = 0
-
+        self.mode = 'Physical'
         self.init_UI_state = {}
         self.dt = 0.1
         self.robot = MotionClient(address = robot_ip)
-        self.robot.startServer(mode = 'Kinematic', components = ['left_limb'])
+        self.robot.startServer(mode = self.mode, components = ['left_limb'])
         # self.robot_client = MotionClient()
         # self.robot = Motion()
         self.UI_state = {}
@@ -103,10 +103,17 @@ class UIController:
                 self.init_UI_state = self.server['UI_STATE'].read()
                 self.startup = False
                 self.init_pos_left = self.robot.sensedLeftEETransform()
-                # self.init_pos_right = self.robot.sensedRightEETransform()
+                self.init_pos_right = self.robot.sensedRightEETransform()
             
             while(True):
-                # try:https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.norm.html
+                # try:
+                
+                self.last_time = time.time()
+                self.cur_pos_left = self.robot.sensedLeftEETransform()
+                self.cur_pos_right = self.robot.sensedRightEETransform()
+                self.UI_state = self.server['UI_STATE'].read()
+                # print('\n\n\n\n',self.UI_state,'\n\n\n\n')
+                self.UIStateLogic()
                 time.sleep(0.025)
 
                 # except:
@@ -171,6 +178,7 @@ class UIController:
             ch------controller homw
             rh------robot home
         '''
+        print('entered position_control\n\n\n\n\n')
         self.positionControlArm('left')
         self.positionControlArm('right')
         # print('final_time =',time.time() - start_time)
@@ -183,7 +191,7 @@ class UIController:
         assert (side in ['left','right']), "invalid arm selection"
         R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
         joystick = side+"Controller"
-        # print("{} button pushed".format(side),self.UI_state["controllerButtonState"][joystick])
+        print("{} button pushed".format(side),self.UI_state["controllerButtonState"][joystick])
         if self.UI_state["controllerButtonState"][joystick]["squeeze"][0] > 0.5 :
             # print("{} button pushed".format(side))
             # print('moving arm')
@@ -197,15 +205,15 @@ class UIController:
             RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
             RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
 
-            RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch)))
+            RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch))).tolist()
 
 
             # we now check if the "ideal" velocity is greater than 1 m/s
 
             #current position:
-            linear_velocity_vector = (RT_final - curr_position)*(1.0/60)
-            if(np.linalg.norm(linear_velocity_vector)>0.95):
-                RT_final = (curr_position + (linear_velocity_vector/np.linalg.norm(linear_velocity_vector))*0.95*60).tolist()
+            # linear_velocity_vector = (RT_final - curr_position)*(1.0/60)
+            # if(np.linalg.norm(linear_velocity_vector)>0.95):
+            #     RT_final = (curr_position + (linear_velocity_vector/np.linalg.norm(linear_velocity_vector))*0.95*60).tolist()
             # print(np.subtract(RT_cw_cc,RT_cw_ch),RT_rw_rh)
             
             # RR_unit_x = R.from_rotvec(np.pi/2 * np.array([1, 0, 0]))
@@ -243,6 +251,12 @@ class UIController:
             else:
                 # print('moving left arm \n\n\n')
                 self.robot.setLeftEEInertialTransform([RR_final,RT_final],0.025)
+                if((self.mode == 'Physical')):
+                    if(self.UI_state["controllerButtonState"]["rightController"]["press"][1] == True):
+                        self.robot.setLeftGripperPosition([2,2,0,0])
+                    else:
+                        self.robot.setLeftGripperPosition([0,0,0,0])
+
             # print('operation_time =',time.process_time() - start_time)
 
 
