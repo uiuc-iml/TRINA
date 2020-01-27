@@ -246,6 +246,7 @@ class Motion:
                         self.right_limb_state.sensedWrench = self.right_limb.getWrench()
                 if self.left_gripper_enabled:
                     self.left_gripper.start()
+                    print('left gripper started')
                     logger.info('left gripper started')
                 if self.right_gripper_enabled:
                     self.right_gripper.start()
@@ -426,9 +427,9 @@ class Motion:
 
                     if self.right_gripper_enabled:
                         if self.right_gripper_state.commandType == 0:
-                          self.right_gripper.setPose(self.right_gripper_state.command_finger_set)
-                      elif self.right_gripper_state.commandType == 1:
-                          self.right_gripper.setVelocity(self.right_gripper_state.command_finger_set)
+                            self.right_gripper.setPose(self.right_gripper_state.command_finger_set)
+                        elif self.right_gripper_state.commandType == 1:
+                            self.right_gripper.setVelocity(self.right_gripper_state.command_finger_set)
                     #update internal robot model, does not use the base's position and orientation
                     #basically assumes that the world frame is the frame centered at the base local frame, on the floor.
                     #robot_modelQ = self.base_state.sensedq + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
@@ -844,11 +845,6 @@ class Motion:
         else:
             logger.warning('Left limb not enabled')
             print("Left limb not enabled.")
-        # self.motion_log = pd.DataFrame({'arm':['left'],'execution_time':[time.time() - start_time_2],'current_position':[initial],'target_position':[target_config],'iterations':[iterations]})
-        # self.motion_log.to_csv('current_log.csv', sep = '|',mode = 'a',header = False)
-        if(self.debug_logging):
-            cond_num = np.linalg.cond(solver.getJacobian())
-            self.log_file.write('{}|{}|{}|{}|{}|{}|{}\r\n'.format('left',ik_solve_time,col_check_time,initial[10:16],target_config[10:16],iterations,cond_num))
         return ''
 
     def setLeftEEVelocity(self,v, tool = [0,0,0]):
@@ -1637,12 +1633,15 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Physical',components = ['left_gripper'])
+    robot = Motion(mode = 'Physical',components = ['left_limb'])
     robot.startup()
     time.sleep(1)
+    current_config = robot.sensedLeftLimbPosition()
+    current_config[5] = current_config[5] - 0.5
+    robot.setLeftLimbPositionLinear(current_config,1)
+    time.sleep(1.2)
     #print(robot.sensedLeftEEVelcocity(),robot.sensedRightEEVelcocity())
-    robot.setLeftGripperPosition([0,0,0,0])
-    time.sleep(1)
+    #robot.setLeftGripperPosition([1,0,0,0])
     robot.shutdown()
     # robot.startup()
     # logger.info('Robot start() called')
