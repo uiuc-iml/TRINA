@@ -9,11 +9,11 @@ pkill -9 python
 cd ~/TRINA/
 echo 'starting server'
 cd Motion
-# python2 motion_server.py & sleep 1
+python2 motion_server.py & sleep 1
 cd ..
 echo 'server started'
 python3 $PWD/robot_v2/robot.py & sleep 2
 
-# python3 UIController_reem.py & 
+python3 UIController_reem.py & 
 
-# python2 Robot_visualizer.py &
+python2 Robot_visualizer.py &
