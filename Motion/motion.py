@@ -6,7 +6,6 @@ import math
 from threading import Thread, Lock, RLock
 import threading
 import numpy as np
-from gripperController import GripperController
 from kinematicController import KinematicController
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
@@ -108,6 +107,7 @@ class Motion:
             from limbController import LimbController
             from baseController import BaseController
             from torsoController import TorsoController
+            from gripperController import GripperController
             for component in components:
                 if component == 'left_limb':
                     self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright,\
