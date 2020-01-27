@@ -41,7 +41,7 @@ class UIController:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = 0
-        self.mode = 'Physical'
+        self.mode = 'Kinematics'
         self.components = ['left_limb','left_gripper']
         self.init_UI_state = {}
         self.dt = 0.1
