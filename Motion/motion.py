@@ -41,7 +41,7 @@ logger.addHandler(f_handler)
 
 class Motion:
 
-    def __init__(self,  mode = 'Kinematic', model_path = model_name, components = ['left_limb','right_limb'], debug_logging = False):
+    def __init__(self,  mode = 'Kinematic', model_path = model_name, components = ['left_limb','right_limb'], debug_logging = False, codename = 'seed'):
         """
         This class provides a low-level controller to the TRINA robot.
 
@@ -54,9 +54,10 @@ class Motion:
             It is a list of component names, including: left_limb, right_limb, base, torso (including the support legs.),
             left_gripper, right_gripper.
         """
+        self.codename = codename
         self.mode = mode
         self.model_path = model_path
-        self.computation_model_path = "data/TRINA_world.xml"
+        self.computation_model_path = "data/TRINA_world_reflex.xml"
         self.debug_logging = debug_logging
         if(self.debug_logging):
             self.logging_filename = time.time()
@@ -80,10 +81,10 @@ class Motion:
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
         #End-effector links and active dofs used for arm cartesian control and IK
-        self.left_EE_link = self.robot_model.link(16)
-        self.left_active_Dofs = [10,11,12,13,14,15]
-        self.right_EE_link = self.robot_model.link(33)
-        self.right_active_Dofs = [27,28,29,30,31,32]
+        self.left_EE_link = self.robot_model.link(TRINAConfig.TRINA_left_tool_link_N)
+        self.left_active_Dofs = TRINAConfig.TRINA_left_active_Dofs
+        self.right_EE_link = self.robot_model.link(TRINAConfig.TRINA_right_tool_link_N)
+        self.right_active_Dofs = TRINAConfig.TRINA_right_active_Dofs
         #UR5 arms need correct gravity vector
         self.currentGravityVector = [0,0,-9.81]
 
@@ -100,7 +101,7 @@ class Motion:
             self.right_limb_enabled = True
             self.base_enabled = True
             print("initiating Kinematic controller")
-            self.simulated_robot = KinematicController(model_path)
+            self.simulated_robot = KinematicController(model_path,codename = self.codename)
             print("initiated Kinematic controller")
 
         elif self.mode == "Physical":
@@ -432,8 +433,8 @@ class Motion:
                             self.right_gripper.setVelocity(self.right_gripper_state.command_finger_set)
                     #update internal robot model, does not use the base's position and orientation
                     #basically assumes that the world frame is the frame centered at the base local frame, on the floor.
-                    #robot_modelQ = self.base_state.sensedq + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
-                    robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
+                    robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq)
+                    #robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*4+self.right_limb_state.sensedq+[0]*2
                     self.robot_model.setConfig(robot_model_Q)
 
             elif self.mode == "Kinematic":
@@ -547,7 +548,8 @@ class Motion:
 
                     ##gripper
                     self.simulated_robot.setLeftGripperPosition(self.left_gripper_state.command_finger_set)
-                    robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*11+self.right_limb_state.sensedq+[0]*10
+                    robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq)
+                    #robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*4+self.right_limb_state.sensedq+[0]*2
                     self.robot_model.setConfig(robot_model_Q)
             self._controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
@@ -840,7 +842,7 @@ class Motion:
             self.robot_model.setConfig(initial)
             self._controlLoopLock.release()
             start_time = time.time()
-            self.setLeftLimbPositionLinear(target_config[10:16],duration)
+            self.setLeftLimbPositionLinear(target_config[self.left_active_Dofs[0]:self.left_active_Dofs[5]+1],duration)
             # print("setting linear position takes", time.time() - start_time)
         else:
             logger.warning('Left limb not enabled')
@@ -949,15 +951,10 @@ class Motion:
 
             self.robot_model.setConfig(initial)
             self._controlLoopLock.release()
-            self.setRightLimbPositionLinear(target_config[27:33],duration)
+            self.setRightLimbPositionLinear(target_config[self.right_active_Dofs[0]:self.right_active_Dofs[5]+1],duration)
         else:
             logger.warning('Right limb not enabled')
             print("Right limb not enabled. ")
-        ## This is for debugging purposes only
-        if(self.debug_logging):
-            cond_num = np.linalg.cond(solver.getJacobian())
-            self.log_file.write('{}|{}|{}|{}|{}|{}|{}\r\n'.format('right',ik_solve_time,col_check_time,initial[27:33],target_config[27:33],iterations,cond_num))
-         ## This section is for debugging purposes only
         return ''
 
     def setRightEEVelocity(self,v, tool = [0,0,0]):
@@ -1032,7 +1029,7 @@ class Motion:
         """
         if self.left_limb_enabled:
             position_J = np.array(self.left_EE_link.getJacobian(local_pt))
-            q_dot = np.array([0]*10 + copy(self.left_limb_state.senseddq) + [0]*27)
+            q_dot = TRINAConfig.get_klampt_model_q(left_limb = self.left_limb_state.senseddq)
             EE_vel = np.dot(position_J,q_dot)
             return ([EE_vel[3],EE_vel[4],EE_vel[5]],[EE_vel[0],EE_vel[1],EE_vel[2]])
         else:
@@ -1066,7 +1063,7 @@ class Motion:
         """
         if self.right_limb_enabled:
             position_J = np.array(self.right_EE_link.getJacobian(local_pt))
-            q_dot = np.array([0]*25 + copy(self.right_limb_state.senseddq) + [0]*12)
+            q_dot = TRINAConfig.get_klampt_model_q(right_limb = self.right_limb_state.senseddq)
             EE_vel = np.dot(position_J,q_dot)
             return ([EE_vel[3],EE_vel[4],EE_vel[5]],[EE_vel[0],EE_vel[1],EE_vel[2]])
         else:
@@ -1232,19 +1229,17 @@ class Motion:
         return copy(self.left_gripper_state.sense_finger_set)
 
     def getKlamptCommandedPosition(self):
-        """Return the entire commanded position, in Klampt format.
-        ###using attached grippers as reflex grippers ###
+        """Return the entire commanded position, in Klampt format. The base returns velocity instead
         """
         if self.left_limb_state.commandedq and self.right_limb_state.commandedq:
-            return copy(self.base_state.measuredPos + [0]*7 + self.left_limb_state.commandedq + [0]*19 + self.right_limb_state.commandedq + [0]*18)
+            return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.commandedq, right_limb = self.right_limb_state.commandedq,base = self.base_state.commandedVel + [0])
         else:
             return self.getKlamptSensedPosition()
 
     def getKlamptSensedPosition(self):
         """Return the entire sensed Klampt position, in Klampt format.
-        ###using attached grippers as reflex grippers ###
         """
-        return copy(self.base_state.measuredPos + [0]*7 + self.left_limb_state.sensedq + [0]*19 + self.right_limb_state.sensedq + [0]*18)
+        return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq,base = self.base_state.measuredPos)
 
     def shutdown(self):
         """Shutdown the componets.
@@ -1532,7 +1527,7 @@ class Motion:
         # print("\n\n\n number of iterations: ",ik.)
         failFlag = False
         if res:
-            if self._arm_is_in_limit(self.robot_model.getConfig()[10:16],joint_upper_limits,joint_lower_limits):
+            if self._arm_is_in_limit(self.robot_model.getConfig()[self.left_active_Dofs[0]:self.left_active_Dofs[5]+1],joint_upper_limits,joint_lower_limits):
                 pass
             else:
                 failFlag = True
@@ -1556,7 +1551,7 @@ class Motion:
                 #    self.left_limb_state.driveSpeedAdjustment)
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
-            target_config = self.robot_model.getConfig()[10:16]
+            target_config = self.robot_model.getConfig()[self.left_active_Dofs[0]:self.left_active_Dofs[5]+1]
             self.left_limb_state.driveTransform = target_transform
             if self.left_limb_state.driveSpeedAdjustment < 1:
                 self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment + 0.1
@@ -1603,7 +1598,7 @@ class Motion:
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.right_active_Dofs,tol=0.000001)
         failFlag = False
         if res:
-            if self._arm_is_in_limit(self.robot_model.getConfig()[27:33],joint_upper_limits,joint_lower_limits):
+            if self._arm_is_in_limit(self.robot_model.getConfig()[self.right_active_Dofs[0]:self.right_active_Dofs[5]+1],joint_upper_limits,joint_lower_limits):
                 pass
             else:
                 failFlag = True
@@ -1622,7 +1617,7 @@ class Motion:
                 #    self.right_limb_state.driveSpeedAdjustment)
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
-            target_config = self.robot_model.getConfig()[27:33]
+            target_config = self.robot_model.getConfig()[self.right_active_Dofs[0]:self.right_active_Dofs[5]+1]
             self.right_limb_state.driveTransform = target_transform
             if self.right_limb_state.driveSpeedAdjustment < 1:
                 self.right_limb_state.driveSpeedAdjustment = self.right_limb_state.driveSpeedAdjustment + 0.1
@@ -1633,7 +1628,7 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Physical',components = ['left_limb'])
+    robot = Motion(mode = 'Kinematic',components = ['left_limb'])
     robot.startup()
     time.sleep(1)
     current_config = robot.sensedLeftLimbPosition()

@@ -18,7 +18,7 @@ import os
 import TRINAConfig
 dirname = os.path.dirname(__file__)
 #getting absolute model name
-model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
+model_name = os.path.join(dirname, "data/TRINA_world_new_model_2020_01_29.xml")
 
 def setup():
   vis.show()
@@ -39,7 +39,7 @@ base_indeces = [0,3]
 left_limb_indexes = [10,16]
 right_limb_indexes = [27,33]
 class KinematicController:
-    def __init__(self, model_path = model_name):
+    def __init__(self, model_path = model_name,codename = 'anthrax'):
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
@@ -49,6 +49,7 @@ class KinematicController:
         self.dt = 0.004
         self.model_path = model_path
         self.world = WorldModel()
+        self.codename = codename
         print("KinematicController: loading world")
         res = self.world.readFile(self.model_path)
 
@@ -178,9 +179,7 @@ class KinematicController:
             #need to check limits here.... ignoring for now....    
             self.left_gripper_state.sense_finger_set = deepcopy(self.left_gripper_state.command_finger_set)
             #set klampt robot config
-            #print(len(self.robot.getConfig()))
-            #print(len(base_state_q_to_be_set + [0]*7 +left_limb_to_be_set+[0] + left_gripper_to_be_set + [0] +right_limb_to_be_set+[0]*18))
-            self.robot.setConfig(base_state_q_to_be_set + [0]*7 +left_limb_to_be_set+[0] + left_gripper_to_be_set + [0] +right_limb_to_be_set+[0]*18)
+            self.robot.setConfig(TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb_to_be_set, right_limb = right_limb_to_be_set,base = base_state_q_to_be_set))
             self.new_state = True
             self.controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime

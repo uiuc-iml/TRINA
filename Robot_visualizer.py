@@ -4,7 +4,7 @@ from klampt import WorldModel
 from klampt.model.trajectory import Trajectory
 import threading
 from Motion.motion_client import MotionClient
-simport json
+import json
 from multiprocessing import Process, Manager, Pipe
 import pickle
 from pdb import set_trace

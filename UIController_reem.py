@@ -21,7 +21,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 
-# robot_ip = 'http://10.194.203.22:8080'
+# robot_ip = 'http://172.16.250.88:8080'
 robot_ip = 'http://localhost:8080'
 ws_port = 1234
 
@@ -41,12 +41,14 @@ class UIController:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = 0
-
+        self.mode = 'Kinematics'
+        self.components = ['left_limb','left_gripper']
         self.init_UI_state = {}
         self.dt = 0.1
         self.robot = MotionClient(address = robot_ip)
-        self.robot.startServer(mode = 'Kinematic', components = ['left_limb'])
+        self.robot.startServer(mode = self.mode, components = self.components)
         # self.robot_client = MotionClient()
+        time.sleep(4)
         # self.robot = Motion()
         self.UI_state = {}
         self.init_pos_left = {}
@@ -55,39 +57,12 @@ class UIController:
         self.cur_pos_right = {}
         self.startup = True
         res = self.robot.startup()
-        # if not res:
-        #     return
-        # world = WorldModel()
-        # res = world.readFile(model_name)
-        # if not res:
-        #     raise RuntimeError("Unable to load Klamp't model")
-        # self.vis_robot = world.robot(0)
-
-        # visualUpdateThread = Process(target = self._visualUpdateLoop)
-        # visualUpdateThread.start()
+        if not res:
+            return
 
         stateRecieverThread = threading.Thread(target=self._serveStateReciever)
-        stateRecieverThread.start()
+        stateRecieverThread.start()   
 
-
-
-        # vis.add("world",world)
-        # vis.show()        
-
-
-    # def _visualUpdateLoop(self):
-    #     while True:
-    #         try:
-    #             q = self.robot_client.getKlamptSensedPosition()
-    #         except:
-    #             print("getKlamptSensedPosition failed")
-    #             pass
-    #         self.vis_robot.setConfig(q)
-    #         EndLink = self.vis_robot.link(42)           # This link number should be the end effector link number
-    #         Tlink = EndLink.getTransform()
-    #         vis.add("Frame",Tlink)
-
-    #         time.sleep(self.dt)
 
     def _serveStateReciever(self):
 
@@ -106,7 +81,14 @@ class UIController:
                 # self.init_pos_right = self.robot.sensedRightEETransform()
             
             while(True):
-                # try:https://docs.scipy.org/doc/numpy/reference/generated/numpy.linalg.norm.html
+                # try:
+                
+                self.last_time = time.time()
+                self.cur_pos_left = self.robot.sensedLeftEETransform()
+                # self.cur_pos_right = self.robot.sensedRightEETransform()
+                self.UI_state = self.server['UI_STATE'].read()
+                # print('\n\n\n\n',self.UI_state,'\n\n\n\n')
+                self.UIStateLogic()
                 time.sleep(0.025)
 
                 # except:
@@ -114,8 +96,8 @@ class UIController:
 
 
         # return [self.robot.sensedLeftLimbPosition(),self.robot.sensedLeftLimbVelocity(),self.robot.sensedRightLimbPosition(),self.robot.sensedRightLimbVelocity()]
-        return [self.robot.sensedLeftLimbPosition(),self.robot.sensedRightLimbPosition()]
-
+        # return [self.robot.sensedLeftLimbPosition(),self.robot.sensedRightLimbPosition()]
+        
     def moveRobotTest(self):
         # self.robot.setBaseVelocity([0,0])
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
@@ -128,7 +110,7 @@ class UIController:
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
         rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
         self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-        self.robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
+        # self.robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
         #self.robot.setRightEEInertialTransform([[[1,0,0],[0,1,0],[0,0,1]], self.init_pos_right],3)
 
     def UIStateLogic(self):
@@ -138,7 +120,7 @@ class UIController:
             if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True):
                 print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
                 self.init_UI_state = self.UI_state
-            self.baseControl()
+            # self.baseControl()
             self.positionControl()
             #self.logTeleoperation('test')
 
@@ -171,12 +153,15 @@ class UIController:
             ch------controller homw
             rh------robot home
         '''
-        self.positionControlArm('left')
-        self.positionControlArm('right')
+        # print('entered position_control\n\n\n\n\n')
+        if('left_limb' in self.components):
+            self.positionControlArm('left')
+        if('right_limb' in self.components):
+            self.positionControlArm('right')
         # print('final_time =',time.time() - start_time)
         # print('\n\n\n\n\n',self.robot.sensedLeftLimbPosition(),type(self.robot.sensedLeftLimbPosition()),'\n\n\n\n\n\n')
-        self.server['robotTelemetry'] = {'leftArm':self.robot.sensedLeftLimbPosition(),
-            'rightArm':self.robot.sensedRightLimbPosition()}
+        # self.server['robotTelemetry'] = {'leftArm':self.robot.sensedLeftLimbPosition(),
+        #     'rightArm':self.robot.sensedRightLimbPosition()}
 
         
     def positionControlArm(self,side):
@@ -197,16 +182,15 @@ class UIController:
             RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
             RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
 
-            RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch)))
+            RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch))).tolist()
 
 
             # we now check if the "ideal" velocity is greater than 1 m/s
 
-            #current position:
+            # current position:
             linear_velocity_vector = (RT_final - curr_position)*(1.0/60)
             if(np.linalg.norm(linear_velocity_vector)>0.95):
                 RT_final = (curr_position + (linear_velocity_vector/np.linalg.norm(linear_velocity_vector))*0.95*60).tolist()
-            # print(np.subtract(RT_cw_cc,RT_cw_ch),RT_rw_rh)
             
             # RR_unit_x = R.from_rotvec(np.pi/2 * np.array([1, 0, 0]))
             # RR_unit_y = R.from_rotvec(np.pi/2 * np.array([0, 1, 0]))
@@ -241,8 +225,14 @@ class UIController:
 
 
             else:
-                # print('moving left arm \n\n\n')
+                print('moving left arm \n\n\n')
                 self.robot.setLeftEEInertialTransform([RR_final,RT_final],0.025)
+                if((self.mode == 'Physical')):
+                    if(self.UI_state["controllerButtonState"]["rightController"]["press"][1] == True):
+                        self.robot.setLeftGripperPosition([2,2,0,0])
+                    else:
+                        self.robot.setLeftGripperPosition([0,0,0,0])
+
             # print('operation_time =',time.process_time() - start_time)
 
 
@@ -293,8 +283,8 @@ class UIController:
         self.velocityControlArm('right')
         # print('final_time =',time.time() - start_time)
         # print('\n\n\n\n\n',self.robot.sensedLeftLimbPosition(),type(self.robot.sensedLeftLimbPosition()),'\n\n\n\n\n\n')
-        self.server['robotTelemetry'] = {'leftArm':self.robot.sensedLeftLimbPosition(),
-            'rightArm':self.robot.sensedRightLimbPosition()}
+        # self.server['robotTelemetry'] = {'leftArm':self.robot.sensedLeftLimbPosition(),
+        #     'rightArm':self.robot.sensedRightLimbPosition()}
 
     def velocityControlArm(self,side):
         assert (side in ['left','right']), "invalid arm selection"
