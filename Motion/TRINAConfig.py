@@ -11,3 +11,20 @@ limb_velocity_limits = [2.0,2.0,2.0,2.0,2.0,2.0]
 epsilon = 0.01
 limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon]
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
+
+
+TRINA_left_tool_link_N = 16
+TRINA_right_tool_link_N = 41 #seed
+#TRINA_right_tool_link_N = 26 #anthrax
+TRINA_left_active_Dofs = [10,11,12,13,14,15]
+TRINA_right_active_Dofs = [35,36,37,38,39,40] #seed
+#TRINA_right_active_Dofs = [20,21,22,23,24,25] #anthrax
+
+def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
+    if name == 'anthrax':
+        return base[0:2] + [0]*3 + [base[2]] + [0]*4 + left_limb + [0]*4 + right_limb + [0]*2 
+    elif(name == 'seed'):
+        return base[0:3] + [0]*7 + left_limb + [0]*19 + right_limb + [0]*18
+    else:
+        print("wrong model name used.")
+        return 
