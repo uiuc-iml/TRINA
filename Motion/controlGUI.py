@@ -314,7 +314,7 @@ class ControlWidget(QWidget):
             return
 
         world = WorldModel()
-        res = world.readFile("data/TRINA_world_reflex.xml")
+        res = world.readFile("data/TRINA_world_new_model_2020_01_29.xml")
         if not res:
             raise RuntimeError("Unable to load Klamp't model "+klampt_model_local)
 

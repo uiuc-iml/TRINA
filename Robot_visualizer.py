@@ -23,7 +23,7 @@ import pdb
 from klampt.math import so3
 
 # robot_ip = '72.36.119.129:8080'
-# robot_ip = 'http://172.16.187.91:8080'
+# robot_ip = 'http://172.16.241.141:8080'
 robot_ip = 'http://localhost:8080'
 ws_port = 1234
 
@@ -47,13 +47,17 @@ def visualUpdateLoop():
 
         vis.lock()
         sensed_position = robot.getKlamptSensedPosition()
+        # print(len(sensed_position))
         vis_robot.setConfig(sensed_position)
         ## end effector is 42
         # Adding the third person perspective. First, select a link that is aligned with the base
         EndLink = vis_robot.link(3)           # This link number should be the end effector link number
         # get that link's T
         Tlink = EndLink.getTransform()
-        # vis.add("Frame",Tlink)
+
+        # EE_link = vis_robot.link(41)
+        # transform = EE_link.getTransform()
+        # vis.add("Frame",transform)
         # Do transforms to get it into Klampt format
         rot_link = so3.from_matrix(so3.matrix(Tlink[0]))
         #add view angle of 45 degrees down
