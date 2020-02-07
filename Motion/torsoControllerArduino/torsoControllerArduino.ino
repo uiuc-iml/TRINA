@@ -1,11 +1,27 @@
 #include <Servo.h>
+
+class PIDController {
+  private:
+    double kP, kI, kD;
+    double integral_error, prev_error;
+    double min_output, max_output;
+    double tol;
+    double prev_millis;
+    bool at_target;
+
+  public:
+    PIDController(double kP, double kI, double kD);
+    double set_tolerance(double tol);
+    double update(double current, double target);
+    bool done();
+};
+
+enum LegState {CLOSED, MOVING, OPEN};
+
 Servo lift_motor;
 
 //Program setup
 int initial_loop_count = 0;
-double loop_time = millis();
-double previous_loop_time = 0;
-double loop_frequency = 0;
 
 // Arduino Port numbers
 #define kLiftPotPin         A2
@@ -15,37 +31,9 @@ double loop_frequency = 0;
 #define kLegPotPin          A0
 #define kLegDirectionPin    4
 #define kLegPwmPin          9
-
 #define kBaudRate        115200     //Need faster kBaudRate to prevent miss counting turns
-bool stop_height = false;
-
-//Tilt Motor Setup
-double speed = 20;
-int loop1 = 0;
-bool stop_tilt = false;
-
-//Support Leg Setup
-double leg_kp = 3.0, leg_ki = 0.0, leg_kd = 0.0042;
-double leg_error, leg_de, leg_ie; //param
-double leg_error_last;
-double dt = 0.025;
-double currentTime = 0.0;
-double previous_time = micros(); //previous time var. Default set to current time
-int dtpulsewidth = 1000;
-double target_leg = 0.35;
-//minimum = 0.35
-boolean reachedTarget = false;
-//-----------------------Python Comm Setup-------------------
-double target_leg_max = 0;
-double target_leg_min = 2;
-double leg_error_range = 0.01;
-double leg_current_loc = 0;
-enum states{Closed, Moving, Open} leg_states;
-double leg_soft_limit = 0.35;
-bool moving = false;
 
 //Tilt Potentiometer Setup (AMT23 Encoder)
-//Define special ascii characters
 #define carriageReturn  0x0D
 #define newLine         0x0A
 #define tab             0x09
@@ -55,24 +43,13 @@ bool moving = false;
 #define SSI_SDO         11 //SSI Data (SDO):  Pin 11
 #define res14           14
 #define res12           12
-uint16_t encoderPosition; //holder for encoder position
+uint16_t encoder_pos_int; //holder for encoder position
 uint8_t attempts; //we can use this for making sure position is valid
-double encoderPosition_Float = 0;
-double encoderPosition_Float_Old = 0;
+double encoder_pos_float = 0;
+double encoder_pos_float_old = 0;
 double turn_count = 0.0;
-int read_count = 0;
-/*
-   AMT23 Pin Connections
-   Vdd (5V):              Pin 1
-   SSI DATA (SDO):        Pin 2
-   SSI CLOCK (SCK):       Pin 3
-   GND:                   Pin 4
-   Mode (unconnnected:    Pin 5
-   SSI Chip Select:       Pin 6
-*/
 
-//Python Communication Setup
-//For Height
+// Lift constraints/status
 #define target_height_max    0.47 //0.47
 #define target_height_min    0.05
 #define height_error_range   0.01
@@ -82,7 +59,9 @@ double previous_target_height = 0.3;
 double current_height = 0;
 bool lift_moving = false;
 bool lift_goal_reached = true;
-//For Tilt
+bool stop_height = false;
+
+//Tilt constraints/status
 #define target_tilt_max    265 //Lowest point 
 #define target_tilt_min    235 //Highest point (perpendicular)
 #define tilt_error_range   1   //unit: degrees
@@ -93,29 +72,43 @@ double previous_target_tilt = 250;
 double current_tilt = 0;
 bool tilt_moving = true;
 bool tilt_goal_reached = true;
+bool stop_tilt = false;
 
-//Height PID setup
+//Support Leg constraints/status
+double target_leg = 0.35;  //minimum = 0.35
+boolean leg_goal_reached = false;
+#define target_leg_max 0
+#define target_leg_min 2
+#define leg_error_range 0.01
+double leg_current_loc = 0;
+#define leg_soft_limit 0.35
+bool leg_moving = false;
+LegState leg_state;
+
+//Lift PID
 #define height_kp   80
 #define height_ki   5
-#define height_kd   0             // PID parameters for height
-double height_e_last, dt_height;
-double previous_time_height = millis(); //initialize previous time to current time
+#define height_kd   0
+PIDController height_pid_controller(height_kp, height_ki, height_kd);
 
-//Tilt PID setup
+//Tilt PID
 #define tilt_kp   10
 #define tilt_ki   0.5
-#define tilt_kd   0             // PID parameters for tilt
-double tilt_e_last, dt_tilt;
-double previous_time_tilt = millis(); //initialize previous time to current time
+#define tilt_kd   0
+PIDController tilt_pid_controller(tilt_kp, tilt_ki, tilt_kd);
 
+//Support Leg PID
+#define leg_kp    3.0
+#define leg_ki    0.0
+#define leg_kd    0.0042
+PIDController leg_pid_controller(leg_kp, leg_ki, leg_kd);
 
-int count = 0;
+//Python communication flag
+int bad_message_count = 0;
 
-void setup()
-{
+void setup() {
   Serial.begin(kBaudRate);
   lift_motor.attach(kLiftPwmPin);
-  //pinMode(kLiftPwmPin, OUTPUT);
   pinMode(kLiftPotPin, INPUT);
   pinMode(kTiltPwmPin, OUTPUT);
   pinMode(kTiltDirectionPin, OUTPUT);
@@ -126,16 +119,15 @@ void setup()
   digitalWrite(kTiltDirectionPin, LOW);
 }
 
-void loop()
-{
+void loop() {
   height_position_read();
   tilt_position_read();
   leg_current_loc = (float)(analogRead(kLegPotPin) / (117.0));
-  if((2-leg_current_loc) <= (1/117)){
-    leg_states = Open;
-  }else if((leg_current_loc - leg_soft_limit) <= (1/117)){
-    leg_states = Closed;
-  }else leg_states = Moving;
+  if ((2 - leg_current_loc) <= (1 / 117)) {
+    leg_state = OPEN;
+  } else if ((leg_current_loc - leg_soft_limit) <= (1 / 117)) {
+    leg_state = CLOSED;
+  } else leg_state = MOVING;
 
 
   if (initial_loop_count == 0) { //make robot stay at it's initial position
@@ -151,36 +143,31 @@ void loop()
   if (rv == 1) {
     Serial.print("yo\n");
   } else if (rv == 0) {
-    send_message(current_height, current_tilt, leg_states);
+    send_message(current_height, current_tilt, leg_state);
   } else {
     Serial.print("BAD\n");
   }
 
   if (rv != 0) {
-    count++;
-    if (count > 20) {
+    bad_message_count++;
+    if (bad_message_count > 20) {
       stop_motor_height();
       stop_motor_tilt();
-      stopActuator();
+      stop_leg();
       return; //does not move motor unless receive good message
     }
   } else {
-    count = 0;
+    bad_message_count = 0;
     height_validation_execution();
     tilt_validation_execution();
-    if(target_leg <= leg_soft_limit){
+    if (target_leg <= leg_soft_limit) {
       target_leg = leg_soft_limit;
     }
-    leg_pidCalc(leg_current_loc, target_leg);
+    double u = leg_pid_controller.update(leg_current_loc, target_leg);
+    run_leg(u);
   }
 
   delay(10);
-}
-
-void loop_frequency_check() {
-  previous_loop_time = loop_time;
-  loop_time = millis();
-  loop_frequency = 1 / (loop_time - previous_loop_time); //can use printf() to print out Arduino's loop frequency
 }
 
 void height_position_read() {
@@ -189,39 +176,37 @@ void height_position_read() {
 
 void tilt_position_read() {
   attempts = 0; //set attemps counter at 0 so we can try again if we get bad position
-  encoderPosition = getPositionSSI_efficient(res14);
+  encoder_pos_int = getPositionSSI_efficient(res14);
 
-  while (encoderPosition == 0xFFFF && attempts++ < 3)
+  while (encoder_pos_int == 0xFFFF && attempts++ < 3)
   {
     //Serial.print("");
     //delay(10); //important for reading correct data, 1ms doesn't work
-    encoderPosition = getPositionSSI_efficient(res14); //try again
+    encoder_pos_int = getPositionSSI_efficient(res14); //try again
   }
 
-  if (encoderPosition == 0xFFFF) {
-    encoderPosition_Float = encoderPosition_Float_Old;
+  if (encoder_pos_int == 0xFFFF) {
+    encoder_pos_float = encoder_pos_float_old;
   }
 
-  encoderPosition_Float = encoderPosition * 0.021974; //turn the encoder's value in degrees
+  encoder_pos_float = encoder_pos_int * 0.021974; //turn the encoder's value in degrees
 
-  double val = encoderPosition_Float + 360.0 * turn_count;
-  if (val < 280){
+  double val = encoder_pos_float + 360.0 * turn_count;
+  if (val < 280) {
     current_tilt = val;
   }
-  encoderPosition_Float_Old = encoderPosition_Float;
+  encoder_pos_float_old = encoder_pos_float;
 }
 
 void height_validation_execution() {
-  dt_height = millis() - previous_time_height;
-  previous_time_height = millis();
-
   if (target_height >= target_height_min && target_height <= target_height_max && current_height >= target_height_min && current_height <= target_height_max ) { //check if the target height is within range
     if (abs(current_height - target_height) < height_error_range) {
       stop_motor_height();
       stop_height = true;
       lift_goal_reached = true;
     } else if (stop_height == false && abs(current_height - target_height) >= height_error_range) {
-      height_pid_control(current_height, target_height);
+      double u = height_pid_controller.update(current_height, target_height);
+      run_lift(u);
       previous_target_height = target_height;
       lift_goal_reached = false;
     }
@@ -230,14 +215,11 @@ void height_validation_execution() {
       stop_height = false;
       lift_goal_reached = false;
     }
-  } else {
   }
 
 }
 
 void tilt_validation_execution() {
-  dt_tilt = millis() - previous_time_tilt;
-  previous_time_tilt = millis();
 
   if (target_tilt >= target_tilt_min && target_tilt <= target_tilt_max && current_tilt >= target_tilt_min && current_tilt <= target_tilt_max ) { //check if the target tilt is within range
     if (abs(current_tilt - target_tilt) < tilt_error_range) {
@@ -245,7 +227,8 @@ void tilt_validation_execution() {
       stop_tilt = true;
       tilt_goal_reached = true;
     } else if (stop_tilt == false && abs(current_tilt - target_tilt) >= tilt_error_range) {
-      tilt_pid_control(current_tilt, target_tilt);
+      double u = tilt_pid_controller.update(current_tilt, target_tilt); //tilt_pid_control(current_tilt, target_tilt);
+      run_tilt(u);
       previous_target_tilt = target_tilt;
       tilt_goal_reached = false;
     }
@@ -257,28 +240,6 @@ void tilt_validation_execution() {
   }
 }
 
-float height_pid_control(double current_height, double target_height) {
-  double e, de, ie;
-  e = target_height - current_height;
-  de = (e - height_e_last) / dt_height;
-  ie = ie + e * dt_height;
-  height_e_last = e;
-  double u = height_kp * e + height_ki * ie + height_kd * de;
-  run_lift(u); //power the motor
-  return 0;
-}
-
-float tilt_pid_control(double current_t, double target_t) {
-  double e, de, ie;
-  e = target_t - current_t;
-  de = (e - tilt_e_last) / dt_tilt;
-  ie = ie + e * dt_tilt;
-  tilt_e_last = e;
-  double u = tilt_kp * e + tilt_ki * ie + tilt_kd * de;
-  run_tilt(u);
-  return 0;
-}
-
 void run_lift(double u) {
   lift_moving = true; //shows that the lift motor is moving
   if (u > 3)u = 3;
@@ -286,10 +247,10 @@ void run_lift(double u) {
   double height_pwm = map_values(u, -3.0, 3.0, 1300, 1700); //1000us = clockwise, 2000us = counter-clockwise, map [-1000, 1000] to [1000, 2000]
   int height_pwm_int = (int)height_pwm;
   /*
-  Serial.print("pwm: ");
-  Serial.print(height_pwm);
-  Serial.print(" u:" );
-  Serial.println(u);
+    Serial.print("pwm: ");
+    Serial.print(height_pwm);
+    Serial.print(" u:" );
+    Serial.println(u);
   */
   lift_motor.writeMicroseconds(height_pwm_int);
 }
@@ -385,29 +346,15 @@ uint16_t getPositionSSI_efficient(uint8_t resolution) {
   return currentPosition;
 }
 
-float leg_pidCalc(double current_pos, double target_leg) {
-  //dt = micros() - previous_time;
-  //previous_time = micros(); //reset the previous time
-  leg_error = target_leg - current_pos;
-  leg_de = (leg_error - leg_error_last) / dt;
-  leg_ie = leg_ie + leg_error * dt;
-  leg_error_last = leg_error;
-  double leg_pid = (leg_kp * leg_error) + (leg_ki * leg_ie) + (leg_kd * leg_de);
-  if (reachedTarget) {
-    leg_runMotor(0);
-  } else {
-    leg_runMotor(leg_pid);
-  }
-  return 0;
-}
-
-
-void stopActuator() {
+void stop_leg() {
+  leg_moving = false;
   digitalWrite(kLegDirectionPin, LOW);
   analogWrite(kLegPwmPin, 0);
 }
 
-void leg_runMotor(double leg_pid) {
+void run_leg(double leg_pid) {
+  leg_moving = false;
+  
   if (leg_pid > 2) {
     leg_pid = 2;
   }
@@ -418,17 +365,17 @@ void leg_runMotor(double leg_pid) {
   if (fabs(leg_pid) < (1.0 / 117.0)) {
     digitalWrite(kLegDirectionPin, LOW);
     analogWrite(kLegPwmPin, 0);
-    reachedTarget = true;
-    stopActuator();
+    leg_goal_reached = true;
+    stop_leg();
     return;
   } else {
     double kLegPwmPin_double =  map_values(fabs(leg_pid), 0, 2.0, 0, 255.0);
     int kLegPwmPin_int = (int)kLegPwmPin_double;
 
-    if (kLegPwmPin_int < 70 && kLegPwmPin_int > 0){
+    if (kLegPwmPin_int < 70 && kLegPwmPin_int > 0) {
       kLegPwmPin_int = 70;
     }
-    if (kLegPwmPin_int > -70 && kLegPwmPin_int < 0){
+    if (kLegPwmPin_int > -70 && kLegPwmPin_int < 0) {
       kLegPwmPin_int = -70;
     }
 
@@ -451,7 +398,7 @@ double map_values(double value, double input_low, double input_high, double outp
   return f;
 }
 
-void send_message(double height, double tilt, states leg) {
+void send_message(double height, double tilt, LegState leg) {
   Serial.print("T\t");
   Serial.print(tilt);
   Serial.print("\t");
@@ -509,7 +456,7 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
 
   while (buf[cnt] != '\t' && cnt < 199) {
     leg_str += buf[cnt++];
-    reachedTarget = false;
+    leg_goal_reached = false;
   }
   cnt++;
 
@@ -527,7 +474,7 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
   target_tilt = atof(tilt_buf);
   leg_str.toCharArray(leg_buf, N);
   target_leg = atof(leg_buf);
-  
+
   if (target_leg < 0.35) {
     target_leg = 0.35;
   }
@@ -535,57 +482,46 @@ int poll_message(double &target_height, double &target_tilt, double &target_leg)
   return 0;
 }
 
-//TODO: use the PIDController class instead of writing the same PID calculation multiple times.
-/*
-  class PIDController{
-  private:
-    double kP, kI, kD;
-    double integral_error, prev_error;
-    double target;
-    double min_output, max_output;
-    double tol;
-    double curr_millis, prev_millis;
-    bool has_target, at_target;
-  public:
-    PIDController(double kP, double kI, double kD){
-      this->kP = kP;
-      this->kI = kI;
-      this->kD = kD;
-      this->tol = 0.1;
-      this->has_target = false;
-    }
-    double set_target(double target){
-      has_target = true;
-      at_target = false;
-      prev_error = 0;
-      integral_error = 0;
-      this->target = target;
-      prev_millis = millis();
-    }
-    double set_tolerance(double tol){
-      this->tol = tol;
-    }
-    double update(double current){
-      if (!has_target){
-        return 0;
-      }
-      double now = millis();
-      double dt = prev_millis - now;
-      prev_millis = now;
-      double e = target - current;
-      if (fabs(e) < tol){
-        at_target = true;
-        has_target = false;
-        return 0;
-      }
-      double d_e = (e - prev_error)/dt;
-      integral_error += e * dt;
-      double output = kP * e + kI * integral_error + kD * d_e;
-      prev_error = e;
-      return output;
-    }
-    bool done(){
-      return at_target;
-    }
-  };
-*/
+/**
+ * PID Controller Implementation
+ */
+ 
+PIDController::PIDController(double kP, double kI, double kD) {
+  this->kP = kP;
+  this->kI = kI;
+  this->kD = kD;
+  this->tol = 0.1;
+  this->prev_millis = -1;
+  this->integral_error = 0;
+  this->prev_error = 0;
+}
+
+double PIDController::set_tolerance(double tol) {
+  this->tol = tol;
+}
+
+double PIDController::update(double current, double target) {
+  // if prev_millis is still -1, this is the first loop iteration. Update the previous time and skip.
+  if (prev_millis == -1){
+    prev_millis = millis();
+    return 0;
+  }
+  
+  double now = millis();
+  double dt = prev_millis - now;
+  prev_millis = now;
+  double e = target - current;
+  if (fabs(e) < tol) {
+    at_target = true;
+    return 0;
+  }
+  double d_e = (e - prev_error) / dt;
+  integral_error += e * dt;
+  double output = kP * e + kI * integral_error + kD * d_e;
+  prev_error = e;
+  return output;
+}
+
+bool PIDController::done() {
+  return at_target;
+}
