@@ -1,0 +1,68 @@
+motion_server: 16:55:23 - signal_shutdown [atexit]
+motion_server: 16:58:41 - Server Created
+motion_server: 16:59:55 - signal_shutdown [atexit]
+motion_server: 17:00:07 - Server Created
+motion_server: 17:02:10 - signal_shutdown [atexit]
+motion_server: 17:09:41 - Server Created
+motion_server: 17:10:24 - Kinematic mode is activated
+17:10:24 motion-Motion.startup :INFO- robot started.
+motion_server: 17:10:24 - robot started.
+17:10:24 motion-Motion._controlLoop :INFO- controlLoop started.
+motion_server: 17:10:24 - controlLoop started.
+17:10:29 motion-Motion._controlLoop :INFO- controlThread exited.
+motion_server: 17:10:29 - controlThread exited.
+motion_server: 17:14:46 - signal_shutdown [atexit]
+motion_server: 17:15:43 - Server Created
+motion_server: 17:16:00 - Kinematic mode is activated
+17:16:00 Motion._controlLoop :INFO- controlLoop started.
+motion_server: 17:16:00 - controlLoop started.
+17:16:00 Motion.startup :INFO- robot started.
+motion_server: 17:16:00 - robot started.
+17:16:05 Motion._controlLoop :INFO- controlThread exited.
+motion_server: 17:16:05 - controlThread exited.
+motion_server: 17:18:33 - signal_shutdown [atexit]
+motion_server: 17:18:45 - Server Created
+motion_server: 17:18:57 - Kinematic mode is activated
+17:18:57 Motion._controlLoop :INFO- controlLoop started.
+motion_server: 17:18:57 - controlLoop started.
+17:18:57 Motion.startup :INFO- robot started.
+motion_server: 17:18:57 - robot started.
+17:19:02 Motion.sensedRightLimbPosition :DEBUG- Right limb states
+motion_server: 17:19:02 - Right limb states
+17:19:02 Motion._controlLoop :INFO- controlThread exited.
+motion_server: 17:19:02 - controlThread exited.
+motion_server: 17:19:36 - signal_shutdown [atexit]
+motion_server: 17:20:52 - Server Created
+motion_server: 17:21:00 - Kinematic mode is activated
+17:21:00 Motion._controlLoop :INFO- controlLoop started.
+17:21:00 Motion.startup :INFO- robot started.
+motion_server: 17:21:00 - robot started.
+motion_server: 17:21:00 - controlLoop started.
+17:21:05 Motion.setRightLimbPosition :DEBUG- number of joint positions sent : 4
+motion_server: 17:21:05 - number of joint positions sent : 4
+17:22:36 Motion._controlLoop :INFO- controlThread exited.
+motion_server: 17:22:36 - controlThread exited.
+motion_server: 17:22:36 - signal_shutdown [atexit]
+motion_server: 17:25:29 - Server Created
+motion_server: 17:25:40 - Kinematic mode is activated
+17:25:40 Motion._controlLoop :INFO- controlLoop started.
+motion_server: 17:25:40 - controlLoop started.
+17:25:40 Motion.startup :INFO- robot started.
+motion_server: 17:25:40 - robot started.
+17:26:14 Motion._controlLoop :INFO- controlThread exited.
+motion_server: 17:26:14 - controlThread exited.
+motion_server: 17:26:14 - signal_shutdown [atexit]
+motion_server: 17:26:43 - Server Created
+motion_server: 17:26:54 - Kinematic mode is activated
+17:26:54 Motion._controlLoop :INFO- controlLoop started.
+motion_server: 17:26:54 - controlLoop started.
+17:26:54 Motion.startup :INFO- robot started.
+motion_server: 17:26:54 - robot started.
+motion_server: 17:28:23 - signal_shutdown [atexit]
+motion_server: 17:28:56 - Kinematic mode is activated
+17:28:56 Motion._controlLoop :INFO- controlLoop started.
+motion_server: 17:28:56 - controlLoop started.
+17:28:56 Motion.startup :INFO- robot started.
+motion_server: 17:28:56 - robot started.
+17:30:28 Motion._controlLoop :INFO- controlThread exited.
+motion_server: 17:30:28 - controlThread exited.

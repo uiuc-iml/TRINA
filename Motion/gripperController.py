@@ -4,7 +4,7 @@ import roslib
 import rospy
 import time
 import threading
-
+import sys
 
 
 from std_srvs.srv import Empty
@@ -42,7 +42,8 @@ class GripperController:
 
         self.command_type = None
         self.contact = False
-
+        self.finger_contact = [False, False, False]
+        self.motor_load = None
         self.enable = False
         self.exit = False
         self.stop = False
@@ -66,7 +67,18 @@ class GripperController:
 
         while not rospy.is_shutdown() and (not self.exit):
             # print(self.sense_finger_set)
-
+            f = open("gripperlog.txt", "a")
+            f.write("this is the finger position: ")
+            for x in self.sense_finger_set:
+                f.write(str(x))
+                f.write("  ")
+            f.write("\n")
+            f.write("this is the motor load: ")
+            for x in self.motor_load:
+                f.write(str(x))
+                f.write("  ")
+            f.write("\n")
+            f.close()
             if self.stop:
                 self.pos_pub.publish(PoseCommand(f1 = 0.0, f2 = 0.0, f3 = 0.0, preshape = 0.0))
             elif self.command_type == "pose":
@@ -92,6 +104,7 @@ class GripperController:
                     break
             if self.contact == True:
                 break
+        self.motor_load = [data.motor[0].load, data.motor[1].load, data.motor[2].load, data.motor[3].load]
         self.new_state = True
 
 
@@ -166,6 +179,7 @@ class GripperController:
         calibrate_tactile = rospy.ServiceProxy('/reflex_takktile2/calibrate_tactile', Empty)
         self.fopen()
         calibrate_fingers()
+        time.sleep(2)
         calibrate_tactile()
 
 ####################################
@@ -191,7 +205,8 @@ class GripperController:
     def sensed_finger_positions(self):
         return self.sense_finger_set
 
-
+    def motorload(self):
+        return self.motor_load
 
     def stop_process(self):
         self.enable = False
@@ -208,6 +223,7 @@ class GripperController:
     def shutDown(self):
         self.enable = False
         self.exit = True
+        time.sleep(0.1)
 
     def moving(self):
         if self.enable:
@@ -229,8 +245,18 @@ def hand_state_cb(data):
 if __name__ == "__main__":
     con = GripperController()
     con.start()
-    con.setPose([2,2,0,1])
+    # con.calibrate()
+    print(con.sensed_finger_positions())
+    print(con.motorload())
+    con.fopen()
+    con.setPose([1,1,1,1])
+    # con.open()
+    # # con.close()
     time.sleep(2)
+    print(con.sensed_finger_positions())
+    print(con.motorload())
+
+
     # while True:
     #     con.close()
     #     rospy.sleep(2)

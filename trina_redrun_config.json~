@@ -1,0 +1,21 @@
+{
+    "name": "motion_server",
+    "port": 1000,
+    "launch_browser":true,
+    "http_port": 8080, 
+    "peers" : {
+        "motion_client": { "address":"localhost:1010", "required":false }
+    },
+    "programs" : {
+        "gripper":  {
+            "command":"roslaunch reflex reflex_takktile2.launch"
+        },
+	"motion_server" : {"program": "motion_server.py"}
+    },
+    "aliases": {
+        "robot": [ "gripper" , "motion_server" ]
+    },
+    "startup": [
+        "robot"
+    ],
+}

@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<world>
-  <robot name="trina" file="robots/TRINA_with_reflex.rob" rotateZ="0" translation="0 0 0"  />
- <terrain file="terrains/cube.off" scale="10.0 10.0 0.01" translation="-5.0 -5.0 -0.01">
-     <display color="0.8 0.8 0.8"/>
-  </terrain>	
-</world>

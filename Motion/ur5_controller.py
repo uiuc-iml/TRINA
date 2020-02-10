@@ -153,8 +153,8 @@ class UR5Controller(object):
         self._velocity = 0
         self._speed_scale = None
 
-        self._tcp = kwargs.pop('tcp', [0.04,0,0.0,0,0,0])
-        self._payload = kwargs.pop('payload', 0.2)
+        self._tcp = kwargs.pop('tcp', [0.0,0,0.0,0,0,0])
+        self._payload = kwargs.pop('payload', 0.0)
         self._gravity = kwargs.pop('gravity', [0, 0, 9.82])
 
         self._version = None
@@ -210,7 +210,7 @@ class UR5Controller(object):
 
         controlThread = threading.Thread(target = self.controlLoop, args=[[target, setpoint_id, target_type, velocity, acceleration, lookahead, gain, speed_slider,gravity]])
         controlThread.start()
-        #return started    
+        #return started
         return True
     def controlLoop(self, args):
         if not len(args) == 9:
@@ -358,7 +358,7 @@ class UR5Controller(object):
             self._gain = gain
 
     #this function is not used
-    #speed_scale set on teaching pendant directly 
+    #speed_scale set on teaching pendant directly
     def speed_scale(self, s=None):
         if s is not None:
             self._speed_scale = s

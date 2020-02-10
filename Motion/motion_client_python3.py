@@ -6,7 +6,7 @@ from klampt import WorldModel
 import os
 dirname = os.path.dirname(__file__)
 #getting absolute model name
-model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
+model_name = os.path.join(dirname, "data/TRINA_world_new_model_2020_01_29.xml")
 
 class MotionClient:
 	def __init__(self, address = 'http://127.0.0.1:8000'):
