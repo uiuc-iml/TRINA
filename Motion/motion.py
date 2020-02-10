@@ -16,9 +16,9 @@ from klampt.model import ik, collide
 import numpy as np
 from klampt import WorldModel
 import os
-dirname = os.path.dirname(__file__)
-#getting absolute model name
-model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
+# dirname = os.path.dirname(__file__)
+# #getting absolute model name
+# model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 
 import logging
 from datetime import datetime
@@ -41,7 +41,7 @@ logger.addHandler(f_handler)
 
 class Motion:
 
-    def __init__(self,  mode = 'Kinematic', model_path = model_name, components = ['left_limb','right_limb'], debug_logging = False, codename = 'seed'):
+    def __init__(self,  mode = 'Kinematic', model_path = "data/TRINA_world_seed.xml", components = ['left_limb','right_limb'], debug_logging = False, codename = 'seed'):
         """
         This class provides a low-level controller to the TRINA robot.
 
@@ -56,8 +56,8 @@ class Motion:
         """
         self.codename = codename
         self.mode = mode
-        self.model_path = model_path
-        self.computation_model_path = "data/TRINA_world_reflex.xml"
+        self.model_path = "data/TRINA_world_" + self.codename + ".xml"
+        self.computation_model_path = "data/TRINA_world_" + self.codename + ".xml"
         self.debug_logging = debug_logging
         if(self.debug_logging):
             self.logging_filename = time.time()
@@ -81,10 +81,10 @@ class Motion:
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
         #End-effector links and active dofs used for arm cartesian control and IK
-        self.left_EE_link = self.robot_model.link(TRINAConfig.TRINA_left_tool_link_N)
-        self.left_active_Dofs = TRINAConfig.TRINA_left_active_Dofs
-        self.right_EE_link = self.robot_model.link(TRINAConfig.TRINA_right_tool_link_N)
-        self.right_active_Dofs = TRINAConfig.TRINA_right_active_Dofs
+        self.left_EE_link = self.robot_model.link(TRINAConfig.get_left_tool_link_N(self.codename))
+        self.left_active_Dofs = TRINAConfig.get_left_active_Dofs(self.codename)
+        self.right_EE_link = self.robot_model.link(TRINAConfig.get_right_tool_link_N(self.codename))
+        self.right_active_Dofs = TRINAConfig.get_right_active_Dofs(self.codename)
         #UR5 arms need correct gravity vector
         self.currentGravityVector = [0,0,-9.81]
 
@@ -141,8 +141,10 @@ class Motion:
         else:
             logger.error('Wrong Mode specified')
             raise RuntimeError('Wrong Mode specified')
+
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
+
         self.base_state = BaseState()
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
@@ -1239,8 +1241,8 @@ class Motion:
     def getKlamptSensedPosition(self):
         """Return the entire sensed Klampt position, in Klampt format.
         """
-        return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq,base = self.base_state.measuredPos)
-
+        #return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq,base = self.base_state.measuredPos)
+        return self.robot_model.getConfig()
     def shutdown(self):
         """Shutdown the componets.
 
@@ -1628,15 +1630,12 @@ class Motion:
 
 if __name__=="__main__":
 
-    robot = Motion(mode = 'Kinematic',components = ['left_limb'])
+    robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "seed")
     robot.startup()
-    time.sleep(1)
-    current_config = robot.sensedLeftLimbPosition()
-    current_config[5] = current_config[5] - 0.5
-    robot.setLeftLimbPositionLinear(current_config,1)
-    time.sleep(1.2)
-    #print(robot.sensedLeftEEVelcocity(),robot.sensedRightEEVelcocity())
-    #robot.setLeftGripperPosition([1,0,0,0])
+    time.sleep(0.2)
+    for i in range(20):
+        print(robot.getKlamptSensedPosition())
+        time.sleep(0.1)
     robot.shutdown()
     # robot.startup()
     # logger.info('Robot start() called')

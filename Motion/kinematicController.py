@@ -16,9 +16,9 @@ from motionStates import * #state structures
 from baseController import Path2d
 import os
 import TRINAConfig
-dirname = os.path.dirname(__file__)
-#getting absolute model name
-model_name = os.path.join(dirname, "data/TRINA_world_new_model_2020_01_29.xml")
+# dirname = os.path.dirname(__file__)
+# #getting absolute model name
+# model_name = os.path.join(dirname, "data/TRINA_world_new_model_2020_01_29.xml")
 
 def setup():
   vis.show()
@@ -39,7 +39,7 @@ base_indeces = [0,3]
 left_limb_indexes = [10,16]
 right_limb_indexes = [27,33]
 class KinematicController:
-    def __init__(self, model_path = model_name,codename = 'anthrax'):
+    def __init__(self, model_path,codename = 'seed'):
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
@@ -75,7 +75,7 @@ class KinematicController:
         while not self.shut_down:
             loopStartTime = time.time()
             #print("loop start time:",loopStartTime - self.robot_start_time)
-            
+
             self.controlLoopLock.acquire()
             q_to_be_set = [0.0]
 
@@ -107,7 +107,7 @@ class KinematicController:
             if self.left_limb_state.commandType == 0:
                 for i in range(6):
                     command = self.left_limb_state.commandedq[i]
-                    old = self.left_limb_state.sensedq[i]           
+                    old = self.left_limb_state.sensedq[i]
                     if (command-old) > self.limb_velocity_limit*self.dt:
                         qi = self.limb_velocity_limit*self.dt + old
                     elif (command-old) <  -self.limb_velocity_limit*self.dt:
@@ -137,7 +137,7 @@ class KinematicController:
             if self.right_limb_state.commandType == 0:
                 for i in range(6):
                     command = self.right_limb_state.commandedq[i]
-                    old = self.right_limb_state.sensedq[i]           
+                    old = self.right_limb_state.sensedq[i]
                     if (command-old) > self.limb_velocity_limit*self.dt:
                         qi = self.limb_velocity_limit*self.dt + old
                     elif (command-old) <  -self.limb_velocity_limit*self.dt:
@@ -176,7 +176,7 @@ class KinematicController:
             left_gripper_to_be_set[14] = self.left_gripper_state.command_finger_set[2]*affineDrive
             left_gripper_to_be_set[4] = self.left_gripper_state.command_finger_set[3]
             left_gripper_to_be_set[8] = -self.left_gripper_state.command_finger_set[3]
-            #need to check limits here.... ignoring for now....    
+            #need to check limits here.... ignoring for now....
             self.left_gripper_state.sense_finger_set = deepcopy(self.left_gripper_state.command_finger_set)
             #set klampt robot config
             self.robot.setConfig(TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb_to_be_set, right_limb = right_limb_to_be_set,base = base_state_q_to_be_set))
@@ -299,7 +299,7 @@ if __name__=="__main__":
         #print(robot.get)
         vis.unlock()
         time.sleep(0.02)
-        
+
         print(time.time()-startTime)
     """
     robot.shutdown()

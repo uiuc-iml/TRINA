@@ -14,19 +14,49 @@ epsilon = 0.01
 limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon]
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
 
-TRINA_left_tool_link_N = 16
-TRINA_right_tool_link_N = 41 #seed
+def get_left_tool_link_N(name):
+    if name == "anthrax":
+        return 16
+    elif name == "seed"  or "half_anthrax":
+        return 16
+
+def get_right_tool_link_N(name):
+    if name == "anthrax":
+        return 26
+    elif name == "seed" or "half_anthrax":
+        return 41
+def get_left_active_Dofs(name):
+    if name == "anthrax":
+        return [10,11,12,13,14,15]
+    elif name == "seed" or "half_anthrax":
+        return [10,11,12,13,14,15]
+
+def get_right_active_Dofs(name):
+    if name == "anthrax":
+        return [20,21,22,23,24,25]
+    elif name == "seed" or "half_anthrax":
+        return [35,36,37,38,39,40]
+
+#TRINA_left_tool_link_N = 16
+#TRINA_right_tool_link_N = 41 #seed
 #TRINA_right_tool_link_N = 26 #anthrax
-TRINA_left_active_Dofs = [10,11,12,13,14,15]
-TRINA_right_active_Dofs = [35,36,37,38,39,40] #seed
+# TRINA_left_active_Dofs = [10,11,12,13,14,15]
+# TRINA_right_active_Dofs = [35,36,37,38,39,40] #seed
 #TRINA_right_active_Dofs = [20,21,22,23,24,25] #anthrax
 
 def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
     if name == 'anthrax':
-        return base[0:2] + [0]*3 + [base[2]] + [0]*4 + left_limb + [0]*4 + right_limb + [0]*2 
+        return base[0:2] + [0]*3 + [base[2]] + [0]*4 + left_limb + [0]*4 + right_limb + [0]*2
     elif(name == 'seed'):
         return base[0:3] + [0]*7 + left_limb + [0]*19 + right_limb + [0]*18
+    elif(name == 'half_anthrax'):
+        return base[0:3] + [0]*7 + left_limb + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
     else:
         print("wrong model name used.")
-        return 
+        return
 
+
+#to add a new robot model:
+# create a new world file contained the model_name
+# update the functions defined where
+# when using the motion api, specify the correct model name
