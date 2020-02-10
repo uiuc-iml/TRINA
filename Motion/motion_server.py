@@ -205,13 +205,8 @@ def _sensedRightEEVelocity(local_pt):
 	global robot
 	return robot.sensedRightEEVelcocity(local_pt)
 
-<<<<<<< HEAD
 #ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'
-=======
-ip_address = 'localhost'
-# ip_address = '172.16.250.88'
->>>>>>> 84bc0789b2693957b63b9967822ce771700d3ad2
 #ip_address = '72.36.119.129'
 
 ip_address = '172.16.241.141'
