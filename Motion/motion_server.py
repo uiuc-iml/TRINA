@@ -13,11 +13,11 @@ global server_started
 server_started = False
 
 
-def _startServer(mode = "Kinematic", components = []):
+def _startServer(mode = "Kinematic", components = [] , codename = "seed"):
 	##global variable
 	global robot
 	global server_started
-	robot = Motion(mode = mode,components = components)
+	robot = Motion(mode = mode,components = components, codename = codename)
 	logging.info("%s mode is activated",robot.mode)
 	server_started = True
 	print("server started")
@@ -196,6 +196,7 @@ def _getWorld():
 def _cartesianDriveFail():
 	global robot
 	return robot.cartesianDriveFail()
+
 def _sensedLeftEEVelocity(local_pt):
 	global robot
 	return robot.sensedLeftEEVelcocity(local_pt)
@@ -204,9 +205,11 @@ def _sensedRightEEVelocity(local_pt):
 	global robot
 	return robot.sensedRightEEVelcocity(local_pt)
 
-ip_address = 'localhost'
+#ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
+
+ip_address = '172.16.241.141'
 port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()
