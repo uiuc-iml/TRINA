@@ -209,7 +209,8 @@ def _sensedRightEEVelocity(local_pt):
 # ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
 
-ip_address = '172.16.241.141'
+# ip_address = '172.16.241.141'
+ip_address='localhost'
 port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()

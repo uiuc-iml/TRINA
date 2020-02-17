@@ -11,7 +11,7 @@ import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
 from copy import deepcopy,copy
 from klampt.math import vectorops,so3
-from klampt import vis
+# from klampt import vis
 from klampt.model import ik, collide
 import numpy as np
 from klampt import WorldModel

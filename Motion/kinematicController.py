@@ -2,7 +2,7 @@ import time
 from klampt import *
 from klampt.math import vectorops,so3,se3,so2
 from klampt.io import loader
-from klampt import vis
+# from klampt import vis
 from klampt.model import trajectory
 from klampt.model import coordinates
 from klampt.model import ik

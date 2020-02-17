@@ -1,4 +1,5 @@
 echo heading to home directory
+source ~/trina_env/bin/activate
 cd ~/
 echo redis startup procedure
 cd database-server/
@@ -12,8 +13,8 @@ cd Motion
 python2 motion_server.py & sleep 1
 cd ..
 echo 'server started'
-python3 $PWD/robot_v2/robot.py & sleep 2
+python $PWD/robot_v2/robot.py & sleep 2
 
-python3 UIController_reem.py & 
+python UIController_reem.py & 
 
 python2 Robot_visualizer.py &
