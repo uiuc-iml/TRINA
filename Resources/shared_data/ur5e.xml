@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<world>
+  <robot name="ur5" file="robots/ur5e_with_gripper.rob" rotateZ="-2.3562" translation="0 0 0.3"  />
+  <terrain file="terrains/block.off" />
+
+</world>
