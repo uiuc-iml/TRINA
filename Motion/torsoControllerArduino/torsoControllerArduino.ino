@@ -281,11 +281,17 @@ void run_tilt(double u) {
   }
 }
 
+/**
+ * Stops the lift motor if flag is false
+ */
 void stop_motor_height() {
   lift_motor.writeMicroseconds(1500);
   lift_moving = false; //shows that the lift motor is not moving
 }
 
+/**
+ * Stops the tilt actuator if flag is false
+ */
 void stop_motor_tilt() {
   tilt_moving = false; //shows that the lift motor is not moving
   analogWrite(kTiltPwmPin, 0);
@@ -346,12 +352,20 @@ uint16_t getPositionSSI_efficient(uint8_t resolution) {
   return currentPosition;
 }
 
+/**
+ * Stops the leg if the potentiometer value 
+ * reaches desired position
+ */
 void stop_leg() {
   leg_moving = false;
   digitalWrite(kLegDirectionPin, LOW);
   analogWrite(kLegPwmPin, 0);
 }
 
+/**
+ * Runs the support legs given constant PID input
+ * @param leg_pid PID value to determine motor direction
+ */
 void run_leg(double leg_pid) {
   leg_moving = false;
   
@@ -392,12 +406,26 @@ void run_leg(double leg_pid) {
   }
 }
 
-
+/**
+ * Maps values from arbitrary range to desired range
+ * In the case of the support leg, (-2, 2)
+ * @param value PID value
+ * @param input_low Lowest possible value
+ * @param input_high Highest possible value
+ * @param output_low lower bound of output
+ * @param output_high upper bound of output
+ */
 double map_values(double value, double input_low, double input_high, double output_low, double output_high) {
   double f = (value - input_low) * (output_high - output_low) / (input_high - input_low) + output_low;
   return f;
 }
 
+/**
+ * Prints status of each element to user
+ * @param height  Height of lift
+ * @param tilt    Angle of tilt
+ * @param leg     State of leg (Positive, Negative, Static)
+ */
 void send_message(double height, double tilt, LegState leg) {
   Serial.print("T\t");
   Serial.print(tilt);
