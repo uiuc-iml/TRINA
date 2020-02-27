@@ -21,8 +21,8 @@ class MotionClient:
 
 		print("init complete")
 
-	def startServer(self,mode,components):
-		self.s.startServer(mode,components)
+	def startServer(self,mode,components,codename):
+		self.s.startServer(mode,components,codename)
 
 	def startup(self):
 		res = self.s.startup()
