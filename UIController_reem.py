@@ -80,7 +80,7 @@ class UIController:
         # dataset = pickle.load(fd)
         # self.init_UI_state = dataset
         self.setRobotToDefault()
-        time.sleep(5)
+        time.sleep(3)
         while(True):
             if(self.startup == True & (self.server["UI_STATE"].read()!=0)):
                 print('started the initial values for the variables')
@@ -186,6 +186,7 @@ class UIController:
     def positionControlArm(self,side):
         assert (side in ['left','right']), "invalid arm selection"
         R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
+        # R_cw_rw_t = np.array([[0,0,1],[-1,0,0],[0,1,0]])
         joystick = side+"Controller"
         # print("{} button pushed".format(side),self.UI_state["controllerButtonState"][joystick])
         if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 :
@@ -204,9 +205,9 @@ class UIController:
             RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
             RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
             # print('\n\n\n\n\n',self.init_headset_orientation.inv().as_dcm(),np.matmul(np.matmul(R_cw_rw,self.init_headset_orientation.inv().as_dcm()), np.subtract(RT_cw_cc,RT_cw_ch)),'\n\n\n\n\n')
-            print('\n\n\n\n\n',RT_cw_cc,self.init_headset_orientation.as_dcm(),'\n\n\n\n\n')
+            # print('\n\n\n\n\n',RT_cw_cc,self.init_headset_orientation.as_dcm(),'\n\n\n\n\n')
             RT_final = np.add(RT_rw_rh, np.matmul(np.matmul(R_cw_rw,self.init_headset_orientation.inv().as_dcm()), np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()
-            print(RT_final)
+            print(RT_cw_cc,np.subtract(RT_cw_cc,RT_cw_ch),np.matmul(R_cw_rw,self.init_headset_orientation.inv().as_dcm()))
 
             # we now check if the "ideal" velocity is greater than 1 m/s
 
@@ -221,7 +222,7 @@ class UIController:
 
             # Transforming from left handed to right handed
             # we first read the quaternion
-            init_quat = self.init_UI_state["controllerPositionState"][joystick]['controllerRotation']
+            init_quat = np.array(self.init_UI_state["controllerPositionState"][joystick]['controllerRotation'])
             # turn it into a left handed rotation vector
             # right_handed_init_quat = np.array([-init_quat[2],init_quat[0],-init_quat[1],-(np.pi/180)*init_quat[3]])
             # #transform it to right handed:
@@ -232,22 +233,40 @@ class UIController:
             # RR_cw_ch = R.from_rotvec(right_handed_init_quat[0:3]*right_handed_init_quat[3])
             # RR_cw_ch_T = RR_cw_ch.inv()
             # RR_cw_cc = R.from_rotvec(right_handed_curr_quat[0:3]*right_handed_curr_quat[3])
-
-            right_handed_init_quat = np.array([init_quat[0],init_quat[1],init_quat[2],(np.pi/180)*init_quat[3]])
-            #transform it to right handed:
-
-            curr_quat = self.UI_state["controllerPositionState"][joystick]['controllerRotation']
-
-            right_handed_curr_quat = np.array([curr_quat[0],curr_quat[1],curr_quat[2],(np.pi/180)*curr_quat[3]])
             R_cw_rw = R.from_dcm(R_cw_rw)
 
-            RR_cw_ch = R_cw_rw*R.from_rotvec(right_handed_init_quat[0:3]*right_handed_init_quat[3])
-            RR_cw_ch_T = RR_cw_ch.inv()
-            RR_cw_cc = R_cw_rw*R.from_rotvec(right_handed_curr_quat[0:3]*right_handed_curr_quat[3])
+            # world_adjustment_matrix = R_cw_rw
+            world_adjustment_matrix = R.from_dcm(np.eye(3))
+            init_angle = (np.pi/180)*init_quat[3]
 
+            # right_handed_init_vec = world_adjustment_matrix.apply(init_quat[:3])*init_angle
+            right_handed_init_vec = np.array([init_quat[2],-init_quat[0],init_quat[1]])*(init_angle)
+            #transform it to right handed:
+
+            curr_quat = np.array(self.UI_state["controllerPositionState"][joystick]['controllerRotation'])
+            curr_angle = (np.pi/180)*curr_quat[3]
+            # right_handed_curr_vec =  world_adjustment_matrix.apply(curr_quat[:3])*curr_angle
+            right_handed_curr_vec = np.array([curr_quat[2],-curr_quat[0],curr_quat[1]])*(curr_angle)
+
+            # R_cw_rw = R.from_dcm(R_cw_rw)
+            # print('quats',curr_quat,init_quat)
+            RR_cw_ch = R.from_rotvec(right_handed_init_vec)
+            RR_cw_ch_T = RR_cw_ch.inv()
+            RR_cw_cc = R.from_rotvec(right_handed_curr_vec)
+            relative_rotation_vec = (RR_cw_ch_T*RR_cw_cc).as_rotvec()
+            unspin = np.array([[1,0,0],[0,0,1],[0,1,0]])
+            secondary_correction = np.matmul(np.matmul(unspin,self.init_headset_orientation.as_dcm()),unspin.transpose())
+            print('secondary correction',secondary_correction,self.init_headset_orientation.as_dcm())
+
+            corrected_relative_rotation_vec = secondary_correction*relative_rotation_vec.transpose()
+            print('corrected relative....',corrected_relative_rotation_vec)
+            corrected_R = R.from_rotvec(corrected_relative_rotation_vec)
             # print((RR_cw_ch_T*RR_cw_cc).as_rotvec(),'\n\n\n')
             # RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
-            RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
+            # RR_final = (RR_rw_rh*secondary_correction*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
+            # RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
+            RR_final = (RR_rw_rh*corrected_R).as_dcm().flatten().tolist()
+
             # RR_final = RR_rw_rh.as_dcm().flatten().tolist()
             start_time = time.process_time()
             if(side == 'right'):
@@ -397,16 +416,16 @@ class UIController:
         output: Rotation Matrix for the headset that ignores pitch and roll
         """
         #first we turn the input into a right_handed rotvec
-        # right_handed_rotvec =  np.array([-headset_orientation[2],headset_orientation[0],-headset_orientation[1],-(np.pi/180)*headset_orientation[3]])
-        right_handed_rotvec =  np.array([headset_orientation[0],headset_orientation[1],headset_orientation[2],(np.pi/180)*headset_orientation[3]])
+        right_handed_rotvec =  np.array([headset_orientation[2],-headset_orientation[0],headset_orientation[1],(np.pi/180)*headset_orientation[3]])
+        # right_handed_rotvec =  np.array([-headset_orientation[2],-headset_orientation[0],headset_orientation[1],-(np.pi/180)*headset_orientation[3]])
 
         partial_rotation = R.from_rotvec(right_handed_rotvec[:3]*right_handed_rotvec[3])
         # we then get its equivalent row, pitch and yaw 
         rpy = partial_rotation.as_euler('ZYX')
         # we then ignore its roll and pitch in unity
-        rotation_final = R.from_euler('ZYX',[0,rpy[1],0])
+        rotation_final = R.from_euler('ZYX',[0,rpy[0],0])
+        print(rotation_final.as_dcm())
         return rotation_final
-        # and transform it again into a rotation matrix
 
        
 
