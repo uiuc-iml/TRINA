@@ -16,4 +16,4 @@ python3 $PWD/robot_v2/robot.py & sleep 2
 
 python3 UIController_reem.py & 
 
-python2 Robot_visualizer.py &
+python2.7 Robot_visualizer.py &

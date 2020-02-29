@@ -23,6 +23,8 @@ import os
 import logging
 from datetime import datetime
 
+if not os.path.exists('errorLogs'):
+    os.makedirs('errorLogs')
 logger = logging.getLogger(__name__)
 # Create handlers
 c_handler = logging.StreamHandler()
