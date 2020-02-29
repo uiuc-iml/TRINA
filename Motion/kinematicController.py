@@ -16,10 +16,6 @@ from motionStates import * #state structures
 from baseController import Path2d
 import os
 import TRINAConfig
-# dirname = os.path.dirname(__file__)
-# #getting absolute model name
-# model_name = os.path.join(dirname, "data/TRINA_world_new_model_2020_01_29.xml")
-
 def setup():
   vis.show()
 
@@ -39,7 +35,7 @@ base_indeces = [0,3]
 left_limb_indexes = [10,16]
 right_limb_indexes = [27,33]
 class KinematicController:
-    def __init__(self, model_path,codename = 'seed'):
+    def __init__(self, model_path,codename):
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
@@ -183,17 +179,11 @@ class KinematicController:
             self.new_state = True
             self.controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
-            # print("sleep for",self.dt-elapsedTime)
 
             if elapsedTime < self.dt:
-                # print("before sleep",time.time() - self.robot_start_time)
                 time.sleep(self.dt-elapsedTime)
-                # print("after sleep",time.time() - self.robot_start_time)
             else:
                 pass
-            #print(self.left_limb_state.commandedq)
-            # print("elapsedTime",elapsedTime)
-            # print("loopendtime:",time.time() - self.robot_start_time)
         #print("KinematicController.controlThread():exited")
     def setLeftLimbConfig(self,q):
         self.left_limb_state.commandedq = deepcopy(q)

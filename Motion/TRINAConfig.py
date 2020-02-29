@@ -13,7 +13,7 @@ limb_velocity_limits = [2.0,2.0,2.0,2.0,2.0,2.0]
 epsilon = 0.01
 limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon]
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
-
+collision_check_interval = 0.1
 def get_left_tool_link_N(name):
     if name == "anthrax" or "anthrax_lowpoly":
         return 13

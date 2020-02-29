@@ -16,9 +16,6 @@ from klampt.model import ik, collide
 import numpy as np
 from klampt import WorldModel
 import os
-# dirname = os.path.dirname(__file__)
-# #getting absolute model name
-# model_name = os.path.join(dirname, "data/TRINA_world_reflex.xml")
 
 import logging
 from datetime import datetime
@@ -43,7 +40,7 @@ logger.addHandler(f_handler)
 
 class Motion:
 
-    def __init__(self,  mode = 'Kinematic', model_path = "data/TRINA_world_seed.xml", components = ['left_limb','right_limb'], debug_logging = False, codename = 'seed'):
+    def __init__(self,mode = 'Kinematic', components = ['left_limb','right_limb'], debug_logging = False, codename = 'seed'):
         """
         This class provides a low-level controller to the TRINA robot.
 
@@ -103,7 +100,7 @@ class Motion:
             self.right_limb_enabled = True
             self.base_enabled = True
             print("initiating Kinematic controller")
-            self.simulated_robot = KinematicController(model_path,codename = self.codename)
+            self.simulated_robot = KinematicController(self.model_path,codename = self.codename)
             print("initiated Kinematic controller")
 
         elif self.mode == "Physical":
@@ -553,7 +550,6 @@ class Motion:
                     ##gripper
                     self.simulated_robot.setLeftGripperPosition(self.left_gripper_state.command_finger_set)
                     robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq)
-                    #robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*4+self.right_limb_state.sensedq+[0]*2
                     self.robot_model.setConfig(robot_model_Q)
             self._controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
@@ -592,9 +588,8 @@ class Motion:
         logger.debug('number of joint positions sent : %d', len(q))
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"('controlThread exited.')
         if self.left_limb_enabled:
-            #startTime = time.time()
             self._controlLoopLock.acquire()
-            #print("SetLeftLimbPostion lock takes", time.time() - startTime)
+            self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb_state.sensedq),self._get_klampt_q(left_limb = q))
             self.left_limb_state.commandSent = False
             self.left_limb_state.commandedq = deepcopy(q)
             self.left_limb_state.commandeddq = []
@@ -620,9 +615,8 @@ class Motion:
         logger.debug('number of joint positions sent : %d', len(q))
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
         if self.right_limb_enabled:
-            #startTime = time.time()
             self._controlLoopLock.acquire()
-            #print("SetRightLimbPosition lock takes", time.time() - startTime)
+            self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb_state.sensedq),self._get_klampt_q(right_limb = q))
             self.right_limb_state.commandSent = False
             self.right_limb_state.commandedq = deepcopy(q)
             self.right_limb_state.commandeddq = []
@@ -653,6 +647,7 @@ class Motion:
         #TODO:Also collision checks
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
+            self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb_state.sensedq),self._get_klampt_q(left_limb = q))
             planningTime = 0.0 + TRINAConfig.ur5e_control_rate
             positionQueue = []
             currentq = self.left_limb_state.sensedq
@@ -691,6 +686,7 @@ class Motion:
         #Also collision checks
         if self.right_limb_enabled:
             self._controlLoopLock.acquire()
+            self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb_state.sensedq),self._get_klampt_q(right_limb = q))
             planningTime = 0.0 + TRINAConfig.ur5e_control_rate
             positionQueue = []
             currentq = self.right_limb_state.sensedq
@@ -830,7 +826,7 @@ class Motion:
             ik_solve_time = time.time() -start_time
             # print("Solving IK takes", time.time() -start_time,' and {} iterations'.format(iterations))
             start_time_2 = time.time()
-            res = self._check_collision_linear(self.robot_model,initial,target_config,15)
+            res = self._check_collision_linear_adaptive(self.robot_model,initial,target_config)
             col_check_time = time.time()-start_time_2
             # print("collision checking takes", time.time() - start_time_2)
             #print(res)
@@ -940,7 +936,7 @@ class Motion:
                 print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
                 return 'motion.setRightEEInertialtransform():IK solve failure: no IK solution found'
             start_time_2 = time.time()
-            res = self._check_collision_linear(self.robot_model,initial,target_config,15)
+            res = self._check_collision_linear_adaptive(self.robot_model,initial,target_config)
             col_check_time = time.time()-start_time_2
 
             #print(res)
@@ -1415,7 +1411,7 @@ class Motion:
 
         self._controlLoopLock.release()
 
-    def _check_collision_linear(self,robot,q1,q2,disrectization):
+    def _check_collision_linear(self,robot,q1,q2,discretization):
         """ Check collision between 2 robot configurations
 
         Parameters:
@@ -1430,12 +1426,11 @@ class Motion:
         bool
         """
 
-        lin = np.linspace(0,1,disrectization)
+        lin = np.linspace(0,1,discretization)
         initialConfig = robot.getConfig()
         diff = vectorops.sub(q2,q1)
         counter = 0
         for c in lin:
-            #print('_check_collision_linear():started',c)
             Q=vectorops.madd(q1,diff,c)
             robot.setConfig(Q)
             collisions = self.collider.robotSelfCollisions(robot)
@@ -1447,7 +1442,44 @@ class Motion:
             #add_ghosts(robot,vis,[robot.getConfig()],counter)
             counter = counter + 1
         robot.setConfig(initialConfig)
-        #print('_check_collision_linear():no collision')
+        return False
+
+    def _check_collision_linear_adaptive(self,robot,q1,q2):
+        """ Check collision between 2 robot configurations, but with adaptive number of collision checks
+
+        Parameters:
+        -----------------
+        robot: klampt robot model
+        q1: a list of 6 doubles
+        q2: a list of 6 doubles
+
+        Return:
+        -----------------
+        bool
+        """
+        discretization = math.ceil(vectorops.distance(q1,q2)/TRINAConfig.collision_check_interval)
+        #print("N of discretization",discretization)
+        lin = np.linspace(0,1,discretization + 1)
+        initialConfig = robot.getConfig()
+        diff = vectorops.sub(q2,q1)
+        counter = 0
+        iteration_counter = 0
+        for c in lin:
+            if iteration_counter > 0:
+                #print('_check_collision_linear():started',c)
+                Q=vectorops.madd(q1,diff,c)
+                robot.setConfig(Q)
+                collisions = self.collider.robotSelfCollisions(robot)
+                colCounter = 0
+                for col in collisions:
+                    colCounter = colCounter + 1
+                if colCounter > 0:
+                    return True
+                #add_ghosts(robot,vis,[robot.getConfig()],counter)
+                counter = counter + 1
+            else:
+                iteration_counter = iteration_counter + 1
+        robot.setConfig(initialConfig)
         return False
 
     def _limit_arm_position(self,config):
@@ -1535,11 +1567,6 @@ class Motion:
                 pass
             else:
                 failFlag = True
-                #print(self.left_limb_state.driveSpeedAdjustment)
-                #print("motion.controlLoop():IK not in joint limit")
-                #print(self.left_limb_state.sensedq)
-                #print(self.robot_model.getConfig()[10:16])
-                #print(target_transform)
         else:
             failFlag = True
             #print("motion.controlLoop():IK solution not found")
@@ -1630,15 +1657,49 @@ class Motion:
 
         return 2,target_config #2 means success..
 
+    def _get_klampt_q(self,left_limb = [],right_limb = []):
+        if left_limb:
+            return TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb, right_limb = self.right_limb_state.sensedq)
+        elif right_limb:
+            return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = right_limb)
 if __name__=="__main__":
+    #########Check Collision Detection Speed ###############
+    #robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
+    computation_model_path = "data/TRINA_world_anthrax.xml"
+    world = WorldModel()
+    res = world.readFile(computation_model_path)
+    if not res:
+        logger.error('unable to load model')
+        raise RuntimeError("unable to load model")
+    #Initialize collision detection
+    collider = collide.WorldCollider(world)
+    robot_model = world.robot(0)
 
-    robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "seed")
-    robot.startup()
-    time.sleep(0.2)
-    for i in range(20):
-        print(robot.getKlamptSensedPosition())
-        time.sleep(0.1)
-    robot.shutdown()
+    startTime = time.time()
+    totalN = 100
+    for i in range(totalN):
+        robot_model.randomizeConfig()
+        collisions = collider.robotSelfCollisions(robot_model)
+        colCounter = 0
+        for col in collisions:
+            colCounter = colCounter + 1
+        #if colCounter > 0:
+            #print(i,"collision")
+        #else:
+            #print(i)
+    print("average time:", (time.time() - startTime)/float(totalN))
+    ##################################
+    # robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
+    # robot.startup()
+    # time.sleep(0.2)
+    # left_limb_q = robot.sensedLeftLimbPosition()
+    # left_limb_q[2] =left_limb_q[2] + 0.01
+    # robot.setLeftLimbPosition(left_limb_q)
+    # time.sleep(1.2)
+    # robot.shutdown()
+
+
+    #################################
     # robot.startup()
     # logger.info('Robot start() called')
     # print('Robot start() called')
