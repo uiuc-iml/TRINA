@@ -423,7 +423,7 @@ class UIController:
         # we then get its equivalent row, pitch and yaw 
         rpy = partial_rotation.as_euler('ZYX')
         # we then ignore its roll and pitch in unity
-        rotation_final = R.from_euler('ZYX',[0,rpy[0],0])
+        rotation_final = R.from_euler('ZYX',[rpy[0],0,0])
         print(rotation_final.as_dcm())
         return rotation_final
 
