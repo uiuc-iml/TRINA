@@ -1,4 +1,4 @@
-Metadata-Version: 1.2
+Metadata-Version: 1.1
 Name: websocket-client
 Version: 0.56.0
 Summary: WebSocket client for Python. hybi13 is supported.
@@ -302,4 +302,3 @@ Classifier: Operating System :: Microsoft :: Windows
 Classifier: Topic :: Internet
 Classifier: Topic :: Software Development :: Libraries :: Python Modules
 Classifier: Intended Audience :: Developers
-Requires-Python: >=2.6, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*
