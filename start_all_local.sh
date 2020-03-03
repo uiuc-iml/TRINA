@@ -13,8 +13,8 @@ cd Motion
 python2 motion_server.py & sleep 1
 cd ..
 echo 'server started'
-python $PWD/robot_v2/robot.py & sleep 2
+python3 $PWD/robot_v2/robot.py & sleep 2
 
-python UIController_reem.py & 
+python3 UIController_reem.py & 
 
-python2.7 Robot_visualizer.py &
+# python3 Robot_visualizer.py &

@@ -22,9 +22,9 @@ from reem.datatypes import KeyValueStore
 import traceback
 
 # robot_ip = 'http://172.16.241.141:8080'
-# robot_ip = 'http://localhost:8080'
+robot_ip = 'http://localhost:8080'
 #  robot_ip = 'http://10.194.203.22:8080'
-robot_ip = 'http://192.168.0.5:8080'
+# robot_ip = 'http://192.168.0.5:8080'
 
 ws_port = 1234
 
@@ -44,7 +44,7 @@ class UIController:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = 0
-        self.mode = 'Physical'
+        self.mode = 'Kinematic'
         self.components = ['base','left_limb','right_limb','left_gripper']
         self.init_UI_state = {}
         self.dt = 0.02
