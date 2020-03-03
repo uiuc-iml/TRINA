@@ -10,12 +10,13 @@
         "gripper":  {
             "command":"roslaunch reflex reflex_takktile2.launch"
         },
-	"motion_server" : {"program": "motion_server.py"}
+	"motion_server" : {"program": "motion_server.py"},
+	"logger":  { "program":"redrun_builtin/logger.py",  "args": "logs/host1_%time"}
     },
     "aliases": {
         "robot": [ "gripper" , "motion_server" ]
     },
     "startup": [
-        "robot"
-    ],
+        "logger"
+    ]
 }

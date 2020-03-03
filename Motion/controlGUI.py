@@ -31,7 +31,8 @@ VIEWER_MIN_SIZE = (640,480) # width,height
 VIEWER_MAX_SIZE = (QWIDGETSIZE_MAX,QWIDGETSIZE_MAX)
 DRAW_FT_CALIBRATION = True
 DRAW_FORCE_SCALE = 0.1
-robot_ip = 'http://10.194.203.22:8080'
+# robot_ip = 'http://10.194.203.22:8080'
+robot_ip = 'http://localhost:8080'
 
 class GLWidgetProgram(GLPluginProgram):
     """A program that uses a widget plugin"""
@@ -307,14 +308,16 @@ class ControlWidget(QWidget):
         self.setMinimumSize(QSize(860,960))
 
     def startMotionAPI(self):
-        self.robot = MotionClient(robot_ip)
-        self.robot.startServer(mode = 'Kinematic', components = ['left_limb'])
+        self.robot = MotionClient(address = robot_ip)
+        self.robot.startServer(mode = self.mode, components = ['left_limb','right_limb','left_gripper'],codename = 'seed')
+        # self.robot = MotionClient(robot_ip)
+        # self.robot.startServer(mode = 'Kinematic', components = ['left_limb'])
         res = self.robot.startup()
         if not res:
             return
 
         world = WorldModel()
-        res = world.readFile("data/TRINA_world_new_model_2020_01_29.xml")
+        res = world.readFile("data/TRINA_world_seed.xml")
         if not res:
             raise RuntimeError("Unable to load Klamp't model "+klampt_model_local)
 
