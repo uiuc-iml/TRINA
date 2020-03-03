@@ -189,6 +189,7 @@ class UIController:
 
         
     def positionControlArm(self,side):
+        actual_dt = self.dt
         assert (side in ['left','right']), "invalid arm selection"
         R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
         # R_cw_rw_t = np.array([[0,0,1],[-1,0,0],[0,1,0]])
