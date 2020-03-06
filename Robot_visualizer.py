@@ -1,9 +1,11 @@
+#!/usr/local/lib/python2.7
+import sys
 import time,math
 from klampt import vis
 from klampt import WorldModel
 from klampt.model.trajectory import Trajectory
 import threading
-from Motion.motion_client import MotionClient
+from Motion.motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import pickle
@@ -22,7 +24,7 @@ import json
 import pdb
 from klampt.math import so3
 
-# robot_ip = '72.36.119.129:8080'
+# robot_ip = 'http://192.168.0.143:8080'
 # robot_ip = 'http://172.16.241.141:8080'
 robot_ip = 'http://localhost:8080'
 ws_port = 1234

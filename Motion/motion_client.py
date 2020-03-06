@@ -6,7 +6,7 @@ from klampt import WorldModel
 import os
 dirname = os.path.dirname(__file__)
 #getting absolute model name
-model_name = os.path.join(dirname, "data/TRINA_world_new_model_2020_01_29.xml")
+model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")
 
 class MotionClient:
 	def __init__(self, address = 'http://localhost:8000'):
@@ -26,8 +26,8 @@ class MotionClient:
 			self.robot.setConfig(q)
 			time.sleep(self.dt)
 
-	def startServer(self,mode,components):
-		self.s.startServer(mode,components)
+	def startServer(self,mode,components,codename):
+		self.s.startServer(mode,components,codename)
 
 	def startup(self):
 		res = self.s.startup()
