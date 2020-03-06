@@ -175,6 +175,7 @@ class KinematicController:
             #need to check limits here.... ignoring for now....
             self.left_gripper_state.sense_finger_set = deepcopy(self.left_gripper_state.command_finger_set)
             #set klampt robot config
+
             self.robot.setConfig(TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb_to_be_set, right_limb = right_limb_to_be_set,base = base_state_q_to_be_set))
             self.new_state = True
             self.controlLoopLock.release()
