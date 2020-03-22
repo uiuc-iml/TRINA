@@ -266,6 +266,15 @@ class Motion:
             print("motion.startup():Already started")
         return self.startUp
 
+    def enabled_components(self):
+        """
+        Check what components are enabled rn
+
+        return:
+        ---------------
+        
+        """
+
     def _controlLoop(self):
         """main control thread, synchronizing all components
         in each loop,states are updated and new commands are issued
