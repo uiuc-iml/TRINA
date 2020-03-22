@@ -89,7 +89,7 @@ def on_message(ws, message):
                     a = {"a": 7, "c": 0, "p": {"t": 0, "r": roomId,
                                                 "u": userId, "m": "robot_telemetry", "p": robotrec}}
                     b = json.dumps(a).encode('utf-8')
-                    ws.send(b)
+                    # ws.send(b)
             except Exception as e:
                 print('could not read robotTelemetry',e)
 

@@ -2,7 +2,8 @@ class LimbState:
     def __init__(self):
         self.sensedq = [0.0,0.0,0.0,0.0,0.0,0.0]
         self.commandedq = []
-        self.commandedqQueue = []
+        self.difference = []
+        self.commandedqQueueStart = []
         self.senseddq = [0.0,0.0,0.0,0.0,0.0,0.0]
         self.commandeddq = []
         self.senseddqQueue = []
@@ -12,7 +13,8 @@ class LimbState:
         self.commandSent = True
         self.commandType = 0 #0 is position, 1 is velocity
         self.commandQueue = False
-        self.lastCommandQueueTime = 0.0
+        self.commandQueueTime = 0.0
+        self.commandedQueueDuration = 0.0
         #for kinematic to use...
         self.lastSensedq = []
 

@@ -24,9 +24,11 @@ import traceback
 # robot_ip = 'http://172.16.241.141:8080'
 robot_ip = 'http://localhost:8080'
 #  robot_ip = 'http://10.194.203.22:8080'
+# robot_ip = 'http://192.168.0.5:8080'
+
 ws_port = 1234
 
-model_name = "Motion/data/TRINA_world_reflex.xml"
+model_name = "Motion/data/TRINA_world_seed.xml"
 
 roomname = "The Lobby"
 zonename = "BasicExamples"
@@ -43,11 +45,11 @@ class UIController:
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = 0
         self.mode = 'Kinematic'
-        self.components = ['base','left_limb','right_limb','base']
+        self.components = ['base','left_limb','right_limb','left_gripper']
         self.init_UI_state = {}
         self.dt = 0.02
         self.robot = MotionClient(address = robot_ip)
-        self.robot.startServer(mode = self.mode, components = self.components)
+        self.robot.startServer(mode = self.mode, components = self.components,codename = 'seed')
         self.left_limb_active = ('left_limb' in self.components)
         self.right_limb_active = ('right_limb' in self.components)
         self.base_active = ('base' in self.components)
@@ -56,12 +58,13 @@ class UIController:
         self.torso_active = ('torso' in self.components)
         self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
         # self.robot_client = MotionClient()
-        time.sleep(4)
+        time.sleep(5)
         # self.robot = Motion()
         self.UI_state = {}
         self.init_pos_left = {}
         self.cur_pos_left = {}
         self.init_pos_right = {}
+        self.init_headset_orientation = {}
         self.cur_pos_right = {}
         self.startup = True
         res = self.robot.startup()
@@ -79,7 +82,7 @@ class UIController:
         # dataset = pickle.load(fd)
         # self.init_UI_state = dataset
         self.setRobotToDefault()
-        time.sleep(5)
+        time.sleep(3)
         while(True):
             if(self.startup == True & (self.server["UI_STATE"].read()!=0)):
                 print('started the initial values for the variables')
@@ -89,17 +92,20 @@ class UIController:
                     self.init_pos_left = self.robot.sensedLeftEETransform()
                 if(self.right_limb_active):   
                     self.init_pos_right = self.robot.sensedRightEETransform()
-            
+                # either way, we must register the headset initial orientation:
+                # we start by obtaining it: 
+                self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
             while(True):
                 # try:
-                
                 self.last_time = time.time()
                 if(self.left_limb_active):
                     self.cur_pos_left = self.robot.sensedLeftEETransform()
                 if(self.right_limb_active):
                     self.cur_pos_right = self.robot.sensedRightEETransform()
                 self.UI_state = self.server['UI_STATE'].read()
-                # print('\n\n\n\n',self.UI_state,'\n\n\n\n')
+
+                # print('\n\n\n\n',self.UI_state['headSetPositionState'],'\n\n\n\n')
+
                 self.UIStateLogic()
                 time.sleep(self.dt)
 
@@ -109,6 +115,7 @@ class UIController:
     def moveRobotTest(self):
         # self.robot.setBaseVelocity([0,0])
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
+        print(np.array(leftUntuckedConfig)*180.0/np.pi)
         init_leftUntuckedConfig = [0,0,0,0,0,0] #motionAPI format
         self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,7)
         # self.robot.setBaseTargetPosition([0,0,0],[0.5,0.5])
@@ -117,6 +124,7 @@ class UIController:
     def setRobotToDefault(self):
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
         rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
+        print('right_Untucked',rightUntuckedConfig)
         if('left_limb' in self.components):
             self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
         if('right_limb' in self.components):
@@ -130,9 +138,12 @@ class UIController:
             if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True):
                 print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
                 self.init_UI_state = self.UI_state
+                self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
+
             if(self.base_active):
                 self.baseControl()
             self.positionControl()
+            # self.velocityControl()
             #self.logTeleoperation('test')
 
 
@@ -178,8 +189,10 @@ class UIController:
 
         
     def positionControlArm(self,side):
+        actual_dt = self.dt
         assert (side in ['left','right']), "invalid arm selection"
         R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
+        # R_cw_rw_t = np.array([[0,0,1],[-1,0,0],[0,1,0]])
         joystick = side+"Controller"
         # print("{} button pushed".format(side),self.UI_state["controllerButtonState"][joystick])
         if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 :
@@ -188,18 +201,20 @@ class UIController:
             if(side == 'right'):
                 [RR_rw_rh,RT_rw_rh] = self.init_pos_right
                 curr_position = np.array(self.robot.sensedRightEETransform()[1])
-                print('\n\n\n {} \n\n\n '.format(self.robot.sensedRightEETransform()[1]))
+                # print('\n\n\n {} \n\n\n '.format(self.robot.sensedRightEETransform()[1]))
 
             elif(side == 'left'):
-                print('\n\n\n gets to the left side here \n\n\n ')
+                # print('\n\n\n gets to the left side here \n\n\n ')
                 [RR_rw_rh,RT_rw_rh] = self.init_pos_left
                 curr_position = np.array(self.robot.sensedLeftEETransform()[1])
             RT_rw_rh = np.array(RT_rw_rh)
             RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
             RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
-
-            RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch))).tolist()
-
+            # print('\n\n\n\n\n',self.init_headset_orientation.inv().as_dcm(),np.matmul(np.matmul(R_cw_rw,self.init_headset_orientation.inv().as_dcm()), np.subtract(RT_cw_cc,RT_cw_ch)),'\n\n\n\n\n')
+            # print('\n\n\n\n\n',RT_cw_cc,self.init_headset_orientation.as_dcm(),'\n\n\n\n\n')
+            # corrected_R_cw_rw = np.matmul(np.matmul(self.init_headset_orientation.as_matrix(),R_cw_rw),self.init_headset_orientation.inv().as_matrix())
+            RT_final = np.add(RT_rw_rh, np.matmul(np.matmul(self.init_headset_orientation.as_matrix(),R_cw_rw), np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()
+            # RT_final = np.add(RT_rw_rh, np.matmul(self.init_headset_orientation.as_matrix(), np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()
 
             # we now check if the "ideal" velocity is greater than 1 m/s
 
@@ -207,10 +222,6 @@ class UIController:
             # linear_velocity_vector = (RT_final - curr_position)*(self.dt)
             # if(np.linalg.norm(linear_velocity_vector)>0.95):
             #     RT_final = (curr_position + (linear_velocity_vector/np.linalg.norm(linear_velocity_vector))*0.95/self.dt).tolist()
-            
-            # RR_unit_x = R.from_rotvec(np.pi/2 * np.array([1, 0, 0]))
-            # RR_unit_y = R.from_rotvec(np.pi/2 * np.array([0, 1, 0]))
-            # RR_unit_z = R.from_rotvec(np.pi/2 * np.array([0, 0, 1]))
 
             RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
             # RR_rw_rh_T = R.from_dcm(np.transpose(RR_rw_rh.as_dcm()))
@@ -218,40 +229,64 @@ class UIController:
 
             # Transforming from left handed to right handed
             # we first read the quaternion
-            init_quat = self.init_UI_state["controllerPositionState"][joystick]['controllerRotation']
+            init_quat = np.array(self.init_UI_state["controllerPositionState"][joystick]['controllerRotation'])
             # turn it into a left handed rotation vector
-            right_handed_init_quat = np.array([-init_quat[2],init_quat[0],-init_quat[1],-(np.pi/180)*init_quat[3]])
+            # right_handed_init_quat = np.array([-init_quat[2],init_quat[0],-init_quat[1],-(np.pi/180)*init_quat[3]])
+            # #transform it to right handed:
+
+            # curr_quat = self.UI_state["controllerPositionState"][joystick]['controllerRotation']
+
+            # right_handed_curr_quat = np.array([-curr_quat[2],curr_quat[0],-curr_quat[1],-(np.pi/180)*curr_quat[3]])
+            # RR_cw_ch = R.from_rotvec(right_handed_init_quat[0:3]*right_handed_init_quat[3])
+            # RR_cw_ch_T = RR_cw_ch.inv()
+            # RR_cw_cc = R.from_rotvec(right_handed_curr_quat[0:3]*right_handed_curr_quat[3])
+            R_cw_rw = R.from_dcm(R_cw_rw)
+
+            # world_adjustment_matrix = R_cw_rw
+            world_adjustment_matrix = R.from_dcm(np.eye(3))
+            init_angle = (np.pi/180)*init_quat[3]
+
+            # right_handed_init_vec = world_adjustment_matrix.apply(init_quat[:3])*init_angle
+            right_handed_init_vec = np.array([-init_quat[2],init_quat[0],-init_quat[1]])*(-init_angle)
             #transform it to right handed:
 
-            curr_quat = self.UI_state["controllerPositionState"][joystick]['controllerRotation']
+            curr_quat = np.array(self.UI_state["controllerPositionState"][joystick]['controllerRotation'])
+            curr_angle = (np.pi/180)*curr_quat[3]
+            # right_handed_curr_vec =  world_adjustment_matrix.apply(curr_quat[:3])*curr_angle
+            right_handed_curr_vec = np.array([-curr_quat[2],curr_quat[0],-curr_quat[1]])*(-curr_angle)
 
-            right_handed_curr_quat = np.array([-curr_quat[2],curr_quat[0],-curr_quat[1],-(np.pi/180)*curr_quat[3]])
-            RR_cw_ch = R.from_rotvec(right_handed_init_quat[0:3]*right_handed_init_quat[3])
-            RR_cw_ch_T = R.from_dcm(RR_cw_ch.as_dcm().transpose())
-            RR_cw_cc = R.from_rotvec(right_handed_curr_quat[0:3]*right_handed_curr_quat[3])
-
+            # R_cw_rw = R.from_dcm(R_cw_rw)
+            # print('quats',curr_quat,init_quat)
+            RR_cw_ch = R.from_rotvec(right_handed_init_vec)
+            RR_cw_ch_T = RR_cw_ch.inv()
+            RR_cw_cc = R.from_rotvec(right_handed_curr_vec)
+            RR_ch_cc = self.init_headset_orientation*(RR_cw_ch_T*RR_cw_cc)*self.init_headset_orientation.inv()
             # print((RR_cw_ch_T*RR_cw_cc).as_rotvec(),'\n\n\n')
             # RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
-            RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
+            # RR_final = (RR_rw_rh*secondary_correction*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
+            # RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
+            # RR_final = (RR_rw_rh*corrected_R).as_dcm().flatten().tolist()
+            RR_final = (RR_rw_rh*RR_ch_cc).as_matrix().flatten().tolist()
+            # RR_final = RR_rw_rh.as_dcm().flatten().tolist()
             start_time = time.process_time()
             if(side == 'right'):
                 print('\n\n\n\n\n\n moving right arm \n\n\n\n\n\n\n')
 
-                self.robot.setRightEEInertialTransform([RR_final,RT_final],self.dt)
-
+                self.robot.setRightEEInertialTransform([RR_final,RT_final],actual_dt)
 
             else:
+                print('\n\n\n\n\n\n moving left arm \n\n\n\n\n\n\n')
+
                 # print('moving left arm \n\n\n')
-                self.robot.setLeftEEInertialTransform([RR_final,RT_final],self.dt)
+                self.robot.setLeftEEInertialTransform([RR_final,RT_final],actual_dt)
                 if((self.mode == 'Physical') and self.left_gripper_active):
-                    closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*3
+                    closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
                     if(closed_value >= 0.2):                        
-                        self.robot.setLeftGripperPosition([closed_value,closed_value,0,0])
+                        self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])
                     else:
                         self.robot.setLeftGripperPosition([0,0,0,0])
 
             # print('operation_time =',time.process_time() - start_time)
-
 
 
 
@@ -286,6 +321,7 @@ class UIController:
             RR_rw_rh => Right Rotational matrix from Robot World to Robot Home
             RR_rw_rh_T => Right Rotational matrix from Robot World to Robot Home Transpose
             R_cw_rw  => Rotational matrix from Controller World to Robot World
+            RR_hs => Initial headset 
 
             cc------controller current
             rc------robot current
@@ -305,26 +341,57 @@ class UIController:
 
     def velocityControlArm(self,side):
         assert (side in ['left','right']), "invalid arm selection"
-
-        # we start by calculating the desired rotation and position vectors, RR_final and RT_final
         R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
         joystick = side+"Controller"
         # print("{} button pushed".format(side),self.UI_state["controllerButtonState"][joystick])
-        if self.UI_state["controllerButtonState"][joystick]["squeeze"][0] > 0.5 :
+        if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 :
             # print("{} button pushed".format(side))
             # print('moving arm')
             if(side == 'right'):
                 [RR_rw_rh,RT_rw_rh] = self.init_pos_right
-            else:
+                curr_position = np.array(self.robot.sensedRightEETransform()[1])
+                R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
+                curr_orientation = R.from_dcm(np.array(self.robot.sensedRightEETransform()[0]).reshape((3,3)))
+                print('\n\n\n {} \n\n\n '.format(self.robot.sensedRightEETransform()[1]))
+
+            elif(side == 'left'):
+                print('\n\n\n gets to the left side here \n\n\n ')
                 [RR_rw_rh,RT_rw_rh] = self.init_pos_left
+                curr_position = np.array(self.robot.sensedLeftEETransform()[1])
+                curr_orientation = R.from_dcm(np.array(self.robot.sensedLeftEETransform()[0]).reshape((3,3)))
+
             RT_rw_rh = np.array(RT_rw_rh)
             RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
             RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
 
             RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch))).tolist()
+            vel = (np.array(RT_final)-np.array(curr_position))/self.dt
+            vel_norm = np.linalg.norm(vel)
+            max_vel = 0.5
+            actual_dt = self.dt
+            if(vel_norm > max_vel):
+                vel = (vel*max_vel/vel_norm).tolist()
+            else:
+                vel = vel.tolist()
 
+            
+            
+
+
+
+            # we now check if the "ideal" velocity is greater than 1 m/s
+
+            # current position:
+            # linear_velocity_vector = (RT_final - curr_position)*(self.dt)
+            # if(np.linalg.norm(linear_velocity_vector)>0.95):
+            #     RT_final = (curr_position + (linear_velocity_vector/np.linalg.norm(linear_velocity_vector))*0.95/self.dt).tolist()
+            
+            # RR_unit_x = R.from_rotvec(np.pi/2 * np.array([1, 0, 0]))
+            # RR_unit_y = R.from_rotvec(np.pi/2 * np.array([0, 1, 0]))
+            # RR_unit_z = R.from_rotvec(np.pi/2 * np.array([0, 0, 1]))
 
             RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
+            # RR_rw_rh_T = R.from_dcm(np.transpose(RR_rw_rh.as_dcm()))
             
 
             # Transforming from left handed to right handed
@@ -343,22 +410,33 @@ class UIController:
 
             # print((RR_cw_ch_T*RR_cw_cc).as_rotvec(),'\n\n\n')
             # RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_dcm().flatten().tolist()
-            RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc).as_rotvec()
+            RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc)
+            start_time = time.process_time()
 
-            # we now calculate the error values:
-
-            #we first get the current end-effector position
-
+            # we now calculate the difference between current and desired positions:
+            Delta_RR = (curr_orientation.inv()*RR_final).inv().as_rotvec()
+            rotation_norm = np.linalg.norm(Delta_RR)
+            max_rot = 1
+            if(rotation_norm > max_rot):
+                Delta_RR = (Delta_RR*max_rot/rotation_norm).tolist()
+            else:
+                Delta_RR = Delta_RR.tolist()
             if(side == 'right'):
-                # print('moving right arm\n\n\n')
+                # print('\n\n\n\n\n\n moving right arm \n\n\n\n\n\n\n')
 
-                self.robot.setRightEEInertialTransform([RR_final,RT_final],0.025)
+                self.robot.setRightEEVelocity(vel+Delta_RR, tool = [0,0,0])
 
 
             else:
-                # print('moving left arm \n\n\n')
-                self.robot.setLeftEEInertialTransform([RR_final,RT_final],0.025)
-            # print('operation_time =',time.process_time() - start_time)
+                print('moving left arm \n\n\n',vel+Delta_RR)
+                self.robot.setLeftEEVelocity(vel+Delta_RR, tool = [0,0,0])
+                if((self.mode == 'Physical') and self.left_gripper_active):
+                    closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
+                    if(closed_value >= 0.2):                        
+                        self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])
+                    else:
+                        self.robot.setLeftGripperPosition([0,0,0,0])
+
 
     def logTeleoperation(self,name):
         q = self.robotPoser.get()
@@ -375,7 +453,23 @@ class UIController:
         self.robot.setLeftLimbPositionLinear(left_limb_command,3)
         self.robot.setRightLimbPositionLinear(right_limb_command,3)
         return
-    
+    def treat_headset_orientation(self,headset_orientation):
+        """
+        input: Rotvec of the headset position
+        output: Rotation Matrix for the headset that ignores pitch and roll
+        """
+        #first we turn the input into a right_handed rotvec
+        right_handed_rotvec =  np.array([-headset_orientation[2],headset_orientation[0],-headset_orientation[1],-(np.pi/180)*headset_orientation[3]])
+        # right_handed_rotvec =  np.array([-headset_orientation[2],-headset_orientation[0],headset_orientation[1],-(np.pi/180)*headset_orientation[3]])
+
+        partial_rotation = R.from_rotvec(right_handed_rotvec[:3]*right_handed_rotvec[3])
+        # we then get its equivalent row, pitch and yaw 
+        rpy = partial_rotation.as_euler('ZYX')
+        # we then ignore its roll and pitch in unity
+        rotation_final = R.from_euler('ZYX',[rpy[0],0,0])
+        print(rotation_final.as_dcm())
+        return rotation_final
+
        
 
 if __name__ == "__main__" : 

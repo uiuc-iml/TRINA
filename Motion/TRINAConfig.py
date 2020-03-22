@@ -13,28 +13,28 @@ limb_velocity_limits = [2.0,2.0,2.0,2.0,2.0,2.0]
 epsilon = 0.01
 limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon]
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
-
+collision_check_interval = 0.1
 def get_left_tool_link_N(name):
-    if name == "anthrax":
-        return 16
-    elif name == "seed"  or "half_anthrax":
+    if((name == "anthrax")|(name == "anthrax_lowpoly")):
+        return 13
+    elif((name == "seed")|(name == "half_anthrax")):
         return 16
 
 def get_right_tool_link_N(name):
-    if name == "anthrax":
-        return 26
-    elif name == "seed" or "half_anthrax":
+    if((name == "anthrax")|(name == "anthrax_lowpoly")):
+        return 21
+    elif((name == "seed")|(name == "half_anthrax")):
         return 41
 def get_left_active_Dofs(name):
-    if name == "anthrax":
-        return [10,11,12,13,14,15]
-    elif name == "seed" or "half_anthrax":
+    if( (name == "anthrax")|(name == "anthrax_lowpoly")):
+        return [7,8,9,10,11,12]
+    elif((name == "seed")|(name == "half_anthrax")):
         return [10,11,12,13,14,15]
 
 def get_right_active_Dofs(name):
-    if name == "anthrax":
-        return [20,21,22,23,24,25]
-    elif name == "seed" or "half_anthrax":
+    if((name == "anthrax")|(name == "anthrax_lowpoly")):
+        return [15,16,17,18,19,20]
+    elif((name == "seed")|(name == "half_anthrax")):
         return [35,36,37,38,39,40]
 
 #TRINA_left_tool_link_N = 16
@@ -45,15 +45,15 @@ def get_right_active_Dofs(name):
 #TRINA_right_active_Dofs = [20,21,22,23,24,25] #anthrax
 
 def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
-    if name == 'anthrax':
-        return base[0:2] + [0]*3 + [base[2]] + [0]*4 + left_limb + [0]*4 + right_limb + [0]*2
+    if((name == 'anthrax')|(name=="anthrax_lowpoly")):
+        return base[0:2] + [0]*3 + [base[2]] + [0] + left_limb + [0]*2 + right_limb + [0]
     elif(name == 'seed'):
         return base[0:3] + [0]*7 + left_limb + [0]*19 + right_limb + [0]*18
     elif(name == 'half_anthrax'):
         return base[0:3] + [0]*7 + left_limb + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
     else:
         print("wrong model name used.")
-        return
+        return None
 
 
 #to add a new robot model:
