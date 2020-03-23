@@ -180,7 +180,7 @@ class UR5Controller(object):
 
         # configure outputs (URControl -> Python)
         self._conn.send_output_setup(
-             ['timestamp', 'target_q', 'actual_q', 'target_qd', 'actual_qd', 'target_qdd', 'target_speed_fraction','actual_TCP_force'],  # Add TCP forces here
+             ['timestamp', 'target_q', 'actual_q', 'target_qd', 'actual_qd', 'target_qdd', 'target_speed_fraction','actual_TCP_force','safety'],  # Add TCP forces here
             ['DOUBLE', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'DOUBLE', 'VECTOR6D']
         )
 
