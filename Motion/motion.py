@@ -164,9 +164,9 @@ class Motion:
         self.shut_down_flag = False
         self.cartedian_drive_failure = False
         self._controlLoopLock = RLock()
-        #signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
+        #signal.signal(signal.SIGINT, self.sigintHandler) # catch SIGINT (ctrl-c)  #enable this in the inner loop might cause the outter loop not catch ctril-c
 
-    def sigint_handler(self, signum, frame):
+    def sigintHandler(self, signum, frame):
         """ Catch Ctrl+C tp shutdown the robot
 
         """
@@ -266,14 +266,52 @@ class Motion:
             print("motion.startup():Already started")
         return self.startUp
 
-    def enabled_components(self):
+    def enabledComponents(self):
         """
         Check what components are enabled rn
 
         return:
         ---------------
-        
+        A python dictionary indexed by component names, giving a boolean value
         """
+        return {'left_limb': self.left_limb_enabled, 'right_limb': self.right_limb_enabled,'torso': self.torso_enabled,'base':self.base_enabled,'left_gripper':self.left_gripper_enabled,'right_gripper':self.right_gripper_enabled} 
+
+    def enableAComponent(self,component):
+        """
+        Enable a component, while the control loop has already started running
+
+        Parameter:
+        ---------------
+        A string, name of the component
+        """
+        if component == 'left_limb':
+            self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright,\
+                payload = TRINAConfig.left_limb_payload,tcp = TRINAConfig.left_limb_TCP)
+            self.left_limb_enabled = True
+            logger.debug('left limb enabled')
+        elif component == 'right_limb':
+            self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
+            self.right_limb_enabled = True
+            logger.debug('right limb enabled')
+        elif component == 'base':
+            self.base = BaseController()
+            self.base_enabled = True
+            logger.debug('base enabled')
+        elif component == 'torso':
+            self.torso = TorsoController()
+            self.torso_enabled = True
+            logger.debug('torso enabled')
+        elif component == 'left_gripper':
+            self.left_gripper = GripperController()
+            self.left_gripper_enabled = True
+            logger.debug('left gripper enabled')
+        elif component == 'right_gripper':
+            self.right_gripper = GripperController()
+            self.right_gripper_enabled = True
+            logger.debug('right gripper enabled')
+        else:
+            logger.error('Motion: wrong component name specified')
+            raise RuntimeError('Motion: wrong component name specified')
 
     def _controlLoop(self):
         """main control thread, synchronizing all components
@@ -1724,14 +1762,10 @@ if __name__=="__main__":
     #         #print(i)
     # print("average time:", (time.time() - startTime)/float(totalN))
     ##################################
-    # robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
-    # robot.startup()
-    # time.sleep(0.2)
-    # left_limb_q = robot.sensedLeftLimbPosition()
-    # left_limb_q[2] =left_limb_q[2] + 0.01
-    # robot.setLeftLimbPosition(left_limb_q)
-    # time.sleep(1.2)
-    # robot.shutdown()
+    robot = Motion(mode = 'Kinematic',codename = "anthrax")
+    robot.startup()
+    print(robot.enabled_components()
+    robot.shutdown()
 
 
     #################################
