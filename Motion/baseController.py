@@ -103,7 +103,7 @@ class BaseControlMode(Enum):
 
 class BaseController:
 
-    def __init__(self, dt = 1.0/100.0):
+    def __init__(self, dt = 1.0/100.0,indepent = 'True'):
         self.control_mode = BaseControlMode.NOTHING
         self.enabled = False
         self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
@@ -117,7 +117,7 @@ class BaseController:
         self.dt = dt
         self.target_path = None
         self.path_velocity = None
-
+        self.indepent = indepent
     def _controlLoop(self):
         rate = rospy.Rate(1.0/self.dt)
         while not rospy.is_shutdown() and self.enabled:
@@ -162,7 +162,8 @@ class BaseController:
         self.measured_vel[1] = odom_msg.twist.twist.angular.z;
 
     def start(self):
-        rospy.init_node("drive_base")
+        if self.indepent:
+            rospy.init_node("drive_base")
         self.enabled = True
         self.control_thread.start()
 

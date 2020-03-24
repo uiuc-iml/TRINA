@@ -173,6 +173,16 @@ class MotionClient:
 
 	def sensedRightEEVelcocity(self,local_pt = [0,0,0]):
 		return self.s.sensedRightEEVelcocity(local_pt)
+
+	def enabledComponents(self):
+		return self.s.enabledComponents()
+
+	def enableAndStartAComponent(self,name):
+		return self.s.enableAComponent()
+
+	def componentStatus(self):
+		return self.s.componentStatus()
+
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startup()

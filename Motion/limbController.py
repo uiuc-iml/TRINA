@@ -243,11 +243,11 @@ class LimbController:
 
     def getSafetyStatus(self):
         if self.safety_status[0]:
-            return 'normal'
+            return 0 #'normal'
         elif self.safety_status[2]:
-            return 'protective_stop'
+            return 1 #'protective_stop'
         elif self.safety_status[8]:
-            return 'emergency_stop'
+            return 2 #'emergency_stop'
 
 
 

@@ -205,6 +205,21 @@ def _sensedRightEEVelocity(local_pt):
 	global robot
 	return robot.sensedRightEEVelcocity(local_pt)
 
+###new functions###
+def _enabledComponents()
+	global robot
+	return robot.enabledComponents()
+
+def _componentStatus()
+	global robot
+	return robot.componentStatus()
+
+def _enableAndStartAComponent(name):
+	global robot
+	return robot.enableAComponent(name)
+
+
+
 #ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
@@ -258,7 +273,9 @@ server.register_function(_startup,'startup')
 server.register_function(_isShutDown,'isShutDown')
 server.register_function(_sensedLeftEEVelocity,'sensedLeftEEVelcocity')
 server.register_function(_sensedRightEEVelocity,'sensedRightEEVelcocity')
-
+server.register_function(_enabledComponents,'enabledComponents')
+server.register_function(_enableAComponent,'enableAndStartAComponent')
+server.register_function(_componentStatus,'componentStatus')
 ##
 print('#######################')
 print('#######################')

@@ -27,6 +27,9 @@ class LimbState:
         self.driveSpeedAdjustment = 1.0
         self.cartesianMode = 0 # 0 means both translation and rotation, 2 only rotation, 1 only position
         self.toolCenter = [0,0,0]
+
+        #safety status
+        self.safety_status = -1 #0: normal 1:protective stop 2: emergency stop -1:enabled but not started -2:disconnected
         
 class BaseState():
     def __init__(self):
@@ -42,12 +45,15 @@ class BaseState():
 
         self.commandType = 1 # 0 is position, 1 is velocity, 2 is path
         self.commandSent = True
+        self.safety_status = -1
 
 class GripperState:
     def __init__(self):
         self.sense_finger_set = [0.0, 0.0, 0.0, 0.0] #finger 1 finger 2 finger 3 preshape
         self.command_finger_set = [0.0, 0.0, 0.0, 0.0]
         self.commandType = 0 #0 is position, 1 is velocity
+        self.commandSent = True
+        self.safety_status = -1
 
 class TorsoState:
     def __init__(self):
@@ -59,3 +65,4 @@ class TorsoState:
         self.commandSent = True
         self.leftLeg = 0
         self.rightLeg = 0
+        self.safety_status = -1
