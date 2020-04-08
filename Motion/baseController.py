@@ -173,6 +173,7 @@ class BaseController:
         self.enabled = False
         self.commanded_vel = [0.0, 0.0]
         print("BaseController:shutdown called")
+
     def moving(self):
         if not self.enabled:
             return False
