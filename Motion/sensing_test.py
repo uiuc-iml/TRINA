@@ -57,8 +57,8 @@ while True:
 
     vis.add("pc", pc)
 
-    if time.time() - start_time < 4:
-        robot.setBaseVelocity([0.3, 0.1])
+    if time.time() - start_time < 5:
+        robot.setBaseVelocity([0.5, 0.15])
     else:
         robot.setBaseVelocity([0.0,0.0])
     vis.unlock()
