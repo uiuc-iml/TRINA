@@ -17,9 +17,7 @@ from geometry import *
 ##### testing using the kinematic mode..############
 #
 ###################################################
-robot = Motion(mode = 'Kinematic')
-N = len(robot.robot_model.getConfig())
-# for each link: link.setMass
+robot = Motion(mode = 'Kinematic', codename="seed")
 
 world = robot.getWorld()
 
@@ -95,10 +93,17 @@ while True:
     ktraj = klampt.model.trajectory.Trajectory(milestones = [[x, y] for x, y in zip(xs, ys)])
 
     N = len(profile)
+    time_thresh = 0.2
+    start_time = time.time()
 
     for i in range(N):
-        time_start = time.time()
+        iteration_start = time.time()
         state = profile[i]
+
+        if iteration_start - start_time > time_thresh:
+            end_v = state.v
+            break
+
         pose = robot.base_state.measuredPos
 
         curr_target = (state.x, state.y)
@@ -120,7 +125,7 @@ while True:
         new_pose = robot.base_state.measuredPos
         curr_theta = new_pose[2]
 
-        elapsed_time = time.time() - time_start
+        elapsed_time = time.time() - iteration_start
         remaining_time = max(0.01 - elapsed_time, 0.0)
         time.sleep(remaining_time)
 
