@@ -4,7 +4,7 @@ from klampt import vis
 
 from motion import *
 
-robot = Motion(mode = "Kinematic")
+robot = Motion(mode = "Kinematic", codename="anthrax")
 robot.startup()
 
 world = robot.getWorld()
