@@ -2,7 +2,7 @@
 <world>
     <robot name="trina" file="robots/TRINA_with_reflex.rob" rotateZ="0" translation="0 0 0">
         <sensors>
-            <LaserRangeSensor name="lidar" link="2" Tsensor="0 0 1  1 0 0  0 1 0  0.2 0 0.2"  depthMaximum="4.0" depthMinimum="0.1" depthResolution="0.01" depthVarianceLinear="0.0001" />
+            <LaserRangeSensor name="lidar" link="2" Tsensor="0 0 1  1 0 0  0 1 0  0.2 0 0.2"  depthMaximum="4.0" depthMinimum="0.5" depthResolution="0.01" depthVarianceLinear="0.0001" />
         </sensors>
     </robot> 
     <terrain file="terrains/cube.off" scale="10.0 10.0 0.01" translation="-5.0 -5.0 -0.01">

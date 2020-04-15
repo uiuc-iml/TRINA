@@ -1,10 +1,37 @@
 import klampt
 import time
+import math
 from klampt import vis
+from klampt.math import so2
 
 from motion import *
 
-robot = Motion(mode = "Kinematic", codename="anthrax")
+def interpolate(a, b, u):
+    return (b-a)*u + a
+
+def lidar_to_pc(robot, sensor, scan):
+    x, y, theta = robot.base_state.measuredPos
+    angle_range = float(sensor.getSetting("xSweepMagnitude"))
+
+    rv = klampt.PointCloud()
+
+    for i in range(len(scan)):
+        u = float(i)/float(len(scan))
+        # If period = 0, measurement sweeps over range of [-magnitude,magnitude]
+        angle = interpolate(-angle_range, angle_range, u)
+        pt = [math.cos(angle), math.sin(angle)]
+        pt[0] *= scan[i]
+        pt[1] *= scan[i]
+        pt = so2.apply(theta, pt)
+        pt[0] += x
+        pt[1] += y
+        pt.append(0.2)
+
+        rv.addPoint(pt)
+
+    return rv
+
+robot = Motion(mode = "Kinematic", codename="seed")
 robot.startup()
 
 world = robot.getWorld()
@@ -14,15 +41,25 @@ vis.show()
 
 sim = klampt.Simulator(world)
 
-sensor = sim.controller(0).sensor("lidar")
-vis.add("sensor", sensor)
-#print(sensor.getSetting("link"))
+lidar = sim.controller(0).sensor("lidar")
+vis.add("lidar", lidar)
+
+time.sleep(3)
+
+start_time = time.time()
 
 while True:
     vis.lock()
-    sensor.kinematicSimulate(world, 0.01)
-    #sim.simulate(0.01)
-    sim.updateWorld()
-    print(sensor.getMeasurements())
+    lidar.kinematicSimulate(world, 0.01)
+
+    measurements = lidar.getMeasurements()
+    pc = lidar_to_pc(robot, lidar, measurements)
+
+    vis.add("pc", pc)
+
+    if time.time() - start_time < 4:
+        robot.setBaseVelocity([0.3, 0.1])
+    else:
+        robot.setBaseVelocity([0.0,0.0])
     vis.unlock()
     time.sleep(0.01)
