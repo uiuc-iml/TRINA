@@ -17,7 +17,7 @@ from geometry import *
 ##### testing using the kinematic mode..############
 #
 ###################################################
-robot = Motion(mode = 'Kinematic', codename="seed")
+robot = Motion(mode = 'Kinematic', codename="anthrax")
 
 world = robot.getWorld()
 
