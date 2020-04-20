@@ -4,6 +4,8 @@ import math
 from klampt import vis
 from klampt import io
 from klampt.math import so2
+from klampt.model import sensing
+import matplotlib.pyplot as plt
 
 from motion import *
 
@@ -35,7 +37,17 @@ def lidar_to_pc(robot, sensor, scan):
     return rv
 
 robot = Motion(mode = "Kinematic", codename="anthrax")
+
+leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
+leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
+rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
+rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
+
 robot.startup()
+
+# reset arms
+robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
 
 world = robot.getWorld()
 
@@ -49,23 +61,30 @@ left_cam = sim.controller(0).sensor("left_hand_camera")
 right_cam = sim.controller(0).sensor("right_hand_camera")
 vis.add("lidar", lidar)
 vis.add("left_cam", left_cam)
-vis.add("right_cam", right_cam)
+#vis.add("right_cam", right_cam)
 
-time.sleep(3)
+#time.sleep(3)
 
 start_time = time.time()
 
 while True:
-    vis.lock()
     lidar.kinematicSimulate(world, 0.01)
+    left_cam.kinematicSimulate(world, 0.01)
+    #right_cam.kinematicSimulate(world, 0.01)
 
     measurements = lidar.getMeasurements()
-    pc = lidar_to_pc(robot, lidar, measurements)
-    vis.add("pc", pc)
+    lidar_pc = lidar_to_pc(robot, lidar, measurements)
+    vis.add("pc", lidar_pc)
+
+    # rgb image, depth_image
+    lc_rgb, lc_depth = sensing.camera_to_images(left_cam)
+
+    # Get point cloud. For some reason triggers an assertion for me in Python2
+    # with the latest version on Klampt Master
+    left_cam_pc = sensing.camera_to_points(left_cam, points_format='Geometry3D', all_points=True, color_format='rgb')
 
     if time.time() - start_time < 5:
         robot.setBaseVelocity([0.3, 0.15])
     else:
         robot.setBaseVelocity([0.0,0.5])
-    vis.unlock()
     time.sleep(0.01)
