@@ -45,7 +45,7 @@ class UIController:
         self.mode = 'Kinematic'
         self.components = ['base','left_limb','right_limb','base']
         self.init_UI_state = {}
-        self.dt = 0.02
+        self.dt = 0.025
         self.robot = MotionClient(address = robot_ip)
         self.robot.startServer(mode = self.mode, components = self.components)
         self.left_limb_active = ('left_limb' in self.components)
@@ -79,7 +79,7 @@ class UIController:
         # dataset = pickle.load(fd)
         # self.init_UI_state = dataset
         self.setRobotToDefault()
-        time.sleep(5)
+        time.sleep(3)
         while(True):
             if(self.startup == True & (self.server["UI_STATE"].read()!=0)):
                 print('started the initial values for the variables')
