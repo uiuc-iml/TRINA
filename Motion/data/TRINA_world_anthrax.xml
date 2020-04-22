@@ -11,8 +11,4 @@
         <display color="0.8 0.8 0.8"/>
     </terrain>
 
-    <rigidObject name="yellow_block" file="block.obj"  position="2.0 2.0 0.2" rotateZ="0">
-        <display color="0 0 0"/>
-    </rigidObject>
-
 </world>
