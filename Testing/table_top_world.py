@@ -200,12 +200,21 @@ class testingWorldBuilder():
         return item_1
 
 
+# TODO: arms still kinda block camera view
+def reset_arms(robot):
+    leftResetConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+    rightResetConfig = [0.2028,-1.0353,1.610,-0.5749,0.9622,-0.0974]
+    config = [0]*7 + leftResetConfig + [0, 0] + rightResetConfig + [0]
+    robot.setConfig(config)
+
 # add table + robot
 builder = testingWorldBuilder(30,30)
 builder.addTableTopScenario(x=1.75,y=-0.2)
 builder.addRobot("../Motion/data/robots/Anthrax.urdf", None)
 
 w = builder.getWorld()
+robot = w.robot(0)
+reset_arms(robot)
 sim = klampt.Simulator(w)
 
 # setup simulated camera
@@ -223,12 +232,10 @@ vis.add("world",w)
 vis.add("cam", cam)
 
 # Take a picture!
-'''
 cam.kinematicSimulate(w, 0.01)
 rgb, depth = sensing.camera_to_images(cam)
 plt.imshow(rgb)
 plt.show()
-'''
 
 # run the simulation (indefinitely)
 vis.run()
