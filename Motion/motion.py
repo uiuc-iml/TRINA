@@ -327,15 +327,12 @@ class Motion:
                     if self.left_limb_enabled:
                         if self.left_limb_state.commandQueue:
                             if self.left_limb_state.commandType == 0:
-                                if len(self.left_limb_state.commandedqQueue) > 0:
-                                    if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                        self.left_limb.setConfig((self.left_limb_state.commandedqQueue.pop(0) + [0.0]))
-                                        self.left_limb_state.lastCommandQueueTime = time.time()
-                            elif self.left_limb_state.commandType == 1:
-                                if len(self.left_limb_state.commandeddqQueue) > 0:
-                                    if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                        self.left_limb.setVelocity(self.left_limb_state.commandeddqQueue.pop(0) + [0.0])
-                                        self.left_limb_state.lastCommandQueueTime = time.time()
+                                tmp = time.time() - self.left_limb_state.commandQueueTime
+                                if tmp <= self.left_limb_state.commandedQueueDuration:
+                                    self.simulated_robot.setLeftLimbConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,tmp/self.left_limb_state.commandedQueueDuration)))
+                                else:
+                                    self.simulated_robot.setLeftLimbConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
+                                    self.setLeftLimbPosition(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
                         #### cartesian drive mode
                         elif self.left_limb_state.cartesianDrive:
                             flag = 1
@@ -370,15 +367,12 @@ class Motion:
                     if self.right_limb_enabled:
                         if self.right_limb_state.commandQueue:
                             if self.right_limb_state.commandType == 0:
-                                if len(self.right_limb_state.commandedqQueue) > 0:
-                                    if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                        self.right_limb.setConfig(self.right_limb_state.commandedqQueue.pop(0) + [0.0])
-                                        self.right_limb_state.lastCommandQueueTime = time.time()
-                            elif self.right_limb_state.commandType == 1:
-                                if len(self.right_limb_state.commandeddqQueue) > 0:
-                                    if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.ur5e_control_rate):
-                                        self.right_limb.setVelocity(self.right_limb_state.commandeddqQueue.pop(0) + [0.0])
-                                        self.right_limb_state.lastCommandQueueTime = time.time()
+                                tmp = time.time() - self.right_limb_state.commandQueueTime
+                                if tmp <= self.right_limb_state.commandedQueueDuration:
+                                    self.simulated_robot.setRightLimbConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,tmp/self.right_limb_state.commandedQueueDuration)))
+                                else:
+                                    self.simulated_robot.setRightLimbConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
+                                    self.setRightLimbPosition(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
                         elif self.right_limb_state.cartesianDrive:
                             flag = 1
                             while flag:
@@ -452,16 +446,24 @@ class Motion:
                         self.base_state.measuredVel = self.simulated_robot.getBaseVelocity()
                         self.base_state.measuredPos = self.simulated_robot.getBaseConfig()
                         #self.left_gripper_state.sense_finger_set = selfprint("motion.controlLoop(): controlLoop started.")
+
+                    ###left limb
+                    if self.left_limb_state.commandQueue:
                         if self.left_limb_state.commandType == 0:
-                            if len(self.left_limb_state.commandedqQueue) > 0:
-                                if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
-                                    self.simulated_robot.setLeftLimbConfig(self.left_limb_state.commandedqQueue.pop(0))
-                                    self.left_limb_state.lastCommandQueueTime = time.time()
-                        elif self.left_limb_state.commandType == 1:
-                            if len(self.left_limb_state.commandeddqQueue) > 0:
-                                if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
-                                    self.simulated_robot.setLeftLimbVelocity(self.left_limb_state.commandeddqQueue.pop(0))
-                                    self.left_limb_state.lastCommandQueueTime = time.time()
+                            tmp = time.time() - self.left_limb_state.commandQueueTime
+                            if tmp <= self.left_limb_state.commandedQueueDuration:
+                                self.simulated_robot.setLeftLimbConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,tmp/self.left_limb_state.commandedQueueDuration)))
+                            else:
+                                self.simulated_robot.setLeftLimbConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
+                                self.setLeftLimbPosition(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
+
+                        #elif self.left_limb_state.commandType == 1:
+                        #    if len(self.left_limb_state.commandeddqQueue) > 0:
+                        #        #if ((time.time() - self.left_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
+                        #        self.simulated_robot.setLeftLimbVelocity(self.left_limb_state.commandeddqQueue.pop(0))
+                        #        #self.left_limb_state.lastCommandQueueTime = time.time()
+
+
                     #### cartesian drive mode
                     elif self.left_limb_state.cartesianDrive:
                         #clock1 = time.time()
@@ -476,7 +478,10 @@ class Motion:
                                 self.left_limb_state.commandeddq = []
                                 self.left_limb_state.commandType = 0
                                 self.left_limb_state.commandQueue = False
-                                self.left_limb_state.commandedqQueue = []
+                                self.left_limb_state.difference = []
+                                self.left_limb_state.commandedqQueueStart = []
+                                self.left_limb_state.commandQueueTime = 0.0
+                                self.left_limb_state.commandedQueueDuration = 0.0
                                 self.left_limb_state.cartesianDrive = False
                                 break
                             elif res == 1:
@@ -485,9 +490,6 @@ class Motion:
                                 flag = 0
                                 self.simulated_robot.setLeftLimbConfig(target_config)
 
-                            #print(res)
-                        #print("CartesianDrive IK took",time.time() - clock1, "secs")
-                    ####
 
                     else:
                         if not self.left_limb_state.commandSent:
@@ -498,20 +500,17 @@ class Motion:
                                 self.simulated_robot.setLeftLimbVelocity(self.left_limb_state.commandeddq)
                             self.left_limb_state.commandSent = True
 
+                    ##right limb
                     if self.right_limb_state.commandQueue:
                         if self.right_limb_state.commandType == 0:
-                            if len(self.right_limb_state.commandedqQueue) > 0:
-                                if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
-                                    self.simulated_robot.setRightLimbConfig(self.right_limb_state.commandedqQueue.pop(0))
-                                    self.right_limb_state.lastCommandQueueTime = time.time()
-                        elif self.right_limb_state.commandType == 1:
-                            if len(self.right_limb_state.commandeddqQueue) > 0:
-                                if ((time.time() - self.right_limb_state.lastCommandQueueTime) > TRINAConfig.simulated_robot_control_rate):
-                                    self.simulated_robot.setRightLimbVelocity(self.right_limb_state.commandeddqQueue.pop(0))
-                                    self.right_limb_state.lastCommandQueueTime = time.time()
+                            tmp = time.time() - self.right_limb_state.commandQueueTime
+                            if tmp <= self.right_limb_state.commandedQueueDuration:
+                                self.simulated_robot.setRightLimbConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,tmp/self.right_limb_state.commandedQueueDuration)))
+                            else:
+                                self.simulated_robot.setRightLimbConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
+                                self.setRightLimbPosition(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
 
                     elif self.right_limb_state.cartesianDrive:
-                        #clock1 = time.time()
                         flag = 1
                         while flag:
                             #res = 0 means IK has failed completely, 1 means keep trying smaller steps, 2 means success
@@ -524,7 +523,10 @@ class Motion:
                                 self.right_limb_state.commandeddq = []
                                 self.right_limb_state.commandType = 0
                                 self.right_limb_state.commandQueue = False
-                                self.right_limb_state.commandedqQueue = []
+                                self.right_limb_state.difference = []
+                                self.right_limb_state.commandedqQueueStart = []
+                                self.right_limb_state.commandQueueTime = 0.0
+                                self.right_limb_state.commandedQueueDuration = 0.0
                                 self.right_limb_state.cartesianDrive = False
                                 break
                             elif res == 1:
@@ -558,7 +560,6 @@ class Motion:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
-
             #print("Elapsed Time:", time.time() - loopStartTime)
         logger.info('controlThread exited.')
         print("motion.controlThread: exited")
@@ -595,7 +596,10 @@ class Motion:
             self.left_limb_state.commandeddq = []
             self.left_limb_state.commandType = 0
             self.left_limb_state.commandQueue = False
-            self.left_limb_state.commandedqQueue = []
+            self.left_limb_state.difference = []
+            self.left_limb_state.commandedqQueueStart = []
+            self.left_limb_state.commandQueueTime = 0.0
+            self.left_limb_state.commandedQueueDuration = 0.0
             self.left_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
@@ -622,7 +626,10 @@ class Motion:
             self.right_limb_state.commandeddq = []
             self.right_limb_state.commandType = 0
             self.right_limb_state.commandQueue = False
-            self.right_limb_state.commandedqQueue = []
+            self.right_limb_state.difference = []
+            self.right_limb_state.commandedqQueueStart = []
+            self.right_limb_state.commandQueueTime = 0.0
+            self.right_limb_state.commandedQueueDuration = 0.0
             self.right_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
@@ -643,31 +650,35 @@ class Motion:
         logger.debug('number of joint positions sent : %d and duration is %d', len(q), duration)
         assert len(q) == 6, "motion.setLeftLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setLeftLimbPositionLinear(): Duration needs to be a positive number"
+        print(q)
         #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
         #TODO:Also collision checks
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
             self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb_state.sensedq),self._get_klampt_q(left_limb = q))
-            planningTime = 0.0 + TRINAConfig.ur5e_control_rate
-            positionQueue = []
-            currentq = self.left_limb_state.sensedq
-            difference = vectorops.sub(q,currentq)
-            while planningTime < duration:
-                #print(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration))[5])
-                positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
-                planningTime = planningTime + TRINAConfig.ur5e_control_rate
-            positionQueue.append(q)
+            #planningTime = 0.0 + TRINAConfig.ur5e_control_rate
+            #positionQueue = []
+            #currentq = self.left_limb_state.sensedq
+            #difference = vectorops.sub(q,currentq)
+            #while planningTime < duration:
+            #    positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
+            #    planningTime = planningTime + self.dt #TRINAConfig.ur5e_control_rate
+            #positionQueue.append(q)
             self.left_limb_state.commandSent = False
             self.left_limb_state.commandType = 0
-            self.left_limb_state.commandedqQueue = deepcopy(positionQueue)
+            self.left_limb_state.difference = vectorops.sub(q,self.left_limb_state.sensedq)
+            self.left_limb_state.commandedqQueueStart = deepcopy(self.left_limb_state.sensedq)
             self.left_limb_state.commandQueue = True
             self.left_limb_state.commandedq = []
             self.left_limb_state.commandeddq = []
             self.left_limb_state.cartesianDrive = False
+            self.left_limb_state.commandedQueueDuration = duration
+            self.left_limb_state.commandQueueTime = time.time()
             self._controlLoopLock.release()
         else:
             logger.warning('Left limb not enabled')
             print("motion.setLeftLimbPosition():Left limb not enabled")
+        print 
 
     def setRightLimbPositionLinear(self,q,duration):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
@@ -687,22 +698,16 @@ class Motion:
         if self.right_limb_enabled:
             self._controlLoopLock.acquire()
             self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb_state.sensedq),self._get_klampt_q(right_limb = q))
-            planningTime = 0.0 + TRINAConfig.ur5e_control_rate
-            positionQueue = []
-            currentq = self.right_limb_state.sensedq
-            difference = vectorops.sub(q,currentq)
-            while planningTime < duration:
-                positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
-                planningTime = planningTime + TRINAConfig.ur5e_control_rate
-            positionQueue.append(q)
-
             self.right_limb_state.commandSent = False
             self.right_limb_state.commandType = 0
-            self.right_limb_state.commandedqQueue = deepcopy(positionQueue)
+            self.right_limb_state.difference = vectorops.sub(q,self.right_limb_state.sensedq)
+            self.right_limb_state.commandedqQueueStart = deepcopy(self.right_limb_state.sensedq)
             self.right_limb_state.commandQueue = True
             self.right_limb_state.commandedq = []
             self.right_limb_state.commandeddq = []
             self.right_limb_state.cartesianDrive = False
+            self.right_limb_state.commandedQueueDuration = duration
+            self.right_limb_state.commandQueueTime = time.time()
             self._controlLoopLock.release()
         else:
             logger.warning('Right limb not enabled')
@@ -762,7 +767,10 @@ class Motion:
             self.left_limb_state.commandedq = []
             self.left_limb_state.commandType = 1
             self.left_limb_state.commandQueue = False
-            self.left_limb_state.commandedqQueue = []
+            self.left_limb_state.difference = []
+            self.left_limb_state.commandedqQueueStart = []
+            self.left_limb_state.commandQueueTime = 0.0
+            self.left_limb_state.commandedQueueDuration = 0.0
             self.left_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
@@ -787,7 +795,10 @@ class Motion:
             self.right_limb_state.commandedq = []
             self.right_limb_state.commandType = 1
             self.right_limb_state.commandQueue = False
-            self.right_limb_state.commandedqQueue = []
+            self.right_limb_state.difference = []
+            self.right_limb_state.commandedqQueueStart = []
+            self.right_limb_state.commandQueueTime = 0.0
+            self.right_limb_state.commandedQueueDuration = 0.0
             self.right_limb_state.cartesianDrive = False
             self._controlLoopLock.release()
         else:
@@ -863,9 +874,12 @@ class Motion:
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
             self.left_limb_state.commandedq = []
-            self.left_limb_state.commandedqQueue = []
             self.left_limb_state.commandeddq = []
             self.left_limb_state.commandQueue = False
+            self.left_limb_state.difference = []
+            self.left_limb_state.commandedqQueueStart = []
+            self.left_limb_state.commandQueueTime = 0.0
+            self.left_limb_state.commandedQueueDuration = 0.0
             self.cartesian_drive_failure = False
             ##cartesian velocity drive
             if len(v) == 3:
@@ -879,7 +893,7 @@ class Motion:
             else:
                 #error
                 logger.error('wrong input')
-                print("motion.setRightEEVelocity(): wrong input")
+                print("motion.setLeftEEVelocity(): wrong input")
                 return
 
             self.left_limb_state.cartesianDrive = True
@@ -971,9 +985,12 @@ class Motion:
         if self.right_limb_enabled:
             self._controlLoopLock.acquire()
             self.right_limb_state.commandedq = []
-            self.right_limb_state.commandedqQueue = []
             self.right_limb_state.commandeddq = []
             self.right_limb_state.commandQueue = False
+            self.right_limb_state.difference = []
+            self.right_limb_state.commandedqQueueStart = []
+            self.right_limb_state.commandQueueTime = 0.0
+            self.right_limb_state.commandedQueueDuration = 0.0
             self.cartesian_drive_failure = False
             ##cartesian velocity drive
             if len(v) == 3:
@@ -1384,14 +1401,20 @@ class Motion:
         self._controlLoopLock.acquire()
         if self.left_limb_enabled:
             self.left_limb_state.commandedq = []
-            self.left_limb_state.commandedqQueue = []
+            self.left_limb_state.difference = []
+            self.left_limb_state.commandedqQueueStart = []
+            self.left_limb_state.commandQueueTime = 0.0
+            self.left_limb_state.commandedQueueDuration = 0.0
             self.left_limb_state.commandSent = True
             self.left_limb_state.commandQueue = False
             self.left_limb_state.commandeddq = []
             self.left_limb_state.cartesianDrive = False
         if self.right_limb_enabled:
             self.right_limb_state.commandedq = []
-            self.right_limb_state.commandedqQueue = []
+            self.right_limb_state.difference = []
+            self.right_limb_state.commandedqQueueStart = []
+            self.right_limb_state.commandQueueTime = 0.0
+            self.right_limb_state.commandedQueueDuration = 0.0
             self.right_limb_state.commandSent = True
             self.right_limb_state.commandQueue = False
             self.right_limb_state.commandeddq = []
@@ -1543,6 +1566,9 @@ class Motion:
         target_transform = (so3.mul(so3.from_moment(vectorops.mul(w,amount)),\
             self.left_limb_state.driveTransform[0]),vectorops.add(\
             self.left_limb_state.driveTransform[1],vectorops.mul(v,amount)))
+
+        ###debugging
+
         #print("After:",self.left_limb_state.driveTransform)
         #joint position limits from the joint speed limit
         joint_upper_limits = vectorops.add(self.left_limb_state.sensedq,vectorops.mul(\
@@ -1665,29 +1691,29 @@ class Motion:
 if __name__=="__main__":
     #########Check Collision Detection Speed ###############
     #robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
-    computation_model_path = "data/TRINA_world_anthrax.xml"
-    world = WorldModel()
-    res = world.readFile(computation_model_path)
-    if not res:
-        logger.error('unable to load model')
-        raise RuntimeError("unable to load model")
-    #Initialize collision detection
-    collider = collide.WorldCollider(world)
-    robot_model = world.robot(0)
+    # computation_model_path = "data/TRINA_world_anthrax.xml"
+    # world = WorldModel()
+    # res = world.readFile(computation_model_path)
+    # if not res:
+    #     logger.error('unable to load model')
+    #     raise RuntimeError("unable to load model")
+    # #Initialize collision detection
+    # collider = collide.WorldCollider(world)
+    # robot_model = world.robot(0)
 
-    startTime = time.time()
-    totalN = 100
-    for i in range(totalN):
-        robot_model.randomizeConfig()
-        collisions = collider.robotSelfCollisions(robot_model)
-        colCounter = 0
-        for col in collisions:
-            colCounter = colCounter + 1
-        #if colCounter > 0:
-            #print(i,"collision")
-        #else:
-            #print(i)
-    print("average time:", (time.time() - startTime)/float(totalN))
+    # startTime = time.time()
+    # totalN = 100
+    # for i in range(totalN):
+    #     robot_model.randomizeConfig()
+    #     collisions = collider.robotSelfCollisions(robot_model)
+    #     colCounter = 0
+    #     for col in collisions:
+    #         colCounter = colCounter + 1
+    #     #if colCounter > 0:
+    #         #print(i,"collision")
+    #     #else:
+    #         #print(i)
+    # print("average time:", (time.time() - startTime)/float(totalN))
     ##################################
     # robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
     # robot.startup()
@@ -1700,28 +1726,40 @@ if __name__=="__main__":
 
 
     #################################
-    # robot.startup()
+    robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
+    robot.startup()
     # logger.info('Robot start() called')
     # print('Robot start() called')
-    #
-    # leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
-    # leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
-    # rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
-    # rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
-    #
-    # #move to untucked position
-    # robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    # robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
-    # startTime = time.time()
-    # world = robot.getWorld()
-    # vis.add("world",world)
-    # vis.show()
-    # while (time.time()-startTime < 5):
-    #     vis.lock()
-    #     #robot.setBaseVelocity([0.5,0.1])
-    #     vis.unlock()
-    #     time.sleep(0.02)
+    time.sleep(0.2)
+    leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
+    leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
+    rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
+    rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
+    world = robot.getWorld()
+    vis.add("world",world)
+    vis.show()
+    #move to untucked position
+    robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+    robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
+    #robot.setLeftLimbPosition(leftUntuckedConfig)
+    #robot.setRightLimbPosition(rightUntuckedConfig)
+    startTime = time.time()
+    
+    while (time.time()-startTime < 5):
+        vis.lock()
+        #robot.setBaseVelocity([0.5,0.1])
+        vis.unlock()
+        time.sleep(0.02)
 
+    robot.setRightEEVelocity([0.05,0,0,0,0.1,0])
+    robot.setLeftEEVelocity([0.05,0,0,0,0.1,0])
+    startTime = time.time()
+    while (time.time()-startTime < 10):
+        vis.lock()
+        #robot.setBaseVelocity([0.5,0.1])
+        vis.unlock()
+        time.sleep(0.02)
+    robot.shutdown()
     #     print(time.time()-startTime)
     # robot.setBaseVelocity([0,0])
     # robot.setGripperPosition([1,1,1,0])
