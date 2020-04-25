@@ -200,10 +200,9 @@ class testingWorldBuilder():
         return item_1
 
 
-# TODO: arms still kinda block camera view
 def reset_arms(robot):
-    leftResetConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-    rightResetConfig = [0.2028,-1.0353,1.610,-0.5749,0.9622,-0.0974]
+    leftResetConfig = [0.7934, -2.5412, -2.7833, 4.6648, -0.0491, 0.0973]
+    rightResetConfig = [-0.7934, -0.6003, 2.7833, -1.5232, 0.0491, -0.0973]
     config = [0]*7 + leftResetConfig + [0, 0] + rightResetConfig + [0]
     robot.setConfig(config)
 
