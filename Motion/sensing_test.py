@@ -2,7 +2,7 @@ import klampt
 import time
 import math
 from klampt import vis, Geometry3D
-from klampt import io
+from klampt.io import ros
 from klampt.math import so2
 
 from motion import *
@@ -24,8 +24,9 @@ def add_terrain(world, path, T, name):
 
 def publish_tf(curr_pose):
     x, y, theta = curr_pose
+    theta = theta % (math.pi*2)
     br = tf.TransformBroadcaster()
-    br.sendTransform([x, y, 0], tf.transformations.quaternion_from_euler(0, 0, theta), rospy.Time.now(), "odom", "base_link")
+    br.sendTransform([-x, -y, 0], tf.transformations.quaternion_from_euler(0, 0, -theta), rospy.Time.now(), "odom", "base_link")
     br.sendTransform([0.2, 0, 0.2], tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "base_link", "base_scan")
 
 def interpolate(a, b, u):
@@ -93,7 +94,7 @@ start_time = time.time()
 while True:
     lidar.kinematicSimulate(world, 0.01)
 
-    ros_msg = io.to_SensorMsg(lidar, frame = "/base_scan")
+    ros_msg = ros.to_SensorMsg(lidar, frame = "/base_scan")
     measurements = lidar.getMeasurements()
     pub.publish(ros_msg)
 
