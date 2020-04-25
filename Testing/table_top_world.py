@@ -220,7 +220,7 @@ sim = klampt.Simulator(w)
 cam = klampt.SimRobotSensor(sim.controller(0), "rgbd_camera", "CameraSensor")
 # mount camera in place
 cam.setSetting("link","4")
-cam.setSetting("Tsensor","0.0 -0.707 0.707 -1.0 0.0 0.0  0 -0.707 -0.707   0.2 0 1.2")
+cam.setSetting("Tsensor","0.0 -0.707 0.707 -1.0 0.0 0.0  0 -0.707 -0.707   0.2 0.005 1.2")
 # minimum range
 cam.setSetting("zmin","0.1")
 # x field of view
