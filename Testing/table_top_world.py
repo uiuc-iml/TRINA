@@ -1,15 +1,16 @@
 from klampt import WorldModel,Geometry3D
-from klampt.model import sensing
+from klampt.model import sensing, ik
 import time
 import matplotlib.pyplot as plt
 import klampt
 from klampt import vis
-from klampt.math import so3,se3
+from klampt.math import so3,se3, vectorops
 import trimesh
 import os
 import random
 import numpy as np
 import math
+from math import radians
 
 model_path = "../Resources/shared_data/objects/"
 mesh_model_path = "../Resources/grasping/models/"
@@ -28,10 +29,10 @@ class testingWorldBuilder():
         self.light_blue = [3.0/255.0, 140.0/255.0, 252.0/255.0,1.0]
         self.wall_green = [50.0/255.0, 168.0/255.0, 143.0/255.0,1.0]
         ###sizes
-        self.table_length = 1.2
-        self.table_width = 0.8
+        self.table_length = 1.0
+        self.table_width = 0.5
         self.table_top_thickness = 0.03
-        self.table_height = 0.5
+        self.table_height = 0.6
         self.leg_width = 0.05
         self.cube_width = 0.05
 
@@ -50,12 +51,14 @@ class testingWorldBuilder():
 
         self.addTable(x,y)
         # add some cubes
-        self.addCube((so3.from_axis_angle(([0,0,1],0.5)),[x/2,y,self.table_height]), self.cube_width, [1.0,0,0,1],1)
+        '''
+        self.addCube((so3.from_axis_angle(([0,0,1],0.5)),[x/2,y/2,self.table_height]), self.cube_width, [1.0,0,0,1],1)
         # add one mesh
-        self.addRandomMesh([0+x/2,0.2+y,self.table_height],1)
-        self.addRandomMesh([0+x/2,-0.2+y,self.table_height],2)
-        self.addRandomMesh([0.2+x/2,0+y,self.table_height],3)
-        self.addRandomMesh([-0.2+x/2,-0.2+y,self.table_height],4)
+        self.addRandomMesh([0+x,0.2+y,self.table_height],1)
+        self.addRandomMesh([0+x,-0.2+y,self.table_height],2)
+        self.addRandomMesh([0.2+x,0+y,self.table_height],3)
+        self.addRandomMesh([-0.2+x,-0.2+y,self.table_height],4)
+        '''
 
     ##Functions below add individual objects
     def addCube(self,T,side_length,color,ID,object_mass = 0.1):
@@ -199,16 +202,42 @@ class testingWorldBuilder():
         item_1.appearance().setColor(color[0],color[1],color[2],color[3])
         return item_1
 
-
 def reset_arms(robot):
     leftResetConfig = [0.7934, -2.5412, -2.7833, 4.6648, -0.0491, 0.0973]
     rightResetConfig = [-0.7934, -0.6003, 2.7833, -1.5232, 0.0491, -0.0973]
     config = [0]*7 + leftResetConfig + [0, 0] + rightResetConfig + [0]
     robot.setConfig(config)
 
+def ik_solve(target_position, first_time = False):
+    left_ee_link = robot.link(13)
+    left_active_dofs = [7, 8, 9, 10, 11, 12]
+
+    ee_local_pos = [0, 0, 0]
+    h = 0.1
+    local = [ee_local_pos, vectorops.madd(ee_local_pos, (1, 0, 0), -h)]
+    world = [target_position, vectorops.madd(target_position, (0, 0, 1), h)]
+    goal = ik.objective(left_ee_link, local=local, world=world)
+
+    if first_time:
+        solved = ik.solve_global(goal, activeDofs = left_active_dofs, startRandom=True)
+    else:
+        solved = ik.solve(goal, activeDofs = left_active_dofs)
+
+    if solved:
+        print("solve success")
+        return True
+    else:
+        print("Solve unsuccessful")
+        return False
+
+
+def transform_to_string(R, t):
+    rv = " ".join(map(str, R)) + " ".join(map(str, t))
+    return rv
+
 # add table + robot
 builder = testingWorldBuilder(30,30)
-builder.addTableTopScenario(x=1.75,y=-0.2)
+builder.addTableTopScenario(x=1.3,y=-0.25)
 builder.addRobot("../Motion/data/robots/Anthrax.urdf", None)
 
 w = builder.getWorld()
@@ -220,7 +249,9 @@ sim = klampt.Simulator(w)
 cam = klampt.SimRobotSensor(sim.controller(0), "rgbd_camera", "CameraSensor")
 # mount camera in place
 cam.setSetting("link","4")
-cam.setSetting("Tsensor","0.0 -0.707 0.707 -1.0 0.0 0.0  0 -0.707 -0.707   0.2 0.005 1.2")
+
+#cam.setSetting("Tsensor","0.0 -0.866 -0.5 1.0 0.0 0.0  0 -0.5 0.866      0.2 0.005 1.2")
+cam.setSetting("Tsensor", transform_to_string(so3.from_rpy((math.pi, radians(-30), radians(270))), [0.2, 0.005, 1.2]))
 # minimum range
 cam.setSetting("zmin","0.1")
 # x field of view
@@ -233,8 +264,18 @@ vis.add("cam", cam)
 # Take a picture!
 cam.kinematicSimulate(w, 0.01)
 rgb, depth = sensing.camera_to_images(cam)
-plt.imshow(rgb)
-plt.show()
+#plt.imshow(rgb)
+#plt.show()
+vis.show()
+time.sleep(0.5)
+
+positions = [(0.5, 0.5), (0.5, 0.4), (0.5, 0.3), (0.5, 0.2), (0.5, 0.1), (0.5, 0.0), (0.5, -0.1)]
+first_time = True
 
 # run the simulation (indefinitely)
+for e in positions:
+    rv = ik_solve([e[0], e[1], 0.65], first_time)
+    time.sleep(1.0)
+    vis.show()
+    first_time = not first_time
 vis.run()
