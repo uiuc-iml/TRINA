@@ -26,7 +26,7 @@ qmax	10 10 10 0.7 1 0 0 0 0
 
 geometry "" "" "trina/Fetch_base.off" "" "trina/torso.off" "" "" "trina/left_control_box.off" "trina/right_control_box.off"
 
-mass	0 0 68 10 4 0.0001 0.0001 15 15
+mass	0.0001 0.0001 68 10 4 0.0001 0.0001 15 15
 
 com	0 0 0  0 0 0 0 0 0.18	0 0 0.25	0 0 0.25	0 0 0	0 0 0 -0.12 0.16 0.2	-0.12 -0.16 0.2
 

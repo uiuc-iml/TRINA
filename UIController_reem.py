@@ -47,7 +47,7 @@ class UIController:
         self.mode = 'Kinematic'
         self.components = ['base','left_limb','right_limb','left_gripper']
         self.init_UI_state = {}
-        self.dt = 0.02
+        self.dt = 0.025
         self.robot = MotionClient(address = robot_ip)
         self.robot.startServer(mode = self.mode, components = self.components,codename = 'seed')
         self.left_limb_active = ('left_limb' in self.components)
