@@ -66,7 +66,6 @@ vis.add("left_cam", left_cam)
 #time.sleep(3)
 
 start_time = time.time()
-
 while True:
     lidar.kinematicSimulate(world, 0.01)
     left_cam.kinematicSimulate(world, 0.01)
@@ -82,7 +81,8 @@ while True:
     # Get point cloud. For some reason triggers an assertion for me in Python2
     # with the latest version on Klampt Master
     left_cam_pc = sensing.camera_to_points(left_cam, points_format='Geometry3D', all_points=True, color_format='rgb')
-
+    left_cam_pc.saveFile("/home/avatrina-gpu/rohan/gpd/gpd/build/temp.pcd")
+    
     if time.time() - start_time < 5:
         robot.setBaseVelocity([0.3, 0.15])
     else:
