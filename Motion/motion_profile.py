@@ -11,6 +11,9 @@ class State:
         self.acc = acc
         self.t = t
 
+    def __repr__(self):
+        return "({}, {})".format(self.x, self.y)
+
 """
 TODO: this currently doesn't really take in curvature to make the robot
 slow down around curves

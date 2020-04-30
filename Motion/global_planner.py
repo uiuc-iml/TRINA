@@ -172,6 +172,7 @@ def in_range(point, bounds):
     return True
 
 def close_to(gridmap, idx_tuple, radius):
+    radius = int(math.ceil(radius))
     height, width = gridmap.shape
     y, x = idx_tuple[0], idx_tuple[1]
     y_lo, y_hi = clip(0, height-1, y-radius), clip(0, height-1, y+radius)
