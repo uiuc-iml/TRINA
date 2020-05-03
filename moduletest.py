@@ -27,22 +27,23 @@ class Camera_Robot:
 
 
 
-    def __init__(self,robot_ip = 'http://localhost:8080',config_file = {'realsense_right':'realsense_right_config.p'},cameras = ['realsense_right'], mode = 'Kinematic',components = []):
+    def __init__(self,robot_ip = 'http://localhost:8080',cameras = ['realsense_right'], mode = 'Kinematic',components = []):
         """
         Instantiates a camera robot instance
 
         Args:
             robot_ip (str): the ip_address of the motion server, defauts to localhost for local simulated execution. It expects the format http://localhost:8080
             config_file (dict): A dictionary of camera names to camera configuration file paths containing the transform between the camera and the robot's end effector
-            cameras ([str]): A list of strings containing which cameras we are using for this process - Valid entries A.T.M. - 'realsense_right' (future - 'zed')
+            cameras ([str]): A list of strings containing which cameras we are using for this process - Valid entries A.T.M. - ['realsense_right','realsense_left','zed_torso','zed_back'] 
             mode (str): The mode in which the robot will be executed - "Physical" for controlling the real robot, "Kinematic" for controlling the simulation.
-            components ([str]): A list of strings indicating which components of the robot you wish to command
+            components ([str]): A list of strings indicating which components of the robot you wish to command - valid entries : ['base','left_limb','right_limb','left_gripper']
         Returns:
             
     """
-        self.serial_numbers_dict = {'realsense_right':"620202003661",'realsense_left':'620202002883'}
-        self.config_files_dict = {'realsense_right':'./Sensors/realsense_right_config.p','realsense_left':'./Sensors/realsense_left_config.p'}
-        self.valid_cameras = ['realsense_right']
+        self.serial_numbers_dict = {'realsense_right':"620202003661",'realsense_left':'620202002883','zed_torso':24560,'zed_back':24545}
+        self.config_files_dict = {'realsense_right':'./Sensors/realsense_right_config.p','realsense_left':'./Sensors/realsense_left_config.p',
+            'zed_torso':'./Sensors/zed_torso_config.p','zed_back':'./Sensors/zed_back_config.p'}
+        self.valid_cameras = ['realsense_right','realsense_left','zed_torso','zed_back']
         # we first check if the parameters are valid:
         #checking if cameras make sense:
         self.cameras = cameras
@@ -64,16 +65,15 @@ class Camera_Robot:
         for camera in cameras:
             if(camera in self.valid_cameras):
                 #if the camera is a realsense_right camera, import and configure the camera
-                if(camera == 'realsense_right'):
-                    try:
-                        self.active_cameras.update({'realsense_right':RealSenseCamera(self.serial_numbers_dict[camera],self.config_files_dict[camera],self.robot,end_effector='right')})
-                        atexit.register(self.active_cameras[camera].safely_close)
-                    except Exception as e:
-                        print('This camera is currently unavailable. Verify that it is connected and try again \n\n')
+                try:
+                    self.active_cameras.update({camera:Camera_Sensors(camera,self.serial_numbers_dict,self.config_files_dict,self.robot)})
+                    atexit.register(self.active_cameras[camera].safely_close)
+                except Exception as e:
+                    print('This camera ',camera,' is currently unavailable. Verify that it is connected and try again \n\n')
             else:
                 raise ValueError('invalid camera selected. Please update camera selection and try again')
 
-    def get_point_cloud(self,cameras = ['realsense_right']):
+    def get_point_clouds(self,cameras = []):
         """
         Returns the point cloud from the referred source in the robot's base frame.
 
@@ -83,6 +83,8 @@ class Camera_Robot:
             output {camera:point_cloud} : A dictionary containing an open3D point cloud for each camera string for which a point_cloud is available. Returns 
             None as a string if there is no point cloud available for the requested camera 
         """ 
+        if(cameras == []):
+            cameras = list(self.active_cameras.keys())
         output = {}
         if(type(cameras) == str):
             cameras = [cameras]
@@ -90,8 +92,7 @@ class Camera_Robot:
             raise TypeError('Selected cameras must be either a string or a list of strings')
         for camera in cameras:
             if(camera in self.valid_cameras):
-                if(camera == 'realsense_right'):
-                    output.update({camera:self.active_cameras[camera].get_point_cloud()})
+                output.update({camera:self.active_cameras[camera].get_point_cloud()})
         return output
 
     def safely_close_all(self):
@@ -129,7 +130,7 @@ class RealSenseCamera:
 
         Args:
         Returns:
-            transformed_pc : returns the point cloud for this camera in the robot base's coordinate frame. 
+            transformed_pc : returns the point cloud for this camera in the robot base's coordinate frame. or None if the data is not available
         """ 
         # try:
             # Wait for the next set of frames from the camera
@@ -177,12 +178,93 @@ class RealSenseCamera:
         return transformed_pc
 
     def safely_close(self):
-        print('safely closing camera',self.serial_num)
+        print('safely closing Realsense camera',self.serial_num)
         self.pipeline.stop()
 
 class ZedCamera:
-    def __init__():
+    def __init__(self,serial_num,config_file):
+        ### Note: This code presumes the zed cameras are fixed w.r.t. the base.
+        # Create a Camera object
+        self.zed = sl.Camera()
+        self.serial_num = serial_num
+        self.transform = pickle.load(open(config_file,'rb'))
+        # we then create the inverse transform
+        klampt_transforms = se3.from_homogeneous(self.transform)
+        self.inverted_transform = np.array(se3.homogeneous(se3.inv(klampt_transforms)))
+        
+        self.point_cloud = sl.Mat()
+        # Create a InitParameters object and set configuration parameters
+        init_params = sl.InitParameters()
+        init_params.sdk_verbose = False
+        init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
+        init_params.coordinate_units = sl.UNIT.METER
+        init_params.set_from_serial_number(serial_num)
+        init_params.depth_minimum_distance = 0.20
+        init_params.depth_maximum_distance = 40
+        self.runtime_parameters = sl.RuntimeParameters()
+        # Open the camera
+        err = self.zed.open(init_params)
+        if err != sl.ERROR_CODE.SUCCESS:
+            print('There was an error while trying to access the zed camera, please revie and try again.')
 
+    def get_point_cloud(self):
+        self.zed.grab(self.runtime_parameters)
+        self.zed.retrieve_measure(self.point_cloud,sl.MEASURE.XYZRGBA)
+        pc = self.point_cloud.get_data()
+        
+        float_color = pc[:,:,3]
+        final_shape = float_color.shape
+        data = float_color.flatten(order = 'F').view(np.uint8)
+        red = data[::4].reshape(final_shape,order = 'F')
+        green = data[1::4].reshape(final_shape,order = 'F')
+        blue = data[2::4].reshape(final_shape,order = 'F')
+        alpha = data[3::4].reshape(final_shape,order = 'F')
+
+        color_pic = np.zeros((final_shape[0],final_shape[1],3),dtype = np.uint8)
+        color_pic[:,:,0] = red
+        color_pic[:,:,1] = green
+        color_pic[:,:,2] = blue
+        color_t = np.asarray(color_pic).reshape(-1,3)/255
+
+        # pc = np.nan_to_num(pc)
+        reshaped_pc = np.zeros((pc.shape[0]*pc.shape[1],3))
+        reshaped_pc[:,0] = pc[:,:,0].flatten()
+        reshaped_pc[:,1] = pc[:,:,1].flatten()
+        reshaped_pc[:,2] = pc[:,:,2].flatten()
+        reshaped_pc = np.nan_to_num(reshaped_pc,0,posinf = 0, neginf = 0)
+        # we must now process color - and here comes a lot of bit shifting
+
+        point_cloud = o3d.geometry.PointCloud()
+        point_cloud.points = o3d.utility.Vector3dVector(reshaped_pc)
+        point_cloud.colors = o3d.utility.Vector3dVector(color_t)
+        # we then finally transform the point cloud to the robot's coordinates: 
+        transformed_pc = point_cloud.transform(self.inverted_transform)
+        return transformed_pc
+
+    def safely_close(self):
+        print('safely closing zed camera ',self.serial_num)
+        self.zed.close()
+    
+class Camera_Sensors:
+    def __init__(self,camera_name,serial_numbers_dict,config_files_dict,robot,end_effector = 'right'):
+        try:
+            if(camera_name.startswith('realsense')):
+                if(camera_name.endswith('right')):
+                    self.camera = RealSenseCamera(serial_numbers_dict[camera_name],config_files_dict[camera_name],robot,end_effector='right')
+                elif(camera_name.endswith('left')):
+                    self.camera = RealSenseCamera(serial_numbers_dict[camera_name],config_files_dict[camera_name],robot,end_effector='left')
+
+            elif(camera_name.startswith('zed')):
+                self.camera = ZedCamera(serial_numbers_dict[camera_name],config_files_dict[camera_name])
+            else:
+                print('Verify camera names, no camera match found!')
+                raise TypeError('No compatible camera found!')
+        except Exception as e:
+            print('there was an error ',e,'while trying to initialize camera',camera_name)
+    def get_point_cloud(self):
+        return self.camera.get_point_cloud()
+    def safely_close(self):
+        self.camera.safely_close()
 
 if __name__=='__main__':
     a = Camera_Robot()
