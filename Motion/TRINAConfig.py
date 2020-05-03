@@ -1,6 +1,6 @@
 from math import sqrt,pi
-left_limb_address = '10.1.1.20'
-right_limb_address = '192.168.0.178'
+left_limb_address = '10.1.1.30'
+right_limb_address = '10.1.1.20'
 left_limb_payload = 2
 left_limb_TCP = [0,0,0.05,0,0,0]
 ur5e_control_rate = 0.004 #250 Hz
