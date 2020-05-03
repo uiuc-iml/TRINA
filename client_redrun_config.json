@@ -1,0 +1,30 @@
+{
+    "name": "motion_client",
+    "port": 1010,
+    "launch_browser":true,
+    "peers" : {
+        "motion_server": { "address":"localhost:1000", "required":false }
+    },
+    "programs" : {
+        "gui": "klampt_vis_server",
+        "configurable_gui":  {
+            "command":"klampt_vis_server -w %1 -h %2",
+            "args": [320,240]
+        },
+        "ping": { "program": "examples/ping.py", "args":0.2 },
+        "pong": "examples/pong.py",
+        "logger": { "program":"builtins/logger.py", "args":"logs/host1_%time" },
+        "instant_quitter": { "command":"python examples/instant_quit.py" },
+        "hanger": { "program":"examples/hang.py" }
+    },
+    "startup": [
+        "logger",
+        "instant_quitter",
+        "hanger",
+        "ping",
+        "pong"
+    ],
+    "aliases": {
+        "robot" : []
+    }
+}

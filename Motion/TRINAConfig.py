@@ -14,6 +14,9 @@ epsilon = 0.01
 limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon]
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
 collision_check_interval = 0.1
+
+safety_status_names = ['normal','reduced','protective_stopped','recovery','safeguard_stop','system_emergency_stop','robot_emergency_stop','emergency_stop','violation','fault','stopped_due_to_safety']
+
 def get_left_tool_link_N(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")):
         return 13

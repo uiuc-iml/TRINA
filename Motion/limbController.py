@@ -5,6 +5,7 @@ import ur5_config as UR5_CONSTANTS
 from threading import Thread, Lock
 import CRC16
 import time
+import TRINAConfig.py
 
 def addCRC(myHex):
     #takes a hex string and adds a modbus CRC to it
@@ -190,8 +191,8 @@ class LimbController:
         self._gravity = kwargs.pop('gravity', [0, 0, 9.82])
         self._wrench=[]
         self._started = False
-        self.safety_status = [False,False,False,False,False,False,False,False,False,False,False]
-        #normal,reduced,protective stop,recover mode,safeguard mode,system ES, robot ES, ES,violation,fault,stopped due to safey
+        self.safety_status = -1 #-1 means the robot is not running, or disconnected
+
         #debugging
         self._speed_fraction=0.0
         self._min_joints = UR5_CONSTANTS.MIN_JOINTS
@@ -242,13 +243,10 @@ class LimbController:
         return self._last_t
 
     def getSafetyStatus(self):
-        if self.safety_status[0]:
-            return 0 #'normal'
-        elif self.safety_status[2]:
-            return 1 #'protective_stop'
-        elif self.safety_status[8]:
-            return 2 #'emergency_stop'
-
+        if self.safety_status < 0:
+            return -1,"not_connected"
+        else:
+            return self.safety_status, TRINAConfig.safety_status_names[self.safety_status]
 
 
     def getWrench(self):
@@ -429,22 +427,21 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gripper', type=bool, help='enable gripper', default=True)
 
     args = parser.parse_args()
-    ur5 = LimbController(args.robot, gripper=False, gravity=[0,0,9.8])
+    ur5 = LimbController(args.robot, gripper=False, gravity=[0,0,9.82])
     ur5.start()
     time.sleep(1)
-    print(ur5.getSpeedFraction())
 
-    # start_time=time.time()
-    # while time.time()-start_time < 15:
-    #     t=time.time()-start_time
-    #     q1=0.3*math.sin(t/0.5)
-    #     q3=0.3*math.sin(t/0.5)
-    #     q7=abs(math.sin(0.5*t))
-    #     position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
-    #     ur5.setConfig(position)
-    #     #print ur5.getCurrentTime()
-    #     #print ur5.getWrench()
-    #     time.sleep(0.002)
+    start_time=time.time()
+    while time.time()-start_time < 2:
+        # t=time.time()-start_time
+        # q1=0.3*math.sin(t/0.5)
+        # q3=0.3*math.sin(t/0.5)
+        # q7=abs(math.sin(0.5*t))
+        # position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
+        # ur5.setConfig(position)
+        #print ur5.getCurrentTime()
+        #print ur5.getWrench()
+        time.sleep(0.01)
 
     ur5.stop()
 
