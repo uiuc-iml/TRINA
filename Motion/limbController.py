@@ -7,6 +7,8 @@ import CRC16
 import time
 import TRINAConfig
 from copy import deepcopy
+
+
 def addCRC(myHex):
     #takes a hex string and adds a modbus CRC to it
     crc = CRC16.calcString(myHex, CRC16.INITIAL_MODBUS)
@@ -195,6 +197,7 @@ class LimbController:
 
         self.safety_status = -5
         self.robot_mode = -5
+        self.connection_status = True #1 means connected
         #debugging
         self._speed_fraction=0.0
         self._min_joints = UR5_CONSTANTS.MIN_JOINTS
@@ -203,7 +206,11 @@ class LimbController:
         self._max_velocities = UR5_CONSTANTS.MAX_VEL
         self._command_lock = Lock()
         self._state_read = False
-
+        self._stop_flag = False
+        self._disconnected_threshold = 0.2
+        self._last_loop_time = 0.0
+        self._system_start_time = 0.0
+        self._first_loop = True
     def start(self):
         #start the gripper
         if self.gripper:
@@ -215,7 +222,11 @@ class LimbController:
         current_config=self.getConfig()
         self.setConfig(current_config)
         # wait for the robot to initialize itself
-        time.sleep(1)
+        time.sleep(0.5)
+
+        #start the watchdog thread
+        watchDogThread = threading.Thread(target = self._watchDog)
+        watchDogThread.start()
         if res and self.ur5.running():
             self._started = True
             #return started running
@@ -225,6 +236,7 @@ class LimbController:
 
     def stop(self):
         self.ur5.stop()
+        self._stop_flag = True
 
     ####
     def stopMotion(self):
@@ -244,11 +256,27 @@ class LimbController:
     def getCurrentTime(self):
         return self._last_t
 
+    #check robot status
     def getSafetyStatus(self):
         return TRINAConfig.ur_safety_status_names[self.safety_status - 1],self.safety_status
 
     def getRobotMode(self):
         return TRINAConfig.ur_robot_mode_names[self.robot_mode + 1],self.robot_mode
+
+    #this is for motion.py to use, simplified things
+    def getStatus(self):
+        if self.connection_status:
+            if self.safety_status == 1 and self.robot_mode == 7:
+                return 1 #running and normal
+            elif self.safety_status == 3:
+                return 3 #protective stop
+            elif self.safety == 6 or self.safety == 7 or self.safety == 8:
+                return 2 #ES
+            else:
+                return 5
+        else:
+            #disconnected
+            return -1
 
     def getWrench(self):
         return self._wrench
@@ -281,7 +309,23 @@ class LimbController:
             else:
                 print("Warning, velocity not set - outside of limits")
 
+    def _watchDog(self):
+        while not self._stop_flag:
+            self._state_read = False
+            if time.time() - self._system_start_time - self._last_loop_time > self._disconnected_threshold:
+                self.connection_status = False
+            else:
+                self.connection_status = True
+            time.sleep(0.002)
+
     def _update(self,state):
+        #watchdog time
+        if self._first_loop:
+            self._system_start_time = time.time()
+            self._first_loop = False
+        else:
+            self._last_loop_time = time.time() - self._system_start_time
+
         self._state_read = False
         if self._start_time is None:
             self._start_time = state.timestamp

@@ -29,7 +29,9 @@ class LimbState:
         self.toolCenter = [0,0,0]
 
         #safety status
-        self.safety_status = -1 #0: normal 1:protective stop 2: emergency stop -1:enabled but not started -2:disconnected
+        self.safety_status = -1 #-1: connection_lost| 0: enabled but not started | 1:normal | 2: ES stopped | 3:protective stopped |4:all is well and running\
+        # |5: wrong!
+        self.running = False
         
 class BaseState():
     def __init__(self):

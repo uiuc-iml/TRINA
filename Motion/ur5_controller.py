@@ -400,10 +400,10 @@ class UR5Controller(object):
             self._gravity = deepcopy(g)
 
     #resume the paused program
-    def resumeProgram(self):
-        self._conn.send_start()
-        for i in range(10):
-            print('start called')
+    # def resumeProgram(self):
+    #     self._conn.send_start()
+    #     for i in range(10):
+    #         print('start called')
     @property
     def version(self):
         return self._version

@@ -21,6 +21,9 @@ ur_safety_status_names = ['normal','reduced','protective_stopped','recovery','sa
 #this starts from 1
 ur_robot_mode_names = ['no_controller','disconnected','confirm_safety','booting','power_off','power_on','idle','backdrive','running','updating_firmware']
 #this starts from -1
+
+component_status_names = ['connection_lost','enabled_but_not_started','normal','emergency_stop','protective_stop','running']
+#this starts from -1
 def get_left_tool_link_N(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")):
         return 13
