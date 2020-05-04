@@ -22,7 +22,7 @@ ur_safety_status_names = ['normal','reduced','protective_stopped','recovery','sa
 ur_robot_mode_names = ['no_controller','disconnected','confirm_safety','booting','power_off','power_on','idle','backdrive','running','updating_firmware']
 #this starts from -1
 
-component_status_names = ['connection_lost','enabled_but_not_started','normal','emergency_stop','protective_stop','running']
+component_status_names = ['connection_lost','enabled_but_not_started','normal','emergency_stop','protective_stop','running','not ready or fault']
 #this starts from -1
 def get_left_tool_link_N(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")):
@@ -55,6 +55,14 @@ def get_right_active_Dofs(name):
 #TRINA_right_active_Dofs = [20,21,22,23,24,25] #anthrax
 
 def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
+    #handle the case where a empty
+    if not left_limb:
+        left_limb = [0]*6
+    if not right_limb:
+        right_limb = [0]*6
+    if not base:
+        base = [0]*3
+
     if((name == 'anthrax')|(name=="anthrax_lowpoly")):
         return base[0:2] + [0]*3 + [base[2]] + [0] + left_limb + [0]*2 + right_limb + [0]
     elif(name == 'seed'):

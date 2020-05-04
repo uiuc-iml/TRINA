@@ -106,9 +106,7 @@ class Motion:
         self.left_gripper_state = GripperState()
 
         #memory for collision detection when a component dies
-        self.left_limb_q_cd = []
-        self.right_limb_q_cd = []
-        self.torso_q_cd = [] #currently unused
+        self.q_history = positionHistory()
 
         #Initialize components
         if self.mode == "Kinematic":
@@ -265,6 +263,7 @@ class Motion:
                         self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
                         self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
                         self.left_limb_state.sensedWrench =self.left_limb.getWrench()
+                        self.q_history.left_limb = copy(self.left_limb_state.sensedq)
                 if self.right_limb_enabled:
                     res = self.right_limb.start()
                     time.sleep(1)
@@ -277,13 +276,14 @@ class Motion:
                         logger.info('right limb started.')
                         print("motion.startup(): right limb started.")
 
-                        self.right_limb_state.safety_status = self.left_limb.getStatus()
+                        self.right_limb_state.safety_status = self.right_limb.getStatus()
                         if self.right_limb_state.safety_status == 1:
                             self.right_limb_state.safety_status = 4
                         self.right_limb_state.running = True
                         self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                         self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
                         self.right_limb_state.sensedWrench = self.right_limb.getWrench()
+                        self.q_history.right_limb = copy(self.right_limb_state.sensedq)
                 if self.left_gripper_enabled:
                     self.left_gripper.start()
                     #TODO:update this when the status functionality is implemented
@@ -331,64 +331,39 @@ class Motion:
         """
         status = {}
         if self.left_limb_enabled:
-            #if self.startup:
-            if self.left_limb_state.safety_status < 5:
-                status['left_limb'] = TRINAConfig.component_status_names[self.left_limb_state.safety_status + 1] 
-            else:
-                self.shutdown()
-                return 'Error'
+            status['left_limb'] = TRINAConfig.component_status_names[self.left_limb_state.safety_status + 1]
         else:
             status['left_limb'] = 'not_enabled'
 
         if self.right_limb_enabled:
-            if self.right_limb_state.safety_status < 5:
-                status['right_limb'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1] 
-            else:
-                self.shutdown()
-                return 'Error'
+            status['right_limb'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1]
         else:
-            status['left_limb'] = 'not_enabled'
+            status['right_limb'] = 'not_enabled'
         ##TODO: add more safety status to these components
         if self.base_enabled:
-            if self.base_state.safety_status < 5:
-                status['base'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1] 
-            else:
-                self.shutdown()
-                return 'Error'
+            status['base'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1]
         else:
             status['base'] = 'not_enabled'
 
         if self.torso_enabled:
-            if self.torso_state.safety_status < 5:
-                status['torso'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1] 
-            else:
-                self.shutdown()
-                return 'Error'
+            status['torso'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1]
         else:
             status['torso'] = 'not_enabled'
 
         if self.left_gripper_enabled:
-            if self.left_gripper_state.safety_status < 5:
-                status['left_gripper'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1] 
-            else:
-                self.shutdown()
-                return 'Error'
+            status['left_gripper'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1]
         else:
             status['left_gripper'] = 'not_enabled'
-        return
 
         if self.right_gripper_enabled:
-            if self.right_gripper_state.safety_status < 5:
-                status['right_gripper'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1] 
-            else:
-                self.shutdown()
-                return 'Error'
+            status['right_gripper'] = TRINAConfig.component_status_names[self.right_limb_state.safety_status + 1]
         else:
             status['right_gripper'] = 'not_enabled'
+
         return status
 
     def enableAndStartAComponent(self,component):
-        startThread = threading.Thread(target = self._enableAndStartAComponent,args= (component,1))
+        startThread = threading.Thread(target = self._enableAndStartAComponent,args= (component,))
         startThread.start()
 
     def _enableAndStartAComponent(self,component):
@@ -404,7 +379,9 @@ class Motion:
         ---------------
         A string, name of the component
         """
+
         if component == 'left_limb':
+            from limbController import LimbController
             if self.left_limb_state.safety_status == 4:
                 logger.error('left limb is currently running!')
                 print('left limb is currently running!')
@@ -462,17 +439,20 @@ class Motion:
                     return
 
         elif component == 'right_limb':
+            from limbController import LimbController
             if self.right_limb_state.safety_status == 4:
                 logger.error('right limb is currently running!')
                 print('right limb is currently running!')
                 return
             else:
                 #shutdown the instance if already running
-                if self.left_limb_enabled:
-                    self.left_limb.stop()
+                if self.right_limb_enabled:
+                    print("stop called")
+                    self.right_limb.stop()
                     #give enough time for RTDE to exit
                     time.sleep(2)
-                
+
+
                 self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright,\
                     payload = TRINAConfig.right_limb_payload,tcp = TRINAConfig.right_limb_TCP)
                 logger.debug('right limb enabled')
@@ -494,14 +474,14 @@ class Motion:
                 else:
                     logger.info('right limb started.')
                     print("motion.senableAndStartAComponent(): right limb started.")
-                    self.right_limb_state.safety_status = self.left_limb.getStatus()
+                    self.right_limb_state.safety_status = self.right_limb.getStatus()
                     if self.right_limb_state.safety_status == 1:
                         self.right_limb_state.safety_status = 4
                     self.right_limb_state.running = True
                     self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                     self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
                     self.right_limb_state.sensedWrench =self.right_limb.getWrench()
-                    #now add left limb back
+                    #now add right limb back
                     self._controlLoopLock.acquire()
                     self.right_limb_state.commandedq = []
                     self.right_limb_state.difference = []
@@ -519,6 +499,7 @@ class Motion:
 
 
         elif component == 'base':
+            from baseController import BaseController
             if self.base_state == 4:
                 logger.error('base is currently running!')
                 return
@@ -544,6 +525,8 @@ class Motion:
                 return
 
         elif component == 'torso':
+            from torsoController import TorsoController
+
             if self.torso_state == 4:
                 logger.error('torso is currently running!')
                 return
@@ -571,6 +554,7 @@ class Motion:
                 return
 
         elif component == 'left_gripper':
+            from gripperController import GripperController
             if self.left_gripper_state == 4:
                 logger.error('left gripper is currently running!')
                 return
@@ -595,6 +579,7 @@ class Motion:
                 return
 
         elif component == 'right_gripper':
+            from gripperController import GripperController
             if self.right_gripper_state == 4:
                 logger.error('right gripper is currently running!')
                 return
@@ -655,6 +640,7 @@ class Motion:
                                 self.base_state.safety_status
                                 self.base_state.measuredVel = self.base.getMeasuredVelocity()
                                 self.base_state.measuredPos = self.base.getPosition()
+                                self.q_history.base =copy(self.base.getPosition())
                                 self.base.markRead()
 
                     if self.torso_enabled and self.torso_state.safety_status == 4 and self.torso.newState():
@@ -662,54 +648,60 @@ class Motion:
                         tilt, height, _, _ = self.torso.getStates()
                         self.torso_state.measuredTilt = tilt
                         self.torso_state.measuredHeight = height
+                        self.q_history.base = [height,tilt]
                         self.torso.markRead()
 
                     if self.left_limb_enabled:
                         if self.left_limb.newState():
-                            if self.left_limb_state.running:
-                                #update the robot status
-                                tmp = self.left_limb.getStatus()
-                                if tmp == 1:
+                            #update the robot status
+                            tmp = self.left_limb.getStatus()
+                            if tmp == 1:
+                                if self.left_limb_state.running:
                                     self.left_limb_state.safety_status = 4
                                 else:
-                                    if tmp == -1:
-                                        logger.error('left limb disconnected')
                                     self.left_limb_state.safety_status = tmp
-                                    self.left_limb_state.running = False
+                            else:
+                                if tmp == -1:
+                                    logger.error('left limb disconnected')
+                                self.left_limb_state.safety_status = tmp
+                                self.left_limb_state.running = False
 
-                                if self.left_limb_state.safety_status == 4:
-                                    if self.left_limb.newState():
-                                        self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
-                                        self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
-                                        self.left_limb_state.sensedWrench =self.left_limb.getWrench()
-                                        #self.left_limb_q_cd = deepcopy(self.left_limb_state.sensedq)
-                                        self.left_limb.markRead()
+                            if self.left_limb_state.safety_status == 4:
+                                if self.left_limb.newState():
+                                    self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
+                                    self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
+                                    self.left_limb_state.sensedWrench =self.left_limb.getWrench()
+                                    self.q_history.left_limb = copy(self.left_limb_state.sensedq)
+                                    self.left_limb.markRead()
                             self.left_limb.markRead()
 
                     if self.right_limb_enabled:
                         if self.right_limb.newState():
-                            if self.right_limb_state.running:
-                                #update the robot status
-                                tmp = self.right_limb.getStatus()
-                                if tmp == 1:
+                            #update the robot status
+                            tmp = self.right_limb.getStatus()
+                            if tmp == 1:
+                                if self.right_limb_state.running:
                                     self.right_limb_state.safety_status = 4
                                 else:
-                                    if tmp == -1:
-                                        logger.error('left limb disconnected')
                                     self.right_limb_state.safety_status = tmp
-                                    self.right_limb_state.running = False
+                            else:
+                                if tmp == -1:
+                                    logger.error('right limb disconnected')
+                                self.right_limb_state.safety_status = tmp
+                                self.right_limb_state.running = False
 
                                 if self.right_limb_state.safety_status == 4:
                                     if self.right_limb.newState():
                                         self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                                         self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
                                         self.right_limb_state.sensedWrench =self.right_limb.getWrench()
-                                        #self.right_limb_q_cd = deepcopy(self.right_limb_state.sensedq)
+                                        self.q_history.right_limb = copy(self.right_limb_state.sensedq)
                                         self.right_limb.markRead()
                             self.right_limb.markRead()
 
                     if self.left_gripper_enabled and self.left_gripper_state.safety_status == 4 and self.left_gripper.newState():
                        self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
+                       self.q_history.left_gripper = copy(self.left_gripper.sense_finger_set)
                        self.left_gripper.mark_read()
 
                     ##Send Commands
@@ -732,7 +724,7 @@ class Motion:
                                     #set to position mode...
                                     self.cartesian_drive_failure = True
                                     self.left_limb_state.commandSent = False
-                                    self.left_limb_state.commandedq = deepcopy(self.sensedLeftLimbPosition())
+                                    self.left_limb_state.commandedq = copy(self.sensedLeftLimbPosition())
                                     self.left_limb_state.commandeddq = []
                                     self.left_limb_state.commandType = 0
                                     self.left_limb_state.commandQueue = False
@@ -822,7 +814,8 @@ class Motion:
                     #basically assumes that the world frame is the frame centered at the base local frame, on the floor.
                     #TODO: change this when we have more components ready to go
 
-                    robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_q_cd, right_limb = self.right_limb_q_cd)
+                    robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.q_history.left_limb, right_limb = self.q_history.right_limb)
+                    #print(self.left_limb_q_cd,self.codename,len(robot_model_Q),len(self.robot_model.getConfig()))
                     #robot_model_Q = [0]*3 + [0]*7 +self.left_limb_state.sensedq+[0]*4+self.right_limb_state.sensedq+[0]*2
                     self.robot_model.setConfig(robot_model_Q)
 
@@ -2114,86 +2107,61 @@ if __name__=="__main__":
     #         #print(i)
     # print("average time:", (time.time() - startTime)/float(totalN))
     ##################################
-    robot = Motion(mode = 'Kinematic',codename = "anthrax")
+    rightLimbQ1 = [0.13101816177368164, -1.0830786985209961, 1.6050666014300745, -0.5740707677653809, 1.0318655967712402, -1.090234104787008]
+    rightLimbQ2 = [0.13101816177368164, -1.0830786985209961, 1.6050666014300745, -0.5740707677653809, 1.0318655967712402, -1.090234104787008+1]
+    robot = Motion(mode = 'Physical',components = [],codename = 'seed')
     robot.startup()
-    print(robot.enabled_components()
+    time.sleep(1)
+    startTime = time.time()
+    flag = False
+    while (time.time() - startTime) < 20:
+        status = robot.componentStatus()
+        print(time.time() - startTime, status['right_limb'])
+        time.sleep(0.1)
+
+    robot.enableAndStartAComponent('right_limb')
+    startTime = time.time()
+    while (time.time() - startTime) < 10:
+        status = robot.componentStatus()
+        print(time.time() - startTime, status['right_limb'])
+        time.sleep(0.1)
+    robot.setRightLimbPosition(rightLimbQ2)
+    time.sleep(10)
     robot.shutdown()
 
 
     #################################
-    robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
-    robot.startup()
-    # logger.info('Robot start() called')
-    # print('Robot start() called')
-    time.sleep(0.2)
-    leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
-    leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
-    rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
-    rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
-    world = robot.getWorld()
-    vis.add("world",world)
-    vis.show()
-    #move to untucked position
-    robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
-    #robot.setLeftLimbPosition(leftUntuckedConfig)
-    #robot.setRightLimbPosition(rightUntuckedConfig)
-    startTime = time.time()
-
-    while (time.time()-startTime < 5):
-        vis.lock()
-        #robot.setBaseVelocity([0.5,0.1])
-        vis.unlock()
-        time.sleep(0.02)
-
-    robot.setRightEEVelocity([0.05,0,0,0,0.1,0])
-    robot.setLeftEEVelocity([0.05,0,0,0,0.1,0])
-    startTime = time.time()
-    while (time.time()-startTime < 10):
-        vis.lock()
-        #robot.setBaseVelocity([0.5,0.1])
-        vis.unlock()
-        time.sleep(0.02)
-    robot.shutdown()
-    #     print(time.time()-startTime)
-    # robot.setBaseVelocity([0,0])
-    # robot.setGripperPosition([1,1,1,0])
-    # startTime = time.time()
+    # robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax_lowpoly")
+    # robot.startup()
+    # # logger.info('Robot start() called')
+    # # print('Robot start() called')
+    # time.sleep(0.2)
+    # leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
+    # leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
+    # rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
+    # rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
     # world = robot.getWorld()
     # vis.add("world",world)
     # vis.show()
-    # while (time.time()-startTime < 5):
-    #     vis.lock()
-    #     #robot.setBaseVelocity([0.5,0.1])
-    #     vis.unlock()
-    #     time.sleep(0.02)
-    #
-    # #     print(time.time()-startTime)
-    # # robot.setBaseVelocity([0,0])
-    # # robot.setGripperPosition([1,1,1,0])
-    # # startTime = time.time()
-    # # while (time.time()-startTime < 5):
-    # #     vis.lock()
-    # #     #robot.setBaseVelocity([0.5,0.1])
-    # #     vis.unlock()
-    # #     time.sleep(0.02)
-    # ##cartesian drive...
+    # #move to untucked position
+    # robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+    # robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
+    # #robot.setLeftLimbPosition(leftUntuckedConfig)
+    # #robot.setRightLimbPosition(rightUntuckedConfig)
     # startTime = time.time()
-    # # [0.0,-0.05,0],[0,0,0]
-    # robot.setLeftEEInertialTransform([[-0.06720643425243836, -0.7527169832325281, -0.6549047716766548, 0.9749095012575034, -0.18912346734793367, 0.11732283620745665, -0.2121687525365566, -0.6305869228358743, 0.7465423645978749],[0.5536765011424929, 0.10578081079393827, 0.5977151817981915]],3)
+    #
     # while (time.time()-startTime < 5):
     #     vis.lock()
     #     #robot.setBaseVelocity([0.5,0.1])
     #     vis.unlock()
     #     time.sleep(0.02)
-    #     try:
-    #         robot.getKlamptSensedPosition()
-    #     except:
-    #         print("except")
-    #     if robot.cartesianDriveFail():
-    #         break
-    #     print(time.time()-startTime)
     #
-    # vis.kill()
-
+    # robot.setRightEEVelocity([0.05,0,0,0,0.1,0])
+    # robot.setLeftEEVelocity([0.05,0,0,0,0.1,0])
+    # startTime = time.time()
+    # while (time.time()-startTime < 10):
+    #     vis.lock()
+    #     #robot.setBaseVelocity([0.5,0.1])
+    #     vis.unlock()
+    #     time.sleep(0.02)
     # robot.shutdown()

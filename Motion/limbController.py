@@ -237,7 +237,6 @@ class LimbController:
     def stop(self):
         self.ur5.stop()
         self._stop_flag = True
-
     ####
     def stopMotion(self):
         self.setConfig(self._q_curr)
@@ -266,15 +265,17 @@ class LimbController:
     #this is for motion.py to use, simplified things
     def getStatus(self):
         if self.connection_status:
+            #print("limbController",self.safety_status,self.robot_mode)
             if self.safety_status == 1 and self.robot_mode == 7:
                 return 1 #running and normal
             elif self.safety_status == 3:
                 return 3 #protective stop
-            elif self.safety == 6 or self.safety == 7 or self.safety == 8:
+            elif self.safety_status == 6 or self.safety_status == 7 or self.safety_status == 8:
                 return 2 #ES
             else:
                 return 5
         else:
+            print('disconnected')
             #disconnected
             return -1
 
@@ -340,7 +341,7 @@ class LimbController:
         mode_bits = state.robot_mode
         self.safety_status = safety_bits
         self.robot_mode = mode_bits
-
+        #print(self.safety_status,self.robot_mode,self._last_loop_time)
         ###end debug
         q_curr = state.actual_q
         q_gripper = (0 if self.gripper is None else self.gripper.read())

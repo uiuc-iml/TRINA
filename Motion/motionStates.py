@@ -32,7 +32,7 @@ class LimbState:
         self.safety_status = -1 #-1: connection_lost| 0: enabled but not started | 1:normal | 2: ES stopped | 3:protective stopped |4:all is well and running\
         # |5: wrong!
         self.running = False
-        
+
 class BaseState():
     def __init__(self):
         self.measuredPos = [0.0, 0.0, 0.0] #[x, y, yaw]
@@ -68,3 +68,12 @@ class TorsoState:
         self.leftLeg = 0
         self.rightLeg = 0
         self.safety_status = -1
+
+class positionHistory:
+    def __init__(self):
+        self.left_limb = []
+        self.right_limb = []
+        self.torso = []
+        self.base = []
+        self.left_gripper = []
+        self.right_gripper = []
