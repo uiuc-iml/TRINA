@@ -5,8 +5,8 @@ import ur5_config as UR5_CONSTANTS
 from threading import Thread, Lock
 import CRC16
 import time
-import TRINAConfig.py
-
+import TRINAConfig
+from copy import deepcopy
 def addCRC(myHex):
     #takes a hex string and adds a modbus CRC to it
     crc = CRC16.calcString(myHex, CRC16.INITIAL_MODBUS)
@@ -191,8 +191,10 @@ class LimbController:
         self._gravity = kwargs.pop('gravity', [0, 0, 9.82])
         self._wrench=[]
         self._started = False
-        self.safety_status = -1 #-1 means the robot is not running, or disconnected
+        #self._resume_command = False
 
+        self.safety_status = -5
+        self.robot_mode = -5
         #debugging
         self._speed_fraction=0.0
         self._min_joints = UR5_CONSTANTS.MIN_JOINTS
@@ -243,11 +245,10 @@ class LimbController:
         return self._last_t
 
     def getSafetyStatus(self):
-        if self.safety_status < 0:
-            return -1,"not_connected"
-        else:
-            return self.safety_status, TRINAConfig.safety_status_names[self.safety_status]
+        return TRINAConfig.ur_safety_status_names[self.safety_status - 1],self.safety_status
 
+    def getRobotMode(self):
+        return TRINAConfig.ur_robot_mode_names[self.robot_mode + 1],self.robot_mode
 
     def getWrench(self):
         return self._wrench
@@ -291,10 +292,12 @@ class LimbController:
 
         #update current notion of state
         #update the safety Status
-        safety_bits = state.safety_status_bits
-        binary_bits = [int(x) for x in '{0:8b}'.format(safety_bits)]
-        print(safety_bits,binary_bits)
+        safety_bits = state.safety_status
+        mode_bits = state.robot_mode
+        self.safety_status = safety_bits
+        self.robot_mode = mode_bits
 
+        ###end debug
         q_curr = state.actual_q
         q_gripper = (0 if self.gripper is None else self.gripper.read())
         self._wrench=state.actual_TCP_force
@@ -322,6 +325,9 @@ class LimbController:
 
         #self._q_commanded is the commanded configuration that the students give. It has 7 parameters (6 for robot, 1 for gripper)
         self._command_lock.acquire()
+
+
+
         if self._q_commanded:
             #double extra check
             #if students are doing anything wrong
@@ -418,6 +424,11 @@ class LimbController:
 
     def newState(self):
         return (not self._state_read)
+
+    def resumeProgram(self):
+        self.ur5.resumeProgram()
+        #self._resume_command = True
+
 if __name__ == "__main__":
 
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -427,13 +438,36 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gripper', type=bool, help='enable gripper', default=True)
 
     args = parser.parse_args()
-    ur5 = LimbController(args.robot, gripper=False, gravity=[0,0,9.82])
+    ur5 = LimbController(args.robot, gripper=False, gravity=TRINAConfig.right_limb_gravity_upright)
     ur5.start()
     time.sleep(1)
 
+    targetConfig = deepcopy(ur5.getConfig())
+    targetConfig[5] = targetConfig[5] + 0.5
+    targetConfig2 = deepcopy(targetConfig)
+    targetConfig2[5] = targetConfig2[5] + 0.5
+
+    ur5.setConfig(targetConfig)
     start_time=time.time()
-    while time.time()-start_time < 2:
-        # t=time.time()-start_time
+    while time.time()-start_time < 20:
+        t=time.time()-start_time
+        print(t)
+        # q1=0.3*math.sin(t/0.5)
+        # q3=0.3*math.sin(t/0.5)
+        # q7=abs(math.sin(0.5*t))
+        # position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
+        # ur5.setConfig(position)
+        #print ur5.getCurrentTime()
+        #print ur5.getWrench()
+        time.sleep(0.01)
+
+    ur5.resumeProgram()
+    time.sleep(1)
+
+    ur5.setConfig(targetConfig2)
+    while time.time()-start_time < 30:
+        t=time.time()-start_time
+        print(t)
         # q1=0.3*math.sin(t/0.5)
         # q3=0.3*math.sin(t/0.5)
         # q7=abs(math.sin(0.5*t))

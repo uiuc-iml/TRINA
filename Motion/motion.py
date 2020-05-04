@@ -105,7 +105,7 @@ class Motion:
         self.torso_state = TorsoState()
         self.left_gripper_state = GripperState()
 
-        #memory for collision detection when a component dies 
+        #memory for collision detection when a component dies
         self.left_limb_q_cd = []
         self.right_limb_q_cd = []
         self.torso_q_cd = [] #currently unused
@@ -132,7 +132,8 @@ class Motion:
                     self.left_limb_state.safety_status = -1
                     logger.debug('left limb enabled')
                 elif component == 'right_limb':
-                    self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
+                    self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright,\
+                        payload = TRINAConfig.right_limb_payload,tcp = TRINAConfig.right_limb_TCP)
                     self.right_limb_enabled = True
                     self.right_limb_state.safety_status = -1
                     logger.debug('right limb enabled')
@@ -299,7 +300,7 @@ class Motion:
         ---------------
         A python dictionary indexed by component names, giving a boolean value
         """
-        return {'left_limb': self.left_limb_enabled, 'right_limb': self.right_limb_enabled,'torso': self.torso_enabled,'base':self.base_enabled,'left_gripper':self.left_gripper_enabled,'right_gripper':self.right_gripper_enabled} 
+        return {'left_limb': self.left_limb_enabled, 'right_limb': self.right_limb_enabled,'torso': self.torso_enabled,'base':self.base_enabled,'left_gripper':self.left_gripper_enabled,'right_gripper':self.right_gripper_enabled}
 
     def componentStatus(self):
         status = {}
@@ -332,7 +333,7 @@ class Motion:
                 status['right_limb'] = 'not_started'
             else:
                 self.shutdown()
-                return 'Error'         
+                return 'Error'
         else:
             status['left_limb'] = 'not_enabled'
         ##TODO: add more safety status to these components
@@ -368,7 +369,7 @@ class Motion:
                 return 'Error'
         else:
             status['left_gripper'] = 'not_enabled'
-        return 
+        return
 
         if self.right_gripper_enabled:
             if self.right_gripper_state.safety_status == 0:
@@ -393,11 +394,11 @@ class Motion:
         Parameter:
         ---------------
         A string, name of the component
-        """       
+        """
         if component == 'left_limb':
             if self.left_limb_state.safety_status != -1:
                 logger.error('left limb is currently running or not ready!')
-                print('left limb is currently running or not ready!')          
+                print('left limb is currently running or not ready!')
                 return
             else:
                 #recreate these is probably fine
@@ -427,7 +428,7 @@ class Motion:
                     self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
                     self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
                     self.left_limb_state.sensedWrench =self.left_limb.getWrench()
-                    #now add left limb back 
+                    #now add left limb back
                     self._controlLoopLock.acquire()
                     self.left_limb_state.commandedq = []
                     self.left_limb_state.difference = []
@@ -445,8 +446,8 @@ class Motion:
 
         elif component == 'right_limb':
             if self.right_limb_state.safety_status != -1:
-                logger.error('right limb is currently running or not ready!') 
-                print('right limb is currently running or not ready!')         
+                logger.error('right limb is currently running or not ready!')
+                print('right limb is currently running or not ready!')
                 return
             else:
                 #recreate these is probably fine
@@ -476,7 +477,7 @@ class Motion:
                     self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
                     self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
                     self.right_limb_state.sensedWrench =self.right_limb.getWrench()
-                    #now add left limb back 
+                    #now add left limb back
                     self._controlLoopLock.acquire()
                     self.right_limb_state.commandedq = []
                     self.right_limb_state.difference = []
@@ -490,12 +491,12 @@ class Motion:
                     self.right_limb_state.safety_status = 0
                     self.right_limb_enabled = True
                     self._controlLoopLock.release()
-                    return 
+                    return
 
 
         elif component == 'base':
             if self.base_state != -1:
-                logger.error('base is currently running or not ready!')          
+                logger.error('base is currently running or not ready!')
                 return
             else:
                 self.base = BaseController()
@@ -514,7 +515,7 @@ class Motion:
 
         elif component == 'torso':
             if self.torso_state != -1:
-                logger.error('torso is currently running or not ready!')          
+                logger.error('torso is currently running or not ready!')
                 return
             else:
                 self.torso = TorsoController()
@@ -535,7 +536,7 @@ class Motion:
 
         elif component == 'left_gripper':
             if self.left_gripper_state != -1:
-                logger.error('left gripper is currently running or not ready!')          
+                logger.error('left gripper is currently running or not ready!')
                 return
             else:
                 self.left_gripper = GripperController()
@@ -553,7 +554,7 @@ class Motion:
 
         elif component == 'right_gripper':
             if self.right_gripper_state != -1:
-                logger.error('right gripper is currently running or not ready!')          
+                logger.error('right gripper is currently running or not ready!')
                 return
             else:
                 self.right_gripper = GripperController()
@@ -1015,7 +1016,7 @@ class Motion:
         else:
             logger.warning('Left limb not enabled')
             print("motion.setLeftLimbPosition():Left limb not enabled")
-        print 
+        print
 
     def setRightLimbPositionLinear(self,q,duration):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
@@ -1766,7 +1767,7 @@ class Motion:
             self.left_gripper_state.commmandSent = True
         if self.right_gripper_enabled:
             self.right_gripper_state.command_finger_set = [0.0, 0.0, 0.0, 0.0]
-            self.right_gripper_state.commmandSent = True    
+            self.right_gripper_state.commmandSent = True
         if self.torso_enabled:
             self.torso_state.commandedHeight = 0.0
             self.torso_state.commandedTilt = 0.0
@@ -2082,7 +2083,7 @@ if __name__=="__main__":
     #robot.setLeftLimbPosition(leftUntuckedConfig)
     #robot.setRightLimbPosition(rightUntuckedConfig)
     startTime = time.time()
-    
+
     while (time.time()-startTime < 5):
         vis.lock()
         #robot.setBaseVelocity([0.5,0.1])

@@ -1,8 +1,10 @@
 from math import sqrt,pi
 left_limb_address = '10.1.1.30'
 right_limb_address = '10.1.1.20'
-left_limb_payload = 2
+left_limb_payload = 3
 left_limb_TCP = [0,0,0.05,0,0,0]
+right_limb_payload = 0.5
+right_limb_TCP = [0,0,0,0,0,0]
 ur5e_control_rate = 0.004 #250 Hz
 left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector
 right_limb_gravity_upright = [4.91,-4.91,-6.93672]
@@ -15,7 +17,10 @@ limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*p
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
 collision_check_interval = 0.1
 
-safety_status_names = ['normal','reduced','protective_stopped','recovery','safeguard_stop','system_emergency_stop','robot_emergency_stop','emergency_stop','violation','fault','stopped_due_to_safety']
+ur_safety_status_names = ['normal','reduced','protective_stopped','recovery','safeguard_stop','system_emergency_stop','robot_emergency_stop','emergency_stop','violation','fault','xx','xx','xx','xx']
+#this starts from 1
+ur_robot_mode_names = ['no_controller','disconnected','confirm_safety','booting','power_off','power_on','idle','backdrive','running','updating_firmware']
+#this starts from -1
 def get_left_tool_link_N(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")):
         return 13

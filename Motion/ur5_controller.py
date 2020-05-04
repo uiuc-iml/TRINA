@@ -180,8 +180,8 @@ class UR5Controller(object):
 
         # configure outputs (URControl -> Python)
         self._conn.send_output_setup(
-             ['timestamp', 'target_q', 'actual_q', 'target_qd', 'actual_qd', 'target_qdd', 'target_speed_fraction','actual_TCP_force','safety_status_bits'],  # Add TCP forces here
-            ['DOUBLE', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'DOUBLE', 'VECTOR6D','UINT32']
+             ['timestamp', 'target_q', 'actual_q', 'target_qd', 'actual_qd', 'target_qdd', 'target_speed_fraction','actual_TCP_force','safety_status','robot_mode'],  # Add TCP forces here
+            ['DOUBLE', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'VECTOR6D', 'DOUBLE', 'VECTOR6D','INT32','INT32']
         )
 
         # configure inputs (Python -> URControl)
@@ -399,6 +399,11 @@ class UR5Controller(object):
     def setGravity(self,g):
             self._gravity = deepcopy(g)
 
+    #resume the paused program
+    def resumeProgram(self):
+        self._conn.send_start()
+        for i in range(10):
+            print('start called')
     @property
     def version(self):
         return self._version
