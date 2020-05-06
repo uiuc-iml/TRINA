@@ -14,13 +14,44 @@ from motion_profile import *
 from utils import *
 from geometry import *
 
-##### testing using the kinematic mode..############
-#
-###################################################
+import signal
+import tf
+import rospy
+import sensor_msgs
+from multiprocessing import Process, Lock, Array
+
+pose_lock = Lock()
+
+def publish_tf(curr_pose):
+    x, y, theta = curr_pose
+    theta = theta % (math.pi*2)
+    br = tf.TransformBroadcaster()
+    br.sendTransform([-x, -y, 0], tf.transformations.quaternion_from_euler(0, 0, -theta), rospy.Time.now(), "odom", "base_link")
+    br.sendTransform([0.2, 0, 0.2], tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "base_link", "base_scan")
+
+def publish_gmapping_stuff(lidar, world, curr_pose_shm):
+    rospy.init_node("sensing_test")
+    pub = rospy.Publisher("base_scan", sensor_msgs.msg.LaserScan)
+
+    while True:
+        lidar.kinematicSimulate(world, 0.01)
+        ros_msg = ros.to_SensorMsg(lidar, frame = "/base_scan")
+
+        pub.publish(ros_msg)
+
+        curr_pose_child = []
+        pose_lock.acquire()
+        for e in curr_pose_shm:
+            curr_pose_child.append(e)
+        pose_lock.release()
+        publish_tf(curr_pose_child) 
+
+        time.sleep(0.01)
+
+
 robot = Motion(mode = 'Kinematic', codename="anthrax")
 world = robot.getWorld()
 
-'''
 add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [2, 2, 0]), "test")
 add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [-2, 2, 0]), "test1")
 add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [2, -2, 0]), "test2")
@@ -30,19 +61,21 @@ add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 5, 0]), 
 add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [5, 0, 0]), "test1")
 add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [0, -5, 0]), "test2")
 add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [-5, 0, 0]), "test3")
-'''
 
 vis.add("world",world)
 
 grid = get_occupancy_grid("static_map")
 res = grid.info.resolution
-radius = 0.5588/2/res
+radius = 0.5588/2/res * 2
 gridmap = build_2d_map(grid)
+
+preprocessed_gridmap = preprocess(gridmap, radius)
 
 start = intify(transform_coordinates((0, 0), grid))
 end = intify(transform_coordinates((4, 4), grid))
+#end = intify(transform_coordinates((0, 6), grid))
 
-dists, parents = navigation_function(gridmap, end, radius)
+dists, parents = navigation_function(preprocessed_gridmap, end, radius)
 global_path = get_path(parents, start, end)
 
 plt.plot(global_path.get_xs(), global_path.get_ys())
@@ -70,6 +103,20 @@ robot.setRightLimbPositionLinear(rightTuckedConfig,5)
 sim = klampt.Simulator(world)
 
 lidar = sim.controller(0).sensor("lidar")
+
+curr_pose_shm = Array('f', 3)
+gmapping_proc = Process(target=publish_gmapping_stuff, args=(lidar, world, curr_pose_shm, ))
+gmapping_proc.start()
+
+def sigint_handler(sig, frame):
+    vis.kill()
+    robot.shutdown()
+    gmapping_proc.terminate()
+    gmapping_proc.join()
+    sys.exit(1)
+
+signal.signal(signal.SIGINT, sigint_handler)
+
 vis.add("lidar", lidar)
 
 vis.show()
@@ -78,23 +125,23 @@ time.sleep(3)
 
 end_v = 0.5
 
-while True:
+while True: 
     '''
-    lidar.kinematicSimulate(world, 0.01)
-    ros_msg = ros.to_SensorMsg(lidar, frame = "/base_scan")
-    measurements = lidar.getMeasurements()
-    pub.publish(ros_msg)
+    new_grid = get_occupancy_grid("dynamic_map", timeout=0.1)
+    if new_grid is not None:
+        grid = new_grid
+        gridmap = build_2d_map(grid)
+        preprocessed_gridmap = preprocess(gridmap, radius)
+    '''
 
     curr_pose = robot.base_state.measuredPos
-    publish_tf(curr_pose)
+    pose_lock.acquire()
+    for i in range(3):
+        curr_pose_shm[i] = curr_pose[i]
+    pose_lock.release()
 
-    pc = lidar_to_pc(robot, lidar, measurements)
-    vis.add("pc", pc)
-    '''
-    #grid = get_occupancy_grid("static_map")
-    #gridmap = build_2d_map(grid)
-
-    if curr_point.collides(gridmap):
+    collision = curr_point.collides(gridmap)
+    if collision:
         print("collided...this should not have happened")
         continue
 
@@ -110,11 +157,17 @@ while True:
         primitives = get_primitives(curr_point.center, curr_theta, radius*4, radius*2)
 
     closest = evaluate_primitives(curr_point, primitives, global_path, gridmap)
-
     kglobal = klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], grid) for x, y in zip(global_path.get_xs(), global_path.get_ys())])
+
     vis.add("kglobaltraj", kglobal)
 
     if closest is None:
+        robot.setBaseVelocity([0.0, 0.4])
+        new_pose = robot.base_state.measuredPos
+        new_pose = transform_coordinates(new_pose, grid)
+
+        curr_point = Circle((new_pose[0], new_pose[1]), radius)
+        curr_theta = new_pose[2]
         print("No prim!!!")
         continue
 
@@ -182,14 +235,9 @@ while True:
 
     new_pose = robot.base_state.measuredPos
     new_pose = transform_coordinates(new_pose, grid)
+
     curr_point = Circle((new_pose[0], new_pose[1]), radius)
     curr_theta = new_pose[2]
-    #print(curr_point.center)
-    #print("Distance to goal:", l2_dist(curr_point.center, end))
 
 robot.setBaseVelocity([0, 0])
-while True:
-    time.sleep(0.5)
-
-vis.kill()
-robot.shutdown()
+vis.show()

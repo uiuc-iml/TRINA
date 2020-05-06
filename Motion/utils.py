@@ -10,14 +10,18 @@ import numpy as np
 
 from nav_msgs.srv import GetMap
 
-def get_occupancy_grid(topic = "dynamic_map"):
-    rospy.wait_for_service(topic)
+def get_occupancy_grid(topic = "dynamic_map", timeout = None):
+    try:
+        rospy.wait_for_service(topic, timeout = timeout)
+    except rospy.ROSException:
+        return None
     try:
         srv = rospy.ServiceProxy(topic, GetMap)
         resp1 = srv()
         return resp1.map
     except rospy.ServiceException as e:
-        print("Service call failed: {}".format(e))
+        pass
+        #print("Service call failed: {}".format(e))
 
 def build_2d_map(occupancy_grid):
     width, height = occupancy_grid.info.width, occupancy_grid.info.height
@@ -35,6 +39,8 @@ def build_2d_map(occupancy_grid):
                 continue
 
             val = occupancy_grid.data[i*width + j]
+
+            # if unknown, assume it is open
             if val == 0 or val == -1:
                 rv[i, j] = 0
             else:
@@ -66,8 +72,11 @@ def transform_coordinates(point, occupancy_grid):
     x_new = x / resolution
     y_new = y / resolution
 
-    x_new += x_origin + occupancy_grid.info.width/2
-    y_new += y_origin + occupancy_grid.info.height/2
+    #x_new += x_origin + occupancy_grid.info.width/2
+    #y_new += y_origin + occupancy_grid.info.height/2
+
+    x_new += occupancy_grid.info.width/2
+    y_new += occupancy_grid.info.height/2
 
     if theta is None:
         return x_new, y_new
@@ -80,8 +89,8 @@ def transform_back(point, occupancy_grid):
 
     x_origin, y_origin = occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y
 
-    x_new = x - (x_origin + occupancy_grid.info.width/2)
-    y_new = y - (y_origin + occupancy_grid.info.height/2)
+    x_new = x - (occupancy_grid.info.width/2)
+    y_new = y - (occupancy_grid.info.height/2)
 
     x_new *= resolution
     y_new *= resolution

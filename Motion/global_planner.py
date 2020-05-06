@@ -171,6 +171,22 @@ def in_range(point, bounds):
         return False
     return True
 
+def preprocess(gridmap, radius):
+    rv = np.copy(gridmap)
+    H, W = gridmap.shape
+
+    for y in range(H):
+        for x in range(W):
+            val = gridmap[y, x]
+            if val != 0:
+                y_lo, y_hi = int(clip(0, H-1, y-radius)), int(clip(0, H-1, y+radius))
+                x_lo, x_hi = int(clip(0, W-1, x-radius)), int(clip(0, W-1, x+radius))
+
+                for ii in range(y_lo, y_hi+1):
+                    for jj in range(x_lo, x_hi+1):
+                        rv[ii, jj] = val
+    return rv
+
 def close_to(gridmap, idx_tuple, radius):
     radius = int(math.ceil(radius))
     height, width = gridmap.shape
