@@ -66,7 +66,7 @@ vis.add("world",world)
 
 grid = get_occupancy_grid("static_map")
 res = grid.info.resolution
-radius = 0.5588/2/res * 2
+radius = 0.5588/2/res * 3
 gridmap = build_2d_map(grid)
 
 preprocessed_gridmap = preprocess(gridmap, radius)
@@ -126,13 +126,11 @@ time.sleep(3)
 end_v = 0.5
 
 while True: 
-    '''
     new_grid = get_occupancy_grid("dynamic_map", timeout=0.1)
     if new_grid is not None:
         grid = new_grid
         gridmap = build_2d_map(grid)
         preprocessed_gridmap = preprocess(gridmap, radius)
-    '''
 
     curr_pose = robot.base_state.measuredPos
     pose_lock.acquire()
@@ -154,7 +152,7 @@ while True:
         primitives = [LocalPath([(curr_point.center[0], curr_point.center[1], curr_theta), (end[0], end[1], end_theta)])]
         end_v = 0
     else:
-        primitives = get_primitives(curr_point.center, curr_theta, radius*4, radius*2)
+        primitives = get_primitives(curr_point.center, curr_theta, radius*2, radius*1)
 
     closest = evaluate_primitives(curr_point, primitives, global_path, gridmap)
     kglobal = klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], grid) for x, y in zip(global_path.get_xs(), global_path.get_ys())])

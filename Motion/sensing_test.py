@@ -106,7 +106,7 @@ while True:
 
     vis.lock()
     if time.time() - start_time < 5:
-        robot.setBaseVelocity([0.2, 0.1])
+        robot.setBaseVelocity([0.5, 0.1])
     else:
         robot.setBaseVelocity([0.0,0.5])
     vis.unlock()
