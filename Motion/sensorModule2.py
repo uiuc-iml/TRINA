@@ -71,10 +71,10 @@ class Camera_Robot:
                     raise ValueError('invalid camera selected. Please update camera selection and try again')
         elif(self.mode == 'Kinematic'):
 
-            glutInit ([])
-            glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
-            glutInitWindowSize (1, 1)
-            windowID = glutCreateWindow ("test")
+            # glutInit ([])
+            # glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
+            # glutInitWindowSize (1, 1)
+            # windowID = glutCreateWindow ("test")
 
             # reset arms
 
@@ -168,8 +168,8 @@ class Camera_Robot:
                     output.update({camera:self.active_cameras[camera].get_point_cloud()})
             return output
         else:
-            right_image = sensing.camera_to_images(self.right_cam, image_format='numpy', color_format='channels')
-            left_image = sensing.camera_to_images(self.left_cam, image_format='numpy', color_format='channels')
+            right_image = sensing.camera_to_images(self.right_cam, image_format= 'numpy', color_format='channels')
+            left_image = sensing.camera_to_images(self.left_cam, image_format= 'numpy', color_format='channels')
 
 
             return {"realsense_right":right_image,"realsense_left":left_image}
@@ -180,7 +180,7 @@ class Camera_Robot:
             self.active_cameras[camera].safely_close()
 
     def update_sim(self):
-        dt = 0.05
+        dt = 0.1
         glutInit ([])
         glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
         glutInitWindowSize (1, 1)
