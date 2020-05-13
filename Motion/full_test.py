@@ -18,35 +18,29 @@ import signal
 import tf
 import rospy
 import sensor_msgs
-from multiprocessing import Process, Lock, Array
-
-pose_lock = Lock()
+from multiprocessing import Process, Pipe
 
 def publish_tf(curr_pose):
     x, y, theta = curr_pose
     theta = theta % (math.pi*2)
     br = tf.TransformBroadcaster()
-    br.sendTransform([-x, -y, 0], tf.transformations.quaternion_from_euler(0, 0, -theta), rospy.Time.now(), "odom", "base_link")
-    br.sendTransform([0.2, 0, 0.2], tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "base_link", "base_scan")
+    br.sendTransform([x, y, 0], tf.transformations.quaternion_from_euler(0, 0, theta), rospy.Time.now(), "base_link", "odom")
+    br.sendTransform([0.2, 0, 0.2], tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "base_scan", "base_link")
 
-def publish_gmapping_stuff(lidar, world, curr_pose_shm):
-    rospy.init_node("sensing_test")
+def publish_gmapping_stuff(conn):
+    rospy.init_node("sensing_test_child")
     pub = rospy.Publisher("base_scan", sensor_msgs.msg.LaserScan)
 
+    ros_msg = None
+    curr_pose_child = None
+
     while True:
-        lidar.kinematicSimulate(world, 0.01)
-        ros_msg = ros.to_SensorMsg(lidar, frame = "/base_scan")
+        if conn.poll():
+            ros_msg, curr_pose_child = conn.recv()
 
-        pub.publish(ros_msg)
-
-        curr_pose_child = []
-        pose_lock.acquire()
-        for e in curr_pose_shm:
-            curr_pose_child.append(e)
-        pose_lock.release()
-        publish_tf(curr_pose_child) 
-
-        time.sleep(0.01)
+        if ros_msg is not None and curr_pose_child is not None:
+            pub.publish(ros_msg)
+            publish_tf(curr_pose_child) 
 
 
 robot = Motion(mode = 'Kinematic', codename="anthrax")
@@ -104,9 +98,11 @@ sim = klampt.Simulator(world)
 
 lidar = sim.controller(0).sensor("lidar")
 
-curr_pose_shm = Array('f', 3)
-gmapping_proc = Process(target=publish_gmapping_stuff, args=(lidar, world, curr_pose_shm, ))
+parent_conn, child_conn = Pipe()
+gmapping_proc = Process(target=publish_gmapping_stuff, args=(child_conn, ))
 gmapping_proc.start()
+
+rospy.init_node("sensing_test_parent")
 
 def sigint_handler(sig, frame):
     vis.kill()
@@ -118,12 +114,12 @@ def sigint_handler(sig, frame):
 signal.signal(signal.SIGINT, sigint_handler)
 
 vis.add("lidar", lidar)
-
 vis.show()
 
 time.sleep(3)
 
 end_v = 0.5
+start_time = time.time()
 
 while True: 
     new_grid = get_occupancy_grid("dynamic_map", timeout=0.1)
@@ -132,11 +128,10 @@ while True:
         gridmap = build_2d_map(grid)
         preprocessed_gridmap = preprocess(gridmap, radius)
 
+    lidar.kinematicSimulate(world, 0.01)
+    ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")
     curr_pose = robot.base_state.measuredPos
-    pose_lock.acquire()
-    for i in range(3):
-        curr_pose_shm[i] = curr_pose[i]
-    pose_lock.release()
+    parent_conn.send([ros_msg, curr_pose])
 
     collision = curr_point.collides(gridmap)
     if collision:

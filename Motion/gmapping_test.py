@@ -11,8 +11,7 @@ import rospy
 import tf
 import sensor_msgs
 
-rospy.init_node("sensing_test")
-pub = rospy.Publisher("base_scan", sensor_msgs.msg.LaserScan)
+from multiprocessing import Process, Pipe
 
 def add_terrain(world, path, T, name):
     geom = Geometry3D()
@@ -89,20 +88,34 @@ vis.add("lidar", lidar)
 
 time.sleep(1)
 
-start_time = time.time()
+def publish_gmapping_stuff(conn):
+    rospy.init_node("sensing_test_child")
+    pub = rospy.Publisher("base_scan", sensor_msgs.msg.LaserScan)
 
+    ros_msg = None
+    curr_pose_child = None
+
+    while True:
+        if conn.poll():
+            ros_msg, curr_pose_child = conn.recv()
+
+        if ros_msg is not None and curr_pose_child is not None:
+            pub.publish(ros_msg)
+            publish_tf(curr_pose_child)
+
+        now = time.time()
+
+parent_conn, child_conn = Pipe()
+ros_process = Process(target=publish_gmapping_stuff, args=(child_conn, ))
+ros_process.start()
+
+rospy.init_node("sensing_test_parent")
+start_time = time.time()
 while True:
     lidar.kinematicSimulate(world, 0.01)
-
-    ros_msg = ros.to_SensorMsg(lidar, frame = "/base_scan")
-    measurements = lidar.getMeasurements()
-    pub.publish(ros_msg)
-
+    ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")
     curr_pose = robot.base_state.measuredPos
-    publish_tf(curr_pose)
-
-    pc = lidar_to_pc(robot, lidar, measurements)
-    vis.add("pc", pc)
+    parent_conn.send([ros_msg, curr_pose])
 
     vis.lock()
     if time.time() - start_time < 5:
@@ -110,5 +123,7 @@ while True:
     else:
         robot.setBaseVelocity([0.0,0.5])
     vis.unlock()
+    time.sleep(0.1)
 
-    time.sleep(0.01)
+ros_process.join()
+vis.show()
