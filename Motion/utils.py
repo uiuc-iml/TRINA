@@ -59,6 +59,7 @@ def clip(mini, maxi, val):
     return val
 
 def transform_coordinates(point, occupancy_grid):
+    # world -> grid
     try:
         x, y = point
         theta = None
@@ -72,11 +73,11 @@ def transform_coordinates(point, occupancy_grid):
     x_new = x / resolution
     y_new = y / resolution
 
-    #x_new += x_origin + occupancy_grid.info.width/2
-    #y_new += y_origin + occupancy_grid.info.height/2
+    x_new += -x_origin + occupancy_grid.info.width/2
+    y_new += -y_origin + occupancy_grid.info.height/2
 
-    x_new += occupancy_grid.info.width/2
-    y_new += occupancy_grid.info.height/2
+    #x_new += occupancy_grid.info.width/2
+    #y_new += occupancy_grid.info.height/2
 
     if theta is None:
         return x_new, y_new
@@ -89,8 +90,8 @@ def transform_back(point, occupancy_grid):
 
     x_origin, y_origin = occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y
 
-    x_new = x - (occupancy_grid.info.width/2)
-    y_new = y - (occupancy_grid.info.height/2)
+    x_new = x - (-x_origin + occupancy_grid.info.width/2)
+    y_new = y - (-y_origin + occupancy_grid.info.height/2)
 
     x_new *= resolution
     y_new *= resolution

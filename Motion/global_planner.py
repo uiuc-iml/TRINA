@@ -261,16 +261,20 @@ def navigation_function(gridmap, goal, radius):
     parents = {}
     dists = np.zeros(gridmap.shape)
 
+    if has_obstacle(gridmap, goal):
+        print("Uh oh! Goal is in obstacle!")
+        return None, None
+
     for i in range(len(gridmap)):
-        for j in range(len(gridmap[0])):
-            dists[i, j] = len(gridmap) + len(gridmap[0])
+        for j in range(len(gridmap[i])):
+            dists[i, j] = len(gridmap) + len(gridmap[i])
 
     dists[goal] = 0
     heappush(pq, (0, goal))
 
     while not len(pq) == 0:
 
-        curr = heappop(pq)[1]
+        curr_dist, curr = heappop(pq)
 
         for i in [-1, 0, 1]:
             for j in [-1, 0, 1]:
@@ -287,19 +291,43 @@ def navigation_function(gridmap, goal, radius):
 
                 new_dist = dists[curr] + l2_dist(curr, new_point)
                 if new_dist < dists[new_point]:
-                    heappush(pq, (new_dist, new_point))
                     dists[new_point] = new_dist
+                    heappush(pq, (new_dist, new_point))
                     parents[new_point] = curr
 
     return dists, parents
 
 def get_path(parents, start, goal):
+    if parents is None:
+        return None
+
     rv = GlobalPath()
 
     curr = start
     while curr != goal:
-        rv.add_point(curr[::-1])
-        curr = parents[curr]
+        rv.add_point(curr)
+        try:
+            curr = parents[curr]
+        except KeyError:
+            return None
 
     rv.add_point(goal)
     return rv
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    grid = get_occupancy_grid("static_map")
+    res = grid.info.resolution
+    radius = 0.5588/2/res * 3
+    gridmap = build_2d_map(grid)
+    preprocessed_gridmap = preprocess(gridmap, radius)
+
+    start = intify(transform_coordinates((0, 0), grid))
+    end = intify(transform_coordinates((4, 4), grid))
+
+    dists, parents = navigation_function(preprocessed_gridmap, end, radius)
+    global_path = get_path(parents, start, end)
+    plt.plot(global_path.get_xs(), global_path.get_ys())
+    plt.imshow(gridmap)
+    plt.show()

@@ -42,6 +42,17 @@ def publish_gmapping_stuff(conn):
             pub.publish(ros_msg)
             publish_tf(curr_pose_child) 
 
+def compute_global_path(conn, end, radius):
+    preprocessed_gridmap = None
+
+    while True:
+        if conn.poll():
+            preprocessed_gridmap, start = conn.recv()
+
+        if preprocessed_gridmap is not None:
+            dists, parents = navigation_function(preprocessed_gridmap, end, radius)
+            global_path = get_path(parents, start, end)
+            conn.send(global_path)
 
 robot = Motion(mode = 'Kinematic', codename="anthrax")
 world = robot.getWorld()
@@ -60,24 +71,15 @@ vis.add("world",world)
 
 grid = get_occupancy_grid("static_map")
 res = grid.info.resolution
-radius = 0.5588/2/res * 3
+radius = 0.5588/2/res * 2.0
 gridmap = build_2d_map(grid)
-
 preprocessed_gridmap = preprocess(gridmap, radius)
 
 start = intify(transform_coordinates((0, 0), grid))
-end = intify(transform_coordinates((4, 4), grid))
-#end = intify(transform_coordinates((0, 6), grid))
-
-dists, parents = navigation_function(preprocessed_gridmap, end, radius)
-global_path = get_path(parents, start, end)
-
-plt.plot(global_path.get_xs(), global_path.get_ys())
-plt.imshow(gridmap)
-plt.show()
-
-if global_path is None:
-    raise Exception("No global path found!")
+#end = intify(transform_coordinates((4, 4), grid))
+#end = intify(transform_coordinates((4, 8), grid))
+end = intify(transform_coordinates((8, 0), grid))
+#end = intify(transform_coordinates((0, 8), grid))
 
 curr_point = Circle(start[::-1], radius)
 curr_theta = 0
@@ -98,9 +100,13 @@ sim = klampt.Simulator(world)
 
 lidar = sim.controller(0).sensor("lidar")
 
-parent_conn, child_conn = Pipe()
-gmapping_proc = Process(target=publish_gmapping_stuff, args=(child_conn, ))
+ros_parent_conn, ros_child_conn = Pipe()
+gmapping_proc = Process(target=publish_gmapping_stuff, args=(ros_child_conn, ))
 gmapping_proc.start()
+
+global_map_parent_conn, global_map_child_conn = Pipe()
+global_map_proc = Process(target=compute_global_path, args=(global_map_child_conn, end, radius))
+global_map_proc.start()
 
 rospy.init_node("sensing_test_parent")
 
@@ -116,22 +122,35 @@ signal.signal(signal.SIGINT, sigint_handler)
 vis.add("lidar", lidar)
 vis.show()
 
-time.sleep(3)
-
 end_v = 0.5
 start_time = time.time()
 
+pose_history = []
+
+global_path = None
+
 while True: 
+    lidar.kinematicSimulate(world, 0.001)
+    ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")
+    curr_pose = robot.base_state.measuredPos
+    ros_parent_conn.send([ros_msg, curr_pose]) 
+
     new_grid = get_occupancy_grid("dynamic_map", timeout=0.1)
     if new_grid is not None:
         grid = new_grid
         gridmap = build_2d_map(grid)
-        preprocessed_gridmap = preprocess(gridmap, radius)
+        preprocessed_gridmap = preprocess(gridmap, radius) 
+        new_start = intify(transform_coordinates((curr_pose[0], curr_pose[1]), grid))
+        global_map_parent_conn.send((preprocessed_gridmap, new_start))
 
-    lidar.kinematicSimulate(world, 0.01)
-    ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")
-    curr_pose = robot.base_state.measuredPos
-    parent_conn.send([ros_msg, curr_pose])
+    if global_map_parent_conn.poll():
+        new_global_path = global_map_parent_conn.recv() 
+        if new_global_path is not None:
+            global_path = new_global_path
+
+    if global_path is None:
+        time.sleep(0.1)
+        continue
 
     collision = curr_point.collides(gridmap)
     if collision:
@@ -152,16 +171,21 @@ while True:
     closest = evaluate_primitives(curr_point, primitives, global_path, gridmap)
     kglobal = klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], grid) for x, y in zip(global_path.get_xs(), global_path.get_ys())])
 
+
     vis.add("kglobaltraj", kglobal)
+    if len(pose_history) > 0:
+        khistory_traj = klampt.model.trajectory.Trajectory(milestones = [p for p in pose_history])
+        vis.add("khistorytraj", khistory_traj)
+        vis.setColor("khistorytraj", 0, 255, 0)
 
     if closest is None:
+        print("No prim!!!")
         robot.setBaseVelocity([0.0, 0.4])
         new_pose = robot.base_state.measuredPos
         new_pose = transform_coordinates(new_pose, grid)
 
         curr_point = Circle((new_pose[0], new_pose[1]), radius)
         curr_theta = new_pose[2]
-        print("No prim!!!")
         continue
 
     xs, ys, thetas = closest.get_xytheta(200)
@@ -197,7 +221,13 @@ while True:
             end_v = min(max_v, end_v)
             break
 
+        lidar.kinematicSimulate(world, 0.001)
+        ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")
         pose = robot.base_state.measuredPos
+        ros_parent_conn.send([ros_msg, pose])
+
+        pose_history.append([pose[0], pose[1]])
+
         pose = transform_coordinates(pose, grid)
 
         curr_target = (state.x, state.y)
