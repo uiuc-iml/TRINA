@@ -43,13 +43,14 @@ def publish_gmapping_stuff(conn):
             publish_tf(curr_pose_child) 
 
 def compute_global_path(conn, end, radius):
-    preprocessed_gridmap = None
+    gridmap = None
 
     while True:
         if conn.poll():
-            preprocessed_gridmap, start = conn.recv()
+            gridmap, start = conn.recv()
 
-        if preprocessed_gridmap is not None:
+        if gridmap is not None:
+            preprocessed_gridmap = preprocess(gridmap, radius)
             dists, parents = navigation_function(preprocessed_gridmap, end, radius)
             global_path = get_path(parents, start, end)
             conn.send(global_path)
@@ -135,13 +136,12 @@ while True:
     curr_pose = robot.base_state.measuredPos
     ros_parent_conn.send([ros_msg, curr_pose]) 
 
-    new_grid = get_occupancy_grid("dynamic_map", timeout=0.1)
+    new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
     if new_grid is not None:
         grid = new_grid
         gridmap = build_2d_map(grid)
-        preprocessed_gridmap = preprocess(gridmap, radius) 
         new_start = intify(transform_coordinates((curr_pose[0], curr_pose[1]), grid))
-        global_map_parent_conn.send((preprocessed_gridmap, new_start))
+        global_map_parent_conn.send((gridmap, new_start))
 
     if global_map_parent_conn.poll():
         new_global_path = global_map_parent_conn.recv() 
@@ -188,7 +188,7 @@ while True:
         curr_theta = new_pose[2]
         continue
 
-    xs, ys, thetas = closest.get_xytheta(200)
+    xs, ys, thetas = closest.get_xytheta(20)
 
     plt.cla()
     plt.plot(global_path.get_xs(), global_path.get_ys())
@@ -242,11 +242,9 @@ while True:
 
         vel = [state.v * res + k_linear*linear_error, state.w + k_angular*cross_track_error]
 
-        vis.lock()
         vis.add("klocaltraj", ktraj)
         vis.setColor("klocaltraj", 0, 0, 255)
         robot.setBaseVelocity(vel)
-        vis.unlock()
 
         new_pose = robot.base_state.measuredPos
         new_pose = transform_coordinates(new_pose, grid)
@@ -255,6 +253,9 @@ while True:
         elapsed_time = time.time() - iteration_start
         remaining_time = max(0.01 - elapsed_time, 0.0)
         time.sleep(remaining_time)
+
+    if time.time() - start_time < time_thresh:
+        time.sleep(time_thresh - time.time() + start_time())
 
     new_pose = robot.base_state.measuredPos
     new_pose = transform_coordinates(new_pose, grid)
