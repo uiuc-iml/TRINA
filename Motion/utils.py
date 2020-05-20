@@ -61,42 +61,36 @@ def clip(mini, maxi, val):
 def transform_coordinates(point, occupancy_grid):
     # world -> grid
     try:
-        x, y = point
+        y, x = point
         theta = None
     except Exception:
-        x, y, theta = point
+        y, x, theta = point
 
     resolution = occupancy_grid.info.resolution
 
     x_origin, y_origin = occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y
 
-    x_new = x / resolution
-    y_new = y / resolution
-
-    x_new += -x_origin + occupancy_grid.info.width/2
-    y_new += -y_origin + occupancy_grid.info.height/2
-
-    #x_new += occupancy_grid.info.width/2
-    #y_new += occupancy_grid.info.height/2
+    x_new = (x - x_origin) / resolution
+    y_new = (y - y_origin) / resolution
 
     if theta is None:
-        return x_new, y_new
+        return y_new, x_new
     else:
-        return x_new, y_new, theta
+        return y_new, x_new, theta
 
 def transform_back(point, occupancy_grid):
-    x, y = point
+    y, x = point
     resolution = occupancy_grid.info.resolution
 
     x_origin, y_origin = occupancy_grid.info.origin.position.x, occupancy_grid.info.origin.position.y
 
-    x_new = x - (-x_origin + occupancy_grid.info.width/2)
-    y_new = y - (-y_origin + occupancy_grid.info.height/2)
+    x_new = x * resolution
+    y_new = y * resolution
 
-    x_new *= resolution
-    y_new *= resolution
+    x_new += x_origin
+    y_new += y_origin
 
-    return [x_new, y_new]
+    return [y_new, x_new]
 
 def intify(point):
     return (int(point[0]), int(point[1]))
