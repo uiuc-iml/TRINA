@@ -305,13 +305,13 @@ def get_path(parents, start, goal):
 
     curr = start
     while curr != goal:
-        rv.add_point(curr)
+        rv.add_point(curr[::-1])
         try:
             curr = parents[curr]
         except KeyError:
             return None
 
-    rv.add_point(goal)
+    rv.add_point(goal[::-1])
     return rv
 
 if __name__ == "__main__":
@@ -324,7 +324,7 @@ if __name__ == "__main__":
     preprocessed_gridmap = preprocess(gridmap, radius)
 
     start = intify(transform_coordinates((0, 0), grid))
-    end = intify(transform_coordinates((4, 4), grid))
+    end = intify(transform_coordinates((0, 8), grid))
 
     dists, parents = navigation_function(preprocessed_gridmap, end, radius)
     global_path = get_path(parents, start, end)

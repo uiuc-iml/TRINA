@@ -85,7 +85,7 @@ end = intify(transform_coordinates((4, 8), grid))
 
 curr_point = Circle(start[::-1], radius)
 curr_theta = 0
-end_theta = math.pi/2
+end_theta = 0 #math.pi/2
 
 leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
 leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
@@ -162,11 +162,12 @@ while True:
         break
 
     dist_to_goal = l2_dist(curr_point.center, end)
-    if dist_to_goal < 0.2 / res:
+    if dist_to_goal < 0.2 / res or at_end:
         break
 
     # near goal, run a special controller?
     if dist_to_goal < 1.0 / res:
+        at_end = True
         primitives = [LocalPath([(curr_point.center[0], curr_point.center[1], curr_theta), (end[0], end[1], end_theta)])]
         end_v = 0
     else:
@@ -221,7 +222,7 @@ while True:
         iteration_start = time.time()
         state = profile[i]
 
-        if iteration_start - start_time > time_thresh:
+        if not at_end and iteration_start - start_time > time_thresh:
             end_v = min(max_v, end_v)
             break
 

@@ -34,7 +34,7 @@ def test_prims_2():
         xs, ys, _ = p.get_xytheta(200)
         plt.plot(xs, ys, color="red")
 
-    best = evaluate_primitives(robot, primitives, global_path, gridmap)
+    #best = evaluate_primitives(robot, primitives, global_path, gridmap)
     plt.show()
 
 def get_primitives(curr_point, curr_theta, dx, dy):
@@ -58,8 +58,8 @@ def get_primitives(curr_point, curr_theta, dx, dy):
         [dx/2, dy/2, math.pi/4],
         [dx/2, -dy/2, -math.pi/4],
 
-        [dx/4, dy/2, math.pi/2],
-        [dx/4, -dy/2, -math.pi/2],
+        [dx/4, dy, math.pi/2],
+        [dx/4, -dy, -math.pi/2],
     ]
 
     rv = []
