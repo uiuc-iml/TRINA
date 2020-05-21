@@ -10,6 +10,8 @@ from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
+from multiprocessing import Pool, TimeoutError
+from Modules import *
 
 robot_ip = 'http://localhost:8080'
 
@@ -35,7 +37,6 @@ class CommandServer:
         self.robot_state = {}
         self.robot_command = {}
         self.modules = ["Wipe", "UIModule", "Motion"]
-        self.init_headset_orientation = {}
         self.startup = True
         self.robot_active = True
         self.shut_down_flag = False
@@ -49,56 +50,72 @@ class CommandServer:
         if not res:
             return
 
+        # create the list of threads
+        # each thread will be assigned to start each module
+
         stateRecieverThread = threading.Thread(target=self.stateReciever)
         stateRecieverThread.start()
         commandRecieverThread = threading.Thread(target=self.commandReciever)
         commandRecieverThread.start()
-        modulesRecieverThread = threading.Thread(target=self.moduleReciever)
-        modulesRecieverThread.start()
+        moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
+        moduleMonitorThread.start()
 
     def stateReciever(self):
-        while(True):
-            if(self.startup == True & (self.server["ROBOT_STATE"].read()!=0)):
-                self.init_robot_state = self.server['ROBOT_STATE'].read()
-                self.startup = False
-                if(self.left_limb_active):
-                    self.init_pos_left = self.robot.sensedLeftEETransform()
-                if(self.right_limb_active):
-                    self.init_pos_right = self.robot.sensedRightEETransform()
-                if(self.base_active):
-                    # self.init_pos_base = self.robot.
-                    print("base position")
-                if(self.left_gripper_active):
-                    # self.init_pos_left_gripper = self.robot.
-                    print("left gripper position")
-                if(self.right_gripper_active):
-                    # self.init_pos_right_gripper = self.robot.
-                    print("right gripper position")
-                if(self.torso_active):
-                    # self.init_pos_torso = self.robot.
-                    print("torso position")
-                self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
+        pos_left = {}
+        pos_right = {}
+        pos_base = {}
+        pos_left_gripper = {}
+        pos_right_gripper = {}
+        pos_torso = {}
+        vel_base = {}
+        vel_right = {}
+        vel_left = {}
         loopStartTime = time.time()
         while not self.shut_down_flag:
+            self.robot_state = self.server['ROBOT_STATE'].read()
+            self.startup = False
             if(self.left_limb_active):
-                self.init_pos_left = self.robot.sensedLeftEETransform()
+                pos_left = self.robot.sensedLeftEETransform()
+                print("left position")
+                vel_left = self.robot.sensedLeftEEVelcocity()
+                print("left velocity")
             if(self.right_limb_active):
-                self.init_pos_right = self.robot.sensedRightEETransform()
+                pos_right = self.robot.sensedRightEETransform()
+                print("right position")
+                vel_right = self.robot.sensedRightEEVelcocity()
+                print("right velocity")
             if(self.base_active):
-                # self.init_pos_base = self.robot.
+                pos_base = self.robot.sensedBasePosition()
                 print("base position")
+                vel_base = self.robot.sensedBaseVelocity()
+                print("base velocity")
             if(self.left_gripper_active):
-                # self.init_pos_left_gripper = self.robot.
+                pos_left_gripper = self.robot.sensedLeftGripperPosition()
                 print("left gripper position")
             if(self.right_gripper_active):
-                # self.init_pos_right_gripper = self.robot.
+                pos_right_gripper = self.robot.sensedRightGripperPosition()
                 print("right gripper position")
             if(self.torso_active):
-                # self.init_pos_torso = self.robot.
+                pos_torso = self.robot.sensedTorsoPosition()
                 print("torso position")
+
+            UI_state = self.server["UI_STATE"].read()
             # build the state.
-            self.server["ROBOT_STATE"] = {}
-            self.UI_state = self.server['UI_STATE'].read()
+            self.server["ROBOT_STATE"] = {
+                                    "Position" : {
+                                        "leftArm" : pos_left,
+                                        "rightArm" : pos_right,
+                                        "base" : pos_base,
+                                        "torso": pos_torso,
+                                        "leftGripper" : pos_left_gripper,
+                                        "rightGripper" : pos_right_gripper,
+                                        },
+                                    "Velocity" : {
+                                        "leftArm" : vel_left,
+                                        "rightArm" : vel_right,
+                                        "base" : vel_base,
+                                    },
+                                    }
             ################
             elapsedTime = time.time() - loopStartTime
             if elapsedTime < self.dt:
@@ -110,38 +127,46 @@ class CommandServer:
         while not self.shut_down_flag:
             loopStartTime = time.time()
             self.robot_command = self.server['ROBOT_COMMAND'].read()
-            #execute the commands
             elapsedTime = time.time() - loopStartTime
+            # check the top priorities
+            
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
 
-    def moduleReciever(self):
+    def run(command):
+        try:
+            exec(command)
+        finally:
+            print("command recieved was " + command)
+        # check all the priorities: 0,1,2,3,4,5
+            # self.server['ROBOT_COMMAND']["0"] = []
+            # self.server['ROBOT_COMMAND']["1"] = [command1,command2]
+
+        ### serial commands. Check the priority.
+
+
+
+#0 -> dead
+#1 -> healthy
+    def moduleMonitor(self):
         while not self.shut_down_flag:
             loopStartTime = time.time()
-
             for module in self.modules:
                 moduleStatus = self.server[module]["Status"].read()
                 if moduleStatus == 0:
+                    print("Module is dead")
                     #restart
                     print(module ++ " restarted")
-                elif moduleStatus == 1:
-                    #turn off
-                    print(module ++ " turned off")
-                elif moduleStatus == 2:
-                    #turn on
-                    print(module ++ " turned on")
-                else:
-                    pass
-
-
+                pass
 
             elapsedTime = time.time() - loopStartTime
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
+
 
     def sigint_handler(self, signum, frame):
         """ Catch Ctrl+C tp shutdown the robot
