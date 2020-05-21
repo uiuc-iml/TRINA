@@ -54,7 +54,7 @@ class CommandServer:
 
         self.threads = []
         for i in range(len(self.modules)):
-            t = threading.Thread(name = self.module[i], target=worker, args = (self.modules[i],))
+            t = threading.Thread(name = self.module[i], target=activate, args = (self.modules[i],))
             threads.append(t)
             t.start()
         # each thread will be assigned to start each module
@@ -65,6 +65,11 @@ class CommandServer:
         commandRecieverThread.start()
         moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
         moduleMonitorThread.start()
+
+#this is place holder for moduleMonitor
+    def activate(name):
+        while not self.shut_down_flag:
+            time.sleep(0.1)
 
     def stateReciever(self):
         pos_left = {}
