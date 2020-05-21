@@ -51,6 +51,12 @@ class CommandServer:
             return
 
         # create the list of threads
+
+        self.threads = []
+        for i in range(len(self.modules)):
+            t = threading.Thread(name = self.module[i], target=worker, args = (self.modules[i],))
+            threads.append(t)
+            t.start()
         # each thread will be assigned to start each module
 
         stateRecieverThread = threading.Thread(target=self.stateReciever)
@@ -128,8 +134,13 @@ class CommandServer:
             loopStartTime = time.time()
             self.robot_command = self.server['ROBOT_COMMAND'].read()
             elapsedTime = time.time() - loopStartTime
-            # check the top priorities
-            
+            for i in range(5):
+                if (len(self.server['ROBOT_COMMAND'][str(i)]) != 0){
+                    commandsList = self.server['ROBOT_COMMAND'][str(i)]
+                    run(commandList[0])
+                    commandList.pop(0)
+                    break;
+                }
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:
@@ -140,13 +151,6 @@ class CommandServer:
             exec(command)
         finally:
             print("command recieved was " + command)
-        # check all the priorities: 0,1,2,3,4,5
-            # self.server['ROBOT_COMMAND']["0"] = []
-            # self.server['ROBOT_COMMAND']["1"] = [command1,command2]
-
-        ### serial commands. Check the priority.
-
-
 
 #0 -> dead
 #1 -> healthy
