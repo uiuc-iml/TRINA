@@ -54,6 +54,7 @@ def compute_global_path(conn, end, radius):
             dists, parents = navigation_function(preprocessed_gridmap, end, radius)
             global_path = get_path(parents, start, end)
             conn.send(global_path)
+            gridmap = None
 
 robot = Motion(mode = 'Kinematic', codename="anthrax")
 world = robot.getWorld()
@@ -78,8 +79,8 @@ preprocessed_gridmap = preprocess(gridmap, radius)
 
 start = intify(transform_coordinates((0, 0), grid))
 #end = intify(transform_coordinates((4, 4), grid))
-#end = intify(transform_coordinates((4, 8), grid))
-end = intify(transform_coordinates((8, 0), grid))
+end = intify(transform_coordinates((4, 8), grid))
+#end = intify(transform_coordinates((8, 0), grid))
 #end = intify(transform_coordinates((0, 8), grid))
 
 curr_point = Circle(start[::-1], radius)
@@ -124,11 +125,12 @@ vis.add("lidar", lidar)
 vis.show()
 
 end_v = 0.5
-start_time = time.time()
+beginning_time = time.time()
 
 pose_history = []
 
 global_path = None
+can_send_gridmap = True
 
 while True: 
     lidar.kinematicSimulate(world, 0.001)
@@ -137,14 +139,16 @@ while True:
     ros_parent_conn.send([ros_msg, curr_pose]) 
 
     new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
-    if new_grid is not None:
+    if new_grid is not None and can_send_gridmap:
         grid = new_grid
         gridmap = build_2d_map(grid)
         new_start = intify(transform_coordinates((curr_pose[0], curr_pose[1]), grid))
         global_map_parent_conn.send((gridmap, new_start))
+        can_send_gridmap = False
 
     if global_map_parent_conn.poll():
         new_global_path = global_map_parent_conn.recv() 
+        can_send_gridmap = True
         if new_global_path is not None:
             global_path = new_global_path
 
@@ -155,7 +159,7 @@ while True:
     collision = curr_point.collides(gridmap)
     if collision:
         print("collided...this should not have happened")
-        continue
+        break
 
     dist_to_goal = l2_dist(curr_point.center, end)
     if dist_to_goal < 0.2 / res:
@@ -196,7 +200,7 @@ while True:
         px, py, _ = p.get_xytheta(200)
         plt.plot(px, py, color='r')
     plt.plot(xs, ys, color='g')
-    plt.imshow(gridmap)
+    plt.imshow(gridmap, origin="lower")
     curr_point.plot(plt)
     plt.pause(0.01)
     plt.gca().set_aspect('equal', adjustable='box')
@@ -262,6 +266,8 @@ while True:
 
     curr_point = Circle((new_pose[0], new_pose[1]), radius)
     curr_theta = new_pose[2]
+
+print("Total time: ", time.time() - beginning_time)
 
 robot.setBaseVelocity([0, 0])
 vis.show()
