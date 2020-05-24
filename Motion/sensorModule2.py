@@ -15,10 +15,10 @@ from motion_client import MotionClient
 from klampt import vis, Geometry3D
 from klampt.model import sensing
 from motion import *
-from OpenGL.GLUT import *
 from threading import Thread
 import copy
-
+from OpenGL.GLUT import *
+from OpenGL.GL import *
 class Camera_Robot:
 
     """
@@ -181,10 +181,24 @@ class Camera_Robot:
 
     def update_sim(self):
         dt = 0.1
+        #GLEW WORKAROUND
         glutInit ([])
         glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
-        glutInitWindowSize (1, 1)
+        glutInitWindowSize (1, 1);
         windowID = glutCreateWindow ("test")
+
+        # Default background color
+        glClearColor(0.8,0.8,0.9,0)
+        # Default light source
+        glLightfv(GL_LIGHT0,GL_POSITION,[0,-1,2,0])
+        glLightfv(GL_LIGHT0,GL_DIFFUSE,[1,1,1,1])
+        glLightfv(GL_LIGHT0,GL_SPECULAR,[1,1,1,1])
+        glEnable(GL_LIGHT0)
+
+        glLightfv(GL_LIGHT1,GL_POSITION,[-1,2,1,0])
+        glLightfv(GL_LIGHT1,GL_DIFFUSE,[0.5,0.5,0.5,1])
+        glLightfv(GL_LIGHT1,GL_SPECULAR,[0.5,0.5,0.5,1])
+        glEnable(GL_LIGHT1)
         while(True):
             q = self.robot.getKlamptSensedPosition()
             self.Rrotation,self.Rtranslation = self.robot.sensedRightEETransform()
