@@ -14,7 +14,7 @@ from klampt.math import vectorops,so3
 # from klampt import vis
 from klampt.model import ik, collide
 import numpy as np
-from klampt import WorldModel
+from klampt import WorldModel,vis
 import os
 
 import logging
@@ -678,7 +678,7 @@ class Motion:
         else:
             logger.warning('Left limb not enabled')
             print("motion.setLeftLimbPosition():Left limb not enabled")
-        print 
+        print
 
     def setRightLimbPositionLinear(self,q,duration):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
@@ -1557,6 +1557,7 @@ class Motion:
         result flag
         target_configuration, a list of 6 doubles
 
+
         """
         v = self.left_limb_state.cartesianDriveV
         w = self.left_limb_state.cartesianDriveW
@@ -1592,6 +1593,7 @@ class Motion:
             if self._arm_is_in_limit(self.robot_model.getConfig()[self.left_active_Dofs[0]:self.left_active_Dofs[5]+1],joint_upper_limits,joint_lower_limits):
                 pass
             else:
+
                 failFlag = True
         else:
             failFlag = True
@@ -1608,6 +1610,7 @@ class Motion:
                 #    self.left_limb_state.driveSpeedAdjustment)
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
+
             target_config = self.robot_model.getConfig()[self.left_active_Dofs[0]:self.left_active_Dofs[5]+1]
             self.left_limb_state.driveTransform = target_transform
             if self.left_limb_state.driveSpeedAdjustment < 1:
@@ -1687,7 +1690,8 @@ class Motion:
         if left_limb:
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb, right_limb = self.right_limb_state.sensedq)
         elif right_limb:
-            return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = right_limb)
+            return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.
+            left_limb_state.sensedq, right_limb = right_limb)
 if __name__=="__main__":
     #########Check Collision Detection Speed ###############
     #robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
@@ -1706,6 +1710,7 @@ if __name__=="__main__":
     # for i in range(totalN):
     #     robot_model.randomizeConfig()
     #     collisions = collider.robotSelfCollisions(robot_model)
+
     #     colCounter = 0
     #     for col in collisions:
     #         colCounter = colCounter + 1
@@ -1744,7 +1749,7 @@ if __name__=="__main__":
     #robot.setLeftLimbPosition(leftUntuckedConfig)
     #robot.setRightLimbPosition(rightUntuckedConfig)
     startTime = time.time()
-    
+
     while (time.time()-startTime < 5):
         vis.lock()
         #robot.setBaseVelocity([0.5,0.1])

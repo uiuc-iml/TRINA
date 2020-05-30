@@ -13,7 +13,6 @@ from threading import Thread, Lock
 import threading
 from copy import deepcopy
 from motionStates import * #state structures
-from baseController import Path2d
 import os
 import TRINAConfig
 def setup():
