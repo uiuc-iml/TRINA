@@ -11,11 +11,11 @@ import klampt
 import numpy
 import time
 from klampt.math import se3
-from motion_client import MotionClient
+from motion_client_python3 import MotionClient
 from klampt import vis, Geometry3D
 from klampt.model import sensing
-from motion import *
 from threading import Thread
+import threading
 import copy
 from OpenGL.GLUT import *
 from OpenGL.GL import *
@@ -86,10 +86,10 @@ class Camera_Robot:
             self.left_cam = self.sim.controller(0).sensor("left_hand_camera")
             self.right_cam = self.sim.controller(0).sensor("right_hand_camera")
             self.simulated_cameras.update({'realsense_right':self.right_cam,'realsense_left':self.left_cam})
-            vis.add("world",self.world)
+            # vis.add("world",self.world)
 
-            vis.show()
-            vis.kill()
+            # vis.show()
+            # vis.kill()
             # and we start the thread that will update the simulation live:
             simUpdaterThread = threading.Thread(target=self.update_sim)
             simUpdaterThread.start()   
@@ -184,7 +184,7 @@ class Camera_Robot:
         #GLEW WORKAROUND
         glutInit ([])
         glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
-        glutInitWindowSize (1, 1);
+        glutInitWindowSize (1, 1)
         windowID = glutCreateWindow ("test")
 
         # Default background color
@@ -200,10 +200,15 @@ class Camera_Robot:
         glLightfv(GL_LIGHT1,GL_SPECULAR,[0.5,0.5,0.5,1])
         glEnable(GL_LIGHT1)
         while(True):
-            q = self.robot.getKlamptSensedPosition()
-            self.Rrotation,self.Rtranslation = self.robot.sensedRightEETransform()
-            self.Lrotation,self.Ltranslation = self.robot.sensedLeftEETransform()
-
+            print('updating_sim')
+            try:
+                q = self.robot.getKlamptSensedPosition()
+                self.Rrotation,self.Rtranslation = self.robot.sensedRightEETransform()
+                self.Lrotation,self.Ltranslation = self.robot.sensedLeftEETransform()
+            except Exception as e:
+                print('error updating robot state')
+                print(e)
+                pass
             self.simrobot.setConfig(q)
             self.left_cam.kinematicSimulate(self.world, dt)
             self.right_cam.kinematicSimulate(self.world, dt)
