@@ -12,6 +12,10 @@ from reem.datatypes import KeyValueStore
 import traceback
 from multiprocessing import Pool, TimeoutError
 from Modules import *
+import trina_modules
+import sys, inspect
+
+
 
 robot_ip = 'http://localhost:8080'
 
@@ -52,11 +56,19 @@ class CommandServer:
 
         # create the list of threads
 
-        self.threads = []
-        for i in range(len(self.modules)):
-            t = threading.Thread(name = self.module[i], target=activate, args = (self.modules[i],))
-            threads.append(t)
-            t.start()
+        self.modules_dict = {}
+        trina_modules = reload(trina_modules)
+        for name, obj in inspect.getmembers(trina_modules):
+            if inspect.isclass(obj):
+                tmp = start_module(obj)
+                modules_dict.update({name:tmp})
+                print(name)
+        print(modules_dict)
+
+        # for i in range(len(self.modules)):
+        #     t = threading.Thread(name = self.module[i], target=activate, args = (self.modules[i],))
+        #     threads.append(t)
+        #     t.start()
         # each thread will be assigned to start each module
 
         stateRecieverThread = threading.Thread(target=self.stateReciever)
@@ -66,7 +78,12 @@ class CommandServer:
         moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
         moduleMonitorThread.start()
 
-#this is place holder for moduleMonitor
+
+    def start_modules(self,module):
+        a = module()
+        return a.return_processes()
+        
+    #this is place holder for moduleMonitor
     def activate(name):
         while not self.shut_down_flag:
             time.sleep(0.1)
