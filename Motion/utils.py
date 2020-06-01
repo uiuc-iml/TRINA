@@ -7,7 +7,6 @@ from klampt.io import ros
 from klampt.math import so2
 
 import numpy as np
-
 from nav_msgs.srv import GetMap
 
 def get_occupancy_grid(topic = "dynamic_map", timeout = None):
