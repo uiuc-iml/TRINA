@@ -82,7 +82,7 @@ class CommandServer:
     def start_modules(self,module):
         a = module()
         return a.return_processes()
-        
+
     #this is place holder for moduleMonitor
     def activate(name):
         while not self.shut_down_flag:
@@ -131,17 +131,17 @@ class CommandServer:
             # build the state.
             self.server["ROBOT_STATE"] = {
                                     "Position" : {
-                                        "leftArm" : pos_left,
-                                        "rightArm" : pos_right,
-                                        "base" : pos_base,
-                                        "torso": pos_torso,
-                                        "leftGripper" : pos_left_gripper,
-                                        "rightGripper" : pos_right_gripper,
+                                        "LeftArm" : pos_left,
+                                        "RightArm" : pos_right,
+                                        "Base" : pos_base,
+                                        "Torso": pos_torso,
+                                        "LeftGripper" : pos_left_gripper,
+                                        "RightGripper" : pos_right_gripper,
                                         },
                                     "Velocity" : {
-                                        "leftArm" : vel_left,
-                                        "rightArm" : vel_right,
-                                        "base" : vel_base,
+                                        "LeftArm" : vel_left,
+                                        "RightArm" : vel_right,
+                                        "Base" : vel_base,
                                     },
                                     }
             ################
