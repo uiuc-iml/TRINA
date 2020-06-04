@@ -34,7 +34,6 @@ key presses and headsets orientations.
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
-        self.server["UI_STATE"] = 0
         self.server["UI_END_COMMAND"] = []
 
         self.init_UI_state = {}
@@ -65,6 +64,11 @@ key presses and headsets orientations.
 
     def test(self):
         self._do_rpc({'funcName':'test','args':{}})
+        return
+
+    def getRayClick(self):
+        # ask the user to click on a destination in the map, returns 2 rays in reem
+        self._do_rpc({'funcName':'getRayClick','args':{}})
         return
 
     def addText(self, text, position):

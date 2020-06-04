@@ -34,6 +34,7 @@ class MyQtMainWindow(QMainWindow):
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
+        self.server["UI_STATE"] = 0
         self.commandQueue = commandQueue
         self.world = world
         QMainWindow.__init__(self)
@@ -107,7 +108,12 @@ class MyQtMainWindow(QMainWindow):
         reply = QMessageBox.question(self, title, text,
                                     QMessageBox.Yes|QMessageBox.No)
         if reply == QMessageBox.Yes:
-            print("todo feedback to reem")
+            self.server['UI_FEEDBACK'][str(id)]['REPLIED'] = True
+            self.server['UI_FEEDBACK'][str(id)]['MSG'] = 'YES'
+        else:
+            self.server['UI_FEEDBACK'][str(id)]['REPLIED'] = True
+            self.server['UI_FEEDBACK'][str(id)]['MSG'] = 'NO'
+            
         pass
 
     def addPrompt(self,title,text):
@@ -127,6 +133,9 @@ class MyQtMainWindow(QMainWindow):
         vis.add("robot trajectory",trajectory)
         vis.animate(robotPath,trajectory,endBehavior='halt')
         return
+
+    def getRayClick(self):
+        
 
     def test(self):
         print("hello")
