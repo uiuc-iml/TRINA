@@ -78,10 +78,10 @@ class CommandServer:
 
         stateRecieverThread = threading.Thread(target=self.stateReciever)
         stateRecieverThread.start()
-        # commandRecieverThread = threading.Thread(target=self.commandReciever)
-        # commandRecieverThread.start()
-        # moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
-        # moduleMonitorThread.start()
+        commandRecieverThread = threading.Thread(target=self.commandReciever)
+        commandRecieverThread.start()
+        moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
+        moduleMonitorThread.start()
         atexit.register(self.shutdown_all)
 
     def start_module(self,module):
@@ -197,11 +197,12 @@ class CommandServer:
             loopStartTime = time.time()
             self.robot_command = self.server['ROBOT_COMMAND'].read()
             elapsedTime = time.time() - loopStartTime
-            for i in range(5):
-                if (len(self.server['ROBOT_COMMAND'][str(i)]) != 0):
-                    commandsList = self.server['ROBOT_COMMAND'][str(i)]
+            for i in self.robot_command.keys():
+                if (self.robot_command[i] != []):
+                    commandsList = self.robot_command[i]
                     run(commandList[0])
-                    commandList.pop(0)
+                    self.server['ROBOT_COMMAND'][i] = commandList[1:]
+
                     break
                 
             if elapsedTime < self.dt:
