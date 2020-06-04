@@ -11,10 +11,10 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 from multiprocessing import Pool, TimeoutError
-from Modules import *
 import trina_modules
 import sys, inspect
-
+from importlib import reload 
+import atexit
 
 
 robot_ip = 'http://localhost:8080'
@@ -25,18 +25,18 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 
 class CommandServer:
 
-    def __init__(self):
+    def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,):
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["ROBOT_STATE"] = 0
         self.server["ROBOT_COMMAND"] = 0
         self.mode = 'Kinematic'
-        self.components = ['base','left_limb','right_limb','left_gripper']
+        self.components = components
         self.init_robot_state = {}
         self.dt = 0.001
         self.robot = MotionClient(address = robot_ip)
-        self.controller = UIController()
+        # self.controller = UIController()
         self.robot.startServer(mode = self.mode, components = self.components,codename = 'seed')
         self.robot_state = {}
         self.robot_command = {}
@@ -53,17 +53,22 @@ class CommandServer:
         res = self.robot.startup()
         if not res:
             return
-
+        self.health_dict = {}
         # create the list of threads
-
         self.modules_dict = {}
-        trina_modules = reload(trina_modules)
-        for name, obj in inspect.getmembers(trina_modules):
-            if inspect.isclass(obj):
-                tmp = start_module(obj)
-                modules_dict.update({name:tmp})
-                print(name)
-        print(modules_dict)
+
+        self.start_modules()
+
+        self.server['ROBOT_COMMAND'] = {'0':[],'1':[],'2':[],'3':[],'4':[]}
+
+        # trina_modules = reload(trina_modules)
+        # for name, obj in inspect.getmembers(trina_modules):
+        #     if inspect.isclass(obj):
+
+        #         tmp = self.start_module(obj)
+        #         self.modules_dict.update({name:tmp})
+        #         print(name)
+        # print(self.modules_dict)
 
         # for i in range(len(self.modules)):
         #     t = threading.Thread(name = self.module[i], target=activate, args = (self.modules[i],))
@@ -73,18 +78,54 @@ class CommandServer:
 
         stateRecieverThread = threading.Thread(target=self.stateReciever)
         stateRecieverThread.start()
-        commandRecieverThread = threading.Thread(target=self.commandReciever)
-        commandRecieverThread.start()
-        moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
-        moduleMonitorThread.start()
+        # commandRecieverThread = threading.Thread(target=self.commandReciever)
+        # commandRecieverThread.start()
+        # moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
+        # moduleMonitorThread.start()
+        atexit.register(self.shutdown_all)
 
-
-    def start_modules(self,module):
+    def start_module(self,module):
         a = module()
         return a.return_processes()
-        
+
+    def start_modules(self,module_names = []):
+        import trina_modules
+        trina_modules = reload(trina_modules)
+        if(module_names == []):
+            for name, obj in inspect.getmembers(trina_modules):
+                if inspect.isclass(obj):
+                    if(str(obj).find('trina_modules')):
+                        tmp = self.start_module(obj)
+                        self.modules_dict.update({name:tmp})
+                        self.health_dict.update({name:[True,time.time()]})
+            self.server['health_log'] = self.health_dict                        
+        else:
+            print('starting only modules '+ str(module_names))
+            for name, obj in inspect.getmembers(trina_modules):
+                if inspect.isclass(obj):
+                    if(str(obj).find('trina_modules')):
+                        if(name in module_names):
+                            print('killing module '+ name)
+                            for pcess in self.modules_dict[name]:
+                                pcess.terminate()
+                            self.modules_dict.update({name:[]})
+                            print('restarting only module ' + name)
+                            tmp = self.start_module(obj)
+                            self.modules_dict.update({name:tmp})
+                            self.server['health_log'][name] = [True,time.time()]
+
+    def shutdown_all(self):
+        self.shutdown()
+        print('closing all and exiting')
+        for module in self.modules_dict.keys():
+            for pcess in self.modules_dict[module]:
+                try:
+                    pcess.terminate()
+                except Exception as e:
+                    print(e)
+                    pass
     #this is place holder for moduleMonitor
-    def activate(name):
+    def activate(self,name):
         while not self.shut_down_flag:
             time.sleep(0.1)
 
@@ -105,12 +146,12 @@ class CommandServer:
             if(self.left_limb_active):
                 pos_left = self.robot.sensedLeftEETransform()
                 print("left position")
-                vel_left = self.robot.sensedLeftEEVelcocity()
+                vel_left = self.robot.sensedLeftEEVelocity()
                 print("left velocity")
             if(self.right_limb_active):
                 pos_right = self.robot.sensedRightEETransform()
                 print("right position")
-                vel_right = self.robot.sensedRightEEVelcocity()
+                vel_right = self.robot.sensedRightEEVelocity()
                 print("right velocity")
             if(self.base_active):
                 pos_base = self.robot.sensedBasePosition()
@@ -157,53 +198,66 @@ class CommandServer:
             self.robot_command = self.server['ROBOT_COMMAND'].read()
             elapsedTime = time.time() - loopStartTime
             for i in range(5):
-                if (len(self.server['ROBOT_COMMAND'][str(i)]) != 0){
+                if (len(self.server['ROBOT_COMMAND'][str(i)]) != 0):
                     commandsList = self.server['ROBOT_COMMAND'][str(i)]
                     run(commandList[0])
                     commandList.pop(0)
-                    break;
-                }
+                    break
+                
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
 
-    def run(command):
+    def run(self,command):
         try:
             exec(command)
         finally:
             print("command recieved was " + command)
+        
 
-#0 -> dead
-#1 -> healthy
+    #0 -> dead
+    #1 -> healthy
     def moduleMonitor(self):
+        self.monitoring_dt = 1
+        self.tolerance = 3
         while not self.shut_down_flag:
+            to_restart = []
+
             loopStartTime = time.time()
-            for module in self.modules:
-                moduleStatus = self.server[module]["Status"].read()
-                if moduleStatus == 0:
-                    print("Module is dead")
-                    #restart
-                    print(module ++ " restarted")
-                pass
+            for module in self.modules_dict.keys():
+                moduleStatus = self.server["health_log"][module].read()
+                if ((time.time()-moduleStatus[1]) > self.tolerance*self.monitoring_dt):
+                    print("Module " + module + " is dead, queueing restart")
+                    to_restart.append(module)
+                else:
+                    processes = self.modules_dict[module]
+                    for pcess in processes:
+                        if(not(pcess.is_alive())):
+                            print("Module " + module + " is dead, queueing restart")
+                            to_restart.append(module)
+                            break 
+            if(to_restart != []):
+                print('restarting modules ' + str(to_restart))
+                self.start_modules(to_restart)
 
             elapsedTime = time.time() - loopStartTime
-            if elapsedTime < self.dt:
-                time.sleep(self.dt-elapsedTime)
+            if elapsedTime < self.monitoring_dt:
+                time.sleep(self.monitoring_dt-elapsedTime)
             else:
                 pass
 
 
-    def sigint_handler(self, signum, frame):
-        """ Catch Ctrl+C tp shutdown the robot
+    # def sigint_handler(self, signum, frame):
+    #     """ Catch Ctrl+C tp shutdown the robot
 
-        """
-        assert(signum == signal.SIGINT)
-        logger.warning('SIGINT caught...shutting down the api!')
-        print("SIGINT caught...shutting down the api!")
-        self.shutdown()
+    #     """
+    #     assert(signum == signal.SIGINT)
+    #     # logger.warning('SIGINT caught...shutting down the api!')
+    #     print("SIGINT caught...shutting down the api!")
+    #     self.shutdown()
 
-    def shutdown():
+    def shutdown(self):
         #send shutdown to all modules
         self.shut_down_flag = True
         return 0
