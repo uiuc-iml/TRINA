@@ -1,12 +1,14 @@
 import sys
 import klampt
 from klampt import vis
+from klampt import io
 from klampt.robotsim import setRandomSeed
 from klampt.vis.glcommon import GLWidgetPlugin
 from klampt import RobotPoser
 from klampt.model import ik,coordinates,config,trajectory,collide
 from klampt.math import vectorops,so3,se3
 from klampt.vis import GLSimulationPlugin
+import json
 import time
 import math
 import threading
@@ -24,7 +26,7 @@ if glinit._PyQtAvailable:
 
 # outer box
 class MyQtMainWindow(QMainWindow):
-    def __init__(self,klamptGLWindow,commandQueue):
+    def __init__(self,klamptGLWindow,commandQueue,world):
         """When called, this be given a QtGLWidget object(found in klampt.vis.qtbackend).
 
         You will need to place this widget into your Qt window's layout.
@@ -33,6 +35,7 @@ class MyQtMainWindow(QMainWindow):
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.commandQueue = commandQueue
+        self.world = world
         QMainWindow.__init__(self)
         # Splitter to show 2 views in same widget easily.
         self.splitter = QSplitter()
@@ -56,22 +59,25 @@ class MyQtMainWindow(QMainWindow):
         self.setCentralWidget(self.splitter)
         self.dt = 0.05
         self.setMouseTracking(True)
+        self.rpc_args = {}
 
     
     def event(self,event):
         try:
             self.commandQueue = self.server["UI_END_COMMAND"].read()
             if  self.commandQueue:
-                print(self.commandQueue)
                 command = self.commandQueue[0]
                 try:
                     self.commandQueue.pop(0)
                     self.server["UI_END_COMMAND"] = self.commandQueue
-                    exec(command)
+                    self.rpc_args = command['args']
+                    time.sleep(0.0001) 
+                    exec('self.'+command['funcName']+'()')
                 finally:
-                    print("command recieved was " + command)
+                    print("command recieved was " + command['funcName'])
+                    print("-------------------------------------------------------------")
         except AttributeError:
-            print("AttributeError")
+            print(AttributeError.message)
         QMainWindow.event(self,event)
         return 0
 
@@ -86,11 +92,18 @@ class MyQtMainWindow(QMainWindow):
         else:
             QMainWindow.closeEvent(self,event)
 
-    def addText(self, text, position):
+    def addText(self): 
+        text =self.rpc_args['text']
+        position =self.rpc_args['position']
+        self.rpc_args = {}
         vis.addText(position,text)
         return
 
-    def addConfirmation(self,id,title,text):
+    def addConfirmation(self):
+        id = self.rpc_args['id']
+        text =self.rpc_args['text']
+        title =self.rpc_args['title']
+        self.rpc_args = {}
         reply = QMessageBox.question(self, title, text,
                                     QMessageBox.Yes|QMessageBox.No)
         if reply == QMessageBox.Yes:
@@ -103,9 +116,16 @@ class MyQtMainWindow(QMainWindow):
     def addInputBox(self,title,text,fields):
         pass
 
-    def sendTrajecotry(self,trajectory):
+    def sendTrajecotry(self):
+        world = self.world
+        trajectory = self.rpc_args['trajectory']
+        self.rpc_args = {}
+        print("inside sendTrajecotry")
+        trajectory = io.loader.fromJson(trajectory,'Trajectory')
+        print("pass from Json")
         robotPath = ("world",world.robot(0).getName())
-        vis.animate(robotPath,trajectory)
+        vis.add("robot trajectory",trajectory)
+        vis.animate(robotPath,trajectory,endBehavior='halt')
         return
 
     def test(self):
@@ -194,7 +214,7 @@ class UI_end_1:
         #To hook into that thread, you will need to pass a window creation function into vis.customUI.
         def makefunc(gl_backend):
             global g_mainwindow
-            g_mainwindow = MyQtMainWindow(gl_backend, self.commandQueue)
+            g_mainwindow = MyQtMainWindow(gl_backend, self.commandQueue,world)
             return g_mainwindow
         vis.add("world",world)
         vis.setWindowTitle("UI END 1")

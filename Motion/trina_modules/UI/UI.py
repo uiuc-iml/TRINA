@@ -6,7 +6,10 @@ import threading
 from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
-
+import klampt
+from klampt import io
+from klampt.model import ik,coordinates,config,trajectory,collide
+import json
 
 class UI:
 
@@ -32,7 +35,7 @@ key presses and headsets orientations.
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = 0
-        self.server["UI_END_COMMAND"] = 0
+        self.server["UI_END_COMMAND"] = []
 
         self.init_UI_state = {}
         self.UI_state = {}
@@ -61,59 +64,63 @@ key presses and headsets orientations.
 
 
     def test(self):
-        commandQueue = self.server["UI_END_COMMAND"].read()
-        if commandQueue:
-            commandQueue.append('self.test()')
-        else:
-            commandQueue = ['self.test()']
-        self.server["UI_END_COMMAND"] = commandQueue
-        print("commandQueue", commandQueue)
-        time.sleep(0.0001) 
+        self._do_rpc({'funcName':'test','args':{}})
         return
 
     def addText(self, text, position):
-        commandQueue = self.server["UI_END_COMMAND"].read()
-        if commandQueue:
-            commandQueue.append('self.addText("testing","text1")')
-        else:
-            commandQueue = ['self.addText("testing","text1")']
-        self.server["UI_END_COMMAND"] = commandQueue
-        print("commandQueue", commandQueue)
-        time.sleep(0.0001) 
+        self._do_rpc({'funcName':'addText','args':{'text':text,'position':position}})
         return
     
     def addConfirmation(self,title,text):
-        id = uuid.uuid1() 
-        self.UI_End.addConfirmation(id,title,text)
+        id = uuid.uuid1()
+        self._do_rpc({'funcName':'addConfirmation','args':{'id':str(id),'title':title,'text':text}})
         return  id
 
     def addPrompt(self,title,text):
-        id = uuid.uuid1() 
-        self.UI_End.addPrompt(id,title,text)
+        id = uuid.uuid1()
+        # TODO
         return  id
     
     def addInputBox(self,title,text,fields):
         id = uuid.uuid1()
-        self.UI_End.addInputBox(id,title,text,fields)
+        # TODO
         return id
 
     def sendTrajecotry(self,trajectory):
-        self.UI_End.sendTrajecotry(trajectory)
+        self._do_rpc({'funcName':'sendTrajecotry','args':{'trajectory':trajectory}})
         return
 
-    def getCurrentUIState(self):
-        if not self.startup:
-            return self.UI_state
-        else:
-            return None
 
     def modifyRawState(self, state):
         # placeholder for modifing the ui state when needed
         return state
 
 
+    def _do_rpc(self,msg):
+        commandQueue = self.server["UI_END_COMMAND"].read()
+        commandQueue.append(msg)
+        self.server["UI_END_COMMAND"] = commandQueue
+        print("commandQueue", commandQueue)
+        time.sleep(0.0001) 
+
+
+
 
 if __name__ == "__main__":
     a = UI()
-    print("UI!")
-    a.addText(1,1)
+    a.test()
+    a.addText('testing','text1')
+
+    file_dir = "../../data/TRINA_world_seed.xml"
+    world = klampt.WorldModel()
+    res = world.readFile(file_dir)
+    robot = world.robot(0)
+    times = list(range(10))
+    milestones = []
+    for t in times:
+        robot.randomizeConfig()
+        milestones.append(robot.getConfig())
+    traj = trajectory.RobotTrajectory(robot,times,milestones)
+    traj = io.loader.toJson(traj,'Trajectory')
+    a.sendTrajecotry(traj)
+       
