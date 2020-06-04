@@ -145,28 +145,28 @@ class CommandServer:
             self.startup = False
             if(self.left_limb_active):
                 pos_left = self.robot.sensedLeftEETransform()
-                print("left position")
+                # print("left position")
                 vel_left = self.robot.sensedLeftEEVelocity()
-                print("left velocity")
+                # print("left velocity")
             if(self.right_limb_active):
                 pos_right = self.robot.sensedRightEETransform()
-                print("right position")
+                # print("right position")
                 vel_right = self.robot.sensedRightEEVelocity()
-                print("right velocity")
+                # print("right velocity")
             if(self.base_active):
                 pos_base = self.robot.sensedBasePosition()
-                print("base position")
+                # print("base position")
                 vel_base = self.robot.sensedBaseVelocity()
-                print("base velocity")
-            if(self.left_gripper_active):
-                pos_left_gripper = self.robot.sensedLeftGripperPosition()
-                print("left gripper position")
-            if(self.right_gripper_active):
-                pos_right_gripper = self.robot.sensedRightGripperPosition()
-                print("right gripper position")
-            if(self.torso_active):
-                pos_torso = self.robot.sensedTorsoPosition()
-                print("torso position")
+                # print("base velocity")
+            # if(self.left_gripper_active):
+            #     pos_left_gripper = self.robot.sensedLeftGripperPosition()
+            #     print("left gripper position")
+            # if(self.right_gripper_active):
+            #     pos_right_gripper = self.robot.sensedRightGripperPosition()
+            #     print("right gripper position")
+            # if(self.torso_active):
+            #     pos_torso = self.robot.sensedTorsoPosition()
+            #     print("torso position")
 
             UI_state = self.server["UI_STATE"].read()
             # build the state.
@@ -175,9 +175,9 @@ class CommandServer:
                                         "leftArm" : pos_left,
                                         "rightArm" : pos_right,
                                         "base" : pos_base,
-                                        "torso": pos_torso,
-                                        "leftGripper" : pos_left_gripper,
-                                        "rightGripper" : pos_right_gripper,
+                                        "torso": 0 #pos_torso,
+                                        "leftGripper" : 0 #pos_left_gripper,
+                                        "rightGripper" : 0 # pos_right_gripper,
                                         },
                                     "Velocity" : {
                                         "leftArm" : vel_left,
