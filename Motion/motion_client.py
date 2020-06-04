@@ -173,10 +173,10 @@ class MotionClient:
 	def cartesianDriveFail(self):
 		return self.s.cartesianDriveFail()
 
-	def sensedLeftEEVelcocity(self,local_pt = [0,0,0]):
+	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
 		return self.s.sensedLeftEEVelcocity(local_pt)
 
-	def sensedRightEEVelcocity(self,local_pt = [0,0,0]):
+	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
 		return self.s.sensedRightEEVelcocity(local_pt)
 
 if __name__=="__main__":

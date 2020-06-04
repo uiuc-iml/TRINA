@@ -199,11 +199,11 @@ def _cartesianDriveFail():
 
 def _sensedLeftEEVelocity(local_pt):
 	global robot
-	return robot.sensedLeftEEVelcocity(local_pt)
+	return robot.sensedLeftEEVelocity(local_pt)
 
 def _sensedRightEEVelocity(local_pt):
 	global robot
-	return robot.sensedRightEEVelcocity(local_pt)
+	return robot.sensedRightEEVelocity(local_pt)
 
 #ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'

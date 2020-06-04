@@ -1032,7 +1032,7 @@ class Motion:
             print("Left limb not enabled.")
             return
 
-    def sensedLeftEEVelcocity(self,local_pt = [0,0,0]):
+    def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
         """Return the EE translational and rotational velocity  w.r.t. the base DataFrame
 
         Parameter:
@@ -1046,8 +1046,8 @@ class Motion:
         """
         if self.left_limb_enabled:
             position_J = np.array(self.left_EE_link.getJacobian(local_pt))
-            q_dot = TRINAConfig.get_klampt_model_q(left_limb = self.left_limb_state.senseddq)
-            EE_vel = np.dot(position_J,q_dot)
+            q_dot = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.senseddq)
+            EE_vel = np.dot(position_J,q_dot).tolist()
             return ([EE_vel[3],EE_vel[4],EE_vel[5]],[EE_vel[0],EE_vel[1],EE_vel[2]])
         else:
             return "NA"
@@ -1066,7 +1066,7 @@ class Motion:
             print("Right limb not enabled.")
             return
 
-    def sensedRightEEVelcocity(self,local_pt = [0,0,0]):
+    def sensedRightEEVelocity(self,local_pt = [0,0,0]):
         """Return the EE translational and rotational velocity  w.r.t. the base DataFrame
 
         Parameter:
@@ -1080,8 +1080,8 @@ class Motion:
         """
         if self.right_limb_enabled:
             position_J = np.array(self.right_EE_link.getJacobian(local_pt))
-            q_dot = TRINAConfig.get_klampt_model_q(right_limb = self.right_limb_state.senseddq)
-            EE_vel = np.dot(position_J,q_dot)
+            q_dot = TRINAConfig.get_klampt_model_q(self.codename,right_limb = self.right_limb_state.senseddq)
+            EE_vel = np.dot(position_J,q_dot).tolist()
             return ([EE_vel[3],EE_vel[4],EE_vel[5]],[EE_vel[0],EE_vel[1],EE_vel[2]])
         else:
             return "NA"
