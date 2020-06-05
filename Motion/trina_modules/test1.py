@@ -19,6 +19,7 @@ class C1:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.start_time = time.time()
+        self.sleep_time = 30
         for i in self.processes:
             i.start()
         # while(True):
@@ -29,21 +30,20 @@ class C1:
         start_time = time.time()
         while(True):
             now = time.time()
-            print('waiting to start trouble')
-            if((now-start_time) > 5):
-                raise Exception('Timeout, punk!')
-            time.sleep(2)
+            # print('waiting to start trouble')
+            # if((now-start_time) > 5):
+            #     raise Exception('Timeout, punk!')
+            time.sleep(self.sleep_time)
             
     def shout(self):
         while(True):
-            print('this thread is still active! lalalalalalalalala\n\n')
-            time.sleep(4)
+            # print('this thread is still active! lalalalalalalalala\n\n')
+            time.sleep(self.sleep_time)
     def verify(self):
         while(True):
             try:
-                print('verifying C1')
                 self.server['health_log']['C1'] = [True,time.time()]
-                time.sleep(2)
+                time.sleep(1)
             except Exception as e:
                 print(e)
 
