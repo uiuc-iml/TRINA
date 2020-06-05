@@ -26,19 +26,21 @@ if glinit._PyQtAvailable:
 
 # outer box
 class MyQtMainWindow(QMainWindow):
-    def __init__(self,klamptGLWindow,commandQueue,world):
+    def __init__(self,klamptGLWindow,world,global_state,server):
         """When called, this be given a QtGLWidget object(found in klampt.vis.qtbackend).
 
         You will need to place this widget into your Qt window's layout.
         """
-        self.interface = RedisInterface(host="localhost")
-        self.interface.initialize()
-        self.server = KeyValueStore(self.interface)
-        self.server["UI_STATE"] = 0
-        self.commandQueue = commandQueue
+
+        self.commandQueue = []
         self.world = world
+        self.global_state = global_state
+        self.server = server
+
+
         QMainWindow.__init__(self)
         # Splitter to show 2 views in same widget easily.
+        # self.resize(2000,2000)
         self.splitter = QSplitter()
         self.left = QFrame()
         self.leftLayout = QVBoxLayout()
@@ -77,10 +79,11 @@ class MyQtMainWindow(QMainWindow):
                 finally:
                     print("command recieved was " + command['funcName'])
                     print("-------------------------------------------------------------")
-        except AttributeError:
-            print(AttributeError.message)
+        except AttributeError as err:
+            print("AttributeError: {0}".format(err))
         QMainWindow.event(self,event)
         return 0
+
 
 
     def closeEvent(self,event):
@@ -108,11 +111,9 @@ class MyQtMainWindow(QMainWindow):
         reply = QMessageBox.question(self, title, text,
                                     QMessageBox.Yes|QMessageBox.No)
         if reply == QMessageBox.Yes:
-            self.server['UI_FEEDBACK'][str(id)]['REPLIED'] = True
-            self.server['UI_FEEDBACK'][str(id)]['MSG'] = 'YES'
+            self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':'YES'}
         else:
-            self.server['UI_FEEDBACK'][str(id)]['REPLIED'] = True
-            self.server['UI_FEEDBACK'][str(id)]['MSG'] = 'NO'
+            self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':'NO'}
             
         pass
 
@@ -122,11 +123,11 @@ class MyQtMainWindow(QMainWindow):
     def addInputBox(self,title,text,fields):
         pass
 
-    def sendTrajecotry(self):
+    def sendTrajectory(self):
         world = self.world
         trajectory = self.rpc_args['trajectory']
         self.rpc_args = {}
-        print("inside sendTrajecotry")
+        print("inside sendTrajectory")
         trajectory = io.loader.fromJson(trajectory,'Trajectory')
         print("pass from Json")
         robotPath = ("world",world.robot(0).getName())
@@ -135,6 +136,13 @@ class MyQtMainWindow(QMainWindow):
         return
 
     def getRayClick(self):
+        id = self.rpc_args['id']
+        # ask the user to click the destination
+        reply = QMessageBox.question(self, "CLick Navigation", "Please specify destination by right click on the map.",
+                                    QMessageBox.Yes)
+        if reply == QMessageBox.Yes:
+            self.global_state['collectRaySignal'] = [True,False]
+            self.global_state['feedbackId']['getRayClick'] = id
         
 
     def test(self):
@@ -142,11 +150,13 @@ class MyQtMainWindow(QMainWindow):
 
 # inner vis plugin
 class MyGLPlugin(vis.GLPluginInterface):
-    def __init__(self,world):
+    def __init__(self,world,global_state,server):
         vis.GLPluginInterface.__init__(self)
         self.world = world
         self.collider = collide.WorldCollider(world)
         self.quit = False
+        self.global_state = global_state
+        self.server = server
 
         #adds an action to the window's menu
         def doquit():
@@ -154,8 +164,8 @@ class MyGLPlugin(vis.GLPluginInterface):
         self.add_action(doquit,"Quit",'Ctrl+q',"Quit the program")
 
     def initialize(self):
-        vis.add("instructions1","Right-click to get the list of intersecting items")
-        vis.add("instructions2","Press q, Ctrl+q, or select Quit from the menu to quit")
+        # vis.add("instructions1","Right-click to get the list of intersecting items")
+        # vis.add("instructions2","Press q, Ctrl+q, or select Quit from the menu to quit")
         vis.GLPluginInterface.initialize(self)
         return True
 
@@ -186,7 +196,9 @@ class MyGLPlugin(vis.GLPluginInterface):
         increasing distance."""
         #get the viewport ray
         (s,d) = self.click_ray(x,y)
-        print("ray",s,d)
+        id = self.global_state['feedbackId']['getRayClick']
+
+        
 
         #run the collision tests
         collided = []
@@ -194,7 +206,34 @@ class MyGLPlugin(vis.GLPluginInterface):
             (hit,pt) = g[1].rayCast(s,d)
             if hit:
                 dist = vectorops.dot(vectorops.sub(pt,s),d)
-                collided.append((dist,g[0]))
+                collided.append((dist,g[0],pt))
+
+        try:
+            if self.global_state['collectRaySignal'][0]:
+                print('you have clicked the destination')
+                vis.addText("text4","you have clicked the destination,\n please click again for calibration")
+                vis.setColor("text4",1,0,0)
+                vis.setAttribute("text4","size",20)
+                vis.add("destination",sorted(collided)[0][2])
+                self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':False, 'MSG':{'FIRST_RAY':{'source':[e for e in s], 'destination':[e for e in d]}}}
+                self.global_state['collectRaySignal'] = [False,True]
+            elif self.global_state['collectRaySignal'][1]:
+                print('you have clicked the point for calibration')
+                vis.addText("text4","you have clicked the point for calibration")
+                vis.setColor("text4",1,0,0)
+                vis.setAttribute("text4","size",24)
+                self.server['UI_FEEDBACK'][str(id)]['MSG']['SECOND_RAY'] = {'source':[e for e in s], 'destination':[e for e in d]}
+                time.sleep(0.001)
+                self.server['UI_FEEDBACK'][str(id)]['REPLIED'] = True
+                self.global_state['collectRaySignal'] = [False,False]
+                vis.addText("text4","")
+
+        except AttributeError as err:
+            print("AttributeError: {0}".format(err))
+
+        print("ray"," source: ", [e for e in s], "destination: ", [e for e in d])
+
+
         return [g[1] for g in sorted(collided)]
 
 
@@ -207,7 +246,11 @@ class UI_end_1:
         self.world = world
         if not res:
             raise RuntimeError("Unable to load model "+file_dir)
-        self.commandQueue = []
+        self.interface = RedisInterface(host="localhost")
+        self.interface.initialize()
+        self.server = KeyValueStore(self.interface)
+        self.server["UI_STATE"] = 0
+        self.global_state = {'collectRaySignal':[False,False],'feedbackId':{}}
         self._serveVis()
 
 
@@ -223,11 +266,11 @@ class UI_end_1:
         #To hook into that thread, you will need to pass a window creation function into vis.customUI.
         def makefunc(gl_backend):
             global g_mainwindow
-            g_mainwindow = MyQtMainWindow(gl_backend, self.commandQueue,world)
+            g_mainwindow = MyQtMainWindow(gl_backend,world, self.global_state, self.server)
             return g_mainwindow
         vis.add("world",world)
         vis.setWindowTitle("UI END 1")
-        plugin = MyGLPlugin(world)
+        plugin = MyGLPlugin(world, self.global_state,self.server)
         vis.customUI(makefunc)
         vis.pushPlugin(plugin)   #put the plugin on top of the standard visualization functionality.
         vis.spin(float('inf'))

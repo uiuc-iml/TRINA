@@ -35,6 +35,7 @@ key presses and headsets orientations.
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_END_COMMAND"] = []
+        self.server['UI_FEEDBACK'] = {}
 
         self.init_UI_state = {}
         self.UI_state = {}
@@ -61,14 +62,15 @@ key presses and headsets orientations.
                 except:
                     pass
 
-
+    #############################Below section is integrated to Jarvis.py############################
     def test(self):
         self._do_rpc({'funcName':'test','args':{}})
         return
 
     def getRayClick(self):
+        id = '$'+ uuid.uuid1().hex
         # ask the user to click on a destination in the map, returns 2 rays in reem
-        self._do_rpc({'funcName':'getRayClick','args':{}})
+        self._do_rpc({'funcName':'getRayClick','args':{'id':str(id)}})
         return
 
     def addText(self, text, position):
@@ -76,28 +78,23 @@ key presses and headsets orientations.
         return
     
     def addConfirmation(self,title,text):
-        id = uuid.uuid1()
+        id = '$'+ uuid.uuid1().hex
         self._do_rpc({'funcName':'addConfirmation','args':{'id':str(id),'title':title,'text':text}})
         return  id
 
     def addPrompt(self,title,text):
-        id = uuid.uuid1()
+        id = '$'+ uuid.uuid1().hex
         # TODO
         return  id
     
     def addInputBox(self,title,text,fields):
-        id = uuid.uuid1()
+        id = '$'+ uuid.uuid1().hex
         # TODO
         return id
 
-    def sendTrajecotry(self,trajectory):
-        self._do_rpc({'funcName':'sendTrajecotry','args':{'trajectory':trajectory}})
+    def sendTrajectory(self,trajectory):
+        self._do_rpc({'funcName':'sendTrajectory','args':{'trajectory':trajectory}})
         return
-
-
-    def modifyRawState(self, state):
-        # placeholder for modifing the ui state when needed
-        return state
 
 
     def _do_rpc(self,msg):
@@ -107,6 +104,10 @@ key presses and headsets orientations.
         print("commandQueue", commandQueue)
         time.sleep(0.0001) 
 
+
+    def modifyRawState(self, state):
+        # placeholder for modifing the ui state when needed
+        return state
 
 
 
@@ -126,5 +127,5 @@ if __name__ == "__main__":
         milestones.append(robot.getConfig())
     traj = trajectory.RobotTrajectory(robot,times,milestones)
     traj = io.loader.toJson(traj,'Trajectory')
-    a.sendTrajecotry(traj)
+    a.sendTrajectory(traj)
        
