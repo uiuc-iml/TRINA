@@ -93,8 +93,6 @@ class CommandServer:
         a = module()
         return a.return_processes()
 
-<<<<<<< HEAD
-=======
     def start_modules(self,module_names = []):
         import trina_modules
         trina_modules = reload(trina_modules)
@@ -131,7 +129,6 @@ class CommandServer:
                 except Exception as e:
                     print(e)
                     pass
->>>>>>> 96915ff406faa86339f5a203d73f614c102c6545
     #this is place holder for moduleMonitor
     def activate(self,name):
         while not self.shut_down_flag:
@@ -180,26 +177,17 @@ class CommandServer:
             # build the state.
             self.server["ROBOT_STATE"] = {
                                     "Position" : {
-<<<<<<< HEAD
-                                        "LeftArm" : pos_left,
-                                        "RightArm" : pos_right,
-                                        "Base" : pos_base,
-                                        "Torso": pos_torso,
-                                        "LeftGripper" : pos_left_gripper,
-                                        "RightGripper" : pos_right_gripper,
-=======
                                         "leftArm" : pos_left,
                                         "rightArm" : pos_right,
                                         "base" : pos_base,
                                         "torso": 0 ,#pos_torso,
                                         "leftGripper" : 0 ,#pos_left_gripper,
                                         "rightGripper" : 0 # pos_right_gripper,
->>>>>>> 96915ff406faa86339f5a203d73f614c102c6545
                                         },
                                     "Velocity" : {
-                                        "LeftArm" : vel_left,
-                                        "RightArm" : vel_right,
-                                        "Base" : vel_base,
+                                        "leftArm" : vel_left,
+                                        "rightArm" : vel_right,
+                                        "base" : vel_base,
                                     },
                                     }
             ################
@@ -217,7 +205,7 @@ class CommandServer:
             for i in self.robot_command.keys():
                 if (self.robot_command[i] != []):
                     commandList = self.robot_command[i]
-                    self.run(commandList[0])
+                    exec(commandList[0])
                     self.server['ROBOT_COMMAND'][i] = commandList[1:]
 
                     break
