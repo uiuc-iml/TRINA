@@ -135,10 +135,11 @@ class Jarvis:
 		# TODO
 		return id
 
-	def sendTrajectoryUI(self,trajectory):
-		"""send a trajectory to UI, UI will add the path preview and animate the robot ghost immediately for only once 
+	def sendTrajectoryUI(self,trajectory,animate):
+		"""send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once 
 		args:
 			trajectory: (klampt obj) the traj calculated
+			animate: (bool) if user wants to animate the path
 
 		return:
 			nothing
@@ -147,7 +148,7 @@ class Jarvis:
 			no
 		"""
 		trajectory = io.loader.toJson(trajectory,'Trajectory')
-		self._do_rpc({'funcName':'sendTrajectory','args':{'trajectory':trajectory}})
+		self._do_rpc({'funcName':'sendTrajectory','args':{'trajectory':trajectory, 'animate':animate}})
 		return
 
 

@@ -31,40 +31,22 @@ class MyQtMainWindow(QMainWindow):
 
         You will need to place this widget into your Qt window's layout.
         """
+        QMainWindow.__init__(self)
 
         self.commandQueue = []
         self.world = world
         self.global_state = global_state
         self.server = server
-
-
-        QMainWindow.__init__(self)
-        # Splitter to show 2 views in same widget easily.
-        # self.resize(2000,2000)
-        self.splitter = QSplitter()
-        self.left = QFrame()
-        self.leftLayout = QVBoxLayout()
-        self.left.setLayout(self.leftLayout)
-        self.right = QFrame()
-        self.rightLayout = QVBoxLayout()
-        self.right.setLayout(self.rightLayout)
-        
-        self.glwidget = klamptGLWindow
-        self.glwidget.setParent(self.right)
-        self.rightLayout.addWidget(self.glwidget)
-    
-        self.helloButton = QPushButton("Menu")
-        self.leftLayout.addWidget(self.helloButton)
-
-        self.splitter.addWidget(self.left)
-        self.splitter.addWidget(self.right)
-        self.splitter.setHandleWidth(7)
-        self.setCentralWidget(self.splitter)
         self.dt = 0.05
-        self.setMouseTracking(True)
         self.rpc_args = {}
 
-    
+
+        self._initScrennLayout(klamptGLWindow)
+        self._initMenuBar()
+        self.setMouseTracking(True)
+
+       
+
     def event(self,event):
         try:
             self.commandQueue = self.server["UI_END_COMMAND"].read()
@@ -126,27 +108,85 @@ class MyQtMainWindow(QMainWindow):
     def sendTrajectory(self):
         world = self.world
         trajectory = self.rpc_args['trajectory']
+        animate = self.rpc_args['animate']
         self.rpc_args = {}
         print("inside sendTrajectory")
         trajectory = io.loader.fromJson(trajectory,'Trajectory')
         print("pass from Json")
         robotPath = ("world",world.robot(0).getName())
         vis.add("robot trajectory",trajectory)
-        vis.animate(robotPath,trajectory,endBehavior='halt')
+        if animate:
+            vis.animate(robotPath,trajectory,endBehavior='halt')
         return
 
     def getRayClick(self):
         id = self.rpc_args['id']
         # ask the user to click the destination
-        reply = QMessageBox.question(self, "CLick Navigation", "Please specify destination by right click on the map.",
+        reply = QMessageBox.question(self, "Click Navigation", "Please specify destination by right click on the map.",
                                     QMessageBox.Yes)
         if reply == QMessageBox.Yes:
             self.global_state['collectRaySignal'] = [True,False]
             self.global_state['feedbackId']['getRayClick'] = id
         
-
     def test(self):
-        print("hello")
+        print("inde the test function")
+
+    
+    def _initMenuBar(self):
+        bar = self.menuBar()
+        mode = bar.addMenu("Mode Switch")
+        mode.addAction("Point Click Navigation")
+        mode.addAction("Go Home")
+        mode.addAction("Teleoperation")
+        mode.triggered[QAction].connect(self._processModeTrigger)
+
+        action = bar.addMenu("Quick Action")
+        action.addAction("Emergency Stop")
+        action.addAction("Pause")
+        action.addAction("Quit")
+        action.triggered[QAction].connect(self._processActionTrigger)
+
+    def _processModeTrigger(self,q):
+        print (q.text()+" is triggered")
+        self.modeText.setText("Mode: " +  q.text())
+
+    def _processActionTrigger(self,q):
+        print (q.text()+" is triggered")
+        if q.text() == "Quit":
+            self.close()
+
+
+
+    def _initScrennLayout(self,klamptGLWindow):
+        self.setFixedSize(1650, 1050)
+        self.splitter = QSplitter()
+        self.left = QFrame()
+        self.left.setFixedSize(400,1000)
+        self.leftLayout = QVBoxLayout()
+        self.left.setLayout(self.leftLayout)
+        self.right = QFrame()
+        self.right.setFixedSize(1200,1000)
+        self.rightLayout = QVBoxLayout()
+        self.right.setLayout(self.rightLayout)
+        
+        self.glwidget = klamptGLWindow
+        self.glwidget.do_reshape(1200,1000)
+        self.glwidget.setParent(self.right)
+        self.rightLayout.addWidget(self.glwidget)
+    
+        self.welcomeText = QLabel("Welcome to TRINA UI! \n\n\nPlease Refer to Menu Bar for More Actions.")
+        self.modeText = QLabel("")
+        self.modeText.setWordWrap(True)
+        self.welcomeText.setWordWrap(True)
+        
+        self.leftLayout.addWidget(self.welcomeText)
+        self.leftLayout.addWidget(self.modeText)
+
+        self.splitter.addWidget(self.left)
+        self.splitter.addWidget(self.right)
+        self.splitter.setHandleWidth(7)
+        self.setCentralWidget(self.splitter)
+    
 
 # inner vis plugin
 class MyGLPlugin(vis.GLPluginInterface):
@@ -158,21 +198,12 @@ class MyGLPlugin(vis.GLPluginInterface):
         self.global_state = global_state
         self.server = server
 
-        #adds an action to the window's menu
-        def doquit():
-            self.quit = True
-        self.add_action(doquit,"Quit",'Ctrl+q',"Quit the program")
 
     def initialize(self):
-        # vis.add("instructions1","Right-click to get the list of intersecting items")
-        # vis.add("instructions2","Press q, Ctrl+q, or select Quit from the menu to quit")
         vis.GLPluginInterface.initialize(self)
         return True
 
     def mousefunc(self,button,state,x,y):
-        #Put your mouse handler here
-        #the current example prints out the list of objects clicked whenever
-        #you right click
         print ("mouse",button,state,x,y)
         if button==2:
             if state==0:
@@ -196,9 +227,6 @@ class MyGLPlugin(vis.GLPluginInterface):
         increasing distance."""
         #get the viewport ray
         (s,d) = self.click_ray(x,y)
-        id = self.global_state['feedbackId']['getRayClick']
-
-        
 
         #run the collision tests
         collided = []
@@ -208,39 +236,47 @@ class MyGLPlugin(vis.GLPluginInterface):
                 dist = vectorops.dot(vectorops.sub(pt,s),d)
                 collided.append((dist,g[0],pt))
 
+        self._collect_ray(s,d,collided)
+       
+        return [g[1] for g in sorted(collided)]
+
+    
+    def _collect_ray(self, s, d, collided):
         try:
+            id = self.global_state['feedbackId']['getRayClick']
             if self.global_state['collectRaySignal'][0]:
-                print('you have clicked the destination')
-                vis.addText("text4","you have clicked the destination,\n please click again for calibration")
-                vis.setColor("text4",1,0,0)
-                vis.setAttribute("text4","size",20)
+                vis.addText("pointclick","You have clicked the destination,\n Please click again for calibration.")
+                vis.setColor("pointclick",1,0,0)
+                vis.setAttribute("pointclick","size",30)
                 vis.add("destination",sorted(collided)[0][2])
+
+                vis.setColor("destination",1,0,0)
+                vis.setAttribute("destination","size",10)
+
+
                 self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':False, 'MSG':{'FIRST_RAY':{'source':[e for e in s], 'destination':[e for e in d]}}}
                 self.global_state['collectRaySignal'] = [False,True]
+
             elif self.global_state['collectRaySignal'][1]:
-                print('you have clicked the point for calibration')
-                vis.addText("text4","you have clicked the point for calibration")
-                vis.setColor("text4",1,0,0)
-                vis.setAttribute("text4","size",24)
+                vis.addText("pointclick","You have clicked the point for calibration")
+                vis.setColor("pointclick",1,0,0)
+                vis.setAttribute("pointclick","size",30)
+
                 self.server['UI_FEEDBACK'][str(id)]['MSG']['SECOND_RAY'] = {'source':[e for e in s], 'destination':[e for e in d]}
                 time.sleep(0.001)
                 self.server['UI_FEEDBACK'][str(id)]['REPLIED'] = True
                 self.global_state['collectRaySignal'] = [False,False]
-                vis.addText("text4","")
+
+                vis.addText("pointclick","")
 
         except AttributeError as err:
             print("AttributeError: {0}".format(err))
 
-        print("ray"," source: ", [e for e in s], "destination: ", [e for e in d])
-
-
-        return [g[1] for g in sorted(collided)]
-
-
 
 class UI_end_1:
     def __init__(self,placeholder):
-        file_dir = "../../data/TRINA_world_seed.xml"
+        file_dir = "../../data/TRINA_world.xml"
+        # file_dir = "../../data/TRINA_world_anthrax_PointClick.xml"
         world = klampt.WorldModel()
         res = world.readFile(file_dir)
         self.world = world
@@ -250,7 +286,7 @@ class UI_end_1:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = 0
-        self.global_state = {'collectRaySignal':[False,False],'feedbackId':{}}
+        self.global_state = {'collectRaySignal':[False,False],'feedbackId':{'getRayClick':''}}
         self._serveVis()
 
 
@@ -260,24 +296,25 @@ class UI_end_1:
             print ("PyQt5 is not available on your system, try sudo apt-get install python-qt5")
             return
         world = self.world
-        #Qt objects must be explicitly deleted for some reason in PyQt5...
+
+        # init qtmain window
         g_mainwindow = None
-        #All Qt functions must be called in the vis thread.
-        #To hook into that thread, you will need to pass a window creation function into vis.customUI.
         def makefunc(gl_backend):
             global g_mainwindow
             g_mainwindow = MyQtMainWindow(gl_backend,world, self.global_state, self.server)
             return g_mainwindow
         vis.add("world",world)
         vis.setWindowTitle("UI END 1")
-        plugin = MyGLPlugin(world, self.global_state,self.server)
         vis.customUI(makefunc)
+        # init plugin for getting input
+        plugin = MyGLPlugin(world, self.global_state,self.server)
         vis.pushPlugin(plugin)   #put the plugin on top of the standard visualization functionality.
+       
+        # start vis
         vis.spin(float('inf'))
         vis.kill()
 
-        #Safe cleanup of all Qt objects created in makefunc.
-        #If you don't have this, PyQt5 complains about object destructors being called from the wrong thread
+        # clean up
         del g_mainwindow
 
     
