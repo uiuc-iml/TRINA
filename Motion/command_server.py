@@ -43,7 +43,7 @@ class CommandServer:
         self.dt = 0.001
         self.robot = MotionClient(address = robot_ip)
         # self.controller = UIController()
-        self.robot.startServer(mode = self.mode, components = self.components,codename = 'seed')
+        self.robot.startServer(mode = self.mode, components = self.components,codename = 'anthrax_lowpoly')
         self.robot_state = {}
         self.robot_command = {}
         self.modules = ["Wipe", "UIModule", "Motion"]
@@ -56,9 +56,13 @@ class CommandServer:
         self.left_gripper_active = ('left_gripper' in self.components)
         self.right_gripper_active = ('right_gripper' in self.components)
         self.torso_active = ('torso' in self.components)
+        self.query_robot = MotionClient(address = robot_ip)
+        # self.controller = UIController()
+        self.query_robot.startServer(mode = self.mode, components = self.components,codename = 'anthrax_lowpoly')
+        self.query_robot.startup()
         res = self.robot.startup()
         if not res:
-            return
+            return 'failed'
         self.health_dict = {}
         # create the list of threads
         self.modules_dict = {}
@@ -148,20 +152,22 @@ class CommandServer:
         while not self.shut_down_flag:
             self.robot_state = self.server['ROBOT_STATE'].read()
             self.startup = False
-            if(self.left_limb_active):
-                pos_left = self.robot.sensedLeftEETransform()
-                # print("left position")
-                vel_left = self.robot.sensedLeftEEVelocity()
-                # print("left velocity")
-            if(self.right_limb_active):
-                pos_right = self.robot.sensedRightEETransform()
-                # print("right position")
-                vel_right = self.robot.sensedRightEEVelocity()
-                # print("right velocity")
-            if(self.base_active):
-                pos_base = self.robot.sensedBasePosition()
-                # print("base position")
-                vel_base = self.robot.sensedBaseVelocity()
+            try:
+                if(self.left_limb_active):
+                    pos_left = self.query_robot.sensedLeftEETransform()
+                    # print("left position")
+                    vel_left = self.query_robot.sensedLeftEEVelocity()
+                    # print("left velocity")
+                if(self.right_limb_active):
+                    pos_right = self.query_robot.sensedRightEETransform()
+                    # print("right position")
+                    vel_right = self.query_robot.sensedRightEEVelocity()
+                    # print("right velocity")
+                if(self.base_active):
+                    pos_base = self.query_robot.sensedBasePosition()
+                    # print("base position")
+                    vel_base = self.query_robot.sensedBaseVelocity()
+                klampt_q = self.query_robot.getKlamptSensedPosition()
                 # print("base velocity")
             # if(self.left_gripper_active):
             #     pos_left_gripper = self.robot.sensedLeftGripperPosition()
@@ -172,7 +178,8 @@ class CommandServer:
             # if(self.torso_active):
             #     pos_torso = self.robot.sensedTorsoPosition()
             #     print("torso position")
-
+            except Exception as e:
+                print(e)
             UI_state = self.server["UI_STATE"].read()
             # build the state.
             self.server["ROBOT_STATE"] = {
@@ -183,6 +190,7 @@ class CommandServer:
                                         "Torso": pos_torso,
                                         "LeftGripper" : pos_left_gripper,
                                         "RightGripper" : pos_right_gripper,
+                                        "q": klampt_q
                                         },
                                     "Velocity" : {
                                         "LeftArm" : vel_left,
@@ -196,12 +204,12 @@ class CommandServer:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
+        print('\n\n\n\nstopped updating state!!! \n\n\n\n')
 
     def commandReciever(self):
         while not self.shut_down_flag:
             loopStartTime = time.time()
             self.robot_command = self.server['ROBOT_COMMAND'].read()
-            elapsedTime = time.time() - loopStartTime
             for i in self.robot_command.keys():
                 if (self.robot_command[i] != []):
                     commandList = self.robot_command[i]
@@ -209,7 +217,7 @@ class CommandServer:
                     self.server['ROBOT_COMMAND'][i] = commandList[1:]
 
                     break
-
+            elapsedTime = time.time() - loopStartTime
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:
