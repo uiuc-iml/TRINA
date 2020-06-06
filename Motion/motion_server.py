@@ -2,7 +2,7 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 import signal
 import sys
 from motion import Motion
-
+import time
 import logging
 from datetime import datetime
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
@@ -17,6 +17,22 @@ def _startServer(mode = "Kinematic", components = [] , codename = "seed"):
 	##global variable
 	global robot
 	global server_started
+	if server_started:
+		logging.info("server is already activated")
+		print("server already started ")
+	else:
+		robot = Motion(mode = mode,components = components, codename = codename)
+		logging.info("%s mode is activated",robot.mode)
+		server_started = True
+	print("server started")
+	return 0
+
+def _restartServer(mode= "Kinematic", components = [] , codename = "seed"):
+	global robot
+	global server_started
+	robot.shutdown()
+	time.sleep(2)
+	logging.info("Motion shutdown,restarting")
 	robot = Motion(mode = mode,components = components, codename = codename)
 	logging.info("%s mode is activated",robot.mode)
 	server_started = True
@@ -217,6 +233,7 @@ server.register_introspection_functions()
 signal.signal(signal.SIGINT, sigint_handler)
 
 server.register_function(_startServer,'startServer')
+server.register_function(_restartServer,'restartServer')
 ##add functions...
 server.register_function(_startup,'startup')
 server.register_function(_setLeftLimbPosition,'setLeftLimbPosition')
