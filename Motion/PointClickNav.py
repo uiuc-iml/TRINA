@@ -201,8 +201,10 @@
 						ray = self.Jarvis.getRay()
 					if self.confirmation_request_sent:
 						confirmation = self.Jarvis.getConfirmation()
+
 					#TODO get terminate flag question
 					#terminate_flag = self.Jarvis.get
+					
 					self._sharedLock.acquire()
 					#if terminate_flag:
 						#self.terminate_command = True
@@ -222,7 +224,7 @@
 					#send current status?
 
 					#TODO
-					#get lidar 
+					#get lidar in the physical mode
 					if self.mode == "Kinematic":					
 						lidar = state.lidar
 						ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")
