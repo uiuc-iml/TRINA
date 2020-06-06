@@ -20,10 +20,11 @@ import sys, inspect
 
 class Jarvis:
 
-	def __init__(self):
-		self.interface = RedisInterface(host="localhost")
-		self.interface.initialize()
-		self.server = KeyValueStore(self.interface)
+    def __init__(self, priority = 'P4'):
+        self.interface = RedisInterface(host="localhost")
+        self.interface.initialize()
+        self.server = KeyValueStore(self.interface)
+        self.priority = priority
 		# should not instantiate commanserver
 		# self.command_server = CommandServer()
 
@@ -58,10 +59,13 @@ class Jarvis:
 		return self.server["ROBOT_STATE"]["Position"]["LeftGripper"]
 
 	def setLeftLimbPosition(self,q):
-		command = send_command(Motion.setLeftLimbPosition,q)
-		current_list = server['ROBOT_COMMAND']['3']
-		server['ROBOT_COMMAND']['3'] = current_list.add(command)
+		command = self.send_command('self.robot.setLeftLimbPosition',str(q))
+		current_list = server['ROBOT_COMMAND']['P4'].read()
+		server['ROBOT_COMMAND'][self.priority] = current_list.append(command)
 
+    def setBaseVelocity(self,q):
+        command = self.send_command('self.robot.setBaseVelocity',str(q))
+        server['ROBOT_COMMAND'][self.priority] = server['ROBOT_COMMAND'][self.priority].read().append(command)
 
 
 
@@ -164,7 +168,7 @@ class Jarvis:
 
 
 	# helper func
-	def send_command(command,*args):
+	def send_command(self,command,*args):
 		final_string = str(command)+ '('
 		for index,arg in enumerate(args):
 			if(index != len(args)-1):
