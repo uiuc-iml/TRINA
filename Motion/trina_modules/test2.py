@@ -15,6 +15,7 @@ class C2:
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
+        self.sleep_time = 30
         atexit.register(self.shutdown)
         for i in self.processes:
             i.start()
@@ -22,14 +23,13 @@ class C2:
         #     print('hahahaha you can see this? ')
     def idle(self):
         while(True):
-            print('idling C2')
-            time.sleep(5)
+            # print('idling C2')
+            time.sleep(self.sleep_time)
     def verify(self):
         while(True):
             try:
-                print('verifying C2')
                 self.server['health_log']['C2'] = [True,time.time()]
-                time.sleep(2)
+                time.sleep(1)
             except Exception as e:
                 print(e)
     def shutdown(self):
