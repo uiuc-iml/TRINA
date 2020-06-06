@@ -13,7 +13,7 @@ import traceback
 from multiprocessing import Pool, TimeoutError
 import trina_modules
 import sys, inspect
-from importlib import reload 
+from importlib import reload
 import atexit
 
 
@@ -88,8 +88,6 @@ class CommandServer:
         a = module()
         return a.return_processes()
 
-<<<<<<< HEAD
-=======
     def start_modules(self,module_names = []):
         import trina_modules
         trina_modules = reload(trina_modules)
@@ -100,7 +98,7 @@ class CommandServer:
                         tmp = self.start_module(obj)
                         self.modules_dict.update({name:tmp})
                         self.health_dict.update({name:[True,time.time()]})
-            self.server['health_log'] = self.health_dict                        
+            self.server['health_log'] = self.health_dict
         else:
             print('starting only modules '+ str(module_names))
             for name, obj in inspect.getmembers(trina_modules):
@@ -126,7 +124,6 @@ class CommandServer:
                 except Exception as e:
                     print(e)
                     pass
->>>>>>> 96915ff406faa86339f5a203d73f614c102c6545
     #this is place holder for moduleMonitor
     def activate(self,name):
         while not self.shut_down_flag:
@@ -175,21 +172,12 @@ class CommandServer:
             # build the state.
             self.server["ROBOT_STATE"] = {
                                     "Position" : {
-<<<<<<< HEAD
                                         "LeftArm" : pos_left,
                                         "RightArm" : pos_right,
                                         "Base" : pos_base,
                                         "Torso": pos_torso,
                                         "LeftGripper" : pos_left_gripper,
                                         "RightGripper" : pos_right_gripper,
-=======
-                                        "leftArm" : pos_left,
-                                        "rightArm" : pos_right,
-                                        "base" : pos_base,
-                                        "torso": 0 #pos_torso,
-                                        "leftGripper" : 0 #pos_left_gripper,
-                                        "rightGripper" : 0 # pos_right_gripper,
->>>>>>> 96915ff406faa86339f5a203d73f614c102c6545
                                         },
                                     "Velocity" : {
                                         "LeftArm" : vel_left,
@@ -216,7 +204,7 @@ class CommandServer:
                     self.server['ROBOT_COMMAND'][i] = commandList[1:]
 
                     break
-                
+
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:
@@ -227,7 +215,7 @@ class CommandServer:
             exec(command)
         finally:
             print("command recieved was " + command)
-        
+
 
     #0 -> dead
     #1 -> healthy
@@ -249,7 +237,7 @@ class CommandServer:
                         if(not(pcess.is_alive())):
                             print("Module " + module + " is dead, queueing restart")
                             to_restart.append(module)
-                            break 
+                            break
             if(to_restart != []):
                 print('restarting modules ' + str(to_restart))
                 self.start_modules(to_restart)
