@@ -27,10 +27,8 @@
 	from geometry import *
 
 
-	#import Jarvis
-	#import sensor module
-	#from reem.connection import RedisInterface
-	#from reem.datatypes import KeyValueStore
+	import Jarvis
+
 
 	class PointClickNav:
 		def __init__(self,debugging = True, mode = 'Kinematic'):
@@ -74,15 +72,15 @@
 				#TODO
 				self.Jarvis = Jarvis()
 				#get current pose of the robot
-				left_q = self.Jarvis.sensedLeftLimbPosition()
-				right_q = self.Jarvis.sensedRightLimbPosition()
+				# left_q = self.Jarvis.sensedLeftLimbPosition()
+				# right_q = self.Jarvis.sensedRightLimbPosition()
 				base_q = self.Jarvis.sensedBasePosition()
 				self.curr_pose = base_q
 				#start visualizer
 				self.vis_world = WorldModel()
 				self.vis_world.readFile('data/TRINA_world_anthrax_pointClick.xml')
 				self.vis_robot = self.vis_world.robot(0)
-				self.vis_robot.setConfig(get_klampt_model_q('anthrax',left_limb = left_q,right_limb = right_q, base = base_q))
+				self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
 				if self.visualization:
 					vis.add("world",self.vis_world)
 				if self.mode == 'Kinematic':
@@ -195,9 +193,10 @@
 					#print('lidar scan sent') 
 					self._sharedLock.release()
 				else:
-					left_q = self.Jarvis.sensedLeftLimbPosition()
-					right_q = self.Jarvis.sensedRightLimbPosition()
+					# left_q = self.Jarvis.sensedLeftLimbPosition()
+					# right_q = self.Jarvis.sensedRightLimbPosition()
 					base_q = self.Jarvis.sensedBasePosition()
+					self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
 					if self.ray_request_sent: 
 						ray = self.Jarvis.getRay()
 					if self.confirmation_request_sent:
