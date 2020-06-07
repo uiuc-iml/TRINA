@@ -227,7 +227,7 @@ class CommandServer:
         except Exception as e:
             print('there was an error executing your command!',e)
         finally:
-            # print("command recieved was " + command)
+            print("command recieved was " + command)
 
 
     #0 -> dead
