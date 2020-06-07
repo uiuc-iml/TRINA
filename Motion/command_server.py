@@ -211,7 +211,7 @@ class CommandServer:
             for i in self.robot_command.keys():
                 if (self.robot_command[i] != []):
                     commandList = self.robot_command[i]
-                    exec(commandList[0])
+                    self.run(commandList[0])
                     self.server['ROBOT_COMMAND'][i] = commandList[1:]
 
                     break
@@ -224,8 +224,10 @@ class CommandServer:
     def run(self,command):
         try:
             exec(command)
+        except Exception as e:
+            print('there was an error executing your command!',e)
         finally:
-            print("command recieved was " + command)
+            # print("command recieved was " + command)
 
 
     #0 -> dead
