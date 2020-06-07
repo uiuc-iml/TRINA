@@ -25,11 +25,24 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 
 class CommandServer:
 
-    def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,):
-        # we first start redis:
-        self.start_redis()
-        # and wait a bit for it to start
-        time.sleep(2)
+    def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name):
+        # we first check if redis is up and running:
+        try:
+            self.interface = RedisInterface(host="localhost")
+            self.interface.initialize()
+            self.server = KeyValueStore(self.interface)
+            print('Reem already up and running, skipping creation process')
+        except Exception as e:
+            # if we cannot connect to redis, we start the server for once:
+            print('starting redis server because of ',e)
+            self.start_redis()
+            # wait for it to start
+            time.sleep(2)
+            # then we start our connections as normal:
+            self.interface = RedisInterface(host="localhost")
+            self.interface.initialize()
+            self.server = KeyValueStore(self.interface)
+
         # we then proceed with startup as normal
 
         self.interface = RedisInterface(host="localhost")
@@ -62,28 +75,13 @@ class CommandServer:
         self.query_robot.startup()
         res = self.robot.startup()
         if not res:
-            return 'failed'
+            print('Failed!')
         self.health_dict = {}
         # create the list of threads
         self.modules_dict = {}
 
         self.start_modules()
 
-
-        # trina_modules = reload(trina_modules)
-        # for name, obj in inspect.getmembers(trina_modules):
-        #     if inspect.isclass(obj):
-
-        #         tmp = self.start_module(obj)
-        #         self.modules_dict.update({name:tmp})
-        #         print(name)
-        # print(self.modules_dict)
-
-        # for i in range(len(self.modules)):
-        #     t = threading.Thread(name = self.module[i], target=activate, args = (self.modules[i],))
-        #     threads.append(t)
-        #     t.start()
-        # each thread will be assigned to start each module
 
         stateRecieverThread = threading.Thread(target=self.stateReciever)
         stateRecieverThread.start()
@@ -307,7 +305,7 @@ class CommandServer:
         command_string = '{} {}'.format(redis_server_path,redis_conf_path)
         os.chdir(redis_folder)
         args = shlex.split(command_string)
-        self.redis_process = subprocess.Popen(args)
+        self.redis_process = subprocess.Popen(args,start_new_session = True)
 
         # reverting back to trina directory
         os.chdir(origWD)
