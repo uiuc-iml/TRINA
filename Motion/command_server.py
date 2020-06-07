@@ -101,7 +101,7 @@ class CommandServer:
         if(module_names == []):
             for name, obj in inspect.getmembers(trina_modules):
                 if inspect.isclass(obj):
-                    if(str(obj).find('trina_modules')):
+                    if(str(obj).find('trina_modules') != -1):
                         tmp = self.start_module(obj)
                         self.modules_dict.update({name:tmp})
                         self.health_dict.update({name:[True,time.time()]})
@@ -110,7 +110,7 @@ class CommandServer:
             print('starting only modules '+ str(module_names))
             for name, obj in inspect.getmembers(trina_modules):
                 if inspect.isclass(obj):
-                    if(str(obj).find('trina_modules')):
+                    if(str(obj).find('trina_modules') != -1):
                         if(name in module_names):
                             print('killing module '+ name)
                             for pcess in self.modules_dict[name]:
