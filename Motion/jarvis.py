@@ -52,9 +52,6 @@ class Jarvis:
     def sensedRightLimbPosition(self):
         return self.server["ROBOT_STATE"]["Position"]["RightArm"].read()
 
-    def sensedBasePosition(self):
-        return self.server["ROBOT_STATE"]["Position"]["Base"].read()
-
     def sensedLeftGripperPosition(self):
         return self.server["ROBOT_STATE"]["Position"]["LeftGripper"].read()
 
