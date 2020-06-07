@@ -80,9 +80,13 @@ class MyQtMainWindow(QMainWindow):
 
     def addText(self): 
         text =self.rpc_args['text']
-        position =self.rpc_args['position']
+        color =self.rpc_args['color']
+        size =self.rpc_args['size']
+        name =self.rpc_args['name']
         self.rpc_args = {}
-        vis.addText(position,text)
+        vis.addText(name,text)
+        vis.setColor(name,color[0],color[1],color[2])
+        vis.setAttribute(name,"size",size)
         return
 
     def addConfirmation(self):
