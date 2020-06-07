@@ -200,7 +200,7 @@ class Camera_Robot:
         glLightfv(GL_LIGHT1,GL_SPECULAR,[0.5,0.5,0.5,1])
         glEnable(GL_LIGHT1)
         while(True):
-            print('updating_sim')
+            # print('updating_sim')
             try:
                 q = self.robot.getKlamptSensedPosition()
                 self.Rrotation,self.Rtranslation = self.robot.sensedRightEETransform()
