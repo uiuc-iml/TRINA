@@ -69,7 +69,6 @@
 				if self.visualization:
 					vis.show()
 			else:
-				#TODO
 				self.Jarvis = Jarvis()
 				#get current pose of the robot
 				# left_q = self.Jarvis.sensedLeftLimbPosition()
@@ -197,10 +196,10 @@
 					# right_q = self.Jarvis.sensedRightLimbPosition()
 					base_q = self.Jarvis.sensedBasePosition()
 					self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
-					if self.ray_request_sent: 
-						ray = self.Jarvis.getRay()
-					if self.confirmation_request_sent:
-						confirmation = self.Jarvis.getConfirmation()
+					# if self.ray_request_sent: 
+					# 	ray = self.Jarvis.getRayClickUI()
+					# if self.confirmation_request_sent:
+					# 	confirmation = self.Jarvis.getConfirmation()
 
 					#TODO get terminate flag question
 					#terminate_flag = self.Jarvis.get
@@ -209,15 +208,15 @@
 					#if terminate_flag:
 						#self.terminate_command = True
 					self.curr_pose = base_q
-					if self.ray_request_sent: 
-						if ray:
-							self.new_ray = True
-							self.ray = ray
-							self.ray_request_sent = False
-					if self.confirmation_request_sent:
-						if confirmation == True:
-							self.new_confirmation = True
-							self.confirmation_request_sent = False
+					# if self.ray_request_sent: 
+					# 	if not ray == 'NOT READY':
+					# 		self.new_ray = True
+					# 		self.ray = ray
+					# 		self.ray_request_sent = False
+					# if self.confirmation_request_sent:
+					# 	if confirmation == True:
+					# 		self.new_confirmation = True
+					# 		self.confirmation_request_sent = False
 
 					#TODO
 					#send heartbeat
@@ -267,18 +266,21 @@
 					print("_mainLoop: idling")
 
 				elif self.state == 'active':
-					#TODO request a ray
-					self._sharedLock.acquire()
-					if not self.ray_request_sent:
+
+					#ask for a ray
+					self.ray = self.Jarvis.sendAndGetRayClickUI()
+					self.new_ray = True
+					# self._sharedLock.acquire()
+					#if not self.ray_request_sent:
 						#self.Jarvis.sendRayRequest()
 						#self.ray_request_sent = True
-					self._sharedLock.release()
+					# self._sharedLock.release()
 					#if a new ray has arrived, start planning
 					if self.new_ray:
 						self._sharedLock.acquire()
 						self.new_ray = False
 						self.state = 'planning'
-						self.ray_request_sent = False
+						# self.ray_request_sent = False
 						planning_request_sent = False
 						print("_mainLoop: newRay received")
 						self._sharedLock.release()
@@ -293,11 +295,11 @@
 							self.end_theta = 0
 						else:
 							self._sharedLock.acquire()
-							#TODO Calculate the goal postion and orientation from user
-							self.end = self._groundIntersect(self.ray[0])
-							direction = vectorops.sub(self._groundIntersect(self.ray[1]),self.end)
+							self.end = self._groundIntersect((self.ray['FIRST_RAY']['source'],self.ray['FIRST_RAY']['destination']))
+							direction = vectorops.sub(self._groundIntersect((self.ray['SECOND_RAY']['source'],self.ray['SECOND_RAY']['destination'])),self.end)
 							self.end_theta = math.atan2(direction[1],direction[0])
 							self._sharedLock.release()
+
 						#get the most recent map and send the request
 						new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
 						if new_grid is not None: #this should always find a map if things go right
@@ -306,19 +308,22 @@
 							self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
 							self.global_path_parent_conn.send((self.gridmap, self.start,self.end,True,False))
 							planning_request_sent = True
-							print("_mainloop: first planning request sent")
+							
 						else:
-							print("no map found by gmapping... getting stuck in planning")
-							#keep waiting for map from gmapping
+							print("no map found by gmapping during planning...")
+							self.Jarvis.addPromptUI('Error','A gmapping error has occurred....Returning to idle')
+							
+							self.state = 'idle'
+
 					#if the planning request is already sent to process, then just check if planning has finished
 					else:
 						#check if path planning has finished 
 						if self.global_path_parent_conn.poll():
 							new_global_path = self.global_path_parent_conn.recv()
-							#TODO warn the user path not possible
 							if new_global_path == None:
-								self.state = 'active'
+								self.state = 'idle'
 								planning_request_sent = False
+								self.Jarvis.addPromptUI('Error','A global path does not seem to be possible....Returning to idle')
 								continue
 
 							#stop planning and waiting for user confirmation
@@ -328,34 +333,42 @@
 							self.can_send_gridmap = True
 							end_v = 0.5
 							##send path for user to check
-							self._sharedLock.acquire()
-							if self.debugging:
-								pass
-							else:
-								#TODO
-								#send the path to user to confirm
-								#self.Jarvis.sendTrajectory(self.global_path)
-								pass
-							self.confirmation_request_sent = True
-							self.state = 'waiting' #now wait for user confirmation
-							self._sharedLock.release()
-							print("_mainLoop: waiting for confirmation")
+							# self._sharedLock.acquire()
+							# if self.debugging:
+							# 	pass
+							# else:
+							# 
+							# 	pass
+							# # self.confirmation_request_sent = True
+							# self.state = 'waiting' #now wait for user confirmation
+							# self._sharedLock.release()
 
-				elif self.state == 'waiting':
-					#if the user has agreed to the trajectory
-					if self.new_confirmation:
-						self.new_confirmation = False
-						self._sharedLock.acquire()
-						self.state = 'executing'
-						#unpause the planning process
-						self.global_path_parent_conn.send((self.gridmap,self.start,self.end,True,False))
-						#The current disc of the robot. Used for planning
-						self.curr_point = Circle(self.start[::-1], self.radius)
-						self.curr_theta = self.curr_pose[2]
-						self._sharedLock.release()
-						#variable used for local planning
-						at_end = False
-						print("_mainloop: confirmation received and start executing")
+							if not self.debugging:
+								self.Jarvis.sendTrajectory(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
+								time.sleep(0.5)
+								ans = self.Jarvis.sendAndGetConfirmationUI()
+								if ans == 'YES':
+									self.state = 'executing'
+									self.Jarvis.addPromptUI('info','Path has started executing')
+								else:
+									pass
+									#TODO implemented a way to replan
+
+				# elif self.state == 'waiting':
+				# 	#if the user has agreed to the trajectory
+				# 	if self.new_confirmation:
+				# 		self.new_confirmation = False
+				# 		self._sharedLock.acquire()
+				# 		self.state = 'executing'
+				# 		#unpause the planning process
+				# 		self.global_path_parent_conn.send((self.gridmap,self.start,self.end,True,False))
+				# 		#The current disc of the robot. Used for planning
+				# 		self.curr_point = Circle(self.start[::-1], self.radius)
+				# 		self.curr_theta = self.curr_pose[2]
+				# 		self._sharedLock.release()
+				# 		#variable used for local planning
+				# 		at_end = False
+				# 		print("_mainloop: confirmation received and start executing")
 
 				elif self.state == 'executing':
 					print("_mainLoop: executing")
@@ -374,10 +387,9 @@
 						if self.debugging:
 							print('at end')
 						else:
-							#TODO info that the motion has been completed
-							#self.Jarvis.send
-							#self.Jarvis.setBaseVelocity([0,0]) 
-							pass
+							self.Jarvis.addPromptUI('info','Path has finished')
+							self.Jarvis.setBaseVelocity([0,0]) 
+
 						self.state = 'idle'
 						#stop calculating global path
 						self.global_path_parent_conn.send((None,self.start,self.end,False,False))	
@@ -416,8 +428,17 @@
 							self.curr_theta = new_pose[2]
 							continue
 						else:
-							#TODO
-							pass
+							print("No prim!!!")
+							self.Jarvis.setBaseVelocity([0.0, 0.4])
+							time.sleep(0.1)
+							self._sharedLock.acquire()
+							new_pose = self.curr_pose
+							new_pose = transform_coordinates(new_pose, self.grid)
+
+							self.curr_point = Circle((snew_pose[0], new_pose[1]), self.radius)
+							self.curr_theta = new_pose[2]
+							self._sharedLock.release()
+							continue
 
 					#Get the primitve milestones		
 					xs, ys, thetas = closest.get_xytheta(20)
@@ -465,20 +486,18 @@
 						k_angular = 1.0 * self.res
 
 						vel = [state.v * self.res + k_linear*linear_error, state.w + k_angular*cross_track_error]
-						if self.debugging:
-							if self. visualization:
-								vis.add("klocaltraj", ktraj)
-								vis.setColor("klocaltraj", 0, 0, 255)
+						if self. visualization:
+							vis.add("klocaltraj", ktraj)
+							vis.setColor("klocaltraj", 0, 0, 255)
+						if self.debugging:						
 							self.simulated_robot.setBaseVelocity(vel)
 						else:
-							#TODO
-							#jarvis set velocity for the base
-							#self.Jarvis.setBaseVelocity(vel)
+							self.Jarvis.setBaseVelocity(vel)
 							pass
 
 						new_pose = deepcopy(self.curr_pose)
 						new_pose = transform_coordinates(new_pose, self.grid)
-						curr_theta = new_pose[2]
+						self.curr_theta = new_pose[2]
 
 						elapsed_time = time.time() - iteration_start
 						remaining_time = max(0.01 - elapsed_time, 0.0)
@@ -510,12 +529,9 @@
 							self.global_path = new_global_path
 						else:
 							print("new global path is empty")
-							#TODO
-							#handle the case where the global path is not found
-							#TODO warn the user path not possible
-							if new_global_path == None:
-								self.state = 'active'
-								continue
+							self.Jarvis.addPromptUI('Error','A global path does not seem to be possible....Returning to idle')
+							self.state = 'idle'
+							continue
 						self.can_send_gridmap = True
 
 				elapsed_time = time.time() - loop_start_time
@@ -583,7 +599,8 @@
 
 		def _groundIntersect(self,ray):
 			s = ray[0]
-			d = ray[1]
+			des = ray[1] #destination not direction
+			d = vo.unit(vo.sub(des,s)) #direction
 			assert d[2] != 0.0
 			alpha = -s[2]/d[2]
 
