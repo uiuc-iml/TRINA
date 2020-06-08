@@ -150,11 +150,8 @@ class PointClickNav:
 
 		self.res = self.grid.info.resolution
 		self.radius = 0.5588/2/self.res * 2.0 #radius in terms of grids
-		self.gridmap = build_2d_map(self.grid)
+		self.gridmap = build_2d_map(self.grid).T
 		self.preprocessed_gridmap = preprocess(self.gridmap, self.radius)
-
-		# plt.imshow(self.preprocessed_gridmap)
-		# plt.show()
 
 
 		#current start and end 
@@ -286,10 +283,23 @@ class PointClickNav:
 
 
 	def _mainLoop(self):
+		self.global_path = None
+		self.curr_point = None
 		planning_request_sent = True
 		pose_history = []
 		
 		while not self.exit_flag:
+			'''
+			plt.cla()
+			if self.global_path is not None:
+				plt.plot(self.global_path.get_xs(), self.global_path.get_ys(), color="r")
+			if self.curr_point is not None:
+				self.curr_point.plot(plt)
+			plt.imshow(self.gridmap.T, origin="lower", cmap="plasma")
+			plt.pause(0.005)
+			plt.draw()
+			'''
+
 			loop_start_time = time.time()
 			self.last_timestamp = time.time()
 			if self.terminate_command:
@@ -359,7 +369,7 @@ class PointClickNav:
 					new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
 					if new_grid is not None: #this should always find a map if things go right
 						self.grid = new_grid
-						self.gridmap = build_2d_map(self.grid)
+						self.gridmap = build_2d_map(self.grid).T
 						self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
 						self.global_path_parent_conn.send((self.gridmap, self.start,self.end,True,False))
 						planning_request_sent = True
@@ -440,7 +450,7 @@ class PointClickNav:
 				print("_mainLoop: executing")
 				#####compute local action and send to robot
 				#check collision
-				collision = self.curr_point.collides(self.gridmap)
+				collision = self.curr_point.collides(self.gridmap.T)
 				if collision:
 					print("collided...this should not have happened")
 					break
@@ -471,7 +481,7 @@ class PointClickNav:
 					primitives = get_primitives(self.curr_point.center, self.curr_theta, self.radius*2, self.radius*1)
 
 				#find the primitive that leads to the global path
-				closest = evaluate_primitives(self.curr_point, primitives, self.global_path, self.gridmap)
+				closest = evaluate_primitives(self.curr_point, primitives, self.global_path, self.gridmap.T)
 				kglobal = klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())])
 
 				#if self.debugging:
@@ -583,7 +593,7 @@ class PointClickNav:
 				#print("before", self.can_send_gridmap)
 				if self.can_send_gridmap and new_grid is not None and self.received_first_gridmap_flag:
 					self.grid = new_grid
-					self.gridmap = build_2d_map(self.grid)
+					self.gridmap = build_2d_map(self.grid).T
 					self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
 
 					start_time = time.time()
@@ -636,7 +646,7 @@ class PointClickNav:
 				self._publishTf(curr_pose_child) 
 		print('----------')
 		print('PointClickNav: publish gmapping path exited')
-	def _computeGlobalPath(self,conn, end, radius,active):
+	def _computeGlobalPath(self,conn, end, radius, active):
 		gridmap = None
 		exit = False
 		while not exit:
