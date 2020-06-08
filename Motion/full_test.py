@@ -69,6 +69,15 @@ add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [5, 0, 0]), 
 add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [0, -5, 0]), "test2")
 add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [-5, 0, 0]), "test3")
 
+add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [2, 4, 0]), "test")
+add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [4, 2, 0]), "test")
+add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [-2, 4, 0]), "test")
+add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [-4, 2, 0]), "test")
+add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [2, -4, 0]), "test")
+add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [4, -2, 0]), "test")
+add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [-2, -4, 0]), "test")
+#add_terrain(world, "./data/cube.off", ([1, 0, 0, 0, 1, 0, 0, 0, 1], [-4, -2, 0]), "test")
+
 vis.add("world",world)
 
 grid = get_occupancy_grid("static_map")
@@ -132,6 +141,8 @@ pose_history = []
 global_path = None
 can_send_gridmap = True
 
+consec_global_path_failures = 0
+
 while True: 
     lidar.kinematicSimulate(world, 0.001)
     ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")
@@ -141,7 +152,7 @@ while True:
     new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
     if new_grid is not None and can_send_gridmap:
         grid = new_grid
-        gridmap = build_2d_map(grid)
+        gridmap = build_2d_map(grid).T
         new_start = intify(transform_coordinates((curr_pose[0], curr_pose[1]), grid))
         global_map_parent_conn.send((gridmap, new_start))
         can_send_gridmap = False
@@ -151,29 +162,36 @@ while True:
         can_send_gridmap = True
         if new_global_path is not None:
             global_path = new_global_path
+            consec_global_path_failures = 0
+        else:
+            consec_global_path_failures += 1
 
+    # This is only triggered at the beginning before we got the first global_path
     if global_path is None:
-        time.sleep(0.1)
+        time.sleep(0.01)
         continue
 
-    collision = curr_point.collides(gridmap)
-    if collision:
-        print("collided...this should not have happened")
+    if consec_global_path_failures >= 2:
+        print("Couldn't find global path :(")
         break
 
+    collision = curr_point.collides(gridmap.T)
+    if collision:
+        print("collided...this should not have happened")
+        continue
+
     dist_to_goal = l2_dist(curr_point.center, end)
-    if dist_to_goal < 0.2 / res or at_end:
+    if dist_to_goal < 0.2 / res:
         break
 
     # near goal, run a special controller?
     if dist_to_goal < 1.0 / res:
-        at_end = True
         primitives = [LocalPath([(curr_point.center[0], curr_point.center[1], curr_theta), (end[0], end[1], end_theta)])]
         end_v = 0
     else:
         primitives = get_primitives(curr_point.center, curr_theta, radius*2, radius*1)
 
-    closest = evaluate_primitives(curr_point, primitives, global_path, gridmap)
+    closest = evaluate_primitives(curr_point, primitives, global_path, gridmap.T)
     kglobal = klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], grid) for x, y in zip(global_path.get_xs(), global_path.get_ys())])
 
 
@@ -201,7 +219,7 @@ while True:
         px, py, _ = p.get_xytheta(200)
         plt.plot(px, py, color='r')
     plt.plot(xs, ys, color='g')
-    plt.imshow(gridmap, origin="lower")
+    plt.imshow(gridmap.T, origin="lower")
     curr_point.plot(plt)
     plt.pause(0.01)
     plt.gca().set_aspect('equal', adjustable='box')
@@ -222,7 +240,7 @@ while True:
         iteration_start = time.time()
         state = profile[i]
 
-        if not at_end and iteration_start - start_time > time_thresh:
+        if iteration_start - start_time > time_thresh:
             end_v = min(max_v, end_v)
             break
 
@@ -242,8 +260,8 @@ while True:
         linear_error = trans_target[0]
         cross_track_error = trans_target[1]
 
-        k_linear = 1.0 * res
-        k_angular = 1.0 * res
+        k_linear = 1.5 * res
+        k_angular = 1.5 * res
 
         vel = [state.v * res + k_linear*linear_error, state.w + k_angular*cross_track_error]
 

@@ -92,7 +92,7 @@ time.sleep(1)
 start_time = time.time()
 
 while True:
-    lidar.kinematicSimulate(world, 0.01)
+    lidar.kinematicSimulate(world, 0.001)
 
     ros_msg = ros.to_SensorMsg(lidar, frame = "/base_scan")
     measurements = lidar.getMeasurements()
