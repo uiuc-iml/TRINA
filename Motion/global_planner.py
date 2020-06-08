@@ -309,6 +309,7 @@ def get_path(parents, start, goal):
         try:
             curr = parents[curr]
         except KeyError:
+            print("HI")
             return None
 
     rv.add_point(goal)

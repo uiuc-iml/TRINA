@@ -613,6 +613,11 @@ class PointClickNav:
 						self.global_path = new_global_path
 						self.Jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
 					else:
+						plt.plot(self.start)
+						plt.plot(self.end)
+						self.curr_point.plot(plt)
+						plt.imshow(self.gridmap.T, origin="lower", cmap="inferno")
+						plt.show()
 						print("new global path is empty")
 						self.Jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
 						self.Jarvis.setBaseVelocity([0,0])
