@@ -305,13 +305,13 @@ def get_path(parents, start, goal):
 
     curr = start
     while curr != goal:
-        rv.add_point(curr[::-1])
+        rv.add_point(curr)
         try:
             curr = parents[curr]
         except KeyError:
             return None
 
-    rv.add_point(goal[::-1])
+    rv.add_point(goal)
     return rv
 
 if __name__ == "__main__":

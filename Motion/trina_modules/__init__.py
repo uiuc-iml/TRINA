@@ -7,12 +7,12 @@ sys.path.append(path)
 
 import trina_modules.test1
 import trina_modules.test2
-import trina_modules.UI
+# import trina_modules.UI
 
 test1 = reload(test1)
 test2 = reload(test2)
-UI = reload(trina_modules.UI)
+# UI = reload(trina_modules.UI.UI)
 
 from trina_modules.test1 import *
 from trina_modules.test2 import *
-from trina_modules.UI.UI import *
+# from trina_modules.UI.UI import *

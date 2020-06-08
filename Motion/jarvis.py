@@ -1,10 +1,15 @@
 import time,math,datetime
 import threading
-from motion_client_python3 import MotionClient
+import sys
+
+if(sys.version_info[0] < 3):
+    # from future import *
+    from motion_client import MotionClient
+else:
+    from motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 import os,csv,sys
 from threading import Thread
 from reem.connection import RedisInterface
@@ -14,17 +19,18 @@ from multiprocessing import Pool, TimeoutError
 import uuid
 from klampt import io
 # from Modules import *
-import trina_modules
 import sys, inspect
 # import command_server
 
 class Jarvis:
 
-    def __init__(self, priority = 'P4'):
+    def __init__(self,name, priority = 'P4'):
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.priority = priority
+        self.name = name
+        self.server['ACTIVITY_STATUS'][self.name] = 'Inactive'
         # should not instantiate commanserver
         # self.command_server = CommandServer()
 
@@ -66,7 +72,9 @@ class Jarvis:
         queue = self.server['ROBOT_COMMAND'][self.priority].read()
         queue.append(command)
         self.server['ROBOT_COMMAND'][self.priority] = queue
-
+    
+    def getActivityStatus(self):
+        return self.server['ACTIVITY_STATUS'][self.name].read()
 
 
     ################################## All Mighty divider between motion and UI###############################

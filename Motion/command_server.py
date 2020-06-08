@@ -16,6 +16,7 @@ import sys, inspect
 from importlib import reload
 import atexit
 import subprocess
+from TRINAConfig import *
 
 robot_ip = 'http://localhost:8080'
 
@@ -50,6 +51,8 @@ class CommandServer:
         self.server = KeyValueStore(self.interface)
         self.server["ROBOT_STATE"] = 0
         self.server['ROBOT_COMMAND'] = {'P0':[],'P1':[],'P2':[],'P3':[],'P4':[]}
+        self.server['health_log'] = {}
+        self.server['ACTIVITY_STATUS'] = {}
         self.mode = 'Kinematic'
         self.components = components
         self.init_robot_state = {}
@@ -165,7 +168,7 @@ class CommandServer:
                     pos_base = self.query_robot.sensedBasePosition()
                     # print("base position")
                     vel_base = self.query_robot.sensedBaseVelocity()
-                klampt_q = self.query_robot.getKlamptSensedPosition()
+                klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
                 # print("base velocity")
             # if(self.left_gripper_active):
             #     pos_left_gripper = self.robot.sensedLeftGripperPosition()
@@ -188,7 +191,7 @@ class CommandServer:
                                         "Torso": pos_torso,
                                         "LeftGripper" : pos_left_gripper,
                                         "RightGripper" : pos_right_gripper,
-                                        "q": klampt_q
+                                        "Robotq": klampt_q
                                         },
                                     "Velocity" : {
                                         "LeftArm" : vel_left,
@@ -313,3 +316,6 @@ class CommandServer:
 
 if __name__=="__main__":
     server = CommandServer()
+    while(True):
+        time.sleep(100)
+        pass
