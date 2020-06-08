@@ -62,6 +62,7 @@ class PointClickNav:
 		self.exit_flag = False
 		self.mode = mode
 		self.visualization = False
+		self.received_first_gridmap_flag = False
 		if self.debugging:
 
 			self.simulated_robot = Motion(mode = 'Kinematic', codename="anthrax") #the world file has been modified to add a 
@@ -95,7 +96,7 @@ class PointClickNav:
 			# left_q = self.Jarvis.sensedLeftLimbPosition()
 			# right_q = self.Jarvis.sensedRightLimbPosition()
 			base_q = self.Jarvis.sensedBasePosition()
-			print(base_q)
+			#print(base_q)
 			self.curr_pose = base_q
 			#start visualizer
 			self.vis_world = WorldModel()
@@ -341,12 +342,15 @@ class PointClickNav:
 					else:
 						self._sharedLock.acquire()
 						#TODO
-						# end = self._groundIntersect((self.ray['FIRST_RAY']['source'],self.ray['FIRST_RAY']['destination']))
-						# direction = vectorops.sub(self._groundIntersect((self.ray['SECOND_RAY']['source'],self.ray['SECOND_RAY']['destination'])),end)
-						# self.end = intify(transform_coordinates((end[0],end[1]),self.grid))
-						# self.end_theta = math.atan2(direction[1],direction[0])
-						self.end = intify(transform_coordinates((4,8),self.grid))
-						self.end_theta = 0.0
+						end = self._groundIntersect((self.ray['FIRST_RAY']['source'],self.ray['FIRST_RAY']['destination']))
+						direction = vectorops.sub(self._groundIntersect((self.ray['SECOND_RAY']['source'],self.ray['SECOND_RAY']['destination'])),end)
+						self.end = intify(transform_coordinates((end[0],end[1]),self.grid))
+						self.end_theta = math.atan2(direction[1],direction[0])
+
+						#print(self.ray)
+
+						# self.end = intify(transform_coordinates((-4,4),self.grid))
+						# self.end_theta = 0.0
 						self._sharedLock.release()
 
 					
@@ -378,8 +382,11 @@ class PointClickNav:
 							continue
 
 						#stop planning and waiting for user confirmation
+						start_time = time.time()
 						self.global_path_parent_conn.send((None,self.start,self.end,False,False))			
+						print("sending global path took:",time.time() - start_time)
 						self.global_path = new_global_path
+
 						#This means that the process is ready to accept a new planning request
 						self.can_send_gridmap = True
 						end_v = 0.5
@@ -397,7 +404,7 @@ class PointClickNav:
 						if not self.debugging:
 							print('sending the trajectory.....')
 							self.Jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
-							time.sleep(0.5)
+							time.sleep(3)
 							ans = self.Jarvis.sendAndGetConfirmationUI('Request','Please Confirm the Trajectory')
 							if ans == 'YES':
 								self.state = 'executing'
@@ -494,7 +501,7 @@ class PointClickNav:
 						new_pose = self.curr_pose
 						new_pose = transform_coordinates(new_pose, self.grid)
 
-						self.curr_point = Circle((snew_pose[0], new_pose[1]), self.radius)
+						self.curr_point = Circle((new_pose[0], new_pose[1]), self.radius)
 						self.curr_theta = new_pose[2]
 						self._sharedLock.release()
 						continue
@@ -573,22 +580,32 @@ class PointClickNav:
 
 				##### receive new map and replan global path
 				new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
-				if self.can_send_gridmap and new_grid is not None:
+				#print("before", self.can_send_gridmap)
+				if self.can_send_gridmap and new_grid is not None and self.received_first_gridmap_flag:
 					self.grid = new_grid
 					self.gridmap = build_2d_map(self.grid)
 					self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
+
+					start_time = time.time()
 					self.global_path_parent_conn.send((self.gridmap, self.start,self.end,True,False))
+					#print(self.start,self.end)
+					print('elapsed time:',time.time() - start_time)
 					self.can_send_gridmap = False
-				else:
+
+				if new_grid is None:
 					print("no map found from gmapping..")
+				#print("after", self.can_send_gridmap)
 
 				if self.global_path_parent_conn.poll():
+					self.received_first_gridmap_flag = True
 					new_global_path = self.global_path_parent_conn.recv()
 					if new_global_path:	
 						self.global_path = new_global_path
+						self.Jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
 					else:
 						print("new global path is empty")
 						self.Jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
+						self.Jarvis.setBaseVelocity([0,0])
 						self.state = 'idle'
 						continue
 					self.can_send_gridmap = True
@@ -658,8 +675,9 @@ class PointClickNav:
 
 	def _groundIntersect(self,ray):
 		s = ray[0]
-		des = ray[1] #destination not direction
-		d = vectorops.unit(vectorops.sub(des,s)) #direction
+		d = ray[1]
+		#des = ray[1] #destination not direction
+		#d = vectorops.unit(vectorops.sub(des,s)) #direction
 		assert d[2] != 0.0
 		alpha = -s[2]/d[2]
 

@@ -301,7 +301,7 @@ class Jarvis:
         commandQueue = self.server["UI_END_COMMAND"].read()
         commandQueue.append(msg)
         self.server["UI_END_COMMAND"] = commandQueue
-        print("commandQueue", commandQueue)
+        #print("commandQueue", commandQueue)
         time.sleep(0.0001) 
 
 if __name__=="__main__":
