@@ -80,9 +80,13 @@ class MyQtMainWindow(QMainWindow):
 
     def addText(self): 
         text =self.rpc_args['text']
-        position =self.rpc_args['position']
+        color =self.rpc_args['color']
+        size =self.rpc_args['size']
+        name =self.rpc_args['name']
         self.rpc_args = {}
-        vis.addText(position,text)
+        vis.addText(name,text)
+        vis.setColor(name,color[0],color[1],color[2])
+        vis.setAttribute(name,"size",size)
         return
 
     def addConfirmation(self):
@@ -127,6 +131,23 @@ class MyQtMainWindow(QMainWindow):
         if reply == QMessageBox.Yes:
             self.global_state['collectRaySignal'] = [True,False]
             self.global_state['feedbackId']['getRayClick'] = id
+
+    def addButton(self):
+        name = self.rpc_args['name']
+        text = self.rpc_args['text']
+        id = '$' + name
+        self.buttons[name] = QPushButton(text)
+        self.buttons[name].clicked.connect(lambda: self._handleButtonClick(id))
+        self.leftLayout.addWidget(self.buttons[name])
+        self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':False}
+
+    def _handleButtonClick(self,id):
+        self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':True}
+
+
+
+
+
         
     def test(self):
         print("inde the test function")
@@ -158,22 +179,23 @@ class MyQtMainWindow(QMainWindow):
 
 
     def _initScrennLayout(self,klamptGLWindow):
-        self.setFixedSize(1650, 1050)
+        self.setFixedSize(800, 600)
         self.splitter = QSplitter()
         self.left = QFrame()
-        self.left.setFixedSize(400,1000)
+        self.left.setFixedSize(200,600)
         self.leftLayout = QVBoxLayout()
         self.left.setLayout(self.leftLayout)
         self.right = QFrame()
-        self.right.setFixedSize(1200,1000)
+        self.right.setFixedSize(600,600)
         self.rightLayout = QVBoxLayout()
         self.right.setLayout(self.rightLayout)
         
         self.glwidget = klamptGLWindow
-        self.glwidget.do_reshape(1200,1000)
+        self.glwidget.do_reshape(600,600)
         self.glwidget.setParent(self.right)
         self.rightLayout.addWidget(self.glwidget)
     
+        self.buttons = {}
         self.welcomeText = QLabel("Welcome to TRINA UI! \n\n\nPlease Refer to Menu Bar for More Actions.")
         self.modeText = QLabel("")
         self.modeText.setWordWrap(True)
@@ -281,12 +303,15 @@ class UI_end_1:
         world = klampt.WorldModel()
         res = world.readFile(file_dir)
         self.world = world
+        self.dt = 0.05
         if not res:
             raise RuntimeError("Unable to load model "+file_dir)
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = {'controllerPositionState': {'leftController': {'controllerOrientation': [0.07739845663309097, -0.19212138652801514, 0.3228720426559448, 0.9235001802444458], 'controllerPosition': [-0.021801471710205078, -0.4208446145057678, 0.5902314186096191]}, 'rightController': {'controllerOrientation': [0.052883781492710114, 0.20788685977458954, -0.30593231320381165, 0.927573025226593], 'controllerPosition': [0.15437912940979004, -0.4229428172111511, 0.5827353000640869]}}, 'headSetPositionState': {'deviceRotation': [-0.027466144412755966, 0.7671623826026917, 0.003965826239436865, 0.6408524513244629]}, 'controllerButtonState': {'leftController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}, 'rightController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}}, 'UIlogicState': {'stop': False, 'autonomousMode': False, 'teleoperationMode': False}, 'title': 'UI Outputs'}
+        self.server["UI_END_COMMAND"] = [{'funcName':'test','args':{}}]
+        self.server['UI_FEEDBACK'] = {}
         self.global_state = {'collectRaySignal':[False,False],'feedbackId':{'getRayClick':''}}
         self._serveVis()
 
@@ -311,8 +336,22 @@ class UI_end_1:
         plugin = MyGLPlugin(world, self.global_state,self.server)
         vis.pushPlugin(plugin)   #put the plugin on top of the standard visualization functionality.
        
+
+
+        vis.show()
+        while vis.shown():
+            vis.lock()
+            try:
+                sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
+                vis_robot = world.robot(0)
+                vis_robot.setConfig(sensed_position)
+            except Exception as err:
+                print("Error: {0}".format(err))
+            vis.unlock()
+            time.sleep(self.dt)
+        vis.kill()
         # start vis
-        vis.spin(float('inf'))
+        # vis.spin(float('inf'))
         vis.kill()
 
         # clean up

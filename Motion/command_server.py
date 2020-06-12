@@ -16,6 +16,7 @@ import sys, inspect
 from importlib import reload
 import atexit
 import subprocess
+from TRINAConfig import *
 
 robot_ip = 'http://localhost:8080'
 
@@ -25,11 +26,24 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 
 class CommandServer:
 
-    def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,):
-        # we first start redis:
-        self.start_redis()
-        # and wait a bit for it to start
-        time.sleep(2)
+    def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name):
+        # we first check if redis is up and running:
+        try:
+            self.interface = RedisInterface(host="localhost")
+            self.interface.initialize()
+            self.server = KeyValueStore(self.interface)
+            print('Reem already up and running, skipping creation process')
+        except Exception as e:
+            # if we cannot connect to redis, we start the server for once:
+            print('starting redis server because of ',e)
+            self.start_redis()
+            # wait for it to start
+            time.sleep(2)
+            # then we start our connections as normal:
+            self.interface = RedisInterface(host="localhost")
+            self.interface.initialize()
+            self.server = KeyValueStore(self.interface)
+
         # we then proceed with startup as normal
 
         self.interface = RedisInterface(host="localhost")
@@ -37,6 +51,8 @@ class CommandServer:
         self.server = KeyValueStore(self.interface)
         self.server["ROBOT_STATE"] = 0
         self.server['ROBOT_COMMAND'] = {'P0':[],'P1':[],'P2':[],'P3':[],'P4':[]}
+        self.server['health_log'] = {}
+        self.server['ACTIVITY_STATUS'] = {}
         self.mode = 'Kinematic'
         self.components = components
         self.init_robot_state = {}
@@ -62,28 +78,13 @@ class CommandServer:
         self.query_robot.startup()
         res = self.robot.startup()
         if not res:
-            return 'failed'
+            print('Failed!')
         self.health_dict = {}
         # create the list of threads
         self.modules_dict = {}
 
         self.start_modules()
 
-
-        # trina_modules = reload(trina_modules)
-        # for name, obj in inspect.getmembers(trina_modules):
-        #     if inspect.isclass(obj):
-
-        #         tmp = self.start_module(obj)
-        #         self.modules_dict.update({name:tmp})
-        #         print(name)
-        # print(self.modules_dict)
-
-        # for i in range(len(self.modules)):
-        #     t = threading.Thread(name = self.module[i], target=activate, args = (self.modules[i],))
-        #     threads.append(t)
-        #     t.start()
-        # each thread will be assigned to start each module
 
         stateRecieverThread = threading.Thread(target=self.stateReciever)
         stateRecieverThread.start()
@@ -103,7 +104,7 @@ class CommandServer:
         if(module_names == []):
             for name, obj in inspect.getmembers(trina_modules):
                 if inspect.isclass(obj):
-                    if(str(obj).find('trina_modules')):
+                    if(str(obj).find('trina_modules') != -1):
                         tmp = self.start_module(obj)
                         self.modules_dict.update({name:tmp})
                         self.health_dict.update({name:[True,time.time()]})
@@ -112,7 +113,7 @@ class CommandServer:
             print('starting only modules '+ str(module_names))
             for name, obj in inspect.getmembers(trina_modules):
                 if inspect.isclass(obj):
-                    if(str(obj).find('trina_modules')):
+                    if(str(obj).find('trina_modules') != -1):
                         if(name in module_names):
                             print('killing module '+ name)
                             for pcess in self.modules_dict[name]:
@@ -167,7 +168,7 @@ class CommandServer:
                     pos_base = self.query_robot.sensedBasePosition()
                     # print("base position")
                     vel_base = self.query_robot.sensedBaseVelocity()
-                klampt_q = self.query_robot.getKlamptSensedPosition()
+                klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
                 # print("base velocity")
             # if(self.left_gripper_active):
             #     pos_left_gripper = self.robot.sensedLeftGripperPosition()
@@ -190,7 +191,7 @@ class CommandServer:
                                         "Torso": pos_torso,
                                         "LeftGripper" : pos_left_gripper,
                                         "RightGripper" : pos_right_gripper,
-                                        "q": klampt_q
+                                        "Robotq": klampt_q
                                         },
                                     "Velocity" : {
                                         "LeftArm" : vel_left,
@@ -213,7 +214,7 @@ class CommandServer:
             for i in self.robot_command.keys():
                 if (self.robot_command[i] != []):
                     commandList = self.robot_command[i]
-                    exec(commandList[0])
+                    self.run(commandList[0])
                     self.server['ROBOT_COMMAND'][i] = commandList[1:]
 
                     break
@@ -226,6 +227,8 @@ class CommandServer:
     def run(self,command):
         try:
             exec(command)
+        except Exception as e:
+            print('there was an error executing your command!',e)
         finally:
             print("command recieved was " + command)
 
@@ -307,7 +310,7 @@ class CommandServer:
         command_string = '{} {}'.format(redis_server_path,redis_conf_path)
         os.chdir(redis_folder)
         args = shlex.split(command_string)
-        self.redis_process = subprocess.Popen(args)
+        self.redis_process = subprocess.Popen(args,start_new_session = True)
 
         # reverting back to trina directory
         os.chdir(origWD)
@@ -315,3 +318,6 @@ class CommandServer:
 
 if __name__=="__main__":
     server = CommandServer()
+    while(True):
+        time.sleep(100)
+        pass
