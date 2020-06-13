@@ -76,7 +76,7 @@ res = grid.info.resolution
 radius = 0.5588/2/res * 2.0
 gridmap = build_2d_map(grid)
 preprocessed_gridmap = preprocess(gridmap, radius)
-
+print('Built Map')
 start = intify(transform_coordinates((0, 0), grid))
 #end = intify(transform_coordinates((4, 4), grid))
 end = intify(transform_coordinates((4, 8), grid))
@@ -93,7 +93,7 @@ rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
 rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
 
 robot.startup()
-
+print('gets here')
 # reset arms
 robot.setLeftLimbPositionLinear(leftTuckedConfig,5)
 robot.setRightLimbPositionLinear(rightTuckedConfig,5)
@@ -131,7 +131,7 @@ pose_history = []
 
 global_path = None
 can_send_gridmap = True
-
+print('Gets Here!')
 while True: 
     lidar.kinematicSimulate(world, 0.001)
     ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")

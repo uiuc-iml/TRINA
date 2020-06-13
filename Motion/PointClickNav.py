@@ -151,8 +151,9 @@ class PointClickNav:
 		self.res = self.grid.info.resolution
 		self.radius = 0.5588/2/self.res * 2.0 #radius in terms of grids
 		self.gridmap = build_2d_map(self.grid).T
-		self.preprocessed_gridmap = preprocess(self.gridmap, self.radius)
+		print('flag4')
 
+		self.preprocessed_gridmap = preprocess(self.gridmap, self.radius)
 
 		#current start and end 
 		#transforms world coordinates into the grid (indeces)
