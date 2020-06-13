@@ -51,7 +51,7 @@ def convertMsg(klampt_sensor,frame,stamp = "now"):
 
 
 class PointClickNav:
-	def __init__(self,debugging = True, mode = 'Kinematic'):
+	def __init__(self,Jarvis = [], debugging = True, mode = 'Kinematic'):
 		#if true, run a test locally, otherwise, communicate with Jarvis to get statesssssss
 		self.debugging = debugging
 		self.last_timestamp = 0.0
@@ -91,7 +91,7 @@ class PointClickNav:
 			if self.visualization:
 				vis.show()
 		else:
-			self.Jarvis = Jarvis('PointClickNav')
+			self.Jarvis = Jarvis
 			#get current pose of the robot
 			# left_q = self.Jarvis.sensedLeftLimbPosition()
 			# right_q = self.Jarvis.sensedRightLimbPosition()
