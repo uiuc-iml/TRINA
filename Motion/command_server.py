@@ -1,6 +1,6 @@
 import time,math,datetime
 import threading
-from motion_client_python3 import MotionClient
+# from motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import numpy as np
@@ -17,6 +17,14 @@ from importlib import reload
 import atexit
 import subprocess
 from TRINAConfig import *
+from sensorModule2 import Camera_Robot
+from klampt import WorldModel,Geometry3D
+
+if(sys.version_info[0] < 3):
+    # from future import *
+    from motion_client import MotionClient
+else:
+    from motion_client_python3 import MotionClient
 
 robot_ip = 'http://localhost:8080'
 
@@ -26,7 +34,7 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 
 class CommandServer:
 
-    def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name):
+    def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './data/TRINA_world_anthrax_PointClick.xml'):
         # we first check if redis is up and running:
         try:
             self.interface = RedisInterface(host="localhost")
@@ -43,17 +51,19 @@ class CommandServer:
             self.interface = RedisInterface(host="localhost")
             self.interface.initialize()
             self.server = KeyValueStore(self.interface)
-
+        
+        self.start_ros_stuff()
+        self.world_file = world_file
         # we then proceed with startup as normal
 
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["ROBOT_STATE"] = 0
-        self.server['ROBOT_COMMAND'] = {'P0':[],'P1':[],'P2':[],'P3':[],'P4':[]}
+        self.server['ROBOT_COMMAND'] = {}
         self.server['health_log'] = {}
         self.server['ACTIVITY_STATUS'] = {}
-        self.mode = 'Kinematic'
+        self.mode = mode
         self.components = components
         self.init_robot_state = {}
         self.dt = 0.001
@@ -79,6 +89,11 @@ class CommandServer:
         res = self.robot.startup()
         if not res:
             print('Failed!')
+
+        if(self.mode == 'Kinematic'):
+            self.world = WorldModel()
+            self.world.readFile(self.world_file )
+            # self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
         self.health_dict = {}
         # create the list of threads
         self.modules_dict = {}
@@ -101,6 +116,8 @@ class CommandServer:
     def start_modules(self,module_names = []):
         import trina_modules
         trina_modules = reload(trina_modules)
+        activity_dict = {}
+        command_dict = {}
         if(module_names == []):
             for name, obj in inspect.getmembers(trina_modules):
                 if inspect.isclass(obj):
@@ -108,7 +125,10 @@ class CommandServer:
                         tmp = self.start_module(obj)
                         self.modules_dict.update({name:tmp})
                         self.health_dict.update({name:[True,time.time()]})
+                        command_dict.update({name:[]})
             self.server['health_log'] = self.health_dict
+            self.server['ROBOT_COMMAND'] = command_dict
+            self.empty_command = command_dict
         else:
             print('starting only modules '+ str(module_names))
             for name, obj in inspect.getmembers(trina_modules):
@@ -211,13 +231,12 @@ class CommandServer:
         while not self.shut_down_flag:
             loopStartTime = time.time()
             self.robot_command = self.server['ROBOT_COMMAND'].read()
+            self.server['ROBOT_COMMAND'] = self.empty_command
             for i in self.robot_command.keys():
                 if (self.robot_command[i] != []):
                     commandList = self.robot_command[i]
-                    self.run(commandList[0])
-                    self.server['ROBOT_COMMAND'][i] = commandList[1:]
-
-                    break
+                    for command in commandList:
+                        self.run(command)
             elapsedTime = time.time() - loopStartTime
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
@@ -314,7 +333,26 @@ class CommandServer:
 
         # reverting back to trina directory
         os.chdir(origWD)
+    
+    def start_ros_stuff(self):
+        print('starting ros stuff')
+        origWD = os.getcwd() # remember our original working directory
+        #setting up the start of the redis server
+        catkin_folder = os.path.expanduser('~/catkin_ws/devel/')
+        os.chdir(catkin_folder)
+        # os.system('./setup.sh')
+        # redis_conf_path = os.path.expanduser('~/database-server/redis.conf')
+        # redis_folder = os.path.expanduser('~/database-server')
+        command_string = 'roscore'
+        gmapping_string = 'rosrun gmapping slam_gmapping scan:=base_scan'
+        ros_args = shlex.split(command_string)
+        gmapping_args = shlex.split(gmapping_string)
+        self.ros_process = subprocess.Popen(ros_args)
+        time.sleep(3)
 
+        self.gmapping = subprocess.Popen(gmapping_args)
+        print('executed gmapping')
+        os.chdir(origWD)
 
 if __name__=="__main__":
     server = CommandServer()

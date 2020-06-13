@@ -24,11 +24,10 @@ import sys, inspect
 
 class Jarvis:
 
-    def __init__(self,name, priority = 'P4'):
+    def __init__(self,name):
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
-        self.priority = priority
         self.name = name
         self.server['ACTIVITY_STATUS'][self.name] = 'Inactive'
         # should not instantiate commanserver
@@ -65,13 +64,13 @@ class Jarvis:
         command = self.send_command('self.robot.setLeftLimbPosition',str(q))
         current_list = self.server['ROBOT_COMMAND']['P4'].read()
         current_list.append(command)
-        self.server['ROBOT_COMMAND'][self.priority] = current_list
+        self.server['ROBOT_COMMAND'][self.name] = current_list
 
     def setBaseVelocity(self,q):
         command = self.send_command('self.robot.setBaseVelocity',str(q))
-        queue = self.server['ROBOT_COMMAND'][self.priority].read()
+        queue = self.server['ROBOT_COMMAND'][self.name].read()
         queue.append(command)
-        self.server['ROBOT_COMMAND'][self.priority] = queue
+        self.server['ROBOT_COMMAND'][self.name] = queue
     
     def getActivityStatus(self):
         return self.server['ACTIVITY_STATUS'][self.name].read()

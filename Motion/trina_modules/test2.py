@@ -16,6 +16,7 @@ class C2:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.sleep_time = 30
+        # self.sensor_module = sensor_module
         atexit.register(self.shutdown)
         for i in self.processes:
             i.start()
@@ -25,6 +26,8 @@ class C2:
         while(True):
             # print('idling C2')
             time.sleep(self.sleep_time)
+            # a = self.sensor_module.get_rgbd_images()
+            # print('got Images! ',a)
     def verify(self):
         while(True):
             try:
