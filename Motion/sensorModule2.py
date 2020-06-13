@@ -91,9 +91,35 @@ class Camera_Robot:
             # vis.show()
             # vis.kill()
             # and we start the thread that will update the simulation live:
+            self.right_image = []
+            self.left_image = []
+            self.lpc = np.zeros(shape = (3,6))
+            self.rpc = np.zeros(shape = (3,6))
+            self.simlock = threading.Lock()
+            
+            
+            #GLEW WORKAROUND
+            glutInit ([])
+            glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
+            glutInitWindowSize (1, 1)
+            windowID = glutCreateWindow ("test")
+
+            # Default background color
+            glClearColor(0.8,0.8,0.9,0)
+            # Default light source
+            glLightfv(GL_LIGHT0,GL_POSITION,[0,-1,2,0])
+            glLightfv(GL_LIGHT0,GL_DIFFUSE,[1,1,1,1])
+            glLightfv(GL_LIGHT0,GL_SPECULAR,[1,1,1,1])
+            glEnable(GL_LIGHT0)
+
+            glLightfv(GL_LIGHT1,GL_POSITION,[-1,2,1,0])
+            glLightfv(GL_LIGHT1,GL_DIFFUSE,[0.5,0.5,0.5,1])
+            glLightfv(GL_LIGHT1,GL_SPECULAR,[0.5,0.5,0.5,1])
+            glEnable(GL_LIGHT1)
             simUpdaterThread = threading.Thread(target=self.update_sim)
             simUpdaterThread.start()   
-                
+            pcUpdaterThread = threading.Thread(target=self.update_point_clouds)
+            pcUpdaterThread.start()
     def get_point_clouds(self,cameras = []):
         """
         Returns the point cloud from the referred source in the robot's base frame.
@@ -117,9 +143,10 @@ class Camera_Robot:
                     output.update({camera:self.active_cameras[camera].get_point_cloud()})
             return output
         else:
-
-            lpc = sensing.camera_to_points(self.left_cam, points_format='numpy', all_points=False, color_format='channels')
-            rpc = sensing.camera_to_points(self.right_cam, points_format='numpy', all_points=False, color_format='channels')
+            lpc = self.lpc
+            rpc = self.rpc
+            # lpc = sensing.camera_to_points(self.left_cam, points_format='numpy', all_points=False, color_format='channels')
+            # rpc = sensing.camera_to_points(self.right_cam, points_format='numpy', all_points=False, color_format='channels')
 
             left_pcd = o3d.geometry.PointCloud()
             left_pcd.points = o3d.utility.Vector3dVector(lpc[:,:3])
@@ -168,11 +195,18 @@ class Camera_Robot:
                     output.update({camera:self.active_cameras[camera].get_point_cloud()})
             return output
         else:
-            right_image = sensing.camera_to_images(self.right_cam, image_format= 'numpy', color_format='channels')
-            left_image = sensing.camera_to_images(self.left_cam, image_format= 'numpy', color_format='channels')
+            # try:
+            #     right_image = sensing.camera_to_images(self.right_cam, image_format= 'numpy', color_format='channels')
+            # except Exception as e:
+            #     print('failed to retrieve right camera',e)
+            #     right_image = []
+            # try:
+            #     left_image = sensing.camera_to_images(self.left_cam, image_format= 'numpy', color_format='channels')
+            # except Exception as e:
+            #     print('failed to retrieve left camera',e)
+            #     left_image = []
 
-
-            return {"realsense_right":right_image,"realsense_left":left_image}
+            return {"realsense_right":self.right_image,"realsense_left":self.left_image}
 
 
     def safely_close_all(self):
@@ -180,7 +214,7 @@ class Camera_Robot:
             self.active_cameras[camera].safely_close()
 
     def update_sim(self):
-        dt = 0.1
+        self.dt = 0.01
         #GLEW WORKAROUND
         glutInit ([])
         glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
@@ -200,7 +234,8 @@ class Camera_Robot:
         glLightfv(GL_LIGHT1,GL_SPECULAR,[0.5,0.5,0.5,1])
         glEnable(GL_LIGHT1)
         while(True):
-            print('updating_sim')
+            start_time = time.time()
+            # print('updating_sim')
             try:
                 q = self.robot.getKlamptSensedPosition()
                 self.Rrotation,self.Rtranslation = self.robot.sensedRightEETransform()
@@ -210,11 +245,26 @@ class Camera_Robot:
                 print(e)
                 pass
             self.simrobot.setConfig(q)
-            self.left_cam.kinematicSimulate(self.world, dt)
-            self.right_cam.kinematicSimulate(self.world, dt)
+            # with self.simlock:
+            # self.sim.simulate(self.dt)
+            self.left_cam.kinematicSimulate(self.world, self.dt)
+            self.right_cam.kinematicSimulate(self.world, self.dt)
+            self.left_image = sensing.camera_to_images(self.left_cam, image_format= 'numpy', color_format='channels')
+            self.right_image = sensing.camera_to_images(self.right_cam, image_format= 'numpy', color_format='channels')
             self.sim.updateWorld()
-            time.sleep(dt)
-
+            elapsed_time = time.time() - start_time
+            # print('elapsed_time:',elapsed_time)
+            if(elapsed_time < self.dt):
+                time.sleep(self.dt-elapsed_time)
+            
+    def update_point_clouds(self):
+        time.sleep(3)
+        # while(True):
+        #     # with self.simlock:
+        #         # self.sim.simulate(self.dt)
+        #     self.lpc = sensing.camera_to_points(self.left_cam, points_format='numpy', all_points=False, color_format='channels')
+        #     self.rpc = sensing.camera_to_points(self.right_cam, points_format='numpy', all_points=False, color_format='channels')
+        #     time.sleep(5*self.dt)
 class RealSenseCamera:
 
     def __init__(self,serial_num,config_file,robot,end_effector = 'right'):

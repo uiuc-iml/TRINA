@@ -1,0 +1,1263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.8.1" />
+<title>jarvis API documentation</title>
+<meta name="description" content="" />
+<link href='https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.0/normalize.min.css' rel='stylesheet'>
+<link href='https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/8.0.0/sanitize.min.css' rel='stylesheet'>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" rel="stylesheet">
+<style>.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>jarvis</code></h1>
+</header>
+<section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">import time,math,datetime
+import threading
+from motion_client_python3 import MotionClient
+import json
+from multiprocessing import Process, Manager, Pipe
+import numpy as np
+from scipy.spatial.transform import Rotation as R
+import os,csv,sys
+from threading import Thread
+from reem.connection import RedisInterface
+from reem.datatypes import KeyValueStore
+import traceback
+from multiprocessing import Pool, TimeoutError
+import uuid
+from klampt import io
+# from Modules import *
+import trina_modules
+import sys, inspect
+# import command_server
+
+class Jarvis:
+
+    def __init__(self, priority = &#39;P4&#39;):
+        self.interface = RedisInterface(host=&#34;localhost&#34;)
+        self.interface.initialize()
+        self.server = KeyValueStore(self.interface)
+        self.priority = priority
+        # should not instantiate commanserver
+        # self.command_server = CommandServer()
+
+    # def shutdown(self):
+    #     self.command_server.shutdown()
+
+    def sensedBaseVelocity(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;Base&#34;].read()
+
+    def sensedLeftLimbVelocity(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;LeftArm&#34;].read()
+
+    def sensedRightLimbVelocity(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;RightArm&#34;].read()
+
+    def sensedBasePosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Base&#34;].read()
+
+    def sensedTorsoPosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Torso&#34;].read()
+
+    def sensedLeftLimbPosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;LeftArm&#34;].read()
+
+    def sensedRightLimbPosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;RightArm&#34;].read()
+
+    def sensedBasePosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Base&#34;].read()
+
+    def sensedLeftGripperPosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;LeftGripper&#34;].read()
+
+    def setLeftLimbPosition(self,q):
+        command = self.send_command(&#39;self.robot.setLeftLimbPosition&#39;,str(q))
+        current_list = self.server[&#39;ROBOT_COMMAND&#39;][&#39;P4&#39;].read()
+        current_list.append(command)
+        self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = current_list
+
+    def setBaseVelocity(self,q):
+        command = self.send_command(&#39;self.robot.setBaseVelocity&#39;,str(q))
+        queue = self.server[&#39;ROBOT_COMMAND&#39;][self.priority].read()
+        queue.append(command)
+        self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = queue
+
+
+
+    ################################## All Mighty divider between motion and UI###############################
+
+    def sendRayClickUI(self):
+        &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
+        2 ray objects according to the user clicks. first one for destination, second one for calibration
+
+        return:
+            id: (str) id for ui feedback
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        # ask the user to click on a destination in the map, returns 2 rays in reem
+        self._do_rpc({&#39;funcName&#39;:&#39;getRayClick&#39;,&#39;args&#39;:{&#39;id&#39;:str(id)}})
+        return id
+        
+    def getRayClickUI(self,id):
+        &#34;&#34;&#34;get the feedback of Ray Click of id. 
+
+        return:
+            &#39;NOT READY&#39;: (str) if the msg is not ready
+
+            or
+
+            {
+                &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+                &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+            }
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        return self.getFeedback(id)
+
+
+
+    def sendAndGetRayClickUI(self):
+        &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
+        2 ray objects according to the user clicks. first one for destination, second one for calibration
+        
+        return:
+            
+            {
+                &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+                &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+            }
+        blocking?:
+            yes
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        # ask the user to click on a destination in the map, returns 2 rays in reem
+        self._do_rpc({&#39;funcName&#39;:&#39;getRayClick&#39;,&#39;args&#39;:{&#39;id&#39;:str(id)}})
+        reply = self.checkFeedback(id)
+        return  reply
+
+    def addTextUI(self, name, text, color, size):
+        &#34;&#34;&#34;add text to specfified location on UI screen. 
+
+        args:
+            name: (str) id for the text object
+            text: (str) content you wish to add
+            color: (list) rgb value [0,0,0]
+            size: (int) font size
+
+        return:
+            name: (str) the name/id the user gave 
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        self._do_rpc({&#39;funcName&#39;:&#39;addText&#39;,&#39;args&#39;:{&#39;name&#39;:name, &#39;color&#39;:color, &#39;size&#39;:size,  &#39;text&#39;:text}})
+        return name
+
+    def sendConfirmationUI(self,title,text):
+        &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
+        
+        return:
+            id: (str) id for ui feedback
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        self._do_rpc({&#39;funcName&#39;:&#39;addConfirmation&#39;,&#39;args&#39;:{&#39;id&#39;:str(id),&#39;title&#39;:title,&#39;text&#39;:text}})
+        return id
+        
+    def getConfirmationUI(self,id):
+        &#34;&#34;&#34;get the feedback of Confirmation Window of id. 
+
+        return:
+            &#39;NOT READY&#39;: (str) if the msg is not ready
+
+            or
+
+           (str) &#39;YES&#39; or &#39;NO&#39; if msg is ready
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        return self.getFeedback(id)
+
+
+    def sendAndGetConfirmationUI(self,title,text):
+        &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
+            a string of &#39;YES&#39; or &#34;NO&#34; is returned
+
+        args:
+            text: (str) content you wish to add
+            title: (str) window title
+
+        return:
+            (str) &#39;YES&#39; or &#39;NO&#39;
+
+        blocking?:
+            yes
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        self._do_rpc({&#39;funcName&#39;:&#39;addConfirmation&#39;,&#39;args&#39;:{&#39;id&#39;:str(id),&#39;title&#39;:title,&#39;text&#39;:text}})
+        reply = self.checkFeedback(id)
+        return  reply
+
+
+    def sendTrajectoryUI(self,trajectory,animate = False):
+        &#34;&#34;&#34;send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once 
+        
+        args:
+            trajectory: (klampt obj) the traj calculated
+            animate: (bool) if user wants to animate the path
+
+        return:
+            nothing
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        trajectory = io.loader.toJson(trajectory,&#39;Trajectory&#39;)
+        self._do_rpc({&#39;funcName&#39;:&#39;sendTrajectory&#39;,&#39;args&#39;:{&#39;trajectory&#39;:trajectory, &#39;animate&#39;:animate}})
+        return
+
+    def addButtonUI(self,name,text):
+        &#34;&#34;&#34;add a button to the UI window
+
+        args:
+            name: (str)  id for the button object
+            text: (str) button label text
+
+        return:
+            name: the id user gave
+        
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ name
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        self._do_rpc({&#39;funcName&#39;:&#39;addButton&#39;,&#39;args&#39;:{&#39;name&#39;:name, &#39;text&#39;:text}})
+        return name
+
+    def getButtonClickUI(self,name):
+        &#34;&#34;&#34;returns True if button with specified name is clicked
+
+        args:
+            name: (str) id for the button object
+
+        return:
+
+            (bool) True or False
+        
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ name
+        reply = self.getFeedback(id)
+        if reply:
+            self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:True, &#39;MSG&#39;:False}
+        return reply
+
+
+
+    def addPromptUI(self,title,text):
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        # TODO
+        return  id
+
+    def addInputBoxUI(self,title,text,fields):
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        # TODO
+        return id
+
+
+    # helper func
+    def send_command(self,command,*args):
+        final_string = str(command)+ &#39;(&#39;
+        for index,arg in enumerate(args):
+            if(index != len(args)-1):
+                final_string += &#39;{},&#39;
+            else:
+                final_string += &#39;{}&#39;
+        final_string = (final_string + &#39;)&#39;)
+        final_string = final_string.format(*args)
+        return final_string
+
+    def checkFeedback(self,id):
+        while not self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;REPLIED&#39;].read():
+            continue
+        return self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;MSG&#39;].read()
+
+    def getFeedback(self,id):
+        if not self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;REPLIED&#39;].read():
+            return &#39;NOT READY&#39;
+        return self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;MSG&#39;].read()
+
+    def _do_rpc(self,msg):
+        commandQueue = self.server[&#34;UI_END_COMMAND&#34;].read()
+        commandQueue.append(msg)
+        self.server[&#34;UI_END_COMMAND&#34;] = commandQueue
+        print(&#34;commandQueue&#34;, commandQueue)
+        time.sleep(0.0001) 
+
+if __name__==&#34;__main__&#34;:
+    server = Jarvis()</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="jarvis.Jarvis"><code class="flex name class">
+<span>class <span class="ident">Jarvis</span></span>
+<span>(</span><span>priority='P4')</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Jarvis:
+
+    def __init__(self, priority = &#39;P4&#39;):
+        self.interface = RedisInterface(host=&#34;localhost&#34;)
+        self.interface.initialize()
+        self.server = KeyValueStore(self.interface)
+        self.priority = priority
+        # should not instantiate commanserver
+        # self.command_server = CommandServer()
+
+    # def shutdown(self):
+    #     self.command_server.shutdown()
+
+    def sensedBaseVelocity(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;Base&#34;].read()
+
+    def sensedLeftLimbVelocity(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;LeftArm&#34;].read()
+
+    def sensedRightLimbVelocity(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;RightArm&#34;].read()
+
+    def sensedBasePosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Base&#34;].read()
+
+    def sensedTorsoPosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Torso&#34;].read()
+
+    def sensedLeftLimbPosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;LeftArm&#34;].read()
+
+    def sensedRightLimbPosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;RightArm&#34;].read()
+
+    def sensedBasePosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Base&#34;].read()
+
+    def sensedLeftGripperPosition(self):
+        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;LeftGripper&#34;].read()
+
+    def setLeftLimbPosition(self,q):
+        command = self.send_command(&#39;self.robot.setLeftLimbPosition&#39;,str(q))
+        current_list = self.server[&#39;ROBOT_COMMAND&#39;][&#39;P4&#39;].read()
+        current_list.append(command)
+        self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = current_list
+
+    def setBaseVelocity(self,q):
+        command = self.send_command(&#39;self.robot.setBaseVelocity&#39;,str(q))
+        queue = self.server[&#39;ROBOT_COMMAND&#39;][self.priority].read()
+        queue.append(command)
+        self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = queue
+
+
+
+    ################################## All Mighty divider between motion and UI###############################
+
+    def sendRayClickUI(self):
+        &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
+        2 ray objects according to the user clicks. first one for destination, second one for calibration
+
+        return:
+            id: (str) id for ui feedback
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        # ask the user to click on a destination in the map, returns 2 rays in reem
+        self._do_rpc({&#39;funcName&#39;:&#39;getRayClick&#39;,&#39;args&#39;:{&#39;id&#39;:str(id)}})
+        return id
+        
+    def getRayClickUI(self,id):
+        &#34;&#34;&#34;get the feedback of Ray Click of id. 
+
+        return:
+            &#39;NOT READY&#39;: (str) if the msg is not ready
+
+            or
+
+            {
+                &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+                &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+            }
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        return self.getFeedback(id)
+
+
+
+    def sendAndGetRayClickUI(self):
+        &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
+        2 ray objects according to the user clicks. first one for destination, second one for calibration
+        
+        return:
+            
+            {
+                &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+                &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+            }
+        blocking?:
+            yes
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        # ask the user to click on a destination in the map, returns 2 rays in reem
+        self._do_rpc({&#39;funcName&#39;:&#39;getRayClick&#39;,&#39;args&#39;:{&#39;id&#39;:str(id)}})
+        reply = self.checkFeedback(id)
+        return  reply
+
+    def addTextUI(self, name, text, color, size):
+        &#34;&#34;&#34;add text to specfified location on UI screen. 
+
+        args:
+            name: (str) id for the text object
+            text: (str) content you wish to add
+            color: (list) rgb value [0,0,0]
+            size: (int) font size
+
+        return:
+            name: (str) the name/id the user gave 
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        self._do_rpc({&#39;funcName&#39;:&#39;addText&#39;,&#39;args&#39;:{&#39;name&#39;:name, &#39;color&#39;:color, &#39;size&#39;:size,  &#39;text&#39;:text}})
+        return name
+
+    def sendConfirmationUI(self,title,text):
+        &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
+        
+        return:
+            id: (str) id for ui feedback
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        self._do_rpc({&#39;funcName&#39;:&#39;addConfirmation&#39;,&#39;args&#39;:{&#39;id&#39;:str(id),&#39;title&#39;:title,&#39;text&#39;:text}})
+        return id
+        
+    def getConfirmationUI(self,id):
+        &#34;&#34;&#34;get the feedback of Confirmation Window of id. 
+
+        return:
+            &#39;NOT READY&#39;: (str) if the msg is not ready
+
+            or
+
+           (str) &#39;YES&#39; or &#39;NO&#39; if msg is ready
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        return self.getFeedback(id)
+
+
+    def sendAndGetConfirmationUI(self,title,text):
+        &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
+            a string of &#39;YES&#39; or &#34;NO&#34; is returned
+
+        args:
+            text: (str) content you wish to add
+            title: (str) window title
+
+        return:
+            (str) &#39;YES&#39; or &#39;NO&#39;
+
+        blocking?:
+            yes
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        self._do_rpc({&#39;funcName&#39;:&#39;addConfirmation&#39;,&#39;args&#39;:{&#39;id&#39;:str(id),&#39;title&#39;:title,&#39;text&#39;:text}})
+        reply = self.checkFeedback(id)
+        return  reply
+
+
+    def sendTrajectoryUI(self,trajectory,animate = False):
+        &#34;&#34;&#34;send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once 
+        
+        args:
+            trajectory: (klampt obj) the traj calculated
+            animate: (bool) if user wants to animate the path
+
+        return:
+            nothing
+
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        trajectory = io.loader.toJson(trajectory,&#39;Trajectory&#39;)
+        self._do_rpc({&#39;funcName&#39;:&#39;sendTrajectory&#39;,&#39;args&#39;:{&#39;trajectory&#39;:trajectory, &#39;animate&#39;:animate}})
+        return
+
+    def addButtonUI(self,name,text):
+        &#34;&#34;&#34;add a button to the UI window
+
+        args:
+            name: (str)  id for the button object
+            text: (str) button label text
+
+        return:
+            name: the id user gave
+        
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ name
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+        self._do_rpc({&#39;funcName&#39;:&#39;addButton&#39;,&#39;args&#39;:{&#39;name&#39;:name, &#39;text&#39;:text}})
+        return name
+
+    def getButtonClickUI(self,name):
+        &#34;&#34;&#34;returns True if button with specified name is clicked
+
+        args:
+            name: (str) id for the button object
+
+        return:
+
+            (bool) True or False
+        
+        blocking?:
+            no
+        &#34;&#34;&#34;
+        id = &#39;$&#39;+ name
+        reply = self.getFeedback(id)
+        if reply:
+            self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:True, &#39;MSG&#39;:False}
+        return reply
+
+
+
+    def addPromptUI(self,title,text):
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        # TODO
+        return  id
+
+    def addInputBoxUI(self,title,text,fields):
+        id = &#39;$&#39;+ uuid.uuid1().hex
+        # TODO
+        return id
+
+
+    # helper func
+    def send_command(self,command,*args):
+        final_string = str(command)+ &#39;(&#39;
+        for index,arg in enumerate(args):
+            if(index != len(args)-1):
+                final_string += &#39;{},&#39;
+            else:
+                final_string += &#39;{}&#39;
+        final_string = (final_string + &#39;)&#39;)
+        final_string = final_string.format(*args)
+        return final_string
+
+    def checkFeedback(self,id):
+        while not self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;REPLIED&#39;].read():
+            continue
+        return self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;MSG&#39;].read()
+
+    def getFeedback(self,id):
+        if not self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;REPLIED&#39;].read():
+            return &#39;NOT READY&#39;
+        return self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;MSG&#39;].read()
+
+    def _do_rpc(self,msg):
+        commandQueue = self.server[&#34;UI_END_COMMAND&#34;].read()
+        commandQueue.append(msg)
+        self.server[&#34;UI_END_COMMAND&#34;] = commandQueue
+        print(&#34;commandQueue&#34;, commandQueue)
+        time.sleep(0.0001) </code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="jarvis.Jarvis.addButtonUI"><code class="name flex">
+<span>def <span class="ident">addButtonUI</span></span>(<span>self, name, text)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add a button to the UI window</p>
+<p>args:
+name: (str)
+id for the button object
+text: (str) button label text</p>
+<p>return:
+name: the id user gave</p>
+<p>blocking?:
+no</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def addButtonUI(self,name,text):
+    &#34;&#34;&#34;add a button to the UI window
+
+    args:
+        name: (str)  id for the button object
+        text: (str) button label text
+
+    return:
+        name: the id user gave
+    
+    blocking?:
+        no
+    &#34;&#34;&#34;
+    id = &#39;$&#39;+ name
+    self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+    self._do_rpc({&#39;funcName&#39;:&#39;addButton&#39;,&#39;args&#39;:{&#39;name&#39;:name, &#39;text&#39;:text}})
+    return name</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.addInputBoxUI"><code class="name flex">
+<span>def <span class="ident">addInputBoxUI</span></span>(<span>self, title, text, fields)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def addInputBoxUI(self,title,text,fields):
+    id = &#39;$&#39;+ uuid.uuid1().hex
+    # TODO
+    return id</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.addPromptUI"><code class="name flex">
+<span>def <span class="ident">addPromptUI</span></span>(<span>self, title, text)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def addPromptUI(self,title,text):
+    id = &#39;$&#39;+ uuid.uuid1().hex
+    # TODO
+    return  id</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.addTextUI"><code class="name flex">
+<span>def <span class="ident">addTextUI</span></span>(<span>self, name, text, color, size)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>add text to specfified location on UI screen. </p>
+<p>args:
+name: (str) id for the text object
+text: (str) content you wish to add
+color: (list) rgb value [0,0,0]
+size: (int) font size</p>
+<p>return:
+name: (str) the name/id the user gave </p>
+<p>blocking?:
+no</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def addTextUI(self, name, text, color, size):
+    &#34;&#34;&#34;add text to specfified location on UI screen. 
+
+    args:
+        name: (str) id for the text object
+        text: (str) content you wish to add
+        color: (list) rgb value [0,0,0]
+        size: (int) font size
+
+    return:
+        name: (str) the name/id the user gave 
+
+    blocking?:
+        no
+    &#34;&#34;&#34;
+    self._do_rpc({&#39;funcName&#39;:&#39;addText&#39;,&#39;args&#39;:{&#39;name&#39;:name, &#39;color&#39;:color, &#39;size&#39;:size,  &#39;text&#39;:text}})
+    return name</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.checkFeedback"><code class="name flex">
+<span>def <span class="ident">checkFeedback</span></span>(<span>self, id)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def checkFeedback(self,id):
+    while not self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;REPLIED&#39;].read():
+        continue
+    return self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;MSG&#39;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.getButtonClickUI"><code class="name flex">
+<span>def <span class="ident">getButtonClickUI</span></span>(<span>self, name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>returns True if button with specified name is clicked</p>
+<p>args:
+name: (str) id for the button object</p>
+<p>return:</p>
+<pre><code>(bool) True or False
+</code></pre>
+<p>blocking?:
+no</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getButtonClickUI(self,name):
+    &#34;&#34;&#34;returns True if button with specified name is clicked
+
+    args:
+        name: (str) id for the button object
+
+    return:
+
+        (bool) True or False
+    
+    blocking?:
+        no
+    &#34;&#34;&#34;
+    id = &#39;$&#39;+ name
+    reply = self.getFeedback(id)
+    if reply:
+        self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:True, &#39;MSG&#39;:False}
+    return reply</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.getConfirmationUI"><code class="name flex">
+<span>def <span class="ident">getConfirmationUI</span></span>(<span>self, id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get the feedback of Confirmation Window of id. </p>
+<p>return:
+'NOT READY': (str) if the msg is not ready</p>
+<pre><code>or
+</code></pre>
+<p>(str) 'YES' or 'NO' if msg is ready</p>
+<p>blocking?:
+no</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getConfirmationUI(self,id):
+    &#34;&#34;&#34;get the feedback of Confirmation Window of id. 
+
+    return:
+        &#39;NOT READY&#39;: (str) if the msg is not ready
+
+        or
+
+       (str) &#39;YES&#39; or &#39;NO&#39; if msg is ready
+
+    blocking?:
+        no
+    &#34;&#34;&#34;
+    return self.getFeedback(id)</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.getFeedback"><code class="name flex">
+<span>def <span class="ident">getFeedback</span></span>(<span>self, id)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getFeedback(self,id):
+    if not self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;REPLIED&#39;].read():
+        return &#39;NOT READY&#39;
+    return self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;MSG&#39;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.getRayClickUI"><code class="name flex">
+<span>def <span class="ident">getRayClickUI</span></span>(<span>self, id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>get the feedback of Ray Click of id. </p>
+<p>return:
+'NOT READY': (str) if the msg is not ready</p>
+<pre><code>or
+
+{
+    'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+                'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+    'SECOND_RAY': {'destination': [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+                'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+}
+</code></pre>
+<p>blocking?:
+no</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getRayClickUI(self,id):
+    &#34;&#34;&#34;get the feedback of Ray Click of id. 
+
+    return:
+        &#39;NOT READY&#39;: (str) if the msg is not ready
+
+        or
+
+        {
+            &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+                        &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+            &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+                        &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+        }
+
+    blocking?:
+        no
+    &#34;&#34;&#34;
+    return self.getFeedback(id)</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sendAndGetConfirmationUI"><code class="name flex">
+<span>def <span class="ident">sendAndGetConfirmationUI</span></span>(<span>self, title, text)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>once this function is called, the UI will display a confimation window with specified title and text,
+a string of 'YES' or "NO" is returned</p>
+<p>args:
+text: (str) content you wish to add
+title: (str) window title</p>
+<p>return:
+(str) 'YES' or 'NO'</p>
+<p>blocking?:
+yes</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sendAndGetConfirmationUI(self,title,text):
+    &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
+        a string of &#39;YES&#39; or &#34;NO&#34; is returned
+
+    args:
+        text: (str) content you wish to add
+        title: (str) window title
+
+    return:
+        (str) &#39;YES&#39; or &#39;NO&#39;
+
+    blocking?:
+        yes
+    &#34;&#34;&#34;
+    id = &#39;$&#39;+ uuid.uuid1().hex
+    self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+    self._do_rpc({&#39;funcName&#39;:&#39;addConfirmation&#39;,&#39;args&#39;:{&#39;id&#39;:str(id),&#39;title&#39;:title,&#39;text&#39;:text}})
+    reply = self.checkFeedback(id)
+    return  reply</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sendAndGetRayClickUI"><code class="name flex">
+<span>def <span class="ident">sendAndGetRayClickUI</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>once this function is called, the UI will ask the user to click twice on the map, and sending back
+2 ray objects according to the user clicks. first one for destination, second one for calibration</p>
+<p>return:</p>
+<pre><code>{
+    'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+                'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+    'SECOND_RAY': {'destination': [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+                'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+}
+</code></pre>
+<p>blocking?:
+yes</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sendAndGetRayClickUI(self):
+    &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
+    2 ray objects according to the user clicks. first one for destination, second one for calibration
+    
+    return:
+        
+        {
+            &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+                        &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+            &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+                        &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+        }
+    blocking?:
+        yes
+    &#34;&#34;&#34;
+    id = &#39;$&#39;+ uuid.uuid1().hex
+    self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+    # ask the user to click on a destination in the map, returns 2 rays in reem
+    self._do_rpc({&#39;funcName&#39;:&#39;getRayClick&#39;,&#39;args&#39;:{&#39;id&#39;:str(id)}})
+    reply = self.checkFeedback(id)
+    return  reply</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sendConfirmationUI"><code class="name flex">
+<span>def <span class="ident">sendConfirmationUI</span></span>(<span>self, title, text)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>once this function is called, the UI will display a confimation window with specified title and text, </p>
+<p>return:
+id: (str) id for ui feedback</p>
+<p>blocking?:
+no</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sendConfirmationUI(self,title,text):
+    &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
+    
+    return:
+        id: (str) id for ui feedback
+
+    blocking?:
+        no
+    &#34;&#34;&#34;
+    id = &#39;$&#39;+ uuid.uuid1().hex
+    self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+    self._do_rpc({&#39;funcName&#39;:&#39;addConfirmation&#39;,&#39;args&#39;:{&#39;id&#39;:str(id),&#39;title&#39;:title,&#39;text&#39;:text}})
+    return id</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sendRayClickUI"><code class="name flex">
+<span>def <span class="ident">sendRayClickUI</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>once this function is called, the UI will ask the user to click twice on the map, and sending back
+2 ray objects according to the user clicks. first one for destination, second one for calibration</p>
+<p>return:
+id: (str) id for ui feedback</p>
+<p>blocking?:
+no</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sendRayClickUI(self):
+    &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
+    2 ray objects according to the user clicks. first one for destination, second one for calibration
+
+    return:
+        id: (str) id for ui feedback
+
+    blocking?:
+        no
+    &#34;&#34;&#34;
+    id = &#39;$&#39;+ uuid.uuid1().hex
+    self.server[&#39;UI_FEEDBACK&#39;][str(id)] = {&#39;REPLIED&#39;:False, &#39;MSG&#39;:&#39;&#39;}
+    # ask the user to click on a destination in the map, returns 2 rays in reem
+    self._do_rpc({&#39;funcName&#39;:&#39;getRayClick&#39;,&#39;args&#39;:{&#39;id&#39;:str(id)}})
+    return id</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sendTrajectoryUI"><code class="name flex">
+<span>def <span class="ident">sendTrajectoryUI</span></span>(<span>self, trajectory, animate=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once </p>
+<p>args:
+trajectory: (klampt obj) the traj calculated
+animate: (bool) if user wants to animate the path</p>
+<p>return:
+nothing</p>
+<p>blocking?:
+no</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sendTrajectoryUI(self,trajectory,animate = False):
+    &#34;&#34;&#34;send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once 
+    
+    args:
+        trajectory: (klampt obj) the traj calculated
+        animate: (bool) if user wants to animate the path
+
+    return:
+        nothing
+
+    blocking?:
+        no
+    &#34;&#34;&#34;
+    trajectory = io.loader.toJson(trajectory,&#39;Trajectory&#39;)
+    self._do_rpc({&#39;funcName&#39;:&#39;sendTrajectory&#39;,&#39;args&#39;:{&#39;trajectory&#39;:trajectory, &#39;animate&#39;:animate}})
+    return</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.send_command"><code class="name flex">
+<span>def <span class="ident">send_command</span></span>(<span>self, command, *args)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def send_command(self,command,*args):
+    final_string = str(command)+ &#39;(&#39;
+    for index,arg in enumerate(args):
+        if(index != len(args)-1):
+            final_string += &#39;{},&#39;
+        else:
+            final_string += &#39;{}&#39;
+    final_string = (final_string + &#39;)&#39;)
+    final_string = final_string.format(*args)
+    return final_string</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sensedBasePosition"><code class="name flex">
+<span>def <span class="ident">sensedBasePosition</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sensedBasePosition(self):
+    return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Base&#34;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sensedBaseVelocity"><code class="name flex">
+<span>def <span class="ident">sensedBaseVelocity</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sensedBaseVelocity(self):
+    return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;Base&#34;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sensedLeftGripperPosition"><code class="name flex">
+<span>def <span class="ident">sensedLeftGripperPosition</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sensedLeftGripperPosition(self):
+    return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;LeftGripper&#34;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sensedLeftLimbPosition"><code class="name flex">
+<span>def <span class="ident">sensedLeftLimbPosition</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sensedLeftLimbPosition(self):
+    return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;LeftArm&#34;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sensedLeftLimbVelocity"><code class="name flex">
+<span>def <span class="ident">sensedLeftLimbVelocity</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sensedLeftLimbVelocity(self):
+    return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;LeftArm&#34;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sensedRightLimbPosition"><code class="name flex">
+<span>def <span class="ident">sensedRightLimbPosition</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sensedRightLimbPosition(self):
+    return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;RightArm&#34;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sensedRightLimbVelocity"><code class="name flex">
+<span>def <span class="ident">sensedRightLimbVelocity</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sensedRightLimbVelocity(self):
+    return self.server[&#34;ROBOT_STATE&#34;][&#34;Velocity&#34;][&#34;RightArm&#34;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.sensedTorsoPosition"><code class="name flex">
+<span>def <span class="ident">sensedTorsoPosition</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def sensedTorsoPosition(self):
+    return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Torso&#34;].read()</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.setBaseVelocity"><code class="name flex">
+<span>def <span class="ident">setBaseVelocity</span></span>(<span>self, q)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def setBaseVelocity(self,q):
+    command = self.send_command(&#39;self.robot.setBaseVelocity&#39;,str(q))
+    queue = self.server[&#39;ROBOT_COMMAND&#39;][self.priority].read()
+    queue.append(command)
+    self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = queue</code></pre>
+</details>
+</dd>
+<dt id="jarvis.Jarvis.setLeftLimbPosition"><code class="name flex">
+<span>def <span class="ident">setLeftLimbPosition</span></span>(<span>self, q)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def setLeftLimbPosition(self,q):
+    command = self.send_command(&#39;self.robot.setLeftLimbPosition&#39;,str(q))
+    current_list = self.server[&#39;ROBOT_COMMAND&#39;][&#39;P4&#39;].read()
+    current_list.append(command)
+    self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = current_list</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="jarvis.Jarvis" href="#jarvis.Jarvis">Jarvis</a></code></h4>
+<ul class="">
+<li><code><a title="jarvis.Jarvis.addButtonUI" href="#jarvis.Jarvis.addButtonUI">addButtonUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.addInputBoxUI" href="#jarvis.Jarvis.addInputBoxUI">addInputBoxUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.addPromptUI" href="#jarvis.Jarvis.addPromptUI">addPromptUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.addTextUI" href="#jarvis.Jarvis.addTextUI">addTextUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.checkFeedback" href="#jarvis.Jarvis.checkFeedback">checkFeedback</a></code></li>
+<li><code><a title="jarvis.Jarvis.getButtonClickUI" href="#jarvis.Jarvis.getButtonClickUI">getButtonClickUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.getConfirmationUI" href="#jarvis.Jarvis.getConfirmationUI">getConfirmationUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.getFeedback" href="#jarvis.Jarvis.getFeedback">getFeedback</a></code></li>
+<li><code><a title="jarvis.Jarvis.getRayClickUI" href="#jarvis.Jarvis.getRayClickUI">getRayClickUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.sendAndGetConfirmationUI" href="#jarvis.Jarvis.sendAndGetConfirmationUI">sendAndGetConfirmationUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.sendAndGetRayClickUI" href="#jarvis.Jarvis.sendAndGetRayClickUI">sendAndGetRayClickUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.sendConfirmationUI" href="#jarvis.Jarvis.sendConfirmationUI">sendConfirmationUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.sendRayClickUI" href="#jarvis.Jarvis.sendRayClickUI">sendRayClickUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.sendTrajectoryUI" href="#jarvis.Jarvis.sendTrajectoryUI">sendTrajectoryUI</a></code></li>
+<li><code><a title="jarvis.Jarvis.send_command" href="#jarvis.Jarvis.send_command">send_command</a></code></li>
+<li><code><a title="jarvis.Jarvis.sensedBasePosition" href="#jarvis.Jarvis.sensedBasePosition">sensedBasePosition</a></code></li>
+<li><code><a title="jarvis.Jarvis.sensedBaseVelocity" href="#jarvis.Jarvis.sensedBaseVelocity">sensedBaseVelocity</a></code></li>
+<li><code><a title="jarvis.Jarvis.sensedLeftGripperPosition" href="#jarvis.Jarvis.sensedLeftGripperPosition">sensedLeftGripperPosition</a></code></li>
+<li><code><a title="jarvis.Jarvis.sensedLeftLimbPosition" href="#jarvis.Jarvis.sensedLeftLimbPosition">sensedLeftLimbPosition</a></code></li>
+<li><code><a title="jarvis.Jarvis.sensedLeftLimbVelocity" href="#jarvis.Jarvis.sensedLeftLimbVelocity">sensedLeftLimbVelocity</a></code></li>
+<li><code><a title="jarvis.Jarvis.sensedRightLimbPosition" href="#jarvis.Jarvis.sensedRightLimbPosition">sensedRightLimbPosition</a></code></li>
+<li><code><a title="jarvis.Jarvis.sensedRightLimbVelocity" href="#jarvis.Jarvis.sensedRightLimbVelocity">sensedRightLimbVelocity</a></code></li>
+<li><code><a title="jarvis.Jarvis.sensedTorsoPosition" href="#jarvis.Jarvis.sensedTorsoPosition">sensedTorsoPosition</a></code></li>
+<li><code><a title="jarvis.Jarvis.setBaseVelocity" href="#jarvis.Jarvis.setBaseVelocity">setBaseVelocity</a></code></li>
+<li><code><a title="jarvis.Jarvis.setLeftLimbPosition" href="#jarvis.Jarvis.setLeftLimbPosition">setLeftLimbPosition</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.8.1</a>.</p>
+</footer>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

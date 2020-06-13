@@ -20,6 +20,7 @@ class C1:
         self.server = KeyValueStore(self.interface)
         self.start_time = time.time()
         self.sleep_time = 30
+        # self.sensor_module = sensor_module
         for i in self.processes:
             i.start()
         # while(True):
