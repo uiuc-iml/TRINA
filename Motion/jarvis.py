@@ -79,14 +79,10 @@ class Jarvis:
     ################################## All Mighty divider between motion and UI###############################
 
     def sendRayClickUI(self):
-        """once this function is called, the UI will ask the user to click twice on the map, and sending back
+        """once this function is called, the UI will ask the user to click twice on the map, and sending back 
         2 ray objects according to the user clicks. first one for destination, second one for calibration
-
         return:
-            id: (str) id for ui feedback """
-
-    def getRayClickUI(self):
-        """once this function is called, the UI will ask the user to click twice on the map, and sending back
+            id: (str) id for ui feedback
         blocking?:
             no
         """
@@ -95,22 +91,18 @@ class Jarvis:
         # ask the user to click on a destination in the map, returns 2 rays in reem
         self._do_rpc({'funcName':'getRayClick','args':{'id':str(id)}})
         return id
-
+        
     def getRayClickUI(self,id):
-        """get the feedback of Ray Click of id.
-
+        """get the feedback of Ray Click of id. 
         return:
             'NOT READY': (str) if the msg is not ready
-
             or
-
             {
                 'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
                             'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
                 'SECOND_RAY': {'destination': [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
                             'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
             }
-
         blocking?:
             no
         """
@@ -119,11 +111,11 @@ class Jarvis:
 
 
     def sendAndGetRayClickUI(self):
-        """once this function is called, the UI will ask the user to click twice on the map, and sending back
+        """once this function is called, the UI will ask the user to click twice on the map, and sending back 
         2 ray objects according to the user clicks. first one for destination, second one for calibration
-
+        
         return:
-
+            
             {
                 'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
                             'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
@@ -140,18 +132,15 @@ class Jarvis:
         reply = self.checkFeedback(id)
         return  reply
 
-    def addTextUI(self, text, position):
-        """add text to specfified location on UI screen.
-
+    def addTextUI(self, name, text, color, size):
+        """add text to specfified location on UI screen. 
         args:
             name: (str) id for the text object
             text: (str) content you wish to add
             color: (list) rgb value [0,0,0]
             size: (int) font size
-
         return:
-            nothing
-
+            name: (str) the name/id the user gave 
         blocking?:
             no
         """
@@ -159,11 +148,10 @@ class Jarvis:
         return name
 
     def sendConfirmationUI(self,title,text):
-        """once this function is called, the UI will display a confimation window with specified title and text,
-
+        """once this function is called, the UI will display a confimation window with specified title and text, 
+        
         return:
             id: (str) id for ui feedback
-
         blocking?:
             no
         """
@@ -171,34 +159,27 @@ class Jarvis:
         self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':False, 'MSG':''}
         self._do_rpc({'funcName':'addConfirmation','args':{'id':str(id),'title':title,'text':text}})
         return id
-
+        
     def getConfirmationUI(self,id):
-        """get the feedback of Confirmation Window of id.
-
+        """get the feedback of Confirmation Window of id. 
         return:
             'NOT READY': (str) if the msg is not ready
-
             or
-
            (str) 'YES' or 'NO' if msg is ready
-
         blocking?:
             no
         """
         return self.getFeedback(id)
 
 
-    def addConfirmationUI(self,title,text):
-        """once this function is called, the UI will display a confimation window with specified title and text,
+    def sendAndGetConfirmationUI(self,title,text):
+        """once this function is called, the UI will display a confimation window with specified title and text, 
             a string of 'YES' or "NO" is returned
-
         args:
             text: (str) content you wish to add
             title: (str) window title
-
         return:
             (str) 'YES' or 'NO'
-
         blocking?:
             yes
         """
@@ -209,20 +190,14 @@ class Jarvis:
         return  reply
 
 
-    def addInputBoxUI(self,title,text,fields):
-        id = '$'+ uuid.uuid1().hex
-        # TODO
-        return id
-
-    def sendTrajectoryUI(self,trajectory,animate):
-        """send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once
+    def sendTrajectoryUI(self,trajectory,animate = False):
+        """send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once 
+        
         args:
             trajectory: (klampt obj) the traj calculated
             animate: (bool) if user wants to animate the path
-
         return:
             nothing
-
         blocking?:
             no
         """
@@ -232,39 +207,27 @@ class Jarvis:
 
     def addButtonUI(self,name,text):
         """add a button to the UI window
-
         args:
             name: (str)  id for the button object
             text: (str) button label text
-
-	# helper func
-	def send_command(command,*args):
-		final_string = str(command)+ '('
-		for index,arg in enumerate(args):
-			if(index != len(args)-1):
-				final_string += '{},'
-			else:
-				final_string += '{}'
-		final_string = (final_string + ')')
-		final_string = final_string.format(*args)
-		return final_string
-
-	def checkFeedback(self,id):
-		while not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():
-			continue
-		return self.server['UI_FEEDBACK'][str(id)]['MSG'].read()
-
-	def _do_rpc(self,msg):
-		commandQueue = self.server["UI_END_COMMAND"].read()
-		commandQueue.append(msg)
-		self.server["UI_END_COMMAND"] = commandQueue
-		print("commandQueue", commandQueue)
-		time.sleep(0.0001)
-
         return:
+            name: the id user gave
+        
+        blocking?:
+            no
+        """
+        id = '$'+ name
+        self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':False, 'MSG':''}
+        self._do_rpc({'funcName':'addButton','args':{'name':name, 'text':text}})
+        return name
 
+    def getButtonClickUI(self,name):
+        """returns True if button with specified name is clicked
+        args:
+            name: (str) id for the button object
+        return:
             (bool) True or False
-
+        
         blocking?:
             no
         """
@@ -273,6 +236,48 @@ class Jarvis:
         if reply:
             self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':False}
         return reply
+
+
+
+    def addPromptUI(self,title,text):
+        id = '$'+ uuid.uuid1().hex
+        # TODO
+        return  id
+
+    def addInputBoxUI(self,title,text,fields):
+        id = '$'+ uuid.uuid1().hex
+        # TODO
+        return id
+
+
+    # helper func
+    def send_command(self,command,*args):
+        final_string = str(command)+ '('
+        for index,arg in enumerate(args):
+            if(index != len(args)-1):
+                final_string += '{},'
+            else:
+                final_string += '{}'
+        final_string = (final_string + ')')
+        final_string = final_string.format(*args)
+        return final_string
+
+    def checkFeedback(self,id):
+        while not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():
+            continue
+        return self.server['UI_FEEDBACK'][str(id)]['MSG'].read()
+
+    def getFeedback(self,id):
+        if not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():
+            return 'NOT READY'
+        return self.server['UI_FEEDBACK'][str(id)]['MSG'].read()
+
+    def _do_rpc(self,msg):
+        commandQueue = self.server["UI_END_COMMAND"].read()
+        commandQueue.append(msg)
+        self.server["UI_END_COMMAND"] = commandQueue
+        print("commandQueue", commandQueue)
+        time.sleep(0.0001)
 
 if __name__=="__main__":
     server = Jarvis()
