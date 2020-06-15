@@ -61,7 +61,7 @@ class PointClickNav:
 		self.can_send_gridmap = False
 		self.exit_flag = False
 		self.mode = mode
-		self.visualization = False
+		self.visualization = True
 		self.received_first_gridmap_flag = False
 		if self.debugging:
 
@@ -91,11 +91,11 @@ class PointClickNav:
 			if self.visualization:
 				vis.show()
 		else:
-			self.Jarvis = Jarvis('PointClickNav')
+			self.jarvis = Jarvis('PointClickNav')
 			#get current pose of the robot
-			# left_q = self.Jarvis.sensedLeftLimbPosition()
-			# right_q = self.Jarvis.sensedRightLimbPosition()
-			base_q = self.Jarvis.sensedBasePosition()
+			# left_q = self.jarvis.sensedLeftLimbPosition()
+			# right_q = self.jarvis.sensedRightLimbPosition()
+			base_q = self.jarvis.sensedBasePosition()
 			#print(base_q)
 			self.curr_pose = base_q
 			#start visualizer
@@ -106,11 +106,14 @@ class PointClickNav:
 			print('flag2')
 			if self.visualization:
 				vis.add("world",self.vis_world)
+
 			if self.mode == 'Kinematic':
 				#simulate lidar data here
 				self.sim = klampt.Simulator(self.vis_world)
 				self.lidar = self.sim.controller(0).sensor("lidar")
 				if self.visualization:
+					vis.add("lidar",self.lidar)
+
 					vis.show()
 			elif self.mode == 'Physical':
 				pass
@@ -223,19 +226,19 @@ class PointClickNav:
 				#print('lidar scan sent') 
 				self._sharedLock.release()
 			else:
-				# left_q = self.Jarvis.sensedLeftLimbPosition()
-				# right_q = self.Jarvis.sensedRightLimbPosition()
-				base_q = self.Jarvis.sensedBasePosition()
-				self.curr_vel = self.Jarvis.sensedBaseVelocity()
+				# left_q = self.jarvis.sensedLeftLimbPosition()
+				# right_q = self.jarvis.sensedRightLimbPosition()
+				base_q = self.jarvis.sensedBasePosition()
+				self.curr_vel = self.jarvis.sensedBaseVelocity()
 				self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
-				status = self.Jarvis.getActivityStatus()
+				status = self.jarvis.getActivityStatus()
 				# if self.ray_request_sent: 
-				# 	ray = self.Jarvis.getRayClickUI()
+				# 	ray = self.jarvis.getRayClickUI()
 				# if self.confirmation_request_sent:
-				# 	confirmation = self.Jarvis.getConfirmation()
+				# 	confirmation = self.jarvis.getConfirmation()
 
 				#TODO get terminate flag question
-				#terminate_flag = self.Jarvis.get
+				#terminate_flag = self.jarvis.get
 				
 				self._sharedLock.acquire()
 
@@ -306,7 +309,7 @@ class PointClickNav:
 			if self.terminate_command:
 				self._sharedLock.acquire()
 				self.state = 'idle'
-				self.Jarvis.setBaseVelocity([0,0])
+				self.jarvis.setBaseVelocity([0,0])
 				self.new_ray = False
 				self.ray_request_sent = False
 				self.confirm_request_sent = False
@@ -323,11 +326,11 @@ class PointClickNav:
 
 
 				#ask for a ray
-				self.ray = self.Jarvis.sendAndGetRayClickUI()
+				self.ray = self.jarvis.sendAndGetRayClickUI()
 				self.new_ray = True
 				# self._sharedLock.acquire()
 				#if not self.ray_request_sent:
-					#self.Jarvis.sendRayRequest()
+					#self.jarvis.sendRayRequest()
 					#self.ray_request_sent = True
 				# self._sharedLock.release()
 				#if a new ray has arrived, start planning
@@ -344,7 +347,7 @@ class PointClickNav:
 			elif self.state == 'planning':
 				if not planning_request_sent:
 					print('_mainLoop:planning')
-					self.Jarvis.setLeftLimbPosition([0,0,0,1,0,0])
+					self.jarvis.setLeftLimbPosition([0,0,0,1,0,0])
 					#this will give an initial plan based on the limited 2D map
 					#calculate the end position
 					if self.debugging:
@@ -377,7 +380,7 @@ class PointClickNav:
 						
 					else:
 						print("no map found by gmapping during planning...")
-						self.Jarvis.sendConfirmationUI('Error','A gmapping error has occurred....Returning to idle')
+						self.jarvis.sendConfirmationUI('Error','A gmapping error has occurred....Returning to idle')
 						
 						self.state = 'idle'
 
@@ -389,7 +392,7 @@ class PointClickNav:
 						if new_global_path == None:
 							self.state = 'idle'
 							planning_request_sent = False
-							self.Jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
+							self.jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
 							continue
 
 						#stop planning and waiting for user confirmation
@@ -414,12 +417,12 @@ class PointClickNav:
 
 						if not self.debugging:
 							print('sending the trajectory.....')
-							self.Jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
+							self.jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
 							time.sleep(3)
-							ans = self.Jarvis.sendAndGetConfirmationUI('Request','Please Confirm the Trajectory')
+							ans = self.jarvis.sendAndGetConfirmationUI('Request','Please Confirm the Trajectory')
 							if ans == 'YES':
 								self.state = 'executing'
-								self.Jarvis.sendConfirmationUI('info','Path has started executing')
+								self.jarvis.sendConfirmationUI('info','Path has started executing')
 								#unpause the planning process
 								self.global_path_parent_conn.send((self.gridmap,self.start,self.end,True,False))
 								#The current disc of the robot. Used for planning
@@ -464,8 +467,8 @@ class PointClickNav:
 					if self.debugging:
 						print('at end')
 					else:
-						self.Jarvis.sendConfirmationUI('info','Path has finished')
-						self.Jarvis.setBaseVelocity([0,0]) 
+						self.jarvis.sendConfirmationUI('info','Path has finished')
+						self.jarvis.setBaseVelocity([0,0]) 
 
 					self.state = 'idle'
 					#stop calculating global path
@@ -506,7 +509,7 @@ class PointClickNav:
 						continue
 					else:
 						print("No prim!!!")
-						self.Jarvis.setBaseVelocity([0.0, 0.4])
+						self.jarvis.setBaseVelocity([0.0, 0.4])
 						time.sleep(0.1)
 						self._sharedLock.acquire()
 						new_pose = self.curr_pose
@@ -536,7 +539,7 @@ class PointClickNav:
 					if self.terminate_command:
 						self._sharedLock.acquire()
 						self.state = 'idle'
-						self.Jarvis.setBaseVelocity = [0,0]
+						self.jarvis.setBaseVelocity = [0,0]
 						self._sharedLock.release()
 						break
 					iteration_start = time.time()
@@ -569,7 +572,7 @@ class PointClickNav:
 					if self.debugging:						
 						self.simulated_robot.setBaseVelocity(vel)
 					else:
-						self.Jarvis.setBaseVelocity(vel)
+						self.jarvis.setBaseVelocity(vel)
 						pass
 
 					new_pose = deepcopy(self.curr_pose)
@@ -612,7 +615,7 @@ class PointClickNav:
 					new_global_path = self.global_path_parent_conn.recv()
 					if new_global_path:	
 						self.global_path = new_global_path
-						self.Jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
+						self.jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
 					else:
 						plt.plot(self.start)
 						plt.plot(self.end)
@@ -620,8 +623,8 @@ class PointClickNav:
 						plt.imshow(self.gridmap.T, origin="lower", cmap="inferno")
 						plt.show()
 						print("new global path is empty")
-						self.Jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
-						self.Jarvis.setBaseVelocity([0,0])
+						self.jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
+						self.jarvis.setBaseVelocity([0,0])
 						self.state = 'idle'
 						continue
 					self.can_send_gridmap = True
@@ -707,7 +710,7 @@ class PointClickNav:
 	def deactivate(self):
 		self._sharedLock.acquire()
 		self.state = 'idle'
-		self.Jarvis.setBaseVelocity([0,0])
+		self.jarvis.setBaseVelocity([0,0])
 		self.new_ray = False
 		self.ray_request_sent = False
 		self.confirm_request_sent = False

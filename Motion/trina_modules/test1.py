@@ -7,7 +7,7 @@ import time
 
 
 class C1:
-    def __init__(self):
+    def __init__(self,sensor_module):
         from reem.connection import RedisInterface
         from reem.datatypes import KeyValueStore
         self.name = 'kristoffer'
@@ -20,7 +20,7 @@ class C1:
         self.server = KeyValueStore(self.interface)
         self.start_time = time.time()
         self.sleep_time = 30
-        # self.sensor_module = sensor_module
+        self.sensor_module = sensor_module
         for i in self.processes:
             i.start()
         # while(True):
@@ -31,6 +31,8 @@ class C1:
         start_time = time.time()
         while(True):
             now = time.time()
+            a = self.sensor_module.get_point_clouds()
+            time.sleep(4)
             # print('waiting to start trouble')
             # if((now-start_time) > 5):
             #     raise Exception('Timeout, punk!')

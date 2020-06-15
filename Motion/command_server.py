@@ -13,18 +13,19 @@ import traceback
 from multiprocessing import Pool, TimeoutError
 import trina_modules
 import sys, inspect
-from importlib import reload
 import atexit
 import subprocess
 from TRINAConfig import *
 from sensorModule2 import Camera_Robot
 from klampt import WorldModel,Geometry3D
-
+import rosgraph
 if(sys.version_info[0] < 3):
-    # from future import *
+    from future import *
     from motion_client import MotionClient
 else:
     from motion_client_python3 import MotionClient
+    from importlib import reload
+
 
 robot_ip = 'http://localhost:8080'
 
@@ -44,7 +45,10 @@ class CommandServer:
         except Exception as e:
             # if we cannot connect to redis, we start the server for once:
             print('starting redis server because of ',e)
-            self.start_redis()
+            self.redis_process = Process(target = self.start_redis())
+            self.redis_process.daemon = False
+            self.redis_process.start()
+            # self.start_redis()
             # wait for it to start
             time.sleep(2)
             # then we start our connections as normal:
@@ -89,11 +93,12 @@ class CommandServer:
         res = self.robot.startup()
         if not res:
             print('Failed!')
-
+        self.init_robot_states()
+        time.sleep(0.2)
         if(self.mode == 'Kinematic'):
             self.world = WorldModel()
             self.world.readFile(self.world_file )
-            # self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
+            self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
         self.health_dict = {}
         # create the list of threads
         self.modules_dict = {}
@@ -108,6 +113,65 @@ class CommandServer:
         moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
         moduleMonitorThread.start()
         atexit.register(self.shutdown_all)
+
+    def init_robot_states(self):
+
+        pos_left = {}
+        pos_right = {}
+        pos_base = {}
+        pos_left_gripper = {}
+        pos_right_gripper = {}
+        pos_torso = {}
+        vel_base = {}
+        vel_right = {}
+        vel_left = {}
+        try:
+            if(self.left_limb_active):
+                pos_left = self.query_robot.sensedLeftEETransform()
+                # print("left position")
+                vel_left = self.query_robot.sensedLeftEEVelocity()
+                # print("left velocity")
+            if(self.right_limb_active):
+                pos_right = self.query_robot.sensedRightEETransform()
+                # print("right position")
+                vel_right = self.query_robot.sensedRightEEVelocity()
+                # print("right velocity")
+            if(self.base_active):
+                pos_base = self.query_robot.sensedBasePosition()
+                # print("base position")
+                vel_base = self.query_robot.sensedBaseVelocity()
+            klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
+                # print("base velocity")
+            # if(self.left_gripper_active):
+            #     pos_left_gripper = self.robot.sensedLeftGripperPosition()
+            #     print("left gripper position")
+            # if(self.right_gripper_active):
+            #     pos_right_gripper = self.robot.sensedRightGripperPosition()
+            #     print("right gripper position")
+            # if(self.torso_active):
+            #     pos_torso = self.robot.sensedTorsoPosition()
+            #     print("torso position")
+        except Exception as e:
+            print(e)
+        UI_state = self.server["UI_STATE"].read()
+        # build the state.
+        self.server["ROBOT_STATE"] = {
+                                "Position" : {
+                                    "LeftArm" : pos_left,
+                                    "RightArm" : pos_right,
+                                    "Base" : pos_base,
+                                    "Torso": pos_torso,
+                                    "LeftGripper" : pos_left_gripper,
+                                    "RightGripper" : pos_right_gripper,
+                                    "Robotq": klampt_q
+                                    },
+                                "Velocity" : {
+                                    "LeftArm" : vel_left,
+                                    "RightArm" : vel_right,
+                                    "Base" : vel_base,
+                                },
+                                }
+
 
     def start_module(self,module):
         a = module()
@@ -329,7 +393,21 @@ class CommandServer:
         command_string = '{} {}'.format(redis_server_path,redis_conf_path)
         os.chdir(redis_folder)
         args = shlex.split(command_string)
-        self.redis_process = subprocess.Popen(args,start_new_session = True)
+
+        if(sys.version_info[0] < 3):
+            pid=os.fork()
+            if pid == 0:
+                try:
+                    os.setsid()
+                except:
+                    print('could not separate the process.')
+                # if pid==0: # new process
+                self.redis_pipe = subprocess.Popen(args)   
+                while(True):
+                    time.sleep(1000)
+        else:
+
+            self.redis_pipe = subprocess.Popen(args,start_new_session = True)
 
         # reverting back to trina directory
         os.chdir(origWD)
@@ -344,10 +422,13 @@ class CommandServer:
         # redis_conf_path = os.path.expanduser('~/database-server/redis.conf')
         # redis_folder = os.path.expanduser('~/database-server')
         command_string = 'roscore'
-        gmapping_string = 'rosrun gmapping slam_gmapping scan:=base_scan'
+        gmapping_string = 'rosrun gmapping slam_gmapping scan:=base_scan _xmax:=10 _xmin:=-10 _ymax:=10 _ymin:=-10'
         ros_args = shlex.split(command_string)
         gmapping_args = shlex.split(gmapping_string)
-        self.ros_process = subprocess.Popen(ros_args)
+        if(not rosgraph.is_master_online()):
+            self.ros_process = subprocess.Popen(ros_args)
+        else:
+            print('roscore already running, skipping this part')
         time.sleep(3)
 
         self.gmapping = subprocess.Popen(gmapping_args)
