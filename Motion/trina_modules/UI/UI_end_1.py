@@ -350,8 +350,11 @@ class UI_end_1:
             vis.unlock()
             time.sleep(self.dt)
         vis.kill()
+
         # start vis
+
         # vis.spin(float('inf'))
+        
         vis.kill()
 
         # clean up

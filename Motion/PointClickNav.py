@@ -51,7 +51,7 @@ def convertMsg(klampt_sensor,frame,stamp = "now"):
 
 
 class PointClickNav:
-	def __init__(self,debugging = True, mode = 'Kinematic'):
+	def __init__(self,Jarvis = [], debugging = True, mode = 'Kinematic'):
 		#if true, run a test locally, otherwise, communicate with Jarvis to get statesssssss
 		self.debugging = debugging
 		self.last_timestamp = 0.0
@@ -91,7 +91,7 @@ class PointClickNav:
 			if self.visualization:
 				vis.show()
 		else:
-			self.jarvis = Jarvis('PointClickNav')
+			self.Jarvis = Jarvis
 			#get current pose of the robot
 			# left_q = self.jarvis.sensedLeftLimbPosition()
 			# right_q = self.jarvis.sensedRightLimbPosition()
@@ -109,8 +109,8 @@ class PointClickNav:
 
 			if self.mode == 'Kinematic':
 				#simulate lidar data here
-				self.sim = klampt.Simulator(self.vis_world)
-				self.lidar = self.sim.controller(0).sensor("lidar")
+				#self.sim = klampt.Simulator(self.vis_world)
+				#self.lidar = self.sim.controller(0).sensor("lidar")
 				if self.visualization:
 					vis.add("lidar",self.lidar)
 
@@ -132,9 +132,10 @@ class PointClickNav:
 
 
 		#start the process that sends laser scans to gmapping
-		self.ros_parent_conn, self.ros_child_conn = Pipe()
-		self.gmapping_proc = Process(target=self._publishGmappingStuff, args=(self.ros_child_conn, ))
-		self.gmapping_proc.start()
+		#commented this out becuase there will be handled by sensing module
+		# self.ros_parent_conn, self.ros_child_conn = Pipe()
+		# self.gmapping_proc = Process(target=self._publishGmappingStuff, args=(self.ros_child_conn, ))
+		# self.gmapping_proc.start()
 
 		#start the parent ros node
 		rospy.init_node("sensing_test_parent")
@@ -142,20 +143,16 @@ class PointClickNav:
 		#get the first grid
 		self.grid = None	
 		while self.grid == None:
-			self.lidar.kinematicSimulate(self.vis_world,0.001)
-			ros_msg = convertMsg(self.lidar, frame="/base_scan")
-			self.ros_parent_conn.send([ros_msg, self.curr_pose,False]) 
+			# self.lidar.kinematicSimulate(self.vis_world,0.001)
+			# ros_msg = convertMsg(self.lidar, frame="/base_scan")
+			# self.ros_parent_conn.send([ros_msg, self.curr_pose,False]) 
 			#grid and the gridmap info
 			self.grid = get_occupancy_grid("dynamic_map")
-
-			
-		print('flag3')
+			print("It seems that we cannot get a grid from gmapping, it there something wrong?")
 
 		self.res = self.grid.info.resolution
 		self.radius = 0.5588/2/self.res * 2.0 #radius in terms of grids
 		self.gridmap = build_2d_map(self.grid).T
-		print('flag4')
-
 		self.preprocessed_gridmap = preprocess(self.gridmap, self.radius)
 
 		#current start and end 
@@ -192,7 +189,7 @@ class PointClickNav:
 		print("SIGINT caught...shutting down the api!")
 		vis.kill()
 		self.global_path_parent_conn.send([[],[],[],True,True])
-		self.ros_parent_conn.send([[],[],True]) 
+		#self.ros_parent_conn.send([[],[],True]) 
 
 	def getThreads(self):
 		return [self._infoLoop,self._mainloop]
@@ -231,12 +228,8 @@ class PointClickNav:
 				base_q = self.jarvis.sensedBasePosition()
 				self.curr_vel = self.jarvis.sensedBaseVelocity()
 				self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
-				status = self.jarvis.getActivityStatus()
-				# if self.ray_request_sent: 
-				# 	ray = self.jarvis.getRayClickUI()
-				# if self.confirmation_request_sent:
-				# 	confirmation = self.jarvis.getConfirmation()
-
+				status = self.Jarvis.getActivityStatus()
+				
 				#TODO get terminate flag question
 				#terminate_flag = self.jarvis.get
 				
@@ -250,31 +243,6 @@ class PointClickNav:
 				#if terminate_flag:
 					#self.terminate_command = True
 				self.curr_pose = base_q
-				# if self.ray_request_sent: 
-				# 	if not ray == 'NOT READY':
-				# 		self.new_ray = True
-				# 		self.ray = ray
-				# 		self.ray_request_sent = False
-				# if self.confirmation_request_sent:
-				# 	if confirmation == True:
-				# 		self.new_confirmation = True
-				# 		self.confirmation_request_sent = False
-
-				#TODO
-				#send heartbeat
-				#send current status?
-
-				#TODO
-				#get lidar in the physical mode
-				if self.mode == "Kinematic":					
-					self.lidar.kinematicSimulate(self.vis_world,0.001)
-					ros_msg = convertMsg(self.lidar, frame="/base_scan")
-
-
-					self.ros_parent_conn.send([ros_msg, self.curr_pose,False])
-				elif self.mode == "Physical":
-					pass
-
 				self._sharedLock.release()	
 
 			elapsed_time = time.time() - loop_start_time
@@ -293,17 +261,6 @@ class PointClickNav:
 		pose_history = []
 		
 		while not self.exit_flag:
-			'''
-			plt.cla()
-			if self.global_path is not None:
-				plt.plot(self.global_path.get_xs(), self.global_path.get_ys(), color="r")
-			if self.curr_point is not None:
-				self.curr_point.plot(plt)
-			plt.imshow(self.gridmap.T, origin="lower", cmap="plasma")
-			plt.pause(0.005)
-			plt.draw()
-			'''
-
 			loop_start_time = time.time()
 			self.last_timestamp = time.time()
 			if self.terminate_command:
@@ -652,7 +609,8 @@ class PointClickNav:
 					break
 			if ros_msg is not None and curr_pose_child is not None:
 				pub.publish(ros_msg)
-				self._publishTf(curr_pose_child) 
+				self._publishTf(curr_pose_child)
+			time.sleep(0.001)
 		print('----------')
 		print('PointClickNav: publish gmapping path exited')
 	def _computeGlobalPath(self,conn, end, radius, active):
@@ -671,6 +629,7 @@ class PointClickNav:
 					global_path = get_path(parents, start, end)
 					conn.send(global_path)
 					gridmap = None
+				time.sleep(0.001)
 			else:
 				time.sleep(0.01)
 		print('----------')

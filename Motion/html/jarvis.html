@@ -26,11 +26,16 @@
 </summary>
 <pre><code class="python">import time,math,datetime
 import threading
-from motion_client_python3 import MotionClient
+import sys
+
+if(sys.version_info[0] &lt; 3):
+    # from future import *
+    from motion_client import MotionClient
+else:
+    from motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 import os,csv,sys
 from threading import Thread
 from reem.connection import RedisInterface
@@ -40,17 +45,17 @@ from multiprocessing import Pool, TimeoutError
 import uuid
 from klampt import io
 # from Modules import *
-import trina_modules
 import sys, inspect
 # import command_server
 
 class Jarvis:
 
-    def __init__(self, priority = &#39;P4&#39;):
+    def __init__(self,name):
         self.interface = RedisInterface(host=&#34;localhost&#34;)
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
-        self.priority = priority
+        self.name = name
+        self.server[&#39;ACTIVITY_STATUS&#39;][self.name] = &#39;Inactive&#39;
         # should not instantiate commanserver
         # self.command_server = CommandServer()
 
@@ -78,9 +83,6 @@ class Jarvis:
     def sensedRightLimbPosition(self):
         return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;RightArm&#34;].read()
 
-    def sensedBasePosition(self):
-        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Base&#34;].read()
-
     def sensedLeftGripperPosition(self):
         return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;LeftGripper&#34;].read()
 
@@ -88,14 +90,16 @@ class Jarvis:
         command = self.send_command(&#39;self.robot.setLeftLimbPosition&#39;,str(q))
         current_list = self.server[&#39;ROBOT_COMMAND&#39;][&#39;P4&#39;].read()
         current_list.append(command)
-        self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = current_list
+        self.server[&#39;ROBOT_COMMAND&#39;][self.name] = current_list
 
     def setBaseVelocity(self,q):
         command = self.send_command(&#39;self.robot.setBaseVelocity&#39;,str(q))
-        queue = self.server[&#39;ROBOT_COMMAND&#39;][self.priority].read()
+        queue = self.server[&#39;ROBOT_COMMAND&#39;][self.name].read()
         queue.append(command)
-        self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = queue
-
+        self.server[&#39;ROBOT_COMMAND&#39;][self.name] = queue
+    
+    def getActivityStatus(self):
+        return self.server[&#39;ACTIVITY_STATUS&#39;][self.name].read()
 
 
     ################################## All Mighty divider between motion and UI###############################
@@ -103,10 +107,8 @@ class Jarvis:
     def sendRayClickUI(self):
         &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
         2 ray objects according to the user clicks. first one for destination, second one for calibration
-
         return:
             id: (str) id for ui feedback
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -118,19 +120,15 @@ class Jarvis:
         
     def getRayClickUI(self,id):
         &#34;&#34;&#34;get the feedback of Ray Click of id. 
-
         return:
             &#39;NOT READY&#39;: (str) if the msg is not ready
-
             or
-
             {
                 &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
                             &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
                 &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
                             &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
             }
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -162,16 +160,13 @@ class Jarvis:
 
     def addTextUI(self, name, text, color, size):
         &#34;&#34;&#34;add text to specfified location on UI screen. 
-
         args:
             name: (str) id for the text object
             text: (str) content you wish to add
             color: (list) rgb value [0,0,0]
             size: (int) font size
-
         return:
             name: (str) the name/id the user gave 
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -183,7 +178,6 @@ class Jarvis:
         
         return:
             id: (str) id for ui feedback
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -194,14 +188,10 @@ class Jarvis:
         
     def getConfirmationUI(self,id):
         &#34;&#34;&#34;get the feedback of Confirmation Window of id. 
-
         return:
             &#39;NOT READY&#39;: (str) if the msg is not ready
-
             or
-
            (str) &#39;YES&#39; or &#39;NO&#39; if msg is ready
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -211,14 +201,11 @@ class Jarvis:
     def sendAndGetConfirmationUI(self,title,text):
         &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
             a string of &#39;YES&#39; or &#34;NO&#34; is returned
-
         args:
             text: (str) content you wish to add
             title: (str) window title
-
         return:
             (str) &#39;YES&#39; or &#39;NO&#39;
-
         blocking?:
             yes
         &#34;&#34;&#34;
@@ -235,10 +222,8 @@ class Jarvis:
         args:
             trajectory: (klampt obj) the traj calculated
             animate: (bool) if user wants to animate the path
-
         return:
             nothing
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -248,11 +233,9 @@ class Jarvis:
 
     def addButtonUI(self,name,text):
         &#34;&#34;&#34;add a button to the UI window
-
         args:
             name: (str)  id for the button object
             text: (str) button label text
-
         return:
             name: the id user gave
         
@@ -266,12 +249,9 @@ class Jarvis:
 
     def getButtonClickUI(self,name):
         &#34;&#34;&#34;returns True if button with specified name is clicked
-
         args:
             name: (str) id for the button object
-
         return:
-
             (bool) True or False
         
         blocking?:
@@ -323,7 +303,7 @@ class Jarvis:
         commandQueue.append(msg)
         self.server[&#34;UI_END_COMMAND&#34;] = commandQueue
         print(&#34;commandQueue&#34;, commandQueue)
-        time.sleep(0.0001) 
+        time.sleep(0.0001)
 
 if __name__==&#34;__main__&#34;:
     server = Jarvis()</code></pre>
@@ -340,7 +320,7 @@ if __name__==&#34;__main__&#34;:
 <dl>
 <dt id="jarvis.Jarvis"><code class="flex name class">
 <span>class <span class="ident">Jarvis</span></span>
-<span>(</span><span>priority='P4')</span>
+<span>(</span><span>name)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -350,11 +330,12 @@ if __name__==&#34;__main__&#34;:
 </summary>
 <pre><code class="python">class Jarvis:
 
-    def __init__(self, priority = &#39;P4&#39;):
+    def __init__(self,name):
         self.interface = RedisInterface(host=&#34;localhost&#34;)
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
-        self.priority = priority
+        self.name = name
+        self.server[&#39;ACTIVITY_STATUS&#39;][self.name] = &#39;Inactive&#39;
         # should not instantiate commanserver
         # self.command_server = CommandServer()
 
@@ -382,9 +363,6 @@ if __name__==&#34;__main__&#34;:
     def sensedRightLimbPosition(self):
         return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;RightArm&#34;].read()
 
-    def sensedBasePosition(self):
-        return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;Base&#34;].read()
-
     def sensedLeftGripperPosition(self):
         return self.server[&#34;ROBOT_STATE&#34;][&#34;Position&#34;][&#34;LeftGripper&#34;].read()
 
@@ -392,14 +370,16 @@ if __name__==&#34;__main__&#34;:
         command = self.send_command(&#39;self.robot.setLeftLimbPosition&#39;,str(q))
         current_list = self.server[&#39;ROBOT_COMMAND&#39;][&#39;P4&#39;].read()
         current_list.append(command)
-        self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = current_list
+        self.server[&#39;ROBOT_COMMAND&#39;][self.name] = current_list
 
     def setBaseVelocity(self,q):
         command = self.send_command(&#39;self.robot.setBaseVelocity&#39;,str(q))
-        queue = self.server[&#39;ROBOT_COMMAND&#39;][self.priority].read()
+        queue = self.server[&#39;ROBOT_COMMAND&#39;][self.name].read()
         queue.append(command)
-        self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = queue
-
+        self.server[&#39;ROBOT_COMMAND&#39;][self.name] = queue
+    
+    def getActivityStatus(self):
+        return self.server[&#39;ACTIVITY_STATUS&#39;][self.name].read()
 
 
     ################################## All Mighty divider between motion and UI###############################
@@ -407,10 +387,8 @@ if __name__==&#34;__main__&#34;:
     def sendRayClickUI(self):
         &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
         2 ray objects according to the user clicks. first one for destination, second one for calibration
-
         return:
             id: (str) id for ui feedback
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -422,19 +400,15 @@ if __name__==&#34;__main__&#34;:
         
     def getRayClickUI(self,id):
         &#34;&#34;&#34;get the feedback of Ray Click of id. 
-
         return:
             &#39;NOT READY&#39;: (str) if the msg is not ready
-
             or
-
             {
                 &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
                             &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
                 &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
                             &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
             }
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -466,16 +440,13 @@ if __name__==&#34;__main__&#34;:
 
     def addTextUI(self, name, text, color, size):
         &#34;&#34;&#34;add text to specfified location on UI screen. 
-
         args:
             name: (str) id for the text object
             text: (str) content you wish to add
             color: (list) rgb value [0,0,0]
             size: (int) font size
-
         return:
             name: (str) the name/id the user gave 
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -487,7 +458,6 @@ if __name__==&#34;__main__&#34;:
         
         return:
             id: (str) id for ui feedback
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -498,14 +468,10 @@ if __name__==&#34;__main__&#34;:
         
     def getConfirmationUI(self,id):
         &#34;&#34;&#34;get the feedback of Confirmation Window of id. 
-
         return:
             &#39;NOT READY&#39;: (str) if the msg is not ready
-
             or
-
            (str) &#39;YES&#39; or &#39;NO&#39; if msg is ready
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -515,14 +481,11 @@ if __name__==&#34;__main__&#34;:
     def sendAndGetConfirmationUI(self,title,text):
         &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
             a string of &#39;YES&#39; or &#34;NO&#34; is returned
-
         args:
             text: (str) content you wish to add
             title: (str) window title
-
         return:
             (str) &#39;YES&#39; or &#39;NO&#39;
-
         blocking?:
             yes
         &#34;&#34;&#34;
@@ -539,10 +502,8 @@ if __name__==&#34;__main__&#34;:
         args:
             trajectory: (klampt obj) the traj calculated
             animate: (bool) if user wants to animate the path
-
         return:
             nothing
-
         blocking?:
             no
         &#34;&#34;&#34;
@@ -552,11 +513,9 @@ if __name__==&#34;__main__&#34;:
 
     def addButtonUI(self,name,text):
         &#34;&#34;&#34;add a button to the UI window
-
         args:
             name: (str)  id for the button object
             text: (str) button label text
-
         return:
             name: the id user gave
         
@@ -570,12 +529,9 @@ if __name__==&#34;__main__&#34;:
 
     def getButtonClickUI(self,name):
         &#34;&#34;&#34;returns True if button with specified name is clicked
-
         args:
             name: (str) id for the button object
-
         return:
-
             (bool) True or False
         
         blocking?:
@@ -627,7 +583,7 @@ if __name__==&#34;__main__&#34;:
         commandQueue.append(msg)
         self.server[&#34;UI_END_COMMAND&#34;] = commandQueue
         print(&#34;commandQueue&#34;, commandQueue)
-        time.sleep(0.0001) </code></pre>
+        time.sleep(0.0001)</code></pre>
 </details>
 <h3>Methods</h3>
 <dl>
@@ -635,12 +591,12 @@ if __name__==&#34;__main__&#34;:
 <span>def <span class="ident">addButtonUI</span></span>(<span>self, name, text)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>add a button to the UI window</p>
-<p>args:
+<div class="desc"><p>add a button to the UI window
+args:
 name: (str)
 id for the button object
-text: (str) button label text</p>
-<p>return:
+text: (str) button label text
+return:
 name: the id user gave</p>
 <p>blocking?:
 no</p></div>
@@ -650,11 +606,9 @@ no</p></div>
 </summary>
 <pre><code class="python">def addButtonUI(self,name,text):
     &#34;&#34;&#34;add a button to the UI window
-
     args:
         name: (str)  id for the button object
         text: (str) button label text
-
     return:
         name: the id user gave
     
@@ -701,15 +655,15 @@ no</p></div>
 <span>def <span class="ident">addTextUI</span></span>(<span>self, name, text, color, size)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>add text to specfified location on UI screen. </p>
-<p>args:
+<div class="desc"><p>add text to specfified location on UI screen.
+args:
 name: (str) id for the text object
 text: (str) content you wish to add
 color: (list) rgb value [0,0,0]
-size: (int) font size</p>
-<p>return:
-name: (str) the name/id the user gave </p>
-<p>blocking?:
+size: (int) font size
+return:
+name: (str) the name/id the user gave
+blocking?:
 no</p></div>
 <details class="source">
 <summary>
@@ -717,16 +671,13 @@ no</p></div>
 </summary>
 <pre><code class="python">def addTextUI(self, name, text, color, size):
     &#34;&#34;&#34;add text to specfified location on UI screen. 
-
     args:
         name: (str) id for the text object
         text: (str) content you wish to add
         color: (list) rgb value [0,0,0]
         size: (int) font size
-
     return:
         name: (str) the name/id the user gave 
-
     blocking?:
         no
     &#34;&#34;&#34;
@@ -749,16 +700,28 @@ no</p></div>
     return self.server[&#39;UI_FEEDBACK&#39;][str(id)][&#39;MSG&#39;].read()</code></pre>
 </details>
 </dd>
+<dt id="jarvis.Jarvis.getActivityStatus"><code class="name flex">
+<span>def <span class="ident">getActivityStatus</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def getActivityStatus(self):
+    return self.server[&#39;ACTIVITY_STATUS&#39;][self.name].read()</code></pre>
+</details>
+</dd>
 <dt id="jarvis.Jarvis.getButtonClickUI"><code class="name flex">
 <span>def <span class="ident">getButtonClickUI</span></span>(<span>self, name)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>returns True if button with specified name is clicked</p>
-<p>args:
-name: (str) id for the button object</p>
-<p>return:</p>
-<pre><code>(bool) True or False
-</code></pre>
+<div class="desc"><p>returns True if button with specified name is clicked
+args:
+name: (str) id for the button object
+return:
+(bool) True or False</p>
 <p>blocking?:
 no</p></div>
 <details class="source">
@@ -767,12 +730,9 @@ no</p></div>
 </summary>
 <pre><code class="python">def getButtonClickUI(self,name):
     &#34;&#34;&#34;returns True if button with specified name is clicked
-
     args:
         name: (str) id for the button object
-
     return:
-
         (bool) True or False
     
     blocking?:
@@ -789,13 +749,12 @@ no</p></div>
 <span>def <span class="ident">getConfirmationUI</span></span>(<span>self, id)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>get the feedback of Confirmation Window of id. </p>
-<p>return:
-'NOT READY': (str) if the msg is not ready</p>
-<pre><code>or
-</code></pre>
-<p>(str) 'YES' or 'NO' if msg is ready</p>
-<p>blocking?:
+<div class="desc"><p>get the feedback of Confirmation Window of id.
+return:
+'NOT READY': (str) if the msg is not ready
+or
+(str) 'YES' or 'NO' if msg is ready
+blocking?:
 no</p></div>
 <details class="source">
 <summary>
@@ -803,14 +762,10 @@ no</p></div>
 </summary>
 <pre><code class="python">def getConfirmationUI(self,id):
     &#34;&#34;&#34;get the feedback of Confirmation Window of id. 
-
     return:
         &#39;NOT READY&#39;: (str) if the msg is not ready
-
         or
-
        (str) &#39;YES&#39; or &#39;NO&#39; if msg is ready
-
     blocking?:
         no
     &#34;&#34;&#34;
@@ -836,19 +791,17 @@ no</p></div>
 <span>def <span class="ident">getRayClickUI</span></span>(<span>self, id)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>get the feedback of Ray Click of id. </p>
-<p>return:
-'NOT READY': (str) if the msg is not ready</p>
-<pre><code>or
-
+<div class="desc"><p>get the feedback of Ray Click of id.
+return:
+'NOT READY': (str) if the msg is not ready
+or
 {
-    'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
-                'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
-    'SECOND_RAY': {'destination': [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
-                'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
+'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
+'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
+'SECOND_RAY': {'destination': [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
+'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
 }
-</code></pre>
-<p>blocking?:
+blocking?:
 no</p></div>
 <details class="source">
 <summary>
@@ -856,19 +809,15 @@ no</p></div>
 </summary>
 <pre><code class="python">def getRayClickUI(self,id):
     &#34;&#34;&#34;get the feedback of Ray Click of id. 
-
     return:
         &#39;NOT READY&#39;: (str) if the msg is not ready
-
         or
-
         {
             &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
                         &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
             &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
                         &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
         }
-
     blocking?:
         no
     &#34;&#34;&#34;
@@ -880,13 +829,13 @@ no</p></div>
 </code></dt>
 <dd>
 <div class="desc"><p>once this function is called, the UI will display a confimation window with specified title and text,
-a string of 'YES' or "NO" is returned</p>
-<p>args:
+a string of 'YES' or "NO" is returned
+args:
 text: (str) content you wish to add
-title: (str) window title</p>
-<p>return:
-(str) 'YES' or 'NO'</p>
-<p>blocking?:
+title: (str) window title
+return:
+(str) 'YES' or 'NO'
+blocking?:
 yes</p></div>
 <details class="source">
 <summary>
@@ -895,14 +844,11 @@ yes</p></div>
 <pre><code class="python">def sendAndGetConfirmationUI(self,title,text):
     &#34;&#34;&#34;once this function is called, the UI will display a confimation window with specified title and text, 
         a string of &#39;YES&#39; or &#34;NO&#34; is returned
-
     args:
         text: (str) content you wish to add
         title: (str) window title
-
     return:
         (str) &#39;YES&#39; or &#39;NO&#39;
-
     blocking?:
         yes
     &#34;&#34;&#34;
@@ -962,8 +908,8 @@ yes</p></div>
 <dd>
 <div class="desc"><p>once this function is called, the UI will display a confimation window with specified title and text, </p>
 <p>return:
-id: (str) id for ui feedback</p>
-<p>blocking?:
+id: (str) id for ui feedback
+blocking?:
 no</p></div>
 <details class="source">
 <summary>
@@ -974,7 +920,6 @@ no</p></div>
     
     return:
         id: (str) id for ui feedback
-
     blocking?:
         no
     &#34;&#34;&#34;
@@ -989,10 +934,10 @@ no</p></div>
 </code></dt>
 <dd>
 <div class="desc"><p>once this function is called, the UI will ask the user to click twice on the map, and sending back
-2 ray objects according to the user clicks. first one for destination, second one for calibration</p>
-<p>return:
-id: (str) id for ui feedback</p>
-<p>blocking?:
+2 ray objects according to the user clicks. first one for destination, second one for calibration
+return:
+id: (str) id for ui feedback
+blocking?:
 no</p></div>
 <details class="source">
 <summary>
@@ -1001,10 +946,8 @@ no</p></div>
 <pre><code class="python">def sendRayClickUI(self):
     &#34;&#34;&#34;once this function is called, the UI will ask the user to click twice on the map, and sending back 
     2 ray objects according to the user clicks. first one for destination, second one for calibration
-
     return:
         id: (str) id for ui feedback
-
     blocking?:
         no
     &#34;&#34;&#34;
@@ -1022,10 +965,10 @@ no</p></div>
 <div class="desc"><p>send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once </p>
 <p>args:
 trajectory: (klampt obj) the traj calculated
-animate: (bool) if user wants to animate the path</p>
-<p>return:
-nothing</p>
-<p>blocking?:
+animate: (bool) if user wants to animate the path
+return:
+nothing
+blocking?:
 no</p></div>
 <details class="source">
 <summary>
@@ -1037,10 +980,8 @@ no</p></div>
     args:
         trajectory: (klampt obj) the traj calculated
         animate: (bool) if user wants to animate the path
-
     return:
         nothing
-
     blocking?:
         no
     &#34;&#34;&#34;
@@ -1185,9 +1126,9 @@ no</p></div>
 </summary>
 <pre><code class="python">def setBaseVelocity(self,q):
     command = self.send_command(&#39;self.robot.setBaseVelocity&#39;,str(q))
-    queue = self.server[&#39;ROBOT_COMMAND&#39;][self.priority].read()
+    queue = self.server[&#39;ROBOT_COMMAND&#39;][self.name].read()
     queue.append(command)
-    self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = queue</code></pre>
+    self.server[&#39;ROBOT_COMMAND&#39;][self.name] = queue</code></pre>
 </details>
 </dd>
 <dt id="jarvis.Jarvis.setLeftLimbPosition"><code class="name flex">
@@ -1203,7 +1144,7 @@ no</p></div>
     command = self.send_command(&#39;self.robot.setLeftLimbPosition&#39;,str(q))
     current_list = self.server[&#39;ROBOT_COMMAND&#39;][&#39;P4&#39;].read()
     current_list.append(command)
-    self.server[&#39;ROBOT_COMMAND&#39;][self.priority] = current_list</code></pre>
+    self.server[&#39;ROBOT_COMMAND&#39;][self.name] = current_list</code></pre>
 </details>
 </dd>
 </dl>
@@ -1227,6 +1168,7 @@ no</p></div>
 <li><code><a title="jarvis.Jarvis.addPromptUI" href="#jarvis.Jarvis.addPromptUI">addPromptUI</a></code></li>
 <li><code><a title="jarvis.Jarvis.addTextUI" href="#jarvis.Jarvis.addTextUI">addTextUI</a></code></li>
 <li><code><a title="jarvis.Jarvis.checkFeedback" href="#jarvis.Jarvis.checkFeedback">checkFeedback</a></code></li>
+<li><code><a title="jarvis.Jarvis.getActivityStatus" href="#jarvis.Jarvis.getActivityStatus">getActivityStatus</a></code></li>
 <li><code><a title="jarvis.Jarvis.getButtonClickUI" href="#jarvis.Jarvis.getButtonClickUI">getButtonClickUI</a></code></li>
 <li><code><a title="jarvis.Jarvis.getConfirmationUI" href="#jarvis.Jarvis.getConfirmationUI">getConfirmationUI</a></code></li>
 <li><code><a title="jarvis.Jarvis.getFeedback" href="#jarvis.Jarvis.getFeedback">getFeedback</a></code></li>
