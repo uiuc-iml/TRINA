@@ -68,6 +68,7 @@ class Camera_Robot:
         self.components = components
         self.robot = robot
         self.active_cameras = {}
+        self.update_lock = threading.Lock()
         if(self.mode == 'physical'):
             import pyrealsense2 as rs
             import pyzed.sl as sl
@@ -112,8 +113,8 @@ class Camera_Robot:
             # and we start the thread that will update the simulation live:
             self.right_image = []
             self.left_image = []
-            self.lpc = np.zeros(shape=(3, 6))
-            self.rpc = np.zeros(shape=(3, 6))
+            self.left_point_cloud = []#np.zeros(shape=(3, 6))
+            self.right_point_cloud = []#np.zeros(shape=(3, 6))
             self.simlock = threading.Lock()
 
             # GLEW WORKAROUND
@@ -141,7 +142,7 @@ class Camera_Robot:
             pcUpdaterThread = threading.Thread(target=self.update_point_clouds)
             pcUpdaterThread.daemon = True
             pcUpdaterThread.start()
-
+        
             self.ros_parent_conn, self.ros_child_conn = Pipe()
             gmapping_proc = Process(target=self.update_range_finder, args=(self.ros_child_conn, ))
             gmapping_proc.daemon = True
@@ -182,10 +183,11 @@ class Camera_Robot:
                         {camera: self.active_cameras[camera].get_point_cloud()})
             return output
         else:
-            lpc = self.lpc
-            rpc = self.rpc
+            lpc = self.left_point_cloud
+            rpc = self.right_point_cloud
             # lpc = sensing.camera_to_points(self.left_cam, points_format='numpy', all_points=False, color_format='channels')
             # rpc = sensing.camera_to_points(self.right_cam, points_format='numpy', all_points=False, color_format='channels')
+            print(id(self))
 
             left_pcd = o3d.geometry.PointCloud()
             left_pcd.points = o3d.utility.Vector3dVector(lpc[:, :3])
@@ -280,6 +282,7 @@ class Camera_Robot:
         glLightfv(GL_LIGHT1, GL_DIFFUSE, [0.5, 0.5, 0.5, 1])
         glLightfv(GL_LIGHT1, GL_SPECULAR, [0.5, 0.5, 0.5, 1])
         glEnable(GL_LIGHT1)
+
         while(True):
             start_time = time.time()
             # print('updating_sim')
@@ -304,6 +307,10 @@ class Camera_Robot:
                 self.left_cam, image_format='numpy', color_format='channels')
             self.right_image = sensing.camera_to_images(
                 self.right_cam, image_format='numpy', color_format='channels')
+            # self.left_point_cloud = sensing.camera_to_points(
+            #     self.left_cam, points_format='numpy', all_points=False, color_format='channels')
+            # self.right_point_cloud = sensing.camera_to_points(
+            #     self.right_cam, points_format='numpy', all_points=False, color_format='channels')
             self.sim.updateWorld()
             elapsed_time = time.time() - start_time
             # print('elapsed_time:',elapsed_time)
@@ -315,11 +322,15 @@ class Camera_Robot:
         while(True):
             # with self.simlock:
             # self.sim.simulate(self.dt)
-            self.lpc = sensing.camera_to_points(
+            print(id(self))
+            self.sim.updateWorld()
+
+            # print('updating point clouds')
+            self.left_point_cloud = sensing.camera_to_points(
                 self.left_cam, points_format='numpy', all_points=False, color_format='channels')
-            self.rpc = sensing.camera_to_points(
+            self.right_point_cloud = sensing.camera_to_points(
                 self.right_cam, points_format='numpy', all_points=False, color_format='channels')
-            time.sleep(5*self.dt)
+            time.sleep(3*self.dt)
 
     def update_range_finder(self, conn):
         try:

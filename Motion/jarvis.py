@@ -28,17 +28,18 @@ else:
 
 class Jarvis:
 
-    def __init__(self, name):
+    def __init__(self, name,sensor_module = []):
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.name = name
         self.server['ACTIVITY_STATUS'][self.name] = 'Inactive'
+        self.sensor_module = sensor_module
         # should not instantiate commanserver
         # self.command_server = CommandServer()
 
     # def shutdown(self):
-    #     self.command_server.shutdown()
+    #     self.command_server.shutdown()        
 
     def sensedBaseVelocity(self):
         return self.server["ROBOT_STATE"]["Velocity"]["Base"].read()
@@ -82,6 +83,11 @@ class Jarvis:
     def getActivityStatus(self):
         return self.server['ACTIVITY_STATUS'][self.name].read()
 
+    def get_point_clouds(self):
+        return self.sensor_module.get_point_clouds()
+    
+    def get_rgbd_images(self):
+        return self.sensor_module.get_rgbd_images()
 
     def send_command(self, command, *args):
         final_string = str(command) + '('

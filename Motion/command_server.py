@@ -25,7 +25,7 @@ if(sys.version_info[0] < 3):
 else:
     from motion_client_python3 import MotionClient
     from importlib import reload
-
+from jarvis import Jarvis
 
 robot_ip = 'http://localhost:8080'
 
@@ -99,6 +99,7 @@ class CommandServer:
             self.world = WorldModel()
             self.world.readFile(self.world_file )
             self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
+            time.sleep(5)
         self.health_dict = {}
         # create the list of threads
         self.modules_dict = {}
@@ -173,8 +174,9 @@ class CommandServer:
                                 }
 
 
-    def start_module(self,module):
-        a = module()
+    def start_module(self,module,name):
+        module_jarvis = Jarvis(name,self.sensor_module)
+        a = module(module_jarvis)
         return a.return_processes()
 
     def start_modules(self,module_names = []):
@@ -186,7 +188,7 @@ class CommandServer:
             for name, obj in inspect.getmembers(trina_modules):
                 if inspect.isclass(obj):
                     if(str(obj).find('trina_modules') != -1):
-                        tmp = self.start_module(obj)
+                        tmp = self.start_module(obj,name)
                         self.modules_dict.update({name:tmp})
                         self.health_dict.update({name:[True,time.time()]})
                         command_dict.update({name:[]})
@@ -204,7 +206,7 @@ class CommandServer:
                                 pcess.terminate()
                             self.modules_dict.update({name:[]})
                             print('restarting only module ' + name)
-                            tmp = self.start_module(obj)
+                            tmp = self.start_module(obj,name)
                             self.modules_dict.update({name:tmp})
                             self.server['health_log'][name] = [True,time.time()]
 
