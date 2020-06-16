@@ -134,21 +134,33 @@ class Camera_Robot:
                 Rtranslation = self.Rtranslation
                 Lrotation = self.Lrotation
                 Ltranslation = self.Ltranslation
-                REE_transform = np.array(se3.homogeneous((Rrotation,Rtranslation)))
-                LEE_transform = np.array(se3.homogeneous((Lrotation,Ltranslation)))
-                self.realsense_transform = np.eye(4)
+               
+                REE_transform = (Rrotation,Rtranslation)
+                LEE_transform = (Lrotation,Ltranslation)
+                Tcamera_EE = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+                TRcamera_base = se3.mul(REE_transform,Tcamera_EE)
+                TLcamera_base = se3.mul(LEE_transform,Tcamera_EE)
+
+                #print(TRcamera_base)
+
+                #self.realsense_transform = np.eye(4)
                 # we then multiply this transform with the transform between the end effector and the camera
-                final_Rtransform = np.matmul(REE_transform,self.realsense_transform)
-                final_Ltransform = np.matmul(LEE_transform,self.realsense_transform)
+                #final_Rtransform = np.matmul(REE_transform,self.realsense_transform)
+                #final_Ltransform = np.matmul(LEE_transform,self.realsense_transform)
                 # we then invert this transform using klampt se3
-                Rft = se3.from_homogeneous(final_Rtransform)
-                Rinverted_transform = np.array(se3.homogeneous(se3.inv(Rft)))
-                Lft = se3.from_homogeneous(final_Ltransform)
-                Linverted_transform = np.array(se3.homogeneous(se3.inv(Lft)))
+                #Rft = se3.from_homogeneous(final_Rtransform)
+                #Rinverted_transform = np.array(se3.homogeneous(se3.inv(Rft)))
+                #Lft = se3.from_homogeneous(final_Ltransform)
+                #Linverted_transform = np.array(se3.homogeneous(se3.inv(Lft)))
                 
                 # we then apply this transform to the point cloud
-                Rtransformed_pc = left_pcd.transform(Rinverted_transform)
-                Ltransformed_pc = right_pcd.transform(Linverted_transform)
+                #print(se3.homogeneous(TRcamera_base))
+                R = np.array(se3.homogeneous(TRcamera_base))
+                L = np.array(se3.homogeneous(TLcamera_base))
+
+                Rtransformed_pc = left_pcd.transform(R)
+                Ltransformed_pc = right_pcd.transform(L)
+
                 return {"realsense_right":Rtransformed_pc,"realsense_left":Ltransformed_pc}
             except Exception as e:
                 print(e)

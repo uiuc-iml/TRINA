@@ -287,3 +287,887 @@ motion_server: 01:05:53 - number of joint positions sent : 6 and duration is 5
 motion_server: 01:05:58 - number of joint positions sent : 6
 01:05:58 setRightLimbPosition :DEBUG- number of joint positions sent : 6
 motion_server: 01:05:58 - number of joint positions sent : 6
+motion_server: 15:12:05 - Server Created
+motion_server: 15:12:19 - Kinematic mode is activated
+15:12:19 _controlLoop :INFO- controlLoop started.
+motion_server: 15:12:19 - controlLoop started.
+15:12:19 startup :INFO- robot started.
+motion_server: 15:12:19 - robot started.
+15:12:20 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:12:20 - number of joint positions sent : 6 and duration is 2
+15:12:20 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:12:20 - number of joint positions sent : 6 and duration is 2
+15:12:22 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:12:22 - number of joint positions sent : 6
+15:12:22 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:12:22 - number of joint positions sent : 6
+15:12:23 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:12:23 - IK solve successful
+15:12:23 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:12:23 - No collision
+15:12:23 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:12:23 - number of joint positions sent : 6 and duration is 1
+15:12:23 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:12:23 - IK solve successful
+15:12:23 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:12:23 - No collision
+15:12:23 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:12:23 - number of joint positions sent : 6 and duration is 1
+15:12:24 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:12:24 - number of joint positions sent : 6
+15:12:25 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:12:25 - number of joint positions sent : 6 and duration is 1
+15:12:26 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:12:26 - number of joint positions sent : 6 and duration is 5
+15:12:26 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:12:26 - number of joint positions sent : 6 and duration is 5
+15:12:26 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:12:26 - number of joint positions sent : 6 and duration is 5
+15:12:26 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:12:26 - number of joint positions sent : 6 and duration is 5
+15:12:31 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:12:31 - number of joint positions sent : 6
+15:12:31 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:12:31 - number of joint positions sent : 6
+motion_server: 15:20:20 - Kinematic mode is activated
+15:20:20 _controlLoop :INFO- controlLoop started.
+motion_server: 15:20:20 - controlLoop started.
+15:20:20 startup :INFO- robot started.
+motion_server: 15:20:20 - robot started.
+15:20:22 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:20:22 - number of joint positions sent : 6 and duration is 2
+15:20:22 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:20:22 - number of joint positions sent : 6 and duration is 2
+15:20:24 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:20:24 - number of joint positions sent : 6
+15:20:24 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:20:24 - number of joint positions sent : 6
+15:20:25 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:20:25 - IK solve successful
+15:20:25 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:20:25 - No collision
+15:20:25 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:20:25 - number of joint positions sent : 6 and duration is 1
+15:20:25 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:20:25 - IK solve successful
+15:20:25 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:20:25 - No collision
+15:20:25 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:20:25 - number of joint positions sent : 6 and duration is 1
+15:20:26 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:20:26 - number of joint positions sent : 6
+15:20:27 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:20:27 - number of joint positions sent : 6 and duration is 1
+15:20:27 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:20:27 - number of joint positions sent : 6 and duration is 5
+15:20:27 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:20:27 - number of joint positions sent : 6 and duration is 5
+15:20:27 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:20:27 - number of joint positions sent : 6 and duration is 5
+15:20:27 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:20:27 - number of joint positions sent : 6 and duration is 5
+15:20:32 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:20:32 - number of joint positions sent : 6
+15:20:32 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:20:32 - number of joint positions sent : 6
+motion_server: 15:22:27 - Kinematic mode is activated
+15:22:27 _controlLoop :INFO- controlLoop started.
+motion_server: 15:22:27 - controlLoop started.
+15:22:27 startup :INFO- robot started.
+motion_server: 15:22:27 - robot started.
+15:22:28 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:22:28 - number of joint positions sent : 6 and duration is 2
+15:22:28 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:22:28 - number of joint positions sent : 6 and duration is 2
+15:22:30 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:22:30 - number of joint positions sent : 6
+15:22:30 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:22:30 - number of joint positions sent : 6
+15:22:31 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:22:31 - IK solve successful
+15:22:31 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:22:31 - No collision
+15:22:31 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:22:31 - number of joint positions sent : 6 and duration is 1
+15:22:31 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:22:31 - IK solve successful
+15:22:31 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:22:31 - No collision
+15:22:31 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:22:31 - number of joint positions sent : 6 and duration is 1
+15:22:32 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:22:32 - number of joint positions sent : 6
+15:22:33 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:22:33 - number of joint positions sent : 6 and duration is 1
+15:22:33 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:22:33 - number of joint positions sent : 6 and duration is 5
+15:22:33 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:22:33 - number of joint positions sent : 6 and duration is 5
+15:22:33 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:22:33 - number of joint positions sent : 6 and duration is 5
+15:22:33 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:22:33 - number of joint positions sent : 6 and duration is 5
+15:22:38 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:22:38 - number of joint positions sent : 6
+15:22:38 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:22:38 - number of joint positions sent : 6
+motion_server: 15:40:21 - Kinematic mode is activated
+15:40:21 _controlLoop :INFO- controlLoop started.
+motion_server: 15:40:21 - controlLoop started.
+15:40:21 startup :INFO- robot started.
+motion_server: 15:40:21 - robot started.
+15:40:22 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:40:22 - number of joint positions sent : 6 and duration is 2
+15:40:22 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:40:22 - number of joint positions sent : 6 and duration is 2
+15:40:24 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:40:24 - number of joint positions sent : 6
+15:40:24 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:40:24 - number of joint positions sent : 6
+15:40:25 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:40:25 - IK solve successful
+15:40:25 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:40:25 - No collision
+15:40:25 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:40:25 - number of joint positions sent : 6 and duration is 1
+15:40:25 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:40:25 - IK solve successful
+15:40:25 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:40:25 - No collision
+15:40:25 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:40:25 - number of joint positions sent : 6 and duration is 1
+15:40:26 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:40:26 - number of joint positions sent : 6
+15:40:27 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:40:27 - number of joint positions sent : 6 and duration is 1
+15:40:28 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:40:28 - number of joint positions sent : 6
+15:40:53 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:40:53 - number of joint positions sent : 6 and duration is 5
+15:40:53 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:40:53 - number of joint positions sent : 6 and duration is 5
+15:40:58 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:40:58 - number of joint positions sent : 6
+15:40:58 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:40:58 - number of joint positions sent : 6
+15:41:03 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:41:03 - number of joint positions sent : 6 and duration is 5
+15:41:03 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:41:03 - number of joint positions sent : 6 and duration is 5
+15:41:08 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:41:08 - number of joint positions sent : 6
+15:41:08 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:41:08 - number of joint positions sent : 6
+15:41:49 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:41:49 - number of joint positions sent : 6 and duration is 5
+15:41:49 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:41:49 - number of joint positions sent : 6 and duration is 5
+15:41:54 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:41:54 - number of joint positions sent : 6
+15:41:54 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:41:54 - number of joint positions sent : 6
+15:42:05 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:42:05 - number of joint positions sent : 6 and duration is 5
+15:42:05 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:42:05 - number of joint positions sent : 6 and duration is 5
+15:42:10 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:42:10 - number of joint positions sent : 6
+15:42:10 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:42:10 - number of joint positions sent : 6
+motion_server: 15:44:31 - Kinematic mode is activated
+15:44:31 _controlLoop :INFO- controlLoop started.
+motion_server: 15:44:31 - controlLoop started.
+15:44:31 startup :INFO- robot started.
+motion_server: 15:44:31 - robot started.
+15:44:32 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:44:32 - number of joint positions sent : 6 and duration is 2
+15:44:32 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:44:32 - number of joint positions sent : 6 and duration is 2
+15:44:34 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:44:34 - number of joint positions sent : 6
+15:44:34 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:44:34 - number of joint positions sent : 6
+15:44:35 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:44:35 - IK solve successful
+15:44:35 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:44:35 - No collision
+15:44:35 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:44:35 - number of joint positions sent : 6 and duration is 1
+15:44:37 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:44:37 - number of joint positions sent : 6
+motion_server: 15:47:42 - Kinematic mode is activated
+15:47:42 _controlLoop :INFO- controlLoop started.
+motion_server: 15:47:42 - controlLoop started.
+15:47:42 startup :INFO- robot started.
+motion_server: 15:47:42 - robot started.
+15:47:43 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:47:43 - number of joint positions sent : 6 and duration is 2
+15:47:43 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:47:43 - number of joint positions sent : 6 and duration is 2
+15:47:45 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:47:45 - number of joint positions sent : 6
+15:47:45 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:47:45 - number of joint positions sent : 6
+15:47:47 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:47:47 - IK solve successful
+15:47:47 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:47:47 - No collision
+15:47:47 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:47:47 - number of joint positions sent : 6 and duration is 1
+15:47:48 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:47:48 - number of joint positions sent : 6
+motion_server: 15:48:39 - Kinematic mode is activated
+15:48:39 _controlLoop :INFO- controlLoop started.
+motion_server: 15:48:39 - controlLoop started.
+15:48:39 startup :INFO- robot started.
+motion_server: 15:48:39 - robot started.
+15:48:41 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:48:41 - number of joint positions sent : 6 and duration is 2
+15:48:41 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:48:41 - number of joint positions sent : 6 and duration is 2
+15:48:43 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:48:43 - number of joint positions sent : 6
+15:48:43 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:48:43 - number of joint positions sent : 6
+15:48:44 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:48:44 - IK solve successful
+15:48:45 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:48:45 - No collision
+15:48:45 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:48:45 - number of joint positions sent : 6 and duration is 1
+15:48:46 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:48:46 - number of joint positions sent : 6
+motion_server: 15:51:21 - Kinematic mode is activated
+15:51:21 _controlLoop :INFO- controlLoop started.
+motion_server: 15:51:21 - controlLoop started.
+15:51:21 startup :INFO- robot started.
+motion_server: 15:51:21 - robot started.
+15:51:22 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:51:22 - number of joint positions sent : 6 and duration is 2
+15:51:23 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 15:51:23 - number of joint positions sent : 6 and duration is 2
+15:51:25 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:51:25 - number of joint positions sent : 6
+15:51:25 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:51:25 - number of joint positions sent : 6
+15:51:26 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:51:26 - IK solve successful
+15:51:26 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:51:26 - No collision
+15:51:26 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:51:26 - number of joint positions sent : 6 and duration is 1
+15:51:27 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:51:27 - number of joint positions sent : 6
+15:52:37 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 15:52:37 - IK solve successful
+15:52:37 setLeftEEInertialTransform :INFO- No collision
+motion_server: 15:52:37 - No collision
+15:52:37 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:52:37 - number of joint positions sent : 6 and duration is 1
+15:52:38 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:52:38 - number of joint positions sent : 6
+15:52:39 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 15:52:39 - number of joint positions sent : 6 and duration is 1
+15:52:40 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:52:40 - number of joint positions sent : 6
+15:52:47 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:52:47 - number of joint positions sent : 6 and duration is 5
+15:52:47 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:52:47 - number of joint positions sent : 6 and duration is 5
+15:52:47 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:52:47 - number of joint positions sent : 6 and duration is 5
+15:52:47 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 15:52:47 - number of joint positions sent : 6 and duration is 5
+15:52:52 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:52:52 - number of joint positions sent : 6
+15:52:52 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 15:52:52 - number of joint positions sent : 6
+motion_server: 16:04:06 - Kinematic mode is activated
+16:04:06 _controlLoop :INFO- controlLoop started.
+motion_server: 16:04:06 - controlLoop started.
+16:04:06 startup :INFO- robot started.
+motion_server: 16:04:06 - robot started.
+16:04:07 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:04:07 - number of joint positions sent : 6 and duration is 2
+16:04:07 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:04:07 - number of joint positions sent : 6 and duration is 2
+16:04:09 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:04:09 - number of joint positions sent : 6
+16:04:09 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:04:09 - number of joint positions sent : 6
+16:04:10 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:04:10 - IK solve successful
+16:04:10 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:04:10 - No collision
+16:04:10 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:04:10 - number of joint positions sent : 6 and duration is 1
+16:04:10 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:04:10 - IK solve successful
+16:04:10 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:04:10 - No collision
+16:04:10 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:04:10 - number of joint positions sent : 6 and duration is 1
+16:04:12 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:04:12 - number of joint positions sent : 6
+16:04:13 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:04:13 - number of joint positions sent : 6 and duration is 1
+16:04:13 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:04:13 - number of joint positions sent : 6 and duration is 5
+16:04:13 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:04:13 - number of joint positions sent : 6 and duration is 5
+16:04:18 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:04:18 - number of joint positions sent : 6
+16:04:18 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:04:18 - number of joint positions sent : 6
+motion_server: 16:05:52 - Kinematic mode is activated
+16:05:52 _controlLoop :INFO- controlLoop started.
+motion_server: 16:05:52 - controlLoop started.
+16:05:52 startup :INFO- robot started.
+motion_server: 16:05:52 - robot started.
+16:05:53 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:05:53 - number of joint positions sent : 6 and duration is 2
+16:05:53 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:05:53 - number of joint positions sent : 6 and duration is 2
+16:05:55 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:05:55 - number of joint positions sent : 6
+16:05:55 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:05:55 - number of joint positions sent : 6
+16:05:56 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:05:56 - IK solve successful
+16:05:56 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:05:56 - No collision
+16:05:56 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:05:56 - number of joint positions sent : 6 and duration is 1
+16:05:56 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:05:56 - IK solve successful
+16:05:56 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:05:56 - No collision
+16:05:56 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:05:56 - number of joint positions sent : 6 and duration is 1
+16:05:57 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:05:57 - number of joint positions sent : 6
+16:05:58 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:05:58 - number of joint positions sent : 6 and duration is 1
+16:05:59 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:05:59 - number of joint positions sent : 6 and duration is 5
+16:05:59 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:05:59 - number of joint positions sent : 6 and duration is 5
+16:06:04 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:06:04 - number of joint positions sent : 6
+16:06:04 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:06:04 - number of joint positions sent : 6
+motion_server: 16:07:14 - Kinematic mode is activated
+16:07:14 startup :INFO- robot started.
+16:07:14 _controlLoop :INFO- controlLoop started.
+motion_server: 16:07:14 - robot started.
+motion_server: 16:07:14 - controlLoop started.
+16:07:15 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:07:15 - number of joint positions sent : 6 and duration is 2
+16:07:16 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:07:16 - number of joint positions sent : 6 and duration is 2
+16:07:18 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:07:18 - number of joint positions sent : 6
+16:07:18 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:07:18 - number of joint positions sent : 6
+motion_server: 16:09:00 - Kinematic mode is activated
+16:09:00 _controlLoop :INFO- controlLoop started.
+motion_server: 16:09:00 - controlLoop started.
+16:09:00 startup :INFO- robot started.
+motion_server: 16:09:00 - robot started.
+16:09:02 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:09:02 - number of joint positions sent : 6 and duration is 2
+16:09:02 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:09:02 - number of joint positions sent : 6 and duration is 2
+16:09:04 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:09:04 - number of joint positions sent : 6
+16:09:04 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:09:04 - number of joint positions sent : 6
+16:09:05 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:09:05 - IK solve successful
+16:09:05 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:09:05 - No collision
+16:09:05 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:09:05 - number of joint positions sent : 6 and duration is 1
+16:09:05 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:09:05 - IK solve successful
+16:09:05 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:09:05 - No collision
+16:09:05 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:09:05 - number of joint positions sent : 6 and duration is 1
+16:09:06 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:09:06 - number of joint positions sent : 6
+16:09:07 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:09:07 - number of joint positions sent : 6 and duration is 1
+16:09:07 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:09:07 - number of joint positions sent : 6 and duration is 5
+16:09:07 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:09:07 - number of joint positions sent : 6 and duration is 5
+16:09:12 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:09:12 - number of joint positions sent : 6
+16:09:12 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:09:12 - number of joint positions sent : 6
+motion_server: 16:28:19 - Kinematic mode is activated
+16:28:19 _controlLoop :INFO- controlLoop started.
+16:28:19 startup :INFO- robot started.
+motion_server: 16:28:19 - controlLoop started.
+motion_server: 16:28:19 - robot started.
+16:28:20 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:28:20 - number of joint positions sent : 6 and duration is 2
+16:28:20 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:28:20 - number of joint positions sent : 6 and duration is 2
+16:28:22 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:28:22 - number of joint positions sent : 6
+16:28:22 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:28:22 - number of joint positions sent : 6
+16:28:23 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:28:23 - IK solve successful
+16:28:23 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:28:23 - No collision
+16:28:23 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:28:23 - number of joint positions sent : 6 and duration is 1
+16:28:23 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:28:23 - IK solve successful
+16:28:23 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:28:23 - No collision
+16:28:23 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:28:23 - number of joint positions sent : 6 and duration is 1
+16:28:24 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:28:24 - number of joint positions sent : 6
+16:28:25 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:28:25 - number of joint positions sent : 6 and duration is 1
+16:28:26 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:28:26 - number of joint positions sent : 6 and duration is 5
+16:28:26 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:28:26 - number of joint positions sent : 6 and duration is 5
+16:28:31 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:28:31 - number of joint positions sent : 6
+16:28:31 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:28:31 - number of joint positions sent : 6
+motion_server: 16:30:28 - Kinematic mode is activated
+16:30:28 _controlLoop :INFO- controlLoop started.
+motion_server: 16:30:28 - controlLoop started.
+16:30:28 startup :INFO- robot started.
+motion_server: 16:30:28 - robot started.
+16:30:30 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:30:30 - number of joint positions sent : 6 and duration is 2
+16:30:30 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:30:30 - number of joint positions sent : 6 and duration is 2
+16:30:32 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:30:32 - number of joint positions sent : 6
+16:30:32 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:30:32 - number of joint positions sent : 6
+motion_server: 16:31:52 - Kinematic mode is activated
+16:31:52 _controlLoop :INFO- controlLoop started.
+motion_server: 16:31:52 - controlLoop started.
+16:31:52 startup :INFO- robot started.
+motion_server: 16:31:52 - robot started.
+16:31:53 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:31:53 - number of joint positions sent : 6 and duration is 2
+16:31:53 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:31:53 - number of joint positions sent : 6 and duration is 2
+16:31:55 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:31:55 - number of joint positions sent : 6
+16:31:55 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:31:55 - number of joint positions sent : 6
+16:31:56 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:31:56 - IK solve successful
+16:31:56 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:31:56 - No collision
+16:31:56 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:31:56 - number of joint positions sent : 6 and duration is 1
+16:31:56 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:31:56 - IK solve successful
+16:31:56 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:31:56 - No collision
+16:31:56 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:31:56 - number of joint positions sent : 6 and duration is 1
+16:31:58 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:31:58 - number of joint positions sent : 6
+16:31:59 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:31:59 - number of joint positions sent : 6 and duration is 1
+16:31:59 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:31:59 - number of joint positions sent : 6 and duration is 5
+16:31:59 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:31:59 - number of joint positions sent : 6 and duration is 5
+16:32:04 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:32:04 - number of joint positions sent : 6
+16:32:04 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:32:04 - number of joint positions sent : 6
+motion_server: 16:32:37 - Kinematic mode is activated
+16:32:37 _controlLoop :INFO- controlLoop started.
+motion_server: 16:32:37 - controlLoop started.
+16:32:37 startup :INFO- robot started.
+motion_server: 16:32:37 - robot started.
+16:32:38 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:32:38 - number of joint positions sent : 6 and duration is 2
+16:32:38 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:32:38 - number of joint positions sent : 6 and duration is 2
+16:32:40 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:32:40 - number of joint positions sent : 6
+16:32:41 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:32:41 - number of joint positions sent : 6
+motion_server: 16:33:25 - Kinematic mode is activated
+16:33:26 _controlLoop :INFO- controlLoop started.
+motion_server: 16:33:26 - controlLoop started.
+16:33:26 startup :INFO- robot started.
+motion_server: 16:33:26 - robot started.
+16:33:27 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:33:27 - number of joint positions sent : 6 and duration is 2
+16:33:27 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:33:27 - number of joint positions sent : 6 and duration is 2
+16:33:29 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:33:29 - number of joint positions sent : 6
+16:33:29 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:33:29 - number of joint positions sent : 6
+16:33:30 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:33:30 - IK solve successful
+16:33:30 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:33:30 - No collision
+16:33:30 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:33:30 - number of joint positions sent : 6 and duration is 1
+16:33:30 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:33:30 - IK solve successful
+16:33:30 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:33:30 - No collision
+16:33:31 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:33:31 - number of joint positions sent : 6 and duration is 1
+16:33:32 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:33:32 - number of joint positions sent : 6
+16:33:33 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:33:33 - number of joint positions sent : 6 and duration is 1
+16:33:33 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:33:33 - number of joint positions sent : 6 and duration is 5
+16:33:33 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:33:33 - number of joint positions sent : 6 and duration is 5
+16:33:38 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:33:38 - number of joint positions sent : 6
+16:33:38 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:33:38 - number of joint positions sent : 6
+motion_server: 16:59:29 - Kinematic mode is activated
+16:59:29 _controlLoop :INFO- controlLoop started.
+motion_server: 16:59:29 - controlLoop started.
+16:59:29 startup :INFO- robot started.
+motion_server: 16:59:29 - robot started.
+16:59:30 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:59:30 - number of joint positions sent : 6 and duration is 2
+16:59:30 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 16:59:30 - number of joint positions sent : 6 and duration is 2
+16:59:32 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:59:32 - number of joint positions sent : 6
+16:59:32 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:59:32 - number of joint positions sent : 6
+16:59:33 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:59:33 - IK solve successful
+16:59:33 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:59:33 - No collision
+16:59:33 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:59:33 - number of joint positions sent : 6 and duration is 1
+16:59:33 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 16:59:33 - IK solve successful
+16:59:34 setLeftEEInertialTransform :INFO- No collision
+motion_server: 16:59:34 - No collision
+16:59:34 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:59:34 - number of joint positions sent : 6 and duration is 1
+16:59:35 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:59:35 - number of joint positions sent : 6
+16:59:36 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 16:59:36 - number of joint positions sent : 6 and duration is 1
+16:59:36 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:59:36 - number of joint positions sent : 6 and duration is 5
+16:59:36 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 16:59:36 - number of joint positions sent : 6 and duration is 5
+16:59:41 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:59:41 - number of joint positions sent : 6
+16:59:41 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 16:59:41 - number of joint positions sent : 6
+motion_server: 17:06:38 - Kinematic mode is activated
+17:06:38 _controlLoop :INFO- controlLoop started.
+motion_server: 17:06:38 - controlLoop started.
+17:06:38 startup :INFO- robot started.
+motion_server: 17:06:38 - robot started.
+17:06:40 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:06:40 - number of joint positions sent : 6 and duration is 2
+17:06:40 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:06:40 - number of joint positions sent : 6 and duration is 2
+17:06:42 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:06:42 - number of joint positions sent : 6
+17:06:42 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:06:42 - number of joint positions sent : 6
+17:06:43 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:06:43 - IK solve successful
+17:06:43 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:06:43 - No collision
+17:06:43 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:06:43 - number of joint positions sent : 6 and duration is 1
+17:06:43 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:06:43 - IK solve successful
+17:06:44 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:06:44 - No collision
+17:06:44 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:06:44 - number of joint positions sent : 6 and duration is 1
+17:06:45 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:06:45 - number of joint positions sent : 6
+17:06:46 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:06:46 - number of joint positions sent : 6 and duration is 1
+17:06:46 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:06:46 - number of joint positions sent : 6 and duration is 5
+17:06:46 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:06:46 - number of joint positions sent : 6 and duration is 5
+17:06:51 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:06:51 - number of joint positions sent : 6
+17:06:52 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:06:52 - number of joint positions sent : 6
+motion_server: 17:08:41 - Kinematic mode is activated
+17:08:41 _controlLoop :INFO- controlLoop started.
+motion_server: 17:08:41 - controlLoop started.
+17:08:41 startup :INFO- robot started.
+motion_server: 17:08:41 - robot started.
+17:08:42 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:08:42 - number of joint positions sent : 6 and duration is 2
+17:08:42 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:08:42 - number of joint positions sent : 6 and duration is 2
+17:08:44 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:08:44 - number of joint positions sent : 6
+17:08:45 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:08:45 - number of joint positions sent : 6
+17:08:46 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:08:46 - IK solve successful
+17:08:46 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:08:46 - No collision
+17:08:46 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:08:46 - number of joint positions sent : 6 and duration is 1
+17:08:46 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:08:46 - IK solve successful
+17:08:46 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:08:46 - No collision
+17:08:46 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:08:46 - number of joint positions sent : 6 and duration is 1
+17:08:48 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:08:48 - number of joint positions sent : 6
+17:08:49 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:08:49 - number of joint positions sent : 6 and duration is 1
+17:08:49 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:08:49 - number of joint positions sent : 6 and duration is 5
+17:08:49 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:08:49 - number of joint positions sent : 6 and duration is 5
+17:08:54 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:08:54 - number of joint positions sent : 6
+17:08:55 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:08:55 - number of joint positions sent : 6
+motion_server: 17:13:16 - Kinematic mode is activated
+17:13:16 startup :INFO- robot started.
+17:13:16 _controlLoop :INFO- controlLoop started.
+motion_server: 17:13:16 - robot started.
+motion_server: 17:13:16 - controlLoop started.
+17:13:18 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:13:18 - number of joint positions sent : 6 and duration is 2
+17:13:18 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:13:18 - number of joint positions sent : 6 and duration is 2
+17:13:20 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:13:20 - number of joint positions sent : 6
+17:13:20 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:13:20 - number of joint positions sent : 6
+17:13:21 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:13:21 - IK solve successful
+17:13:21 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:13:21 - No collision
+17:13:21 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:13:21 - number of joint positions sent : 6 and duration is 1
+17:13:21 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:13:21 - IK solve successful
+17:13:22 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:13:22 - No collision
+17:13:22 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:13:22 - number of joint positions sent : 6 and duration is 1
+17:13:23 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:13:23 - number of joint positions sent : 6
+17:13:24 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:13:24 - number of joint positions sent : 6 and duration is 1
+17:13:24 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:13:24 - number of joint positions sent : 6 and duration is 5
+17:13:24 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:13:24 - number of joint positions sent : 6 and duration is 5
+17:13:29 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:13:29 - number of joint positions sent : 6
+17:13:30 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:13:30 - number of joint positions sent : 6
+motion_server: 17:15:34 - Kinematic mode is activated
+17:15:34 _controlLoop :INFO- controlLoop started.
+motion_server: 17:15:34 - controlLoop started.
+17:15:34 startup :INFO- robot started.
+motion_server: 17:15:34 - robot started.
+17:15:36 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:15:36 - number of joint positions sent : 6 and duration is 2
+17:15:36 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:15:36 - number of joint positions sent : 6 and duration is 2
+17:15:38 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:15:38 - number of joint positions sent : 6
+17:15:39 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:15:39 - number of joint positions sent : 6
+17:15:40 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:15:40 - IK solve successful
+17:15:40 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:15:40 - No collision
+17:15:40 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:15:40 - number of joint positions sent : 6 and duration is 1
+17:15:40 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:15:40 - IK solve successful
+17:15:40 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:15:40 - No collision
+17:15:40 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:15:40 - number of joint positions sent : 6 and duration is 1
+17:15:41 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:15:41 - number of joint positions sent : 6
+17:16:38 _controlLoop :INFO- controlThread exited.
+motion_server: 17:16:38 - controlThread exited.
+motion_server: 17:17:14 - Server Created
+motion_server: 17:17:34 - Kinematic mode is activated
+17:17:34 _controlLoop :INFO- controlLoop started.
+motion_server: 17:17:34 - controlLoop started.
+17:17:34 startup :INFO- robot started.
+motion_server: 17:17:34 - robot started.
+17:17:35 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:17:35 - number of joint positions sent : 6 and duration is 2
+17:17:35 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:17:35 - number of joint positions sent : 6 and duration is 2
+17:17:37 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:17:37 - number of joint positions sent : 6
+17:17:37 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:17:37 - number of joint positions sent : 6
+17:17:37 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:17:37 - IK solve successful
+17:17:37 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:17:37 - No collision
+17:17:37 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:17:37 - number of joint positions sent : 6 and duration is 1
+17:17:37 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:17:37 - IK solve successful
+17:17:37 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:17:37 - No collision
+17:17:37 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:17:37 - number of joint positions sent : 6 and duration is 1
+17:17:38 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:17:38 - number of joint positions sent : 6
+17:17:39 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:17:39 - number of joint positions sent : 6 and duration is 1
+17:17:40 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:17:40 - number of joint positions sent : 6 and duration is 5
+17:17:40 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:17:40 - number of joint positions sent : 6 and duration is 5
+17:17:45 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:17:45 - number of joint positions sent : 6
+17:17:45 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:17:45 - number of joint positions sent : 6
+motion_server: 17:23:31 - Kinematic mode is activated
+17:23:31 _controlLoop :INFO- controlLoop started.
+motion_server: 17:23:31 - controlLoop started.
+17:23:31 startup :INFO- robot started.
+motion_server: 17:23:31 - robot started.
+17:23:32 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:23:32 - number of joint positions sent : 6 and duration is 2
+17:23:32 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:23:32 - number of joint positions sent : 6 and duration is 2
+17:23:34 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:23:34 - number of joint positions sent : 6
+17:23:34 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:23:34 - number of joint positions sent : 6
+17:23:35 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:23:35 - IK solve successful
+17:23:35 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:23:35 - No collision
+17:23:35 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:23:35 - number of joint positions sent : 6 and duration is 1
+17:23:35 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:23:35 - IK solve successful
+17:23:35 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:23:35 - No collision
+17:23:35 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:23:35 - number of joint positions sent : 6 and duration is 1
+17:23:36 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:23:36 - number of joint positions sent : 6
+17:23:37 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:23:37 - number of joint positions sent : 6 and duration is 1
+17:23:37 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:23:37 - number of joint positions sent : 6 and duration is 5
+17:23:37 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:23:37 - number of joint positions sent : 6 and duration is 5
+17:23:42 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:23:42 - number of joint positions sent : 6
+17:23:42 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:23:42 - number of joint positions sent : 6
+motion_server: 17:24:26 - Kinematic mode is activated
+17:24:26 _controlLoop :INFO- controlLoop started.
+motion_server: 17:24:26 - controlLoop started.
+17:24:26 startup :INFO- robot started.
+motion_server: 17:24:26 - robot started.
+17:24:27 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:24:27 - number of joint positions sent : 6 and duration is 2
+17:24:27 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:24:27 - number of joint positions sent : 6 and duration is 2
+17:24:29 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:24:29 - number of joint positions sent : 6
+17:24:29 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:24:29 - number of joint positions sent : 6
+17:24:30 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:24:30 - IK solve successful
+17:24:30 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:24:30 - No collision
+17:24:30 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:24:30 - number of joint positions sent : 6 and duration is 1
+17:24:30 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:24:30 - IK solve successful
+17:24:30 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:24:30 - No collision
+17:24:30 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:24:30 - number of joint positions sent : 6 and duration is 1
+17:24:31 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:24:31 - number of joint positions sent : 6
+17:24:32 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:24:32 - number of joint positions sent : 6 and duration is 1
+17:24:32 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:24:32 - number of joint positions sent : 6 and duration is 5
+17:24:32 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:24:32 - number of joint positions sent : 6 and duration is 5
+17:24:37 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:24:37 - number of joint positions sent : 6
+17:24:37 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:24:37 - number of joint positions sent : 6
+motion_server: 17:33:59 - Kinematic mode is activated
+17:33:59 _controlLoop :INFO- controlLoop started.
+17:33:59 startup :INFO- robot started.
+motion_server: 17:33:59 - controlLoop started.
+motion_server: 17:33:59 - robot started.
+17:34:00 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:34:00 - number of joint positions sent : 6 and duration is 2
+17:34:00 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 2
+motion_server: 17:34:00 - number of joint positions sent : 6 and duration is 2
+17:34:02 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:34:02 - number of joint positions sent : 6
+17:34:02 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:34:02 - number of joint positions sent : 6
+17:34:03 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:34:03 - IK solve successful
+17:34:03 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:34:03 - No collision
+17:34:03 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:34:03 - number of joint positions sent : 6 and duration is 1
+17:34:03 setLeftEEInertialTransform :INFO- IK solve successful
+motion_server: 17:34:03 - IK solve successful
+17:34:03 setLeftEEInertialTransform :INFO- No collision
+motion_server: 17:34:03 - No collision
+17:34:03 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:34:03 - number of joint positions sent : 6 and duration is 1
+17:34:04 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:34:04 - number of joint positions sent : 6
+17:34:05 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 1
+motion_server: 17:34:05 - number of joint positions sent : 6 and duration is 1
+17:34:05 setLeftLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:34:05 - number of joint positions sent : 6 and duration is 5
+17:34:05 setRightLimbPositionLinear :DEBUG- number of joint positions sent : 6 and duration is 5
+motion_server: 17:34:05 - number of joint positions sent : 6 and duration is 5
+17:34:10 setLeftLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:34:10 - number of joint positions sent : 6
+17:34:10 setRightLimbPosition :DEBUG- number of joint positions sent : 6
+motion_server: 17:34:10 - number of joint positions sent : 6
+19:18:11 _controlLoop :INFO- controlThread exited.
+motion_server: 19:18:11 - controlThread exited.
