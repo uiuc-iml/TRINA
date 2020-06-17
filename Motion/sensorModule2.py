@@ -39,7 +39,7 @@ class Camera_Robot:
     """
 
     # Whenever a new realsense camera is added, please update this dictionary with its serial number
-    def __init__(self, robot, cameras=['realsense_right'], mode='Kinematic', components=[], world=[]):
+    def __init__(self, robot, cameras=['realsense_right'], mode='Kinematic', components=[], world=[], ros_active = True):
         """
         Instantiates a camera robot instance
 
@@ -69,6 +69,8 @@ class Camera_Robot:
         self.robot = robot
         self.active_cameras = {}
         self.update_lock = threading.Lock()
+        self.ros_active = ros_active
+
         if(self.mode == 'physical'):
             import pyrealsense2 as rs
             import pyzed.sl as sl
@@ -116,7 +118,6 @@ class Camera_Robot:
             self.left_point_cloud = []#np.zeros(shape=(3, 6))
             self.right_point_cloud = []#np.zeros(shape=(3, 6))
             self.simlock = threading.Lock()
-
             # GLEW WORKAROUND
             glutInit([])
             glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |
@@ -142,13 +143,13 @@ class Camera_Robot:
             pcUpdaterThread = threading.Thread(target=self.update_point_clouds)
             pcUpdaterThread.daemon = True
             pcUpdaterThread.start()
-        
-            self.ros_parent_conn, self.ros_child_conn = Pipe()
-            gmapping_proc = Process(target=self.update_range_finder, args=(self.ros_child_conn, ))
-            gmapping_proc.daemon = True
-            print('starts ros node')
-            gmapping_proc.start()
-            print('gets here')
+            if(self.ros_active):
+                self.ros_parent_conn, self.ros_child_conn = Pipe()
+                gmapping_proc = Process(target=self.update_range_finder, args=(self.ros_child_conn, ))
+                gmapping_proc.daemon = True
+                print('starts ros node')
+                gmapping_proc.start()
+                print('gets here')
 
             ### THIS MUST COME AFTER THE OTHER PROCESS!!!!!
             try:
@@ -187,7 +188,6 @@ class Camera_Robot:
             rpc = self.right_point_cloud
             # lpc = sensing.camera_to_points(self.left_cam, points_format='numpy', all_points=False, color_format='channels')
             # rpc = sensing.camera_to_points(self.right_cam, points_format='numpy', all_points=False, color_format='channels')
-            print(id(self))
 
             left_pcd = o3d.geometry.PointCloud()
             left_pcd.points = o3d.utility.Vector3dVector(lpc[:, :3])
@@ -197,8 +197,9 @@ class Camera_Robot:
             right_pcd.colors = o3d.utility.Vector3dVector(rpc[:, 3:])
             # we finally transform the point clouds:
             try:
-
-                Rrotation = self.Rrotation
+                klampt_to_o3d = np.array([[0,-1,0,0],[0,0,-1,0],[1,0,0,0],[0,0,0,1]])
+                inv_k_to_o3d = np.linalg.inv(klampt_to_o3d)
+                Rrotation = self.Rrotation  
                 Rtranslation = self.Rtranslation
                 Lrotation = self.Lrotation
                 Ltranslation = self.Ltranslation
@@ -207,20 +208,20 @@ class Camera_Robot:
                 LEE_transform = np.array(
                     se3.homogeneous((Lrotation, Ltranslation)))
                 self.realsense_transform = np.eye(4)
-                # we then multiply this transform with the transform between the end effector and the camera
-                final_Rtransform = np.matmul(
-                    REE_transform, self.realsense_transform)
-                final_Ltransform = np.matmul(
-                    LEE_transform, self.realsense_transform)
-                # we then invert this transform using klampt se3
-                Rft = se3.from_homogeneous(final_Rtransform)
-                Rinverted_transform = np.array(se3.homogeneous(se3.inv(Rft)))
-                Lft = se3.from_homogeneous(final_Ltransform)
-                Linverted_transform = np.array(se3.homogeneous(se3.inv(Lft)))
+                # we then apply the necessary similarity transforms:
+                final_Rtransform = np.matmul(inv_k_to_o3d,
+                                                np.matmul(klampt_to_o3d,
+                                                    np.matmul(
+                                                        REE_transform,inv_k_to_o3d)))
+                final_Ltransform = np.matmul(inv_k_to_o3d,
+                                np.matmul(klampt_to_o3d,
+                                    np.matmul(
+                                        LEE_transform,inv_k_to_o3d)))
+                
 
                 # we then apply this transform to the point cloud
-                Rtransformed_pc = left_pcd.transform(Rinverted_transform)
-                Ltransformed_pc = right_pcd.transform(Linverted_transform)
+                Rtransformed_pc = right_pcd.transform(final_Rtransform)
+                Ltransformed_pc = left_pcd.transform(final_Ltransform)
                 return {"realsense_right": Rtransformed_pc, "realsense_left": Ltransformed_pc}
             except Exception as e:
                 print(e)
@@ -300,9 +301,10 @@ class Camera_Robot:
             self.left_cam.kinematicSimulate(self.world, self.dt)
             self.right_cam.kinematicSimulate(self.world, self.dt)
             self.lidar.kinematicSimulate(self.world,self.dt)
-            curr_pose = self.jarvis.sensedBasePosition()
-            ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
-            self.ros_parent_conn.send([ros_msg, curr_pose,False]) 
+            if(self.ros_active):
+                curr_pose = self.jarvis.sensedBasePosition()
+                ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
+                self.ros_parent_conn.send([ros_msg, curr_pose,False]) 
             self.left_image = sensing.camera_to_images(
                 self.left_cam, image_format='numpy', color_format='channels')
             self.right_image = sensing.camera_to_images(
@@ -322,7 +324,7 @@ class Camera_Robot:
         while(True):
             # with self.simlock:
             # self.sim.simulate(self.dt)
-            print(id(self))
+            # print(id(self))
             self.sim.updateWorld()
 
             # print('updating point clouds')
@@ -352,8 +354,8 @@ class Camera_Robot:
                     # print('\n\n',ros_msg)
                     pub.publish(ros_msg)
                     self._publishTf(curr_pose_child) 
-    print('----------')
-    print('publish gmapping path exited')
+        print('----------')
+        print('publish gmapping path exited')
 
     def _publishTf(self,curr_pose):
         x, y, theta = curr_pose
