@@ -65,7 +65,7 @@ class CommandServer:
         self.server = KeyValueStore(self.interface)
         self.server["ROBOT_STATE"] = 0
         self.server['ROBOT_COMMAND'] = {}
-        self.server['health_log'] = {}
+        self.server['HEALTH_LOG'] = {}
         self.server['ACTIVITY_STATUS'] = {}
         self.mode = mode
         self.components = components
@@ -73,7 +73,7 @@ class CommandServer:
         self.dt = 0.001
         self.robot = MotionClient(address = robot_ip)
         # self.controller = UIController()
-        self.robot.startServer(mode = self.mode, components = self.components,codename = 'anthrax_lowpoly')
+        self.robot.restartServer(mode = self.mode, components = self.components,codename = 'anthrax_lowpoly')
         self.robot_state = {}
         self.robot_command = {}
         self.modules = ["Wipe", "UIModule", "Motion"]
@@ -169,8 +169,8 @@ class CommandServer:
                                 "Velocity" : {
                                     "LeftArm" : vel_left,
                                     "RightArm" : vel_right,
-                                    "Base" : vel_base,
-                                },
+                                    "Base" : vel_base
+                                }
                                 }
 
 
@@ -184,31 +184,41 @@ class CommandServer:
         trina_modules = reload(trina_modules)
         activity_dict = {}
         command_dict = {}
-        if(module_names == []):
-            for name, obj in inspect.getmembers(trina_modules):
-                if inspect.isclass(obj):
-                    if(str(obj).find('trina_modules') != -1):
-                        tmp = self.start_module(obj,name)
-                        self.modules_dict.update({name:tmp})
-                        self.health_dict.update({name:[True,time.time()]})
-                        command_dict.update({name:[]})
-            self.server['health_log'] = self.health_dict
-            self.server['ROBOT_COMMAND'] = command_dict
-            self.empty_command = command_dict
-        else:
-            print('starting only modules '+ str(module_names))
-            for name, obj in inspect.getmembers(trina_modules):
-                if inspect.isclass(obj):
-                    if(str(obj).find('trina_modules') != -1):
-                        if(name in module_names):
-                            print('killing module '+ name)
-                            for pcess in self.modules_dict[name]:
-                                pcess.terminate()
-                            self.modules_dict.update({name:[]})
-                            print('restarting only module ' + name)
+        try:
+            if(module_names == []):
+                for name, obj in inspect.getmembers(trina_modules):
+                    if inspect.isclass(obj):
+                        if(str(obj).find('trina_modules') != -1):
                             tmp = self.start_module(obj,name)
                             self.modules_dict.update({name:tmp})
-                            self.server['health_log'][name] = [True,time.time()]
+                            self.health_dict.update({name:[True,time.time()]})
+                            activity_dict.update({name:False})
+                            command_dict.update({name:[]})
+                self.server['HEALTH_LOG'] = self.health_dict
+                self.server['ROBOT_COMMAND'] = command_dict
+                self.server['ACTIVITY_STATUS'] = activity_dict
+                self.empty_command = command_dict
+                self.active_modules = set({})
+            else:
+                print('starting only modules '+ str(module_names))
+                for name, obj in inspect.getmembers(trina_modules):
+                    if inspect.isclass(obj):
+                        if(str(obj).find('trina_modules') != -1):
+                            if(name in module_names):
+                                print('killing module '+ name)
+                                for pcess in self.modules_dict[name]:
+                                    pcess.terminate()
+                                self.modules_dict.update({name:[]})
+                                print('restarting only module ' + name)
+                                tmp = self.start_module(obj,name)
+                                self.modules_dict.update({name:tmp})
+                                self.server['HEALTH_LOG'][name] = [True,time.time()]
+                                self.server['ACTIVITY_STATUS'][name] = 'idle'
+        except Exception as e:
+            print('Failed to initialize module',name,'due to ',e)
+    # def switch_module_activity(self,to_deactivate,to_activate):
+    #     for i in to_deactivate:
+
 
     def shutdown_all(self):
         self.shutdown()
@@ -328,7 +338,7 @@ class CommandServer:
 
             loopStartTime = time.time()
             for module in self.modules_dict.keys():
-                moduleStatus = self.server["health_log"][module].read()
+                moduleStatus = self.server["HEALTH_LOG"][module].read()
                 if ((time.time()-moduleStatus[1]) > self.tolerance*self.monitoring_dt):
                     print("Module " + module + " is dead, queueing restart")
                     to_restart.append(module)

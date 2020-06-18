@@ -16,6 +16,7 @@ import math
 import datetime
 import threading
 import sys
+import time 
 
 if(sys.version_info[0] < 3):
     # from future import *
@@ -33,7 +34,7 @@ class Jarvis:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.name = name
-        self.server['ACTIVITY_STATUS'][self.name] = 'Inactive'
+        self.server['ACTIVITY_STATUS'][self.name] = 'idle'
         self.sensor_module = sensor_module
         # should not instantiate commanserver
         # self.command_server = CommandServer()
@@ -70,7 +71,7 @@ class Jarvis:
 
     def setLeftLimbPosition(self, q):
         command = self.send_command('self.robot.setLeftLimbPosition', str(q))
-        current_list = self.server['ROBOT_COMMAND']['P4'].read()
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
         current_list.append(command)
         self.server['ROBOT_COMMAND'][self.name] = current_list
 
@@ -99,6 +100,9 @@ class Jarvis:
         final_string = (final_string + ')')
         final_string = final_string.format(*args)
         return final_string
+
+    def log_health(self,status = True):
+        self.server["HEALTH_LOG"][self.name] = [status,time.time()]
     ################################## All Mighty divider between motion and UI###############################
 
     def sendRayClickUI(self):

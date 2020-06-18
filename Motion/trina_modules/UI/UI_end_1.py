@@ -379,24 +379,23 @@ class UI_end_1:
        
 
 
-        # vis.show()
-        # while vis.shown():
-        #     vis.lock()
-        #     try:
-        #         sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
-        #         vis_robot = world.robot(0)
-        #         vis_robot.setConfig(sensed_position)
-        #     except Exception as err:
-        #         print("Error: {0}".format(err))
-        #     vis.unlock()
-        #     time.sleep(self.dt)
-        # vis.kill()
+        vis.show()
+        while vis.shown():
+            vis.lock()
+            try:
+                sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
+                vis_robot = world.robot(0)
+                vis_robot.setConfig(sensed_position)
+            except Exception as err:
+                print("Error: {0}".format(err))
+            vis.unlock()
+            time.sleep(self.dt)
+        vis.kill()
 
         # start vis
 
-        vis.spin(float('inf'))
-        
-        vis.kill()
+        # vis.spin(float('inf'))
+        # vis.kill()
 
         # clean up
         del g_mainwindow

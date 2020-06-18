@@ -45,7 +45,7 @@ class C2:
     def verify(self):
         while(True):
             try:
-                self.server['health_log']['C2'] = [True,time.time()]
+                self.jarvis.log_health()
                 time.sleep(1)
             except Exception as e:
                 print(e)

@@ -351,7 +351,7 @@ class Camera_Robot:
                 if exit:
                     break
                 if((ros_msg is not None)&(curr_pose_child is not None)):
-                    # print('\n\n',ros_msg)
+                    # print('\n\n updating topic \n\n',ros_msg)
                     pub.publish(ros_msg)
                     self._publishTf(curr_pose_child) 
         print('----------')

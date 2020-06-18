@@ -7,20 +7,15 @@ else:
     from motion_client_python3 import MotionClient
     from importlib import reload
 
-# from importlib import reload
 
-path = os.path.expanduser('~/TRINA/Motion/trina_modules/')
-sys.path.append(path)
-
-
-import trina_modules.test1
-import trina_modules.test2
+from . import test_modules
+from . import PointClickNavModule
 # import trina_modules.UI
 
-test1 = reload(test1)
-test2 = reload(test2)
+reload(test_modules)
+reload(PointClickNavModule)
 # UI = reload(trina_modules.UI.UI)
 
-from trina_modules.test1 import *
-from trina_modules.test2 import *
+from test_modules import *
+from PointClickNavModule import PointClickNav
 # from trina_modules.UI.UI import *
