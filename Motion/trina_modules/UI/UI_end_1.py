@@ -39,6 +39,7 @@ class MyQtMainWindow(QMainWindow):
         self.server = server
         self.dt = 0.05
         self.rpc_args = {}
+        self.mode = ''
 
 
         self._initScrennLayout(klamptGLWindow)
@@ -55,6 +56,8 @@ class MyQtMainWindow(QMainWindow):
                 try:
                     self.commandQueue.pop(0)
                     self.server["UI_END_COMMAND"] = self.commandQueue
+                    rightJoystickMock = self.server["UI_STATE"]["controllerButtonState"]["rightController"]["thumbstickMovement"].read()
+                    print("rightJoystickMock",rightJoystickMock)
                     self.rpc_args = command['args']
                     time.sleep(0.0001) 
                     exec('self.'+command['funcName']+'()')
@@ -65,6 +68,8 @@ class MyQtMainWindow(QMainWindow):
             print("AttributeError: {0}".format(err))
         QMainWindow.event(self,event)
         return 0
+
+
 
 
 
@@ -169,7 +174,15 @@ class MyQtMainWindow(QMainWindow):
 
     def _processModeTrigger(self,q):
         print (q.text()+" is triggered")
-        self.modeText.setText("Mode: " +  q.text())
+        if self.mode != q.text():
+            self.modeText.setText("Mode: " +  q.text())
+            self.mode = q.text()
+            try:
+                vis.clearText()
+                vis.hide("destination")
+                vis.hide("robot trajectory")
+            except Exception as err:
+                print("Error: {0}".format(err))
 
     def _processActionTrigger(self,q):
         print (q.text()+" is triggered")
@@ -179,10 +192,10 @@ class MyQtMainWindow(QMainWindow):
 
 
     def _initScrennLayout(self,klamptGLWindow):
-        self.setFixedSize(800, 600)
+        self.setFixedSize(1000, 600)
         self.splitter = QSplitter()
         self.left = QFrame()
-        self.left.setFixedSize(200,600)
+        self.left.setFixedSize(400,600)
         self.leftLayout = QVBoxLayout()
         self.left.setLayout(self.leftLayout)
         self.right = QFrame()
@@ -196,7 +209,7 @@ class MyQtMainWindow(QMainWindow):
         self.rightLayout.addWidget(self.glwidget)
     
         self.buttons = {}
-        self.welcomeText = QLabel("Welcome to TRINA UI! \n\n\nPlease Refer to Menu Bar for More Actions.")
+        self.welcomeText = QLabel("Welcome to TRINA UI! \n\n\nPlease Refer To Menu Bar Actions For Selecting Operation Mode.")
         self.modeText = QLabel("")
         self.modeText.setWordWrap(True)
         self.welcomeText.setWordWrap(True)
@@ -238,11 +251,39 @@ class MyGLPlugin(vis.GLPluginInterface):
 
     def keyboardfunc(self,c,x,y):
         print ("Pressed",c)
-        self.server['UI_STATE']['controllerButtonState']
+        rightJoystickMock = self.server["UI_STATE"]["controllerButtonState"]["rightController"]["thumbstickMovement"].read()
+        if c == 'w':
+            rightJoystickMock[1] = 1.0
+        if c == 's':
+            rightJoystickMock[1] = -1.0
+        if c == 'a':
+            rightJoystickMock[0] = 1.0
+        if c == 'd':
+            rightJoystickMock[0] = -1.0
+
+        self.server["UI_STATE"]["controllerButtonState"]["rightController"]["thumbstickMovement"] = rightJoystickMock 
+        time.sleep(0.0001)
         if c == 'q':
             self.quit = True
             return True
         return False
+
+    def keyboardupfunc(self,c,x,y):
+        print ("Released",c)
+        rightJoystickMock = self.server["UI_STATE"]["controllerButtonState"]["rightController"]["thumbstickMovement"].read()
+        if c == 'w' and rightJoystickMock[1] == 1.0:
+            rightJoystickMock[1] = 0.0
+        if c == 's' and rightJoystickMock[1] == -1.0:
+            rightJoystickMock[1] = 0.0
+        if c == 'a' and rightJoystickMock[0] == 1.0: 
+            rightJoystickMock[0] = 0.0
+        if c == 'd' and rightJoystickMock[0] == -1.0:
+            rightJoystickMock[0] = 0.0
+
+        self.server["UI_STATE"]["controllerButtonState"]["rightController"]["thumbstickMovement"] = rightJoystickMock 
+        time.sleep(0.0001)
+        return False
+
 
 
     def click_world(self,x,y):
@@ -290,7 +331,7 @@ class MyGLPlugin(vis.GLPluginInterface):
                 self.server['UI_FEEDBACK'][str(id)]['REPLIED'] = True
                 self.global_state['collectRaySignal'] = [False,False]
 
-                vis.addText("pointclick","")
+                vis.remove("pointclick")
 
         except AttributeError as err:
             print("AttributeError: {0}".format(err))
@@ -338,22 +379,22 @@ class UI_end_1:
        
 
 
-        vis.show()
-        while vis.shown():
-            vis.lock()
-            try:
-                sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
-                vis_robot = world.robot(0)
-                vis_robot.setConfig(sensed_position)
-            except Exception as err:
-                print("Error: {0}".format(err))
-            vis.unlock()
-            time.sleep(self.dt)
-        vis.kill()
+        # vis.show()
+        # while vis.shown():
+        #     vis.lock()
+        #     try:
+        #         sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
+        #         vis_robot = world.robot(0)
+        #         vis_robot.setConfig(sensed_position)
+        #     except Exception as err:
+        #         print("Error: {0}".format(err))
+        #     vis.unlock()
+        #     time.sleep(self.dt)
+        # vis.kill()
 
         # start vis
 
-        # vis.spin(float('inf'))
+        vis.spin(float('inf'))
         
         vis.kill()
 
