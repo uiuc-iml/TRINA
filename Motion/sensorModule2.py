@@ -320,7 +320,7 @@ class Camera_Robot:
             #     self.right_cam, points_format='numpy', all_points=False, color_format='channels')
             self.sim.updateWorld()
             elapsed_time = time.time() - start_time
-            print('Simulation Frequency:',1/elapsed_time)
+            # print('Simulation Frequency:',1/elapsed_time)
             if(elapsed_time < self.dt):
                 time.sleep(self.dt-elapsed_time)
 
@@ -354,7 +354,7 @@ class Camera_Robot:
             elapsed_time = time.time()-start_time
             if(elapsed_time < dt):
                 time.sleep(dt-elapsed_time)
-                print('Lidar Update Frequency:',1/(time.time()-start_time))
+                # print('Lidar Update Frequency:',1/(time.time()-start_time))
 
 
     def update_range_finder(self, conn):

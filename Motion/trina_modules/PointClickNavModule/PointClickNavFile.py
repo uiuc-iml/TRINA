@@ -64,6 +64,7 @@ class PointClickNav:
 		self.visualization = False
 		self.received_first_gridmap_flag = False
 		self.status = 'idle'
+		time.sleep(10)
 		if self.debugging:
 
 			self.simulated_robot = Motion(mode = 'Kinematic', codename="anthrax") #the world file has been modified to add a 
@@ -505,7 +506,7 @@ class PointClickNav:
 					if self.terminate_command:
 						self._sharedLock.acquire()
 						self.state = 'idle'
-						self.jarvis.setBaseVelocity = [0,0]
+						self.jarvis.setBaseVelocity([0,0])
 						self._sharedLock.release()
 						break
 					iteration_start = time.time()
@@ -513,7 +514,7 @@ class PointClickNav:
 
 					if not at_end and iteration_start - start_time > time_thresh:
 						end_v = min(max_v, end_v)
-						self.jarvis.setBaseVelocity = [0,0]
+						self.jarvis.setBaseVelocity([0,0])
 
 						break
 

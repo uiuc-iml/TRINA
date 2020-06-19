@@ -10,7 +10,7 @@ from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
-from multiprocessing import Pool, TimeoutError
+from multiprocessing import Pool, TimeoutError,Process
 import trina_modules
 import sys, inspect
 import atexit
@@ -104,16 +104,24 @@ class CommandServer:
         # create the list of threads
         self.modules_dict = {}
 
+        manager = Manager()
+
+        self.active_modules = manager.dict()
+        self.active_modules['UI'] = True
         self.start_modules()
 
 
         stateRecieverThread = threading.Thread(target=self.stateReciever)
         stateRecieverThread.start()
-        commandRecieverThread = threading.Thread(target=self.commandReciever)
+        commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
+        commandRecieverThread.daemon = True
         commandRecieverThread.start()
         moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
         moduleMonitorThread.start()
         atexit.register(self.shutdown_all)
+
+        # self.switch_module_activity(['C2'])
+        # self.empty_command.update({'UI':[]})
 
     def init_robot_states(self):
 
@@ -192,13 +200,14 @@ class CommandServer:
                             tmp = self.start_module(obj,name)
                             self.modules_dict.update({name:tmp})
                             self.health_dict.update({name:[True,time.time()]})
-                            activity_dict.update({name:False})
+                            activity_dict.update({name:'idle'})
                             command_dict.update({name:[]})
+                            self.active_modules[name] = False
+
                 self.server['HEALTH_LOG'] = self.health_dict
                 self.server['ROBOT_COMMAND'] = command_dict
                 self.server['ACTIVITY_STATUS'] = activity_dict
                 self.empty_command = command_dict
-                self.active_modules = set({})
             else:
                 print('starting only modules '+ str(module_names))
                 for name, obj in inspect.getmembers(trina_modules):
@@ -214,11 +223,29 @@ class CommandServer:
                                 self.modules_dict.update({name:tmp})
                                 self.server['HEALTH_LOG'][name] = [True,time.time()]
                                 self.server['ACTIVITY_STATUS'][name] = 'idle'
+                                if(self.active_modules[name]):
+                                    self.active_modules[name] = False
         except Exception as e:
             print('Failed to initialize module',name,'due to ',e)
-    # def switch_module_activity(self,to_deactivate,to_activate):
-    #     for i in to_deactivate:
+    def switch_module_activity(self,to_activate,to_deactivate = []):
+        print('switching module activity:')
+        if(to_deactivate == []):
+            tmp = self.server['ACTIVITY_STATUS'].read()
+            for i in tmp.keys():
+                # print(i)
+                self.server['ACTIVITY_STATUS'][str(i)] = 'idle'
+                if(self.active_modules[i]):
+                    self.active_modules[i] = False
+        else:
+            print('gets here')
 
+            for i in to_deactivate:
+                self.server['ACTIVITY_STATUS'][i] = 'idle'
+                if(self.active_modules[i]):
+                    self.active_modules[i] = False
+        for i in to_activate:
+            self.server['ACTIVITY_STATUS'][i] = 'active'
+            self.active_modules[i] = True
 
     def shutdown_all(self):
         self.shutdown()
@@ -303,17 +330,35 @@ class CommandServer:
                 pass
         print('\n\n\n\nstopped updating state!!! \n\n\n\n')
 
-    def commandReciever(self):
-        while not self.shut_down_flag:
+    def commandReciever(self,robot,active_modules):
+        self.dt = 0.0001
+        self.robot = robot
+        self.interface = RedisInterface(host="localhost")
+        self.interface.initialize()
+        self.server = KeyValueStore(self.interface)     
+        self.active_modules = active_modules   
+        while(True):
             loopStartTime = time.time()
             self.robot_command = self.server['ROBOT_COMMAND'].read()
+            if(self.empty_command.keys() != self.robot_command.keys()):
+                empty_command = {}
+                for key in self.robot_command.keys():
+                    empty_command.update({str(key):[]})
+                    try:
+                        self.active_modules[str(key)]
+                    except Exception as e:
+                        self.active_modules[str(key)] = False
+                self.empty_command = empty_command
             self.server['ROBOT_COMMAND'] = self.empty_command
+
             for i in self.robot_command.keys():
                 if (self.robot_command[i] != []):
-                    commandList = self.robot_command[i]
-                    for command in commandList:
-                        self.run(command)
+                    if(self.active_modules[i]):
+                        commandList = self.robot_command[i]
+                        for command in commandList:
+                            self.run(command)
             elapsedTime = time.time() - loopStartTime
+            # print('Frequency of execution loop:', 1/elapsedTime)
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:
@@ -327,12 +372,14 @@ class CommandServer:
         finally:
             print("command recieved was " + command)
 
+            pass
+
 
     #0 -> dead
     #1 -> healthy
     def moduleMonitor(self):
         self.monitoring_dt = 1
-        self.tolerance = 3
+        self.tolerance = 15
         while not self.shut_down_flag:
             to_restart = []
 
@@ -340,13 +387,13 @@ class CommandServer:
             for module in self.modules_dict.keys():
                 moduleStatus = self.server["HEALTH_LOG"][module].read()
                 if ((time.time()-moduleStatus[1]) > self.tolerance*self.monitoring_dt):
-                    print("Module " + module + " is dead, queueing restart")
+                    print("Module " + module + " is dead  due to timeout, queueing restart")
                     to_restart.append(module)
                 else:
                     processes = self.modules_dict[module]
                     for pcess in processes:
                         if(not(pcess.is_alive())):
-                            print("Module " + module + " is dead, queueing restart")
+                            print("Module " + module + " is dead due to dead process, queueing restart")
                             to_restart.append(module)
                             break
             if(to_restart != []):

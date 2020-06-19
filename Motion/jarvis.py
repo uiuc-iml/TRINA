@@ -33,9 +33,10 @@ class Jarvis:
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
-        self.name = name
-        self.server['ACTIVITY_STATUS'][self.name] = 'idle'
+        self.name = str(name)
+        self.server['ACTIVITY_STATUS'][self.name] = str('idle')
         self.sensor_module = sensor_module
+        self.server['ROBOT_COMMAND'][self.name] = []
         # should not instantiate commanserver
         # self.command_server = CommandServer()
 
@@ -103,6 +104,13 @@ class Jarvis:
 
     def log_health(self,status = True):
         self.server["HEALTH_LOG"][self.name] = [status,time.time()]
+
+    def changeActivityStatus(self,to_activate,to_deactivate = []):
+        command = self.send_command('self.switch_module_activity',str(to_activate),str(to_deactivate))
+        queue = self.server['ROBOT_COMMAND'][self.name].read()
+        queue.append(command)
+        print(command)
+        self.server['ROBOT_COMMAND'][self.name] = queue
     ################################## All Mighty divider between motion and UI###############################
 
     def sendRayClickUI(self):

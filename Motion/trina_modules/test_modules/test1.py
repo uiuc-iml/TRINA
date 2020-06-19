@@ -36,7 +36,7 @@ class C1:
             now = time.time()
             a = self.jarvis.get_point_clouds()
             time.sleep(self.sleep_time)
-            print('got Images! 1',a['realsense_right'])
+            # print('got Images! 1',a['realsense_right'])
             # o3d.visualization.draw_geometries([a['realsense_right']])
             # print('waiting to start trouble')
             # if((now-start_time) > 5):
