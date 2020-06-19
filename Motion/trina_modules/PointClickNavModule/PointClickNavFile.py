@@ -469,7 +469,7 @@ class PointClickNav:
 						new_pose = self.curr_pose
 						new_pose = transform_coordinates(new_pose, self.grid)
 
-						self.curr_point = Circle((snew_pose[0], new_pose[1]), self.radius)
+						self.curr_point = Circle((new_pose[0], new_pose[1]), self.radius)
 						self.curr_theta = new_pose[2]
 						continue
 					else:

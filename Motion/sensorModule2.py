@@ -147,9 +147,12 @@ class Camera_Robot:
                 self.ros_parent_conn, self.ros_child_conn = Pipe()
                 gmapping_proc = Process(target=self.update_range_finder, args=(self.ros_child_conn, ))
                 gmapping_proc.daemon = True
-                print('starts ros node')
+                # print('starts ros node')
                 gmapping_proc.start()
-                print('gets here')
+                # print('gets here')
+                lidar_proc = Process(target = self.update_lidar_sim, args= (self.ros_parent_conn,self.world,self.jarvis,self.simrobot,self.lidar))
+                lidar_proc.daemon = True
+                lidar_proc.start()
 
             ### THIS MUST COME AFTER THE OTHER PROCESS!!!!!
             try:
@@ -288,9 +291,9 @@ class Camera_Robot:
             start_time = time.time()
             # print('updating_sim')
             try:
-                q = self.robot.getKlamptSensedPosition()
-                self.Rrotation, self.Rtranslation = self.robot.sensedRightEETransform()
-                self.Lrotation, self.Ltranslation = self.robot.sensedLeftEETransform()
+                q = self.jarvis.sensedRobotq()
+                self.Rrotation, self.Rtranslation = self.jarvis.sensedRightLimbPosition()
+                self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftLimbPosition()
             except Exception as e:
                 print('error updating robot state')
                 print(e)
@@ -299,23 +302,25 @@ class Camera_Robot:
             # with self.simlock:
             # self.sim.simulate(self.dt)
             self.left_cam.kinematicSimulate(self.world, self.dt)
-            self.right_cam.kinematicSimulate(self.world, self.dt)
-            self.lidar.kinematicSimulate(self.world,self.dt)
-            if(self.ros_active):
-                curr_pose = self.jarvis.sensedBasePosition()
-                ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
-                self.ros_parent_conn.send([ros_msg, curr_pose,False]) 
+            self.right_cam.kinematicSimulate(self.world, self.dt) 
             self.left_image = sensing.camera_to_images(
                 self.left_cam, image_format='numpy', color_format='channels')
             self.right_image = sensing.camera_to_images(
                 self.right_cam, image_format='numpy', color_format='channels')
+
+            # self.lidar.kinematicSimulate(self.world,self.dt)
+            # if(self.ros_active):
+            #     curr_pose = self.jarvis.sensedBasePosition()
+            #     ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
+            #     self.ros_parent_conn.send([ros_msg, curr_pose,False])
+
             # self.left_point_cloud = sensing.camera_to_points(
             #     self.left_cam, points_format='numpy', all_points=False, color_format='channels')
             # self.right_point_cloud = sensing.camera_to_points(
             #     self.right_cam, points_format='numpy', all_points=False, color_format='channels')
             self.sim.updateWorld()
             elapsed_time = time.time() - start_time
-            # print('elapsed_time:',elapsed_time)
+            print('Simulation Frequency:',1/elapsed_time)
             if(elapsed_time < self.dt):
                 time.sleep(self.dt-elapsed_time)
 
@@ -333,6 +338,24 @@ class Camera_Robot:
             self.right_point_cloud = sensing.camera_to_points(
                 self.right_cam, points_format='numpy', all_points=False, color_format='channels')
             time.sleep(3*self.dt)
+    def update_lidar_sim(self,ros_parent_conn,world,jarvis,simrobot,lidar):
+        rospy.init_node("lidar_update_node")
+
+        dt = 0.01
+        while(True):
+            start_time = time.time()
+            q = jarvis.sensedRobotq()
+            simrobot.setConfig(q)
+            lidar.kinematicSimulate(self.world,dt)
+            if(self.ros_active):
+                curr_pose = jarvis.sensedBasePosition()
+                ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
+                ros_parent_conn.send([ros_msg, curr_pose,False])
+            elapsed_time = time.time()-start_time
+            if(elapsed_time < dt):
+                time.sleep(dt-elapsed_time)
+                print('Lidar Update Frequency:',1/(time.time()-start_time))
+
 
     def update_range_finder(self, conn):
         try:
@@ -351,7 +374,7 @@ class Camera_Robot:
                 if exit:
                     break
                 if((ros_msg is not None)&(curr_pose_child is not None)):
-                    # print('\n\n updating topic \n\n',ros_msg)
+                    # print('\n\n updating topic \n\n')
                     pub.publish(ros_msg)
                     self._publishTf(curr_pose_child) 
         print('----------')
