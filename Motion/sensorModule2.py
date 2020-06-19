@@ -140,7 +140,8 @@ class Camera_Robot:
                 Tcamera_EE = ([1,0,0,0,1,0,0,0,1],[0,0,0])
                 TRcamera_base = se3.mul(REE_transform,Tcamera_EE)
                 TLcamera_base = se3.mul(LEE_transform,Tcamera_EE)
-
+                klampt_to_o3d = np.array([[0,-1,0,0],[0,0,-1,0],[1,0,0,0],[0,0,0,1]])
+                inv_k_to_o3d = np.linalg.inv(klampt_to_o3d)
                 #print(TRcamera_base)
 
                 #self.realsense_transform = np.eye(4)
@@ -157,9 +158,15 @@ class Camera_Robot:
                 #print(se3.homogeneous(TRcamera_base))
                 R = np.array(se3.homogeneous(TRcamera_base))
                 L = np.array(se3.homogeneous(TLcamera_base))
+                # we then turn this final transform to open3d coordinates:
+                R = np.matmul(inv_k_to_o3d,np.matmul(klampt_to_o3d,np.matmul(R,inv_k_to_o3d)))
+                L = np.matmul(inv_k_to_o3d,np.matmul(klampt_to_o3d,np.matmul(L,inv_k_to_o3d)))
 
-                Rtransformed_pc = left_pcd.transform(R)
-                Ltransformed_pc = right_pcd.transform(L)
+                # R = np.eye(4)
+                # L = R
+                # Rtransformed_pc = right_pcd.rotate(np.linalg.inv())
+                Rtransformed_pc = right_pcd.transform(R)
+                Ltransformed_pc = left_pcd.transform(L)
 
                 return {"realsense_right":Rtransformed_pc,"realsense_left":Ltransformed_pc}
             except Exception as e:

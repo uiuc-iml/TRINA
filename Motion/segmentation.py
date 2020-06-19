@@ -19,52 +19,57 @@ def list_to_pcd(input_list):
     array = np.array(input_list)
     return numpy_to_pcd(array)
 
-def extract_plane(PointCloud, Ksearch = 50, dis_threshold = 0.01, distance_Weight = 0.01, max_iter = 100):
+# def extract_plane(PointCloud, Ksearch = 50, dis_threshold = 0.01, distance_Weight = 0.01, max_iter = 100):
+#
+#     """
+#     input: PointCloud:open3d pointcloud
+#     Perform plane extraction with ransac
+#     Return
+#     planes -- a pointcloud of the plane
+#     coefficients -- a list of plane parameters
+#     """
+#
+#     array = np.asarray(PointCloud.points, dtype = np.float32)
+#     list = array.tolist()
+#     cloud  = pcl.PointCloud()
+#     cloud.from_array(array)
+#     planes = []
+#     seg = cloud.make_segmenter_normals(ksearch=Ksearch)
+#     seg.set_optimize_coefficients(True)
+#     seg.set_model_type(pcl.SACMODEL_NORMAL_PLANE)
+#     seg.set_method_type(pcl.SAC_RANSAC)
+#     seg.set_distance_threshold(dis_threshold)
+#     seg.set_normal_distance_weight(distance_Weight)
+#     seg.set_max_iterations(max_iter)
+#     plane_indices, coefficients = seg.segment()
+#
+#     if len(plane_indices) == 0:
+#         print('Could not estimate a planar model for the given pointcloud')
+#         return None
+#
+#
+#     for j, indices in enumerate(plane_indices):
+#
+#         points = list[indices]
+#         planes.append(points)
+#
+#     planes = list_to_pcd(planes)
+#
+#     return (planes, coefficients)
 
-    """
-    input: PointCloud:open3d pointcloud
-    Perform plane extraction with ransac
-    Return
-    planes -- a pointcloud of the plane
-    coefficients -- a list of plane parameters
-    """
-
-    array = np.asarray(PointCloud.points, dtype = np.float32)
-    list = array.tolist()
-    cloud  = pcl.PointCloud()
-    cloud.from_array(array)
-    planes = []
-    seg = cloud.make_segmenter_normals(ksearch=Ksearch)
-    seg.set_optimize_coefficients(True)
-    seg.set_model_type(pcl.SACMODEL_NORMAL_PLANE)
-    seg.set_method_type(pcl.SAC_RANSAC)
-    seg.set_distance_threshold(dis_threshold)
-    seg.set_normal_distance_weight(distance_Weight)
-    seg.set_max_iterations(max_iter)
-    plane_indices, coefficients = seg.segment()
-
-    if len(plane_indices) == 0:
-        print('Could not estimate a planar model for the given pointcloud')
-        return None
-
-
-    for j, indices in enumerate(plane_indices):
-
-        points = list[indices]
-        planes.append(points)
-
-    planes = list_to_pcd(planes)
-
-    return (planes, coefficients)
+def extract_plane(PointCloud, distance_threshold = 0.01, ransac_n = 3, num_iterations = 1000):
+    plane_model, inliers = PointCloud.segment_plane(distance_threshold, ransac_n, num_iterations)
+    return (plane_model, PointCloud.select_down_sample(inliers))
 
 def remove_plane(PointCloud, distance_threshold = 0.01, ransac_n = 3, num_iterations = 1000):
     plane_model, inliers = PointCloud.segment_plane(distance_threshold, ransac_n, num_iterations)
-    return PointCloud.select_down_sample(inliers, invert=True) # sometimes here may be select_by_index, depend on which version is being used.
+    return (plane_model, PointCloud.select_down_sample(inliers, invert = True)) # sometimes here may be select_by_index, depend on which version is being used.
 
-def DBSCAN_clustering(PointCloud, eps = 0.02, min_points = 10, print_progress = False):
+def DBSCAN_clustering(PointCloud):
 
-
-    labels = np.array(PointCloud.cluster_dbscan(eps, min_points, print_progress))
+    with o3d.utility.VerbosityContextManager(o3d.utility.VerbosityLevel.Debug) as cm:
+        labels = np.array(pcd.cluster_dbscan(eps=0.02, min_points=10, print_progress=True))
+    labels = np.array(labels)
     max_label = labels.max()
     colors = plt.get_cmap("tab20")(labels / (max_label if max_label > 0 else 1))
     colors[labels < 0] = 0
@@ -72,7 +77,9 @@ def DBSCAN_clustering(PointCloud, eps = 0.02, min_points = 10, print_progress = 
     return PointCloud, labels
 
 def segmented_object(PointCloud):
+    print("here2")
     labels = DBSCAN_clustering(PointCloud)[1]
+
     points = np.asarray(PointCloud.points)
     length = labels.max() + 1
     list = []
@@ -89,6 +96,60 @@ def segmented_object(PointCloud):
         ptc_list.append(list_to_pcd(ptc))
 
     return ptc_list
+
+def vision_segment(PointCloud, dis_thres = 0.02, MinClusterSize = 10, MaxClusterSize = 25000):
+
+    array = np.asarray(PointCloud.points, dtype = np.float32)
+    cloud  = pcl.PointCloud()
+    cloud.from_array(array)
+
+    segments = []
+    tree = cloud.make_kdtree()
+    ec = cloud.make_EuclideanClusterExtraction()
+    ec.set_ClusterTolerance(dis_thres)
+    ec.set_MinClusterSize(MinClusterSize)
+    ec.set_MaxClusterSize(MaxClusterSize)
+    ec.set_SearchMethod(tree)
+    cluster_indices = ec.Extract()
+
+    print('cluster_indices : ' + str(cluster_indices.count) + " count.")
+
+    for j, indices in enumerate(cluster_indices):
+
+        points = array[indices]
+        segment = numpy_to_pcd(points)
+        segments.append(segment)
+
+    print(len(segments))
+
+    return segments
+
+def remove_floor(PointCloud, z = 0.3):
+    list = np.asarray(PointCloud.points).tolist()
+    new_list = []
+    for element in list:
+        if element[2] > z:
+            new_list.append(element)
+
+    return list_to_pcd(new_list)
+
+def remove_wall(PointCloud, x = 5.0):
+    list = np.asarray(PointCloud.points).tolist()
+    new_list = []
+    for element in list:
+        if element[0] < x:
+            new_list.append(element)
+
+    return list_to_pcd(new_list)
+
+def remove_stuff_below_table(PointCloud, plane):
+    list = np.asarray(PointCloud.points).tolist()
+    new_list = []
+    for element in list:
+        if plane[0]* element[0] +  plane[1]* element[1] +  plane[2]* element[2] +  plane[3] > 0:
+            new_list.append(element)
+
+    return list_to_pcd(new_list)
 
 def remove_noise(PointCloud, k = 50, std_mul = 1):
 
@@ -113,16 +174,31 @@ def remove_noise(PointCloud, k = 50, std_mul = 1):
 
 
 if __name__ == '__main__':
-    scene = o3d.io.read_point_cloud('pcd_samples/table_scene_mug_stereo_textured.pcd')
-    # scene = remove_noise(scene)
+    scene = o3d.io.read_point_cloud('pcd_samples/sample_table.pcd')
+    scene = remove_floor(scene)
+    scene = remove_wall(scene)
+    plane, scene = remove_plane(scene)
+    scene = remove_stuff_below_table(scene, plane)
+
+    list_object = vision_segment(scene)
+    for object in list_object:
+        o3d.visualization.draw_geometries([object])
+
+
     # scene = remove_plane(scene)
     # scene = remove_noise(scene)
+    # o3d.visualization.draw_geometries([scene])
     # scene = remove_plane(scene)
     # scene = remove_noise(scene)
+    # o3d.visualization.draw_geometries([scene])
+
+    # [a,b,c,d], scene = extract_plane(scene)
+    # o3d.visualization.draw_geometries([scene])
+    # print([a,b,c,d])
+    # scene = remove_plane(scene)
     # labeled_scene, labels = DBSCAN_clustering(scene)
     # one_object = segmented_object(scene)
     #
-    o3d.visualization.draw_geometries([scene])
     # for i in range(len(one_object)):
     #     o3d.visualization.draw_geometries([one_object[i]])
 
