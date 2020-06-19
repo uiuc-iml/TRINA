@@ -77,7 +77,6 @@ def DBSCAN_clustering(PointCloud):
     return PointCloud, labels
 
 def segmented_object(PointCloud):
-    print("here2")
     labels = DBSCAN_clustering(PointCloud)[1]
 
     points = np.asarray(PointCloud.points)
@@ -175,10 +174,15 @@ def remove_noise(PointCloud, k = 50, std_mul = 1):
 
 if __name__ == '__main__':
     scene = o3d.io.read_point_cloud('pcd_samples/sample_table.pcd')
+    o3d.visualization.draw_geometries([scene])
     scene = remove_floor(scene)
+    o3d.visualization.draw_geometries([scene])
     scene = remove_wall(scene)
+    o3d.visualization.draw_geometries([scene])
     plane, scene = remove_plane(scene)
+    o3d.visualization.draw_geometries([scene])
     scene = remove_stuff_below_table(scene, plane)
+    o3d.visualization.draw_geometries([scene])
 
     list_object = vision_segment(scene)
     for object in list_object:
