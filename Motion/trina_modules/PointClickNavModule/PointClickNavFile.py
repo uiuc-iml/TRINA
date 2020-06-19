@@ -504,7 +504,7 @@ class PointClickNav:
 				for i in range(N):
 					#check current status
 					if self.state == 'idle':
-						self.jarvis.setBaseVelocity = [0,0]
+						self.jarvis.setBaseVelocity([0,0])
 						break
 
 					start = time.time()
@@ -569,7 +569,7 @@ class PointClickNav:
 
 				#check status
 				if self.status == 'idle':
-					self.jarvis.setBaseVelocity = [0,0]
+					self.jarvis.setBaseVelocity([0,0])
 					continue
 
 				##### receive new map and replan global path
