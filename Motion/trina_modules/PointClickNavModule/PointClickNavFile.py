@@ -52,7 +52,7 @@ def convertMsg(klampt_sensor,frame,stamp = "now"):
 
 class PointClickNav:
 	def __init__(self,Jarvis = None, debugging = False, mode = 'Kinematic'):
-		#if true, run a test locally, otherwise, communicate with Jarvis to get statesssssss
+		#if true, run a test locally, otherwise, communicate with Jarvis to get state
 		self.debugging = debugging
 		self.last_timestamp = 0.0
 		self.state = 'idle' #states are " idle, active"
@@ -178,8 +178,8 @@ class PointClickNav:
 		main_thread.start()
 
 		#debugging
-		self.activate()
-		print('active called')
+		#self.activate()
+		#print('active called')
 
 	def sigint_handler(self, signum, frame):
 		""" Catch Ctrl+C tp shutdown the api,
@@ -239,13 +239,13 @@ class PointClickNav:
 				self._sharedLock.acquire()
 
 				if(status == 'active'):
-
 					if(self.status == 'idle'):
 						print('\n\n\n\n starting up Autonomous Navigation Module! \n\n\n\n\n')
 						self.status = 'active'
 						self.activate()
 
-				elif(self.status == 'active'):
+				elif(status == 'idle'):
+					if self.status == 'active':
 						self.deactivate()
 						self.status = 'idle'
 					
@@ -502,6 +502,11 @@ class PointClickNav:
 				start_time = time.time()
 
 				for i in range(N):
+					#check current status
+					if self.state == 'idle':
+						self.jarvis.setBaseVelocity = [0,0]
+						break
+
 					start = time.time()
 					if self.terminate_command:
 						self._sharedLock.acquire()
@@ -561,6 +566,12 @@ class PointClickNav:
 				self.curr_theta = new_pose[2]
 				self._sharedLock.release()
 
+
+				#check status
+				if self.status == 'idle':
+					self.jarvis.setBaseVelocity = [0,0]
+					continue
+
 				##### receive new map and replan global path
 				new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
 				#print("before", self.can_send_gridmap)
@@ -586,11 +597,11 @@ class PointClickNav:
 						self.global_path = new_global_path
 						self.jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
 					else:
-						plt.plot(self.start)
-						plt.plot(self.end)
-						self.curr_point.plot(plt)
-						plt.imshow(self.gridmap.T, origin="lower", cmap="inferno")
-						plt.show()
+						# plt.plot(self.start)
+						# plt.plot(self.end)
+						# self.curr_point.plot(plt)
+						# plt.imshow(self.gridmap.T, origin="lower", cmap="inferno")
+						# plt.show()
 						print("new global path is empty")
 						self.jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
 						self.jarvis.setBaseVelocity([0,0])
