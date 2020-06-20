@@ -26,7 +26,6 @@ from utils import *
 from geometry import *
 from matplotlib import pyplot as plt
 
-from jarvis import Jarvis
 from sensor_msgs.msg import LaserScan
 
 def convertMsg(klampt_sensor,frame,stamp = "now"):
