@@ -42,7 +42,12 @@ class Jarvis:
 
     # def shutdown(self):
     #     self.command_server.shutdown()        
+    def getUIState(self):
+        return self.server["UI_STATE"].read()
 
+    def addRobotTelemetry(self, value):
+        self.server["robotTelemetry"] = value
+        
     def sensedBaseVelocity(self):
         return self.server["ROBOT_STATE"]["Velocity"]["Base"].read()
 

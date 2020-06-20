@@ -42,6 +42,7 @@ class KinematicController:
         self.left_gripper_state = GripperState()
         self.limb_velocity_limit = 2.0
         self.finger_velocity_limit = 1.0
+        self.base_velocity_limit = [1.5,1.5]
         self.dt = 0.004
         self.model_path = model_path
         self.world = WorldModel()
@@ -79,6 +80,15 @@ class KinematicController:
             if self.base_state.commandType == 1:
                 vx = self.base_state.commandedVel[0]
                 w = self.base_state.commandedVel[1]
+                if vx > self.base_velocity_limit[0]:
+                    vx = self.base_velocity_limit[0]
+                if vx < -self.base_velocity_limit[0]:
+                    vx = -self.base_velocity_limit[0]
+                if w > self.base_velocity_limit[1]:
+                    w = self.base_velocity_limit[1]
+                if w < -self.base_velocity_limit[1]:
+                    w= -self.base_velocity_limit[1]
+
             elif self.base_state.commandType == 0:
                 vx = self.base_state.pathFollowingVel
                 angle = self.base_state.generatedPath.get_pose(float(self.base_state.pathFollowingIdx)/self.base_state.pathFollowingNumPoints)[2]
