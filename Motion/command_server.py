@@ -99,7 +99,7 @@ class CommandServer:
             self.world = WorldModel()
             self.world.readFile(self.world_file )
             self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
-            time.sleep(5)
+            time.sleep(3)
         self.health_dict = {}
         # create the list of threads
         self.modules_dict = {}
@@ -202,7 +202,10 @@ class CommandServer:
                             self.health_dict.update({name:[True,time.time()]})
                             activity_dict.update({name:'idle'})
                             command_dict.update({name:[]})
-                            self.active_modules[name] = False
+                            if(name != 'UI'):
+                                self.active_modules[name] = False
+                            else:
+                                self.active_modules[name] = True
 
                 self.server['HEALTH_LOG'] = self.health_dict
                 self.server['ROBOT_COMMAND'] = command_dict
@@ -331,34 +334,41 @@ class CommandServer:
         print('\n\n\n\nstopped updating state!!! \n\n\n\n')
 
     def commandReciever(self,robot,active_modules):
-        self.dt = 0.0001
+        self.dt = 0.01
         self.robot = robot
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)     
         self.active_modules = active_modules   
         while(True):
+            self.active_modules['UI'] = True
             loopStartTime = time.time()
             self.robot_command = self.server['ROBOT_COMMAND'].read()
             if(self.empty_command.keys() != self.robot_command.keys()):
+                print('updating list of modules')
                 empty_command = {}
                 for key in self.robot_command.keys():
                     empty_command.update({str(key):[]})
                     try:
                         self.active_modules[str(key)]
                     except Exception as e:
-                        self.active_modules[str(key)] = False
+                        if(str(key) != str('UI')):
+                            self.active_modules[str(key)] = False
+                        else:
+                            self.active_modules[str(key)] = True
                 self.empty_command = empty_command
             self.server['ROBOT_COMMAND'] = self.empty_command
 
             for i in self.robot_command.keys():
-                if (self.robot_command[i] != []):
-                    if(self.active_modules[i]):
-                        commandList = self.robot_command[i]
+                if (self.robot_command[str(i)] != []):
+                    if(self.active_modules[str(i)]):
+                        commandList = self.robot_command[str(i)]
                         for command in commandList:
                             self.run(command)
+                    else:
+                        print('ignoring commands from ',str(i),self.robot_command[str(i)])
             elapsedTime = time.time() - loopStartTime
-            # print('Frequency of execution loop:', 1/elapsedTime)
+            # print('\n\n Frequency of execution loop:', 1/elapsedTime,'\n\n')
             if elapsedTime < self.dt:
                 time.sleep(self.dt-elapsedTime)
             else:

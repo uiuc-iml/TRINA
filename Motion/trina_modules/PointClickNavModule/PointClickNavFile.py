@@ -269,6 +269,7 @@ class PointClickNav:
 		pose_history = []
 		
 		while not self.exit_flag:
+			# print(self.state)
 			loop_start_time = time.time()
 			self.last_timestamp = time.time()
 			if self.terminate_command:
@@ -284,8 +285,9 @@ class PointClickNav:
 				self._sharedLock.release()
 
 			if self.state == 'idle':							
-				print("_mainLoop: idling")
-
+				# print("_mainLoop: idling")
+				a = 1
+				pass
 			elif self.state == 'active':
 				print('_mainLoop:active')
 
@@ -427,9 +429,11 @@ class PointClickNav:
 				else:
 					print('Execution complete')
 					self._sharedLock.acquire()
-					self.state == 'idle'
+					self.state = 'idle'
+					self.jarvis.setBaseVelocity([0,0])
+					time.sleep(0.1)
 					self._sharedLock.release()
-
+					self.jarvis.changeActivityStatus(['UI'],['PointClickNav'])
 				#####compute local action and send to robot
 				#check collision
 				# collision = self.curr_point.collides(self.gridmap.T)

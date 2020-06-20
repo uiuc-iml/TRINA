@@ -63,10 +63,10 @@ class Jarvis:
     def sensedTorsoPosition(self):
         return self.server["ROBOT_STATE"]["Position"]["Torso"].read()
 
-    def sensedLeftLimbPosition(self):
+    def sensedLeftEETransform(self):
         return self.server["ROBOT_STATE"]["Position"]["LeftArm"].read()
 
-    def sensedRightLimbPosition(self):
+    def sensedRightEETransform(self):
         return self.server["ROBOT_STATE"]["Position"]["RightArm"].read()
 
     def sensedLeftGripperPosition(self):
@@ -74,6 +74,12 @@ class Jarvis:
 
     def sensedRobotq(self):
         return self.server["ROBOT_STATE"]["Position"]["Robotq"].read()
+
+    def sensedRightLimbPosition(self):
+        return self.server["ROBOT_STATE"]["Position"]["RightArm"].read()
+
+    def sensedLeftLimbPosition(self):
+        return self.server["ROBOT_STATE"]["Position"]["LeftArm"].read()
 
     def setLeftLimbPosition(self, q):
         command = self.send_command('self.robot.setLeftLimbPosition', str(q))
@@ -113,6 +119,7 @@ class Jarvis:
     def changeActivityStatus(self,to_activate,to_deactivate = []):
         command = self.send_command('self.switch_module_activity',str(to_activate),str(to_deactivate))
         queue = self.server['ROBOT_COMMAND'][self.name].read()
+        print(command)
         queue.append(command)
         print(command)
         self.server['ROBOT_COMMAND'][self.name] = queue

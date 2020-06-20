@@ -166,9 +166,9 @@ class MyQtMainWindow(QMainWindow):
     def _initMenuBar(self):
         bar = self.menuBar()
         mode = bar.addMenu("Mode Switch")
-        mode.addAction("Point Click Navigation")
+        mode.addAction("PointClickNav")
         mode.addAction("Go Home")
-        mode.addAction("Teleoperation")
+        mode.addAction("DirectTeleOperation")
         mode.triggered[QAction].connect(self._processModeTrigger)
 
         action = bar.addMenu("Quick Action")
@@ -183,7 +183,7 @@ class MyQtMainWindow(QMainWindow):
             self.modeText.setText("Mode: " +  q.text())
             self.mode = q.text()
             try:
-                self.jarvis.changeActivityStatus(self.mode)
+                self.jarvis.changeActivityStatus([str(self.mode)])
                 vis.clearText()
                 vis.hide("destination")
                 vis.hide("robot trajectory")
@@ -363,7 +363,7 @@ class UI_end_1:
         self.server["UI_END_COMMAND"] = [{'funcName':'test','args':{}}]
         self.server['UI_FEEDBACK'] = {}
         self.global_state = {'collectRaySignal':[False,False],'feedbackId':{'getRayClick':''}}
-        self.jarvis = Jarvis("UI")
+        self.jarvis = Jarvis(str("UI"))
         self._serveVis()
 
 
@@ -394,6 +394,7 @@ class UI_end_1:
             vis.lock()
             try:
                 sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
+                print(sensed_position[:2])
                 vis_robot = world.robot(0)
                 vis_robot.setConfig(sensed_position)
             except Exception as err:
