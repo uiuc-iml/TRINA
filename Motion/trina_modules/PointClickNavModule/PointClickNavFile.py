@@ -315,7 +315,6 @@ class PointClickNav:
 			elif self.state == 'planning':
 				if not planning_request_sent:
 					print('_mainLoop:planning')
-					self.jarvis.setLeftLimbPosition([0,0,0,1,0,0])
 					#this will give an initial plan based on the limited 2D map
 					#calculate the end position
 					if self.debugging:
