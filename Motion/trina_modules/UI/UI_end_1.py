@@ -68,11 +68,13 @@ class MyQtMainWindow(QMainWindow):
                         self.rpc_args = command['args']
                         time.sleep(0.0001) 
                         exec('self.'+command['funcName']+'()')
+                except Exception as err:
+                    print("Error: {0}".format(err))
                 finally:
                     print("command recieved was " + command['funcName'])
                     print("-------------------------------------------------------------")
-        except AttributeError as err:
-            print("AttributeError: {0}".format(err))
+        except Exception as err:
+                print("Error: {0}".format(err))
         QMainWindow.event(self,event)
         return 0
 
@@ -349,8 +351,8 @@ class MyGLPlugin(vis.GLPluginInterface):
 
                 vis.remove("pointclick")
 
-        except AttributeError as err:
-            print("AttributeError: {0}".format(err))
+        except Exception as err:
+            print("Error: {0}".format(err))
 
 
 class UI_end_1:
@@ -428,4 +430,4 @@ if __name__ == "__main__":
     print ("""================================================================================
     UI_end_1.py: powered by klampt vis
     """)
-    UI_end_1("haha")
+    UI_end_1("name")
