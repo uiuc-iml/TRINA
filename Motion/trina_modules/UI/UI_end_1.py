@@ -405,7 +405,8 @@ class UI_end_1:
             vis.lock()
             try:
                 sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
-                # print(sensed_position[:2])
+                # print(self.jarvis.sensedBaseVelocity())
+                print(self.server["UI_STATE"]["controllerButtonState"]["rightController"]["thumbstickMovement"].read() )
                 vis_robot = world.robot(0)
                 vis_robot.setConfig(sensed_position)
             except Exception as err:
