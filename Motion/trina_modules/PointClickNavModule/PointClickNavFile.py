@@ -251,7 +251,8 @@ class PointClickNav:
 				#if terminate_flag:
 					#self.terminate_command = True
 				self.curr_pose = base_q
-				self._sharedLock.release()	
+				self._sharedLock.release()
+				self.jarvis.log_health()	
 
 			elapsed_time = time.time() - loop_start_time
 			if elapsed_time < self.infoLoop_rate:
