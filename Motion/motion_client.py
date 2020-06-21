@@ -30,7 +30,7 @@ class MotionClient:
 		self.s.startServer(mode,components,codename)
 
 	def restartServer(self,mode,components,codename):
-		self.s.startServer(mode,components,codename)
+		self.s.restartServer(mode,components,codename)
 
 	def startup(self):
 		res = self.s.startup()

@@ -30,7 +30,8 @@ def _startServer(mode = "Kinematic", components = [] , codename = "seed"):
 def _restartServer(mode= "Kinematic", components = [] , codename = "seed"):
 	global robot
 	global server_started
-	robot.shutdown()
+	if(server_started):
+		robot.shutdown()
 	time.sleep(2)
 	logging.info("Motion shutdown,restarting")
 	robot = Motion(mode = mode,components = components, codename = codename)

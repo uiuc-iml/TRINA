@@ -1,6 +1,5 @@
-import os
+import os,sys
 import signal
-import sys
 import time
 import math
 from threading import Thread, Lock, RLock
@@ -27,8 +26,8 @@ from utils import *
 from geometry import *
 from matplotlib import pyplot as plt
 
-from jarvis import Jarvis
 from sensor_msgs.msg import LaserScan
+
 def convertMsg(klampt_sensor,frame,stamp = "now"):
 	measurements = klampt_sensor.getMeasurements()
 	res = LaserScan()
@@ -51,8 +50,8 @@ def convertMsg(klampt_sensor,frame,stamp = "now"):
 
 
 class PointClickNav:
-	def __init__(self,debugging = True, mode = 'Kinematic'):
-		#if true, run a test locally, otherwise, communicate with Jarvis to get statesssssss
+	def __init__(self,Jarvis = None, debugging = False, mode = 'Kinematic'):
+		#if true, run a test locally, otherwise, communicate with Jarvis to get state
 		self.debugging = debugging
 		self.last_timestamp = 0.0
 		self.state = 'idle' #states are " idle, active"
@@ -63,6 +62,8 @@ class PointClickNav:
 		self.mode = mode
 		self.visualization = False
 		self.received_first_gridmap_flag = False
+		self.status = 'idle'
+		time.sleep(10)
 		if self.debugging:
 
 			self.simulated_robot = Motion(mode = 'Kinematic', codename="anthrax") #the world file has been modified to add a 
@@ -91,11 +92,11 @@ class PointClickNav:
 			if self.visualization:
 				vis.show()
 		else:
-			self.Jarvis = Jarvis('PointClickNav')
+			self.jarvis = Jarvis
 			#get current pose of the robot
-			# left_q = self.Jarvis.sensedLeftLimbPosition()
-			# right_q = self.Jarvis.sensedRightLimbPosition()
-			base_q = self.Jarvis.sensedBasePosition()
+			# left_q = self.jarvis.sensedLeftLimbPosition()
+			# right_q = self.jarvis.sensedRightLimbPosition()
+			base_q = self.jarvis.sensedBasePosition()
 			#print(base_q)
 			self.curr_pose = base_q
 			#start visualizer
@@ -106,11 +107,14 @@ class PointClickNav:
 			print('flag2')
 			if self.visualization:
 				vis.add("world",self.vis_world)
+
 			if self.mode == 'Kinematic':
 				#simulate lidar data here
-				self.sim = klampt.Simulator(self.vis_world)
-				self.lidar = self.sim.controller(0).sensor("lidar")
+				#self.sim = klampt.Simulator(self.vis_world)
+				#self.lidar = self.sim.controller(0).sensor("lidar")
 				if self.visualization:
+					vis.add("lidar",self.lidar)
+
 					vis.show()
 			elif self.mode == 'Physical':
 				pass
@@ -129,9 +133,10 @@ class PointClickNav:
 
 
 		#start the process that sends laser scans to gmapping
-		self.ros_parent_conn, self.ros_child_conn = Pipe()
-		self.gmapping_proc = Process(target=self._publishGmappingStuff, args=(self.ros_child_conn, ))
-		self.gmapping_proc.start()
+		#commented this out becuase there will be handled by sensing module
+		# self.ros_parent_conn, self.ros_child_conn = Pipe()
+		# self.gmapping_proc = Process(target=self._publishGmappingStuff, args=(self.ros_child_conn, ))
+		# self.gmapping_proc.start()
 
 		#start the parent ros node
 		rospy.init_node("sensing_test_parent")
@@ -139,20 +144,17 @@ class PointClickNav:
 		#get the first grid
 		self.grid = None	
 		while self.grid == None:
-			self.lidar.kinematicSimulate(self.vis_world,0.001)
-			ros_msg = convertMsg(self.lidar, frame="/base_scan")
-			self.ros_parent_conn.send([ros_msg, self.curr_pose,False]) 
+			# self.lidar.kinematicSimulate(self.vis_world,0.001)
+			# ros_msg = convertMsg(self.lidar, frame="/base_scan")
+			# self.ros_parent_conn.send([ros_msg, self.curr_pose,False]) 
 			#grid and the gridmap info
 			self.grid = get_occupancy_grid("dynamic_map")
-
-			
-		print('flag3')
+			print("\n\n\n It seems that we cannot get a grid from gmapping, it there something wrong? - Changing for Yifan\n\n\n\n")
 
 		self.res = self.grid.info.resolution
 		self.radius = 0.5588/2/self.res * 2.0 #radius in terms of grids
 		self.gridmap = build_2d_map(self.grid).T
 		self.preprocessed_gridmap = preprocess(self.gridmap, self.radius)
-
 
 		#current start and end 
 		#transforms world coordinates into the grid (indeces)
@@ -175,8 +177,8 @@ class PointClickNav:
 		main_thread.start()
 
 		#debugging
-		self.activate()
-		print('active called')
+		#self.activate()
+		#print('active called')
 
 	def sigint_handler(self, signum, frame):
 		""" Catch Ctrl+C tp shutdown the api,
@@ -188,18 +190,19 @@ class PointClickNav:
 		print("SIGINT caught...shutting down the api!")
 		vis.kill()
 		self.global_path_parent_conn.send([[],[],[],True,True])
-		self.ros_parent_conn.send([[],[],True]) 
+		#self.ros_parent_conn.send([[],[],True]) 
 
-	def getThreads(self):
+	def return_threads(self):
 		return [self._infoLoop,self._mainloop]
 
-	def getProcesses(self):
-		return [self.gmapping_proc,self.global_path_proc]
+	def return_processes(self):
+		return [self.global_path_proc]
 
 	def _infoLoop(self):
 		if self.debugging:
 			send_ray_once = False	
 		while not self.exit_flag:
+			self.jarvis.log_health()
 			loop_start_time = time.time()
 			#check if there is new information
 			if self.debugging:
@@ -222,55 +225,32 @@ class PointClickNav:
 				#print('lidar scan sent') 
 				self._sharedLock.release()
 			else:
-				# left_q = self.Jarvis.sensedLeftLimbPosition()
-				# right_q = self.Jarvis.sensedRightLimbPosition()
-				base_q = self.Jarvis.sensedBasePosition()
-				self.curr_vel = self.Jarvis.sensedBaseVelocity()
+				# left_q = self.jarvis.sensedLeftLimbPosition()
+				# right_q = self.jarvis.sensedRightLimbPosition()
+				base_q = self.jarvis.sensedBasePosition()
+				self.curr_vel = self.jarvis.sensedBaseVelocity()
 				self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
-				status = self.Jarvis.getActivityStatus()
-				# if self.ray_request_sent: 
-				# 	ray = self.Jarvis.getRayClickUI()
-				# if self.confirmation_request_sent:
-				# 	confirmation = self.Jarvis.getConfirmation()
-
+				status = self.jarvis.getActivityStatus()
+				
 				#TODO get terminate flag question
-				#terminate_flag = self.Jarvis.get
+				#terminate_flag = self.jarvis.get
 				
 				self._sharedLock.acquire()
 
-				if status == 'active':
-					if self.status == 'idle':
+				if(status == 'active'):
+					if(self.status == 'idle'):
+						print('\n\n\n\n starting up Autonomous Navigation Module! \n\n\n\n\n')
 						self.status = 'active'
-				else:
-					self.status = 'idle'
+						self.activate()
+
+				elif(status == 'idle'):
+					if self.status == 'active':
+						self.deactivate()
+						self.status = 'idle'
+					
 				#if terminate_flag:
 					#self.terminate_command = True
 				self.curr_pose = base_q
-				# if self.ray_request_sent: 
-				# 	if not ray == 'NOT READY':
-				# 		self.new_ray = True
-				# 		self.ray = ray
-				# 		self.ray_request_sent = False
-				# if self.confirmation_request_sent:
-				# 	if confirmation == True:
-				# 		self.new_confirmation = True
-				# 		self.confirmation_request_sent = False
-
-				#TODO
-				#send heartbeat
-				#send current status?
-
-				#TODO
-				#get lidar in the physical mode
-				if self.mode == "Kinematic":					
-					self.lidar.kinematicSimulate(self.vis_world,0.001)
-					ros_msg = convertMsg(self.lidar, frame="/base_scan")
-
-
-					self.ros_parent_conn.send([ros_msg, self.curr_pose,False])
-				elif self.mode == "Physical":
-					pass
-
 				self._sharedLock.release()	
 
 			elapsed_time = time.time() - loop_start_time
@@ -289,23 +269,13 @@ class PointClickNav:
 		pose_history = []
 		
 		while not self.exit_flag:
-			'''
-			plt.cla()
-			if self.global_path is not None:
-				plt.plot(self.global_path.get_xs(), self.global_path.get_ys(), color="r")
-			if self.curr_point is not None:
-				self.curr_point.plot(plt)
-			plt.imshow(self.gridmap.T, origin="lower", cmap="plasma")
-			plt.pause(0.005)
-			plt.draw()
-			'''
-
+			# print(self.state)
 			loop_start_time = time.time()
 			self.last_timestamp = time.time()
 			if self.terminate_command:
 				self._sharedLock.acquire()
 				self.state = 'idle'
-				self.Jarvis.setBaseVelocity([0,0])
+				self.jarvis.setBaseVelocity([0,0])
 				self.new_ray = False
 				self.ray_request_sent = False
 				self.confirm_request_sent = False
@@ -315,18 +285,19 @@ class PointClickNav:
 				self._sharedLock.release()
 
 			if self.state == 'idle':							
-				print("_mainLoop: idling")
-
+				# print("_mainLoop: idling")
+				a = 1
+				pass
 			elif self.state == 'active':
 				print('_mainLoop:active')
 
 
 				#ask for a ray
-				self.ray = self.Jarvis.sendAndGetRayClickUI()
+				self.ray = self.jarvis.sendAndGetRayClickUI()
 				self.new_ray = True
 				# self._sharedLock.acquire()
 				#if not self.ray_request_sent:
-					#self.Jarvis.sendRayRequest()
+					#self.jarvis.sendRayRequest()
 					#self.ray_request_sent = True
 				# self._sharedLock.release()
 				#if a new ray has arrived, start planning
@@ -343,7 +314,7 @@ class PointClickNav:
 			elif self.state == 'planning':
 				if not planning_request_sent:
 					print('_mainLoop:planning')
-					self.Jarvis.setLeftLimbPosition([0,0,0,1,0,0])
+					self.jarvis.setLeftLimbPosition([0,0,0,1,0,0])
 					#this will give an initial plan based on the limited 2D map
 					#calculate the end position
 					if self.debugging:
@@ -376,7 +347,7 @@ class PointClickNav:
 						
 					else:
 						print("no map found by gmapping during planning...")
-						self.Jarvis.sendConfirmationUI('Error','A gmapping error has occurred....Returning to idle')
+						self.jarvis.sendConfirmationUI('Error','A gmapping error has occurred....Returning to idle')
 						
 						self.state = 'idle'
 
@@ -388,7 +359,7 @@ class PointClickNav:
 						if new_global_path == None:
 							self.state = 'idle'
 							planning_request_sent = False
-							self.Jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
+							self.jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
 							continue
 
 						#stop planning and waiting for user confirmation
@@ -413,12 +384,12 @@ class PointClickNav:
 
 						if not self.debugging:
 							print('sending the trajectory.....')
-							self.Jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
+							self.jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
 							time.sleep(3)
-							ans = self.Jarvis.sendAndGetConfirmationUI('Request','Please Confirm the Trajectory')
+							ans = self.jarvis.sendAndGetConfirmationUI('Request','Please Confirm the Trajectory')
 							if ans == 'YES':
 								self.state = 'executing'
-								self.Jarvis.sendConfirmationUI('info','Path has started executing')
+								self.jarvis.sendConfirmationUI('info','Path has started executing')
 								#unpause the planning process
 								self.global_path_parent_conn.send((self.gridmap,self.start,self.end,True,False))
 								#The current disc of the robot. Used for planning
@@ -426,6 +397,10 @@ class PointClickNav:
 								self.curr_theta = self.curr_pose[2]
 								at_end = False
 								print("_mainloop: confirmation received and start executing")
+
+
+								##for testing
+								self.execution_start_time = time.time()
 							else:
 								pass
 								#TODO implemented a way to replan
@@ -448,182 +423,206 @@ class PointClickNav:
 
 			elif self.state == 'executing':
 				print("_mainLoop: executing")
+				if time.time() - self.execution_start_time < 10:
+					self.jarvis.setBaseVelocity([0,0.1])
+					time.sleep(0.05)
+				else:
+					print('Execution complete')
+					self._sharedLock.acquire()
+					self.state = 'idle'
+					self.jarvis.setBaseVelocity([0,0])
+					time.sleep(0.1)
+					self._sharedLock.release()
+					self.jarvis.changeActivityStatus(['UI'],['PointClickNav'])
 				#####compute local action and send to robot
 				#check collision
-				collision = self.curr_point.collides(self.gridmap.T)
-				if collision:
-					print("collided...this should not have happened")
-					break
+				# collision = self.curr_point.collides(self.gridmap.T)
+				# if collision:
+				# 	print("collided...this should not have happened")
+				# 	break
 
-				#check if the global path his been completed
-				dist_to_goal = l2_dist(self.curr_point.center, self.end)
-				if dist_to_goal < 0.2 / self.res or at_end:
-					#if complete, let user know it is complete
-					self._sharedLock.acquire()
-					if self.debugging:
-						print('at end')
-					else:
-						self.Jarvis.sendConfirmationUI('info','Path has finished')
-						self.Jarvis.setBaseVelocity([0,0]) 
+				# #check if the global path his been completed
+				# dist_to_goal = l2_dist(self.curr_point.center, self.end)
+				# if dist_to_goal < 0.2 / self.res or at_end:
+				# 	#if complete, let user know it is complete
+				# 	self._sharedLock.acquire()
+				# 	if self.debugging:
+				# 		print('at end')
+				# 	else:
+				# 		self.jarvis.sendConfirmationUI('info','Path has finished')
+				# 		self.jarvis.setBaseVelocity([0,0]) 
 
-					self.state = 'idle'
-					#stop calculating global path
-					self.global_path_parent_conn.send((None,self.start,self.end,False,False))	
-					self._sharedLock.release()
-					continue
+				# 	self.state = 'idle'
+				# 	#stop calculating global path
+				# 	self.global_path_parent_conn.send((None,self.start,self.end,False,False))	
+				# 	self._sharedLock.release()
+				# 	continue
 
-				# near goal, run a special controller?
-				if dist_to_goal < 1.0 / self.res:
-					at_end = True
-					primitives = [LocalPath([(self.curr_point.center[0], self.curr_point.center[1], self.curr_theta), (self.end[0], self.end[1], self.end_theta)])]
-					end_v = 0
-				else:
-					primitives = get_primitives(self.curr_point.center, self.curr_theta, self.radius*2, self.radius*1)
+				# # near goal, run a special controller?
+				# if dist_to_goal < 1.0 / self.res:
+				# 	at_end = True
+				# 	primitives = [LocalPath([(self.curr_point.center[0], self.curr_point.center[1], self.curr_theta), (self.end[0], self.end[1], self.end_theta)])]
+				# 	end_v = 0
+				# else:
+				# 	primitives = get_primitives(self.curr_point.center, self.curr_theta, self.radius*2, self.radius*1)
 
-				#find the primitive that leads to the global path
-				closest = evaluate_primitives(self.curr_point, primitives, self.global_path, self.gridmap.T)
-				kglobal = klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())])
+				# #find the primitive that leads to the global path
+				# closest = evaluate_primitives(self.curr_point, primitives, self.global_path, self.gridmap.T)
+				# kglobal = klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())])
 
-				#if self.debugging:
-				if self.visualization:
-					vis.add("kglobaltraj", kglobal)
-					if len(pose_history) > 0:
-						khistory_traj = klampt.model.trajectory.Trajectory(milestones = [p for p in pose_history])
-						vis.add("khistorytraj", khistory_traj)
-						vis.setColor("khistorytraj", 0, 255, 0)
+				# if self.visualization:
+				# 	vis.add("kglobaltraj", kglobal)
+				# 	if len(pose_history) > 0:
+				# 		khistory_traj = klampt.model.trajectory.Trajectory(milestones = [p for p in pose_history])
+				# 		vis.add("khistorytraj", khistory_traj)
+				# 		vis.setColor("khistorytraj", 0, 255, 0)
 
-				#sometimes might need to rotate in place.. rotate in place is not one of the primitives
-				if closest is None:
-					if self.debugging:
-						print("No prim!!!")
-						self.simualted_robot.setBaseVelocity([0.0, 0.4])
-						new_pose = self.curr_pose
-						new_pose = transform_coordinates(new_pose, self.grid)
+				# #sometimes might need to rotate in place.. rotate in place is not one of the primitives
+				# if closest is None:
+				# 	if self.debugging:
+				# 		print("No prim!!!")
+				# 		self.simualted_robot.setBaseVelocity([0.0, 0.4])
+				# 		new_pose = self.curr_pose
+				# 		new_pose = transform_coordinates(new_pose, self.grid)
 
-						self.curr_point = Circle((snew_pose[0], new_pose[1]), self.radius)
-						self.curr_theta = new_pose[2]
-						continue
-					else:
-						print("No prim!!!")
-						self.Jarvis.setBaseVelocity([0.0, 0.4])
-						time.sleep(0.1)
-						self._sharedLock.acquire()
-						new_pose = self.curr_pose
-						new_pose = transform_coordinates(new_pose, self.grid)
+				# 		self.curr_point = Circle((new_pose[0], new_pose[1]), self.radius)
+				# 		self.curr_theta = new_pose[2]
+				# 		continue
+				# 	else:
+				# 		print("No prim!!!")
+				# 		self.jarvis.setBaseVelocity([0.0, 0.4])
+				# 		time.sleep(0.1)
+				# 		self._sharedLock.acquire()
+				# 		new_pose = self.curr_pose
+				# 		new_pose = transform_coordinates(new_pose, self.grid)
 
-						self.curr_point = Circle((new_pose[0], new_pose[1]), self.radius)
-						self.curr_theta = new_pose[2]
-						self._sharedLock.release()
-						continue
+				# 		self.curr_point = Circle((new_pose[0], new_pose[1]), self.radius)
+				# 		self.curr_theta = new_pose[2]
+				# 		self._sharedLock.release()
+				# 		continue
 
-				#Get the primitve milestones		
-				xs, ys, thetas = closest.get_xytheta(20)
-				#proceed to finish one primitive
-				acc = 0.5
-				max_v = 0.5
-				#generate the velocity profile
-				profile = generate_profile(closest, acc/self.res, max_v/self.res, 0.01, end_v = end_v/self.res, start_v=self.curr_vel[0]/self.res)
-				end_v = profile[-1].v
-				milestones = [transform_back([x, y], self.grid) for x, y in zip(xs, ys)]
-				ktraj = klampt.model.trajectory.Trajectory(milestones = milestones)
+				# #Get the primitve milestones		
+				# xs, ys, thetas = closest.get_xytheta(20)
+				# #proceed to finish one primitive
+				# acc = 0.5
+				# max_v = 0.5
+				# #generate the velocity profile
+				# profile = generate_profile(closest, acc/self.res, max_v/self.res, 0.01, end_v = end_v/self.res, start_v=self.curr_vel[0]/self.res)
+				# end_v = profile[-1].v
+				# milestones = [transform_back([x, y], self.grid) for x, y in zip(xs, ys)]
+				# ktraj = klampt.model.trajectory.Trajectory(milestones = milestones)
 
-				N = len(profile)
-				time_thresh = 0.2 #time for the 20 milestons of primitive to complete
-				start_time = time.time()
+				# N = len(profile)
+				# time_thresh = 0.2 #time for the 20 milestons of primitive to complete
+				# start_time = time.time()
 
-				for i in range(N):
-					if self.terminate_command:
-						self._sharedLock.acquire()
-						self.state = 'idle'
-						self.Jarvis.setBaseVelocity = [0,0]
-						self._sharedLock.release()
-						break
-					iteration_start = time.time()
-					state = profile[i]
+				# for i in range(N):
+				# 	#check current status
+				# 	if self.state == 'idle':
+				# 		self.jarvis.setBaseVelocity([0,0])
+				# 		break
 
-					if not at_end and iteration_start - start_time > time_thresh:
-						end_v = min(max_v, end_v)
-						break
+				# 	start = time.time()
+				# 	if self.terminate_command:
+				# 		self._sharedLock.acquire()
+				# 		self.state = 'idle'
+				# 		self.jarvis.setBaseVelocity([0,0])
+				# 		self._sharedLock.release()
+				# 		break
+				# 	iteration_start = time.time()
+				# 	state = profile[i]
 
-					self._sharedLock.acquire()
-					if self.debugging:
-						pose_history.append([self.curr_pose[0], self.curr_pose[1]])
-					pose = transform_coordinates(self.curr_pose, self.grid)
-					self._sharedLock.release()
+				# 	if not at_end and iteration_start - start_time > time_thresh:
+				# 		end_v = min(max_v, end_v)
+				# 		self.jarvis.setBaseVelocity([0,0])
 
-					curr_target = (state.x, state.y)
-					trans_target = so2.apply(-pose[2], vectorops.sub(curr_target, (pose[0], pose[1])))
+				# 		break
 
-					linear_error = trans_target[0]
-					cross_track_error = trans_target[1]
+				# 	self._sharedLock.acquire()
+				# 	if self.debugging:
+				# 		pose_history.append([self.curr_pose[0], self.curr_pose[1]])
+				# 	pose = transform_coordinates(self.curr_pose, self.grid)
+				# 	self._sharedLock.release()
 
-					#tune the gains here?
-					k_linear = 1.0 * self.res 
-					k_angular = 1.0 * self.res
+				# 	curr_target = (state.x, state.y)
+				# 	trans_target = so2.apply(-pose[2], vectorops.sub(curr_target, (pose[0], pose[1])))
 
-					vel = [state.v * self.res + k_linear*linear_error, state.w + k_angular*cross_track_error]
-					if self. visualization:
-						vis.add("klocaltraj", ktraj)
-						vis.setColor("klocaltraj", 0, 0, 255)
-					if self.debugging:						
-						self.simulated_robot.setBaseVelocity(vel)
-					else:
-						self.Jarvis.setBaseVelocity(vel)
-						pass
+				# 	linear_error = trans_target[0]
+				# 	cross_track_error = trans_target[1]
 
-					new_pose = deepcopy(self.curr_pose)
-					new_pose = transform_coordinates(new_pose, self.grid)
-					self.curr_theta = new_pose[2]
+				# 	#tune the gains here?
+				# 	k_linear = 1.0 * self.res 
+				# 	k_angular = 1.0 * self.res
 
-					elapsed_time = time.time() - iteration_start
-					remaining_time = max(0.01 - elapsed_time, 0.0)
-					time.sleep(remaining_time)
+				# 	vel = [state.v * self.res + k_linear*linear_error, state.w + k_angular*cross_track_error]
+				# 	if self. visualization:
+				# 		vis.add("klocaltraj", ktraj)
+				# 		vis.setColor("klocaltraj", 0, 0, 255)
+				# 	if self.debugging:						
+				# 		self.simulated_robot.setBaseVelocity(vel)
+				# 	else:
+				# 		self.jarvis.setBaseVelocity(vel)
+				# 		pass
 
-				#after the primitive is completed, update its posit
-				#In the next iteration, a new primitive will be generated given current pose..
-				self._sharedLock.acquire()
-				new_pose = deepcopy(self.curr_pose)
-				new_pose = transform_coordinates(new_pose, self.grid)
-				self.curr_point = Circle((new_pose[0], new_pose[1]), self.radius)
-				self.curr_theta = new_pose[2]
-				self._sharedLock.release()
+				# 	new_pose = deepcopy(self.curr_pose)
+				# 	new_pose = transform_coordinates(new_pose, self.grid)
+				# 	self.curr_theta = new_pose[2]
 
-				##### receive new map and replan global path
-				new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
-				#print("before", self.can_send_gridmap)
-				if self.can_send_gridmap and new_grid is not None and self.received_first_gridmap_flag:
-					self.grid = new_grid
-					self.gridmap = build_2d_map(self.grid).T
-					self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
+				# 	elapsed_time = time.time() - iteration_start
+				# 	remaining_time = max(0.01 - elapsed_time, 0.0)
+				# 	time.sleep(remaining_time)
+				# 	print('\n\n loop execution frequency PointClickNav',1/(time.time()-start),'\n\n')
+				# #after the primitive is completed, update its posit
+				# #In the next iteration, a new primitive will be generated given current pose..
+				# self._sharedLock.acquire()
+				# new_pose = deepcopy(self.curr_pose)
+				# new_pose = transform_coordinates(new_pose, self.grid)
+				# self.curr_point = Circle((new_pose[0], new_pose[1]), self.radius)
+				# self.curr_theta = new_pose[2]
+				# self._sharedLock.release()
 
-					start_time = time.time()
-					self.global_path_parent_conn.send((self.gridmap, self.start,self.end,True,False))
-					#print(self.start,self.end)
-					print('elapsed time:',time.time() - start_time)
-					self.can_send_gridmap = False
 
-				if new_grid is None:
-					print("no map found from gmapping..")
-				#print("after", self.can_send_gridmap)
+				# #check status
+				# if self.status == 'idle':
+				# 	self.jarvis.setBaseVelocity([0,0])
+				# 	continue
 
-				if self.global_path_parent_conn.poll():
-					self.received_first_gridmap_flag = True
-					new_global_path = self.global_path_parent_conn.recv()
-					if new_global_path:	
-						self.global_path = new_global_path
-						self.Jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
-					else:
-						plt.plot(self.start)
-						plt.plot(self.end)
-						self.curr_point.plot(plt)
-						plt.imshow(self.gridmap.T, origin="lower", cmap="inferno")
-						plt.show()
-						print("new global path is empty")
-						self.Jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
-						self.Jarvis.setBaseVelocity([0,0])
-						self.state = 'idle'
-						continue
-					self.can_send_gridmap = True
+				# ##### receive new map and replan global path
+				# new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
+				# #print("before", self.can_send_gridmap)
+				# if self.can_send_gridmap and new_grid is not None and self.received_first_gridmap_flag:
+				# 	self.grid = new_grid
+				# 	self.gridmap = build_2d_map(self.grid).T
+				# 	self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
+
+				# 	start_time = time.time()
+				# 	self.global_path_parent_conn.send((self.gridmap, self.start,self.end,True,False))
+				# 	#print(self.start,self.end)
+				# 	print('elapsed time:',time.time() - start_time)
+				# 	self.can_send_gridmap = False
+
+				# if new_grid is None:
+				# 	print("no map found from gmapping..")
+				# #print("after", self.can_send_gridmap)
+
+				# if self.global_path_parent_conn.poll():
+				# 	self.received_first_gridmap_flag = True
+				# 	new_global_path = self.global_path_parent_conn.recv()
+				# 	if new_global_path:	
+				# 		self.global_path = new_global_path
+				# 		self.jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
+				# 	else:
+				# 		# plt.plot(self.start)
+				# 		# plt.plot(self.end)
+				# 		# self.curr_point.plot(plt)
+				# 		# plt.imshow(self.gridmap.T, origin="lower", cmap="inferno")
+				# 		# plt.show()
+				# 		print("new global path is empty")
+				# 		self.jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
+				# 		self.jarvis.setBaseVelocity([0,0])
+				# 		self.state = 'idle'
+				# 		continue
+				# 	self.can_send_gridmap = True
 
 			elapsed_time = time.time() - loop_start_time
 			if elapsed_time < self.infoLoop_rate:
@@ -648,7 +647,8 @@ class PointClickNav:
 					break
 			if ros_msg is not None and curr_pose_child is not None:
 				pub.publish(ros_msg)
-				self._publishTf(curr_pose_child) 
+				self._publishTf(curr_pose_child)
+			time.sleep(0.001)
 		print('----------')
 		print('PointClickNav: publish gmapping path exited')
 	def _computeGlobalPath(self,conn, end, radius, active):
@@ -667,6 +667,7 @@ class PointClickNav:
 					global_path = get_path(parents, start, end)
 					conn.send(global_path)
 					gridmap = None
+				time.sleep(0.001)
 			else:
 				time.sleep(0.01)
 		print('----------')
@@ -706,7 +707,7 @@ class PointClickNav:
 	def deactivate(self):
 		self._sharedLock.acquire()
 		self.state = 'idle'
-		self.Jarvis.setBaseVelocity([0,0])
+		self.jarvis.setBaseVelocity([0,0])
 		self.new_ray = False
 		self.ray_request_sent = False
 		self.confirm_request_sent = False

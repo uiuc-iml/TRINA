@@ -1,18 +1,24 @@
-from importlib import reload
 import os,sys
 
-path = os.path.expanduser('~/TRINA/Motion/trina_modules/')
-sys.path.append(path)
+if(sys.version_info[0] < 3):
+    # from future import *
+    from motion_client import MotionClient
+else:
+    from motion_client_python3 import MotionClient
+    from importlib import reload
 
 
-import trina_modules.test1
-import trina_modules.test2
+from . import test_modules
+from . import PointClickNavModule
+from . import DirectTeleOperationModule
 # import trina_modules.UI
 
-test1 = reload(test1)
-test2 = reload(test2)
+reload(test_modules)
+reload(PointClickNavModule)
+reload(DirectTeleOperationModule)
 # UI = reload(trina_modules.UI.UI)
 
-from trina_modules.test1 import *
-from trina_modules.test2 import *
+from test_modules import *
+from PointClickNavModule import PointClickNav
+from DirectTeleOperationModule import DirectTeleOperation
 # from trina_modules.UI.UI import *

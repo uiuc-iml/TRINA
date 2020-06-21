@@ -113,7 +113,9 @@ rospy.init_node("sensing_test_parent")
 start_time = time.time()
 while True:
     lidar.kinematicSimulate(world, 0.01)
+    print('running')
     ros_msg = ros.to_SensorMsg(lidar, frame="/base_scan")
+    print('ran this command')
     curr_pose = robot.base_state.measuredPos
     parent_conn.send([ros_msg, curr_pose])
 
