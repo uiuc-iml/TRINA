@@ -29,7 +29,7 @@ if glinit._PyQtAvailable:
 
 # outer box
 class MyQtMainWindow(QMainWindow):
-    def __init__(self,klamptGLWindow,world,global_state,server,jarvis,UIState):
+    def __init__(self,klamptGLWindow,world,global_state,server,jarvis,UIState,screenElement):
         """When called, this be given a QtGLWidget object(found in klampt.vis.qtbackend).
 
         You will need to place this widget into your Qt window's layout.
@@ -45,6 +45,7 @@ class MyQtMainWindow(QMainWindow):
         self.rpc_args = {}
         self.mode = ''
         self.UIState = UIState
+        self.screenElement = screenElement
 
 
         self._initScrennLayout(klamptGLWindow)
@@ -61,11 +62,12 @@ class MyQtMainWindow(QMainWindow):
                 try:
                     self.commandQueue.pop(0)
                     self.server["UI_END_COMMAND"] = self.commandQueue
-                    rightJoystickMock = self.server["UI_STATE"]["controllerButtonState"]["rightController"]["thumbstickMovement"].read()
-                    print("rightJoystickMock",rightJoystickMock)
-                    self.rpc_args = command['args']
-                    time.sleep(0.0001) 
-                    exec('self.'+command['funcName']+'()')
+                    if command['from'] != self.mode:
+                        print("ignoring command from " + command['from'] + "command recieved was" + command['funcName'])
+                    else:
+                        self.rpc_args = command['args']
+                        time.sleep(0.0001) 
+                        exec('self.'+command['funcName']+'()')
                 finally:
                     print("command recieved was " + command['funcName'])
                     print("-------------------------------------------------------------")
@@ -95,6 +97,7 @@ class MyQtMainWindow(QMainWindow):
         name =self.rpc_args['name']
         self.rpc_args = {}
         vis.addText(name,text)
+        self.screenElement.add(name)
         vis.setColor(name,color[0],color[1],color[2])
         vis.setAttribute(name,"size",size)
         return
@@ -129,6 +132,8 @@ class MyQtMainWindow(QMainWindow):
         print("pass from Json")
         robotPath = ("world",world.robot(0).getName())
         vis.add("robot trajectory",trajectory)
+        self.screenElement.add("robot trajectory")
+
         if animate:
             vis.animate(robotPath,trajectory,endBehavior='halt')
         return
@@ -167,7 +172,6 @@ class MyQtMainWindow(QMainWindow):
         bar = self.menuBar()
         mode = bar.addMenu("Mode Switch")
         mode.addAction("PointClickNav")
-        mode.addAction("Go Home")
         mode.addAction("DirectTeleOperation")
         mode.triggered[QAction].connect(self._processModeTrigger)
 
@@ -184,9 +188,9 @@ class MyQtMainWindow(QMainWindow):
             self.mode = q.text()
             try:
                 self.jarvis.changeActivityStatus([str(self.mode)])
-                vis.clearText()
-                vis.hide("destination")
-                vis.hide("robot trajectory")
+                for element in self.screenElement:
+                    vis.hide(element)
+                self.screenElement.clear()
             except Exception as err:
                 print("Error: {0}".format(err))
 
@@ -231,7 +235,7 @@ class MyQtMainWindow(QMainWindow):
 
 # inner vis plugin
 class MyGLPlugin(vis.GLPluginInterface):
-    def __init__(self,world,global_state,server,jarvis,UIState):
+    def __init__(self,world,global_state,server,jarvis,UIState,screenElement):
         vis.GLPluginInterface.__init__(self)
         self.world = world
         self.collider = collide.WorldCollider(world)
@@ -240,6 +244,7 @@ class MyGLPlugin(vis.GLPluginInterface):
         self.server = server
         self.jarvis = jarvis
         self.UIState = UIState
+        self.screenElement = screenElement
 
 
     def initialize(self):
@@ -318,9 +323,12 @@ class MyGLPlugin(vis.GLPluginInterface):
             id = self.global_state['feedbackId']['getRayClick']
             if self.global_state['collectRaySignal'][0]:
                 vis.addText("pointclick","You have clicked the destination,\n Please click again for calibration.")
+                self.screenElement.addInputBox("pointclick")
                 vis.setColor("pointclick",1,0,0)
                 vis.setAttribute("pointclick","size",30)
                 vis.add("destination",sorted(collided)[0][2])
+                self.screenElement.add("destination")
+
 
                 vis.setColor("destination",1,0,0)
                 vis.setAttribute("destination","size",10)
@@ -364,6 +372,7 @@ class UI_end_1:
         self.server['UI_FEEDBACK'] = {}
         self.global_state = {'collectRaySignal':[False,False],'feedbackId':{'getRayClick':''}}
         self.jarvis = Jarvis(str("UI"))
+        self.screenElement = set([])
         self._serveVis()
 
 
@@ -378,13 +387,13 @@ class UI_end_1:
         g_mainwindow = None
         def makefunc(gl_backend):
             global g_mainwindow
-            g_mainwindow = MyQtMainWindow(gl_backend,world, self.global_state, self.server, self.jarvis, self.UIState)
+            g_mainwindow = MyQtMainWindow(gl_backend,world, self.global_state, self.server, self.jarvis, self.UIState, self.screenElement)
             return g_mainwindow
         vis.add("world",world)
         vis.setWindowTitle("UI END 1")
         vis.customUI(makefunc)
         # init plugin for getting input
-        plugin = MyGLPlugin(world, self.global_state,self.server,self.jarvis, self.UIState)
+        plugin = MyGLPlugin(world, self.global_state,self.server,self.jarvis, self.UIState,self.screenElement)
         vis.pushPlugin(plugin)   #put the plugin on top of the standard visualization functionality.
        
 
@@ -394,7 +403,7 @@ class UI_end_1:
             vis.lock()
             try:
                 sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
-                print(sensed_position[:2])
+                # print(sensed_position[:2])
                 vis_robot = world.robot(0)
                 vis_robot.setConfig(sensed_position)
             except Exception as err:

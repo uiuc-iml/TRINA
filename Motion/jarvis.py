@@ -336,6 +336,7 @@ class Jarvis:
         return self.server['UI_FEEDBACK'][str(id)]['MSG'].read()
 
     def _do_rpc(self,msg):
+        msg["from"] = self.name
         commandQueue = self.server["UI_END_COMMAND"].read()
         commandQueue.append(msg)
         self.server["UI_END_COMMAND"] = commandQueue
