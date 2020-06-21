@@ -370,7 +370,7 @@ class UI_end_1:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = self.UIState
-        self.server["UI_END_COMMAND"] = [{'funcName':'test','args':{}}]
+        self.server["UI_END_COMMAND"] = []
         self.server['UI_FEEDBACK'] = {}
         self.global_state = {'collectRaySignal':[False,False],'feedbackId':{'getRayClick':''}}
         self.jarvis = Jarvis(str("UI"))
