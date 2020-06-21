@@ -315,7 +315,6 @@ class PointClickNav:
 			elif self.state == 'planning':
 				if not planning_request_sent:
 					print('_mainLoop:planning')
-					self.jarvis.setLeftLimbPosition([0,0,0,1,0,0])
 					#this will give an initial plan based on the limited 2D map
 					#calculate the end position
 					if self.debugging:
@@ -458,6 +457,29 @@ class PointClickNav:
 					#stop calculating global path
 					self.global_path_parent_conn.send((None,self.start,self.end,False,False))	
 					self._sharedLock.release()
+					self.jarvis.changeActivityStatus(['UI'],['PointClickNav'])
+				#####compute local action and send to robot
+				#check collision
+				collision = self.curr_point.collides(self.gridmap.T)
+				if collision:
+					print("collided...this should not have happened")
+					break
+
+				#check if the global path his been completed
+				dist_to_goal = l2_dist(self.curr_point.center, self.end)
+				if dist_to_goal < 0.2 / self.res or at_end:
+					#if complete, let user know it is complete
+					self._sharedLock.acquire()
+					if self.debugging:
+						print('at end')
+					else:
+						self.jarvis.sendConfirmationUI('info','Path has finished')
+						self.jarvis.setBaseVelocity([0,0]) 
+
+					self.state = 'idle'
+					#stop calculating global path
+					self.global_path_parent_conn.send((None,self.start,self.end,False,False))	
+					self._sharedLock.release()
 					continue
 
 				# near goal, run a special controller?
@@ -536,7 +558,7 @@ class PointClickNav:
 
 					if not at_end and iteration_start - start_time > time_thresh:
 						end_v = min(max_v, end_v)
-						self.jarvis.setBaseVelocity([0,0])
+						#self.jarvis.setBaseVelocity([0,0])
 
 						break
 

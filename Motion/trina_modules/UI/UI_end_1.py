@@ -325,7 +325,6 @@ class MyGLPlugin(vis.GLPluginInterface):
             id = self.global_state['feedbackId']['getRayClick']
             if self.global_state['collectRaySignal'][0]:
                 vis.addText("pointclick","You have clicked the destination,\n Please click again for calibration.")
-                self.screenElement.addInputBox("pointclick")
                 vis.setColor("pointclick",1,0,0)
                 vis.setAttribute("pointclick","size",30)
                 vis.add("destination",sorted(collided)[0][2])
