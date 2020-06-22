@@ -55,7 +55,7 @@ class CommandServer:
             self.interface = RedisInterface(host="localhost")
             self.interface.initialize()
             self.server = KeyValueStore(self.interface)
-        
+
         self.start_ros_stuff()
         self.world_file = world_file
         # we then proceed with startup as normal
@@ -136,12 +136,14 @@ class CommandServer:
         vel_left = {}
         try:
             if(self.left_limb_active):
-                pos_left = self.query_robot.sensedLeftEETransform()
+                posEE_left = self.query_robot.sensedLeftEETransform()
+                pos_left = self.query_robot.sensedLeftLimbPositions()
                 # print("left position")
                 vel_left = self.query_robot.sensedLeftEEVelocity()
                 # print("left velocity")
             if(self.right_limb_active):
-                pos_right = self.query_robot.sensedRightEETransform()
+                posEE_right = self.query_robot.sensedRightEETransform()
+                pos_right = self.query_robot.sensedRightLimbPositions()
                 # print("right position")
                 vel_right = self.query_robot.sensedRightEEVelocity()
                 # print("right velocity")
@@ -164,6 +166,7 @@ class CommandServer:
             print(e)
         UI_state = self.server["UI_STATE"].read()
         # build the state.
+        #TODO add Klampt and ROBOT_INFO
         self.server["ROBOT_STATE"] = {
                                 "Position" : {
                                     "LeftArm" : pos_left,
@@ -174,6 +177,10 @@ class CommandServer:
                                     "RightGripper" : pos_right_gripper,
                                     "Robotq": klampt_q
                                     },
+                                "PositionEE": {
+                                    "LeftArm" : posEE_left,
+                                    "RightArm" : posEE_right
+                                },
                                 "Velocity" : {
                                     "LeftArm" : vel_left,
                                     "RightArm" : vel_right,
@@ -338,8 +345,8 @@ class CommandServer:
         self.robot = robot
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
-        self.server = KeyValueStore(self.interface)     
-        self.active_modules = active_modules   
+        self.server = KeyValueStore(self.interface)
+        self.active_modules = active_modules
         while(True):
             self.active_modules['UI'] = True
             loopStartTime = time.time()
@@ -471,7 +478,7 @@ class CommandServer:
                 except:
                     print('could not separate the process.')
                 # if pid==0: # new process
-                self.redis_pipe = subprocess.Popen(args)   
+                self.redis_pipe = subprocess.Popen(args)
                 while(True):
                     time.sleep(1000)
         else:
@@ -480,7 +487,7 @@ class CommandServer:
 
         # reverting back to trina directory
         os.chdir(origWD)
-    
+
     def start_ros_stuff(self):
         print('starting ros stuff')
         origWD = os.getcwd() # remember our original working directory
