@@ -138,55 +138,67 @@ class CommandServer:
             if(self.left_limb_active):
                 posEE_left = self.query_robot.sensedLeftEETransform()
                 pos_left = self.query_robot.sensedLeftLimbPositions()
-                # print("left position")
-                vel_left = self.query_robot.sensedLeftEEVelocity()
-                # print("left velocity")
+                vel_left = self.query_robot.sensedLeftLimbVelocity()
+                velEE_left = self.query_robot.sensedLeftEEVelocity()
+
             if(self.right_limb_active):
                 posEE_right = self.query_robot.sensedRightEETransform()
                 pos_right = self.query_robot.sensedRightLimbPositions()
-                # print("right position")
-                vel_right = self.query_robot.sensedRightEEVelocity()
-                # print("right velocity")
+                vel_right = self.query_robot.sensedRightLimbVelocity()
+                velEE_right = self.query_robot.sensedRightEEVelocity()
+
             if(self.base_active):
                 pos_base = self.query_robot.sensedBasePosition()
-                # print("base position")
                 vel_base = self.query_robot.sensedBaseVelocity()
+
             klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
-                # print("base velocity")
-            # if(self.left_gripper_active):
-            #     pos_left_gripper = self.robot.sensedLeftGripperPosition()
-            #     print("left gripper position")
-            # if(self.right_gripper_active):
-            #     pos_right_gripper = self.robot.sensedRightGripperPosition()
-            #     print("right gripper position")
-            # if(self.torso_active):
-            #     pos_torso = self.robot.sensedTorsoPosition()
-            #     print("torso position")
+            klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
+            klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
+            # print("base velocity")
+            if(self.left_gripper_active):
+                pos_left_gripper = self.robot.sensedLeftGripperPosition()
+            if(self.right_gripper_active):
+                pos_right_gripper = self.robot.sensedRightGripperPosition()
+            if(self.torso_active):
+                pos_torso = self.robot.sensedTorsoPosition()
+
+            self.server["ROBOT_INFO"] = {
+                "Started" : self.query_robot.isStarted(),
+                "Shutdown" : self.query_robot.isShutDown(),
+                "Moving" : self.query_robot.moving(),
+                "CartesianDrive" : self.query_robot.cartesianDriveFail(),
+                "Components" : self.components,
+                "Mode" : self.mode
+            }
+            self.server["WORLD"] = self.world
+            self.server["ROBOT_STATE"] = {
+                "Position" : {
+                    "LeftArm" : pos_left,
+                    "RightArm" : pos_right,
+                    "Base" : pos_base,
+                    "Torso": pos_torso,
+                    "LeftGripper" : pos_left_gripper,
+                    "RightGripper" : pos_right_gripper,
+                    "Robotq": klampt_q
+                },
+                "PositionEE": {
+                    "LeftArm" : posEE_left,
+                    "RightArm" : posEE_right
+                },
+                "Velocity" : {
+                    "LeftArm" : vel_left,
+                    "RightArm" : vel_right,
+                    "Base" : vel_base
+                },
+                "VelocityEE" : {
+                    "LeftArm" : velEE_left,
+                    "RightArm" : velEE_right
+                },
+                "KlamptCommandPos" : klampt_command_pos,
+                "KlamptSensedPos" : klampt_sensor_pos
+            }
         except Exception as e:
             print(e)
-        UI_state = self.server["UI_STATE"].read()
-        # build the state.
-        #TODO add Klampt and ROBOT_INFO
-        self.server["ROBOT_STATE"] = {
-                                "Position" : {
-                                    "LeftArm" : pos_left,
-                                    "RightArm" : pos_right,
-                                    "Base" : pos_base,
-                                    "Torso": pos_torso,
-                                    "LeftGripper" : pos_left_gripper,
-                                    "RightGripper" : pos_right_gripper,
-                                    "Robotq": klampt_q
-                                    },
-                                "PositionEE": {
-                                    "LeftArm" : posEE_left,
-                                    "RightArm" : posEE_right
-                                },
-                                "Velocity" : {
-                                    "LeftArm" : vel_left,
-                                    "RightArm" : vel_right,
-                                    "Base" : vel_base
-                                }
-                                }
 
 
     def start_module(self,module,name):
@@ -284,54 +296,71 @@ class CommandServer:
         vel_left = {}
         loopStartTime = time.time()
         while not self.shut_down_flag:
-            self.robot_state = self.server['ROBOT_STATE'].read()
-            self.startup = False
             try:
                 if(self.left_limb_active):
-                    pos_left = self.query_robot.sensedLeftEETransform()
-                    # print("left position")
-                    vel_left = self.query_robot.sensedLeftEEVelocity()
-                    # print("left velocity")
+                    posEE_left = self.query_robot.sensedLeftEETransform()
+                    pos_left = self.query_robot.sensedLeftLimbPositions()
+                    vel_left = self.query_robot.sensedLeftLimbVelocity()
+                    velEE_left = self.query_robot.sensedLeftEEVelocity()
+
                 if(self.right_limb_active):
-                    pos_right = self.query_robot.sensedRightEETransform()
-                    # print("right position")
-                    vel_right = self.query_robot.sensedRightEEVelocity()
-                    # print("right velocity")
+                    posEE_right = self.query_robot.sensedRightEETransform()
+                    pos_right = self.query_robot.sensedRightLimbPositions()
+                    vel_right = self.query_robot.sensedRightLimbVelocity()
+                    velEE_right = self.query_robot.sensedRightEEVelocity()
+
                 if(self.base_active):
                     pos_base = self.query_robot.sensedBasePosition()
-                    # print("base position")
                     vel_base = self.query_robot.sensedBaseVelocity()
+
                 klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
-                # print("base velocity")
-            # if(self.left_gripper_active):
-            #     pos_left_gripper = self.robot.sensedLeftGripperPosition()
-            #     print("left gripper position")
-            # if(self.right_gripper_active):
-            #     pos_right_gripper = self.robot.sensedRightGripperPosition()
-            #     print("right gripper position")
-            # if(self.torso_active):
-            #     pos_torso = self.robot.sensedTorsoPosition()
-            #     print("torso position")
+                klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
+                klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
+                if(self.left_gripper_active):
+                    pos_left_gripper = self.robot.sensedLeftGripperPosition()
+                if(self.right_gripper_active):
+                    pos_right_gripper = self.robot.sensedRightGripperPosition()
+                if(self.torso_active):
+                    pos_torso = self.robot.sensedTorsoPosition()
+                    print("torso position")
+
+                self.server["ROBOT_INFO"] = {
+                    "Started" : self.query_robot.isStarted(),
+                    "Shutdown" : self.query_robot.isShutDown(),
+                    "Moving" : self.query_robot.moving(),
+                    "CartesianDrive" : self.query_robot.cartesianDriveFail(),
+                    "Components" : self.components,
+                    "Mode" : self.mode
+                }
+                self.server["WORLD"] = self.world
+                self.server["ROBOT_STATE"] = {
+                    "Position" : {
+                        "LeftArm" : pos_left,
+                        "RightArm" : pos_right,
+                        "Base" : pos_base,
+                        "Torso": pos_torso,
+                        "LeftGripper" : pos_left_gripper,
+                        "RightGripper" : pos_right_gripper,
+                        "Robotq": klampt_q
+                    },
+                    "PositionEE": {
+                        "LeftArm" : posEE_left,
+                        "RightArm" : posEE_right
+                    },
+                    "Velocity" : {
+                        "LeftArm" : vel_left,
+                        "RightArm" : vel_right,
+                        "Base" : vel_base
+                    },
+                    "VelocityEE" : {
+                        "LeftArm" : velEE_left,
+                        "RightArm" : velEE_right
+                    },
+                    "KlamptCommandPos" : klampt_command_pos,
+                    "KlamptSensedPos" : klampt_sensor_pos
+                }
             except Exception as e:
                 print(e)
-            UI_state = self.server["UI_STATE"].read()
-            # build the state.
-            self.server["ROBOT_STATE"] = {
-                                    "Position" : {
-                                        "LeftArm" : pos_left,
-                                        "RightArm" : pos_right,
-                                        "Base" : pos_base,
-                                        "Torso": pos_torso,
-                                        "LeftGripper" : pos_left_gripper,
-                                        "RightGripper" : pos_right_gripper,
-                                        "Robotq": klampt_q
-                                        },
-                                    "Velocity" : {
-                                        "LeftArm" : vel_left,
-                                        "RightArm" : vel_right,
-                                        "Base" : vel_base,
-                                    },
-                                    }
             ################
             elapsedTime = time.time() - loopStartTime
             if elapsedTime < self.dt:
@@ -424,31 +453,17 @@ class CommandServer:
                 pass
 
 
-    # def sigint_handler(self, signum, frame):
-    #     """ Catch Ctrl+C tp shutdown the robot
+    def sigint_handler(self, signum, frame):
+        """ Catch Ctrl+C tp shutdown the robot
 
-    #     """
-    #     assert(signum == signal.SIGINT)
-    #     # logger.warning('SIGINT caught...shutting down the api!')
-    #     print("SIGINT caught...shutting down the api!")
-    #     self.shutdown()
+        """
+        assert(signum == signal.SIGINT)
+        print("SIGINT caught...shutting down the api!")
 
     def shutdown(self):
         #send shutdown to all modules
         self.shut_down_flag = True
         return 0
-
-
-    def is_robot_active(self):
-        left_limb_active = ('left_limb' in self.components)
-        right_limb_active = ('right_limb' in self.components)
-        base_active = ('base' in self.components)
-        left_gripper_active = ('left_gripper' in self.components)
-        right_gripper_active = ('right_gripper' in self.components)
-        torso_active = ('torso' in self.components)
-
-        return (left_limb_active and right_limb_active and base_active and left_gripper_active and right_gripper_active and torso_active)
-
 
     def setRobotToDefault(self):
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]

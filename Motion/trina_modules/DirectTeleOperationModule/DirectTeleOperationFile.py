@@ -44,7 +44,7 @@ class DirectTeleOperation:
 		self.dt = 0.025
 		self.infoLoop_rate = 0.05
 		self.robot = Jarvis
-		self.components =  ['base','left_limb','right_limb','left_gripper'] 
+		self.components =  ['base','left_limb','right_limb','left_gripper']
 		#self.robot.getComponents()
 		self.left_limb_active = ('left_limb' in self.components)
 		self.right_limb_active = ('right_limb' in self.components)
@@ -71,13 +71,10 @@ class DirectTeleOperation:
 	def sigint_handler(self, signum, frame):
 		""" Catch Ctrl+C tp shutdown the api,
 			there are bugs with using sigint_handler.. not used rn.
-	
+
 		"""
 		assert(signum == signal.SIGINT)
-		#logger.warning('SIGINT caught...shutting down the api!')
 		print("SIGINT caught...shutting down the api!")
-		self.global_path_parent_conn.send([[],[],[],True,True])
-		#self.ros_parent_conn.send([[],[],True]) 
 
 	def return_threads(self):
 		return [self._serveStateReciever, self._infoLoop]
@@ -90,10 +87,7 @@ class DirectTeleOperation:
 			self.robot.log_health()
 			loop_start_time = time.time()
 			status = self.robot.getActivityStatus()
-			
-			#TODO get terminate flag question
-			#terminate_flag = self.jarvis.get
-			
+
 			if(status == 'active'):
 				if(self.status == 'idle'):
 					print('\n\n\n\n starting up Direct-Tele Operation Module! \n\n\n\n\n')
@@ -219,7 +213,7 @@ class DirectTeleOperation:
 			RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
 			RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
 			RT_final = np.add(RT_rw_rh, np.matmul(np.matmul(self.init_headset_orientation.as_matrix(),R_cw_rw), np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()
-		   
+
 			RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
 
 			init_quat = np.array(self.init_UI_state["controllerPositionState"][joystick]['controllerRotation'])

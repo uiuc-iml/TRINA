@@ -98,7 +98,6 @@ class Jarvis:
         current_list.append(command)
         self.server['ROBOT_COMMAND'][self.name] = current_list
 		# self.s.setRightLimbVelocity(qdot)
-		return
 
 	def setLeftEEInertialTransform(self,Ttarget,duration):
         command = self.send_command('self.robot.setLeftEEInertialTransform', str(Ttarget), str(duration))
@@ -198,28 +197,37 @@ class Jarvis:
         self.server['ROBOT_COMMAND'][self.name] = queue
 		# self.s.resumeMotion()
 
-	def mirror_arm_config(self,config):
-        return self.server['WORLD'].read()
-		# return self.s.mirror_arm_config(config)
+	# def mirror_arm_config(self,config):
+    #     command = self.send_command('self.robot.resumeMotion', str(q))
+    #     queue = self.server['ROBOT_COMMAND'][self.name].read()
+    #     queue.append(command)
+    #     self.server['ROBOT_COMMAND'][self.name] = queue
+        # return self.s.mirror_arm_config(config)
 
 	def getWorld(self):
         return self.server["WORLD"].read()
 		# return self.world
 
 	def cartesianDriveFail(self):
-        return self.server["ROBOT_STATE"].read()
+        return self.server["ROBOT_INFO"]["CartesianDrive"].read()
 		# return self.s.cartesianDriveFail()
 
 	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
-        return self.server["ROBOT_STATE"].read()
+		return self.server["ROBOT_STATE"]["VelocityEE"]["LeftArm"].read()
 		# return self.s.sensedLeftEEVelcocity(local_pt)
 
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
-		return self.server["ROBOT_STATE"].read()
+		return self.server["ROBOT_STATE"]["VelocityEE"]["RightArm"].read()
         #return self.s.sensedRightEEVelcocity(local_pt)
 
     def getUIState(self):
         return self.server["UI_STATE"].read()
+
+    def getRobotState(self):
+        return self.server["ROBOT_STATE"].read()
+
+    def getComponents(self):
+        return self.server["ROBOT_INFO"]["Components"].read()
 
     def addRobotTelemetry(self, value):
         self.server["robotTelemetry"] = value
