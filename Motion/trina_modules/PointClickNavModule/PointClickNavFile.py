@@ -528,10 +528,12 @@ class PointClickNav:
 				#Get the primitve milestones		
 				xs, ys, thetas = closest.get_xytheta(20)
 				#proceed to finish one primitive
-				acc = 0.5
-				max_v = 0.5
+				acc = 0.3
+				max_v = 0.3
 				#generate the velocity profile
+				start_time = time.time()
 				profile = generate_profile(closest, acc/self.res, max_v/self.res, 0.01, end_v = end_v/self.res, start_v=self.curr_vel[0]/self.res)
+				print('generating primitive took:',time.time() - start_time)
 				end_v = profile[-1].v
 				milestones = [transform_back([x, y], self.grid) for x, y in zip(xs, ys)]
 				ktraj = klampt.model.trajectory.Trajectory(milestones = milestones)
@@ -575,8 +577,8 @@ class PointClickNav:
 					cross_track_error = trans_target[1]
 
 					#tune the gains here?
-					k_linear = 1.0 * self.res 
-					k_angular = 1.0 * self.res
+					k_linear = 0.5 * self.res  #1.0
+					k_angular = 0.5 * self.res #1.0
 
 					vel = [state.v * self.res + k_linear*linear_error, state.w + k_angular*cross_track_error]
 					if self. visualization:

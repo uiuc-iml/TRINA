@@ -389,7 +389,7 @@ class CommandServer:
     #1 -> healthy
     def moduleMonitor(self):
         self.monitoring_dt = 1
-        self.tolerance = 15
+        self.tolerance = 10000000000000000
         while not self.shut_down_flag:
             to_restart = []
 
