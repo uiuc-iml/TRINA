@@ -16,7 +16,7 @@ import math
 import datetime
 import threading
 import sys
-import time 
+import time
 
 if(sys.version_info[0] < 3):
     # from future import *
@@ -41,13 +41,205 @@ class Jarvis:
         # self.command_server = CommandServer()
 
     # def shutdown(self):
-    #     self.command_server.shutdown()        
+    #     self.command_server.shutdown()
+
+    def setPosition(self,q):
+		return 0
+
+	def setLeftLimbPosition(self,q):
+        command = self.send_command('self.robot.setLeftLimbPosition', str(q))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setLeftLimbPosition(q)
+		return 0
+
+	def setRightLimbPosition(self,q):
+        command = self.send_command('self.robot.setRightLimbPosition', str(q))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setRightLimbPosition(q)
+		return 0
+
+	def setLeftLimbPositionLinear(self,q,duration):
+        command = self.send_command('self.robot.setLeftLimbPositionLinear', str(q), str(duration))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setLeftLimbPositionLinear(q,duration)
+		return 0
+
+	def setRightLimbPositionLinear(self,q,duration):
+        command = self.send_command('self.robot.setRightLimbPositionLinear', str(q), str(duration))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setRightLimbPositionLinear(q,duration)
+		return 0
+
+	def setVelocity(self,qdot):
+        command = self.send_command('self.robot.setVelocity', str(qdot))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setVelocity(qdot)
+
+	def setLeftLimbVelocity(self,qdot):
+        command = self.send_command('self.robot.setLeftLimbVelocity', str(qdot))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setLeftLimbVelocity(qdot)
+
+	def setRightLimbVelocity(self,qdot):
+        command = self.send_command('self.robot.setRightLimbVelocity', str(qdot))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setRightLimbVelocity(qdot)
+
+	def setLeftEEInertialTransform(self,Ttarget,duration):
+        command = self.send_command('self.robot.setLeftEEInertialTransform', str(Ttarget), str(duration))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# return self.s.setLeftEEInertialTransform(Ttarget,duration)
+
+	def setLeftEEVelocity(self,v,tool):
+		if not tool:
+			tool = [0,0,0]
+        command = self.send_command('self.robot.setLeftEEVelocity', str(v), str(tool))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setLeftEEVelocity(v,tool)
+
+	def setRightEEInertialTransform(self,Ttarget,duration):
+        command = self.send_command('self.robot.setRightEEInertialTransform', str(Ttarget), str(duration))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# return self.s.setRightEEInertialTransform(Ttarget,duration)
+
+	def setRightEEVelocity(self, v ,tool):
+		if not tool:
+			tool = [0,0,0]
+        command = self.send_command('self.robot.setRightEEVelocity', str(v), str(tool))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setRightEEVelocity(v,tool)
+
+	def setBaseTargetPosition(self, q, vel):
+        command = self.send_command('self.robot.setBaseTargetPosition', str(q), str(vel))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setBaseTargetPosition(q,vel)
+
+	def setBaseVelocity(self, q):
+        command = self.send_command('self.robot.setBaseVelocity', str(q))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setBaseVelocity(q)
+
+	def setTorsoTargetPosition(self, q):
+        command = self.send_command('self.robot.setTorsoTargetPosition', str(q))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setTorsoTargetPosition(q)
+
+	def setLeftGripperPosition(self, position):
+        command = self.send_command('self.robot.setLeftGripperPosition', str(position))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setLeftGripperPosition(position)
+
+	def setLeftGripperVelocity(self,velocity):
+        command = self.send_command('self.robot.setLeftGripperVelocity', str(velocity))
+        current_list = self.server['ROBOT_COMMAND'][self.name].read()
+        current_list.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = current_list
+		# self.s.setLeftGripperVelocity(velocity)
+
+	# def shutdown(self):
+	# 	self.shut_down = True
+	# 	self.s.shutdown()
+
+	def isStarted(self):
+		return self.server['ROBOT_INFO']['Started'].read()
+
+	def isShutDown(self):
+		return self.server['ROBOT_INFO']['Shutdown'].read()
+
+	def moving(self):
+		"""Returns true if the robot is currently moving."""
+		return self.server['ROBOT_INFO']['Moving'].read()
+
+	def mode(self):
+        return self.server['ROBOT_INFO']['MODE'].read()
+
+	def stopMotion(self):
+        command = self.send_command('self.robot.stopMotion', str(q))
+        queue = self.server['ROBOT_COMMAND'][self.name].read()
+        queue.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = queue
+		# self.s.stopMotion()
+
+	def resumeMotion(self):
+        command = self.send_command('self.robot.resumeMotion', str(q))
+        queue = self.server['ROBOT_COMMAND'][self.name].read()
+        queue.append(command)
+        self.server['ROBOT_COMMAND'][self.name] = queue
+		# self.s.resumeMotion()
+
+	# def mirror_arm_config(self,config):
+    #     command = self.send_command('self.robot.resumeMotion', str(q))
+    #     queue = self.server['ROBOT_COMMAND'][self.name].read()
+    #     queue.append(command)
+    #     self.server['ROBOT_COMMAND'][self.name] = queue
+        # return self.s.mirror_arm_config(config)
+
+	def getWorld(self):
+        return self.server["WORLD"].read()
+		# return self.world
+
+	def cartesianDriveFail(self):
+        return self.server["ROBOT_INFO"]["CartesianDrive"].read()
+		# return self.s.cartesianDriveFail()
+
+	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
+		return self.server["ROBOT_STATE"]["VelocityEE"]["LeftArm"].read()
+		# return self.s.sensedLeftEEVelcocity(local_pt)
+
+	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
+		return self.server["ROBOT_STATE"]["VelocityEE"]["RightArm"].read()
+        #return self.s.sensedRightEEVelcocity(local_pt)
+
     def getUIState(self):
         return self.server["UI_STATE"].read()
 
+    def getRobotState(self):
+        return self.server["ROBOT_STATE"].read()
+
+    def getComponents(self):
+        return self.server["ROBOT_INFO"]["Components"].read()
+
     def addRobotTelemetry(self, value):
         self.server["robotTelemetry"] = value
-        
+
+	def getKlamptSensedPosition(self):
+        return self.server["ROBOT_STATE"]["KlamptSensedPos"].read()
+		# return self.s.getKlamptSensedPosition()
+
+    def getKlamptCommandedPosition(self):
+        return self.server["ROBOT_STATE"]["KlamptCommandPos"].read()
+    	# return self.s.getKlamptCommandedPosition()
+
     def sensedBaseVelocity(self):
         return self.server["ROBOT_STATE"]["Velocity"]["Base"].read()
 
@@ -64,12 +256,12 @@ class Jarvis:
         return self.server["ROBOT_STATE"]["Position"]["Torso"].read()
 
     def sensedLeftEETransform(self):
-        return self.server["ROBOT_STATE"]["Position"]["LeftArm"].read()
+        return self.server["ROBOT_STATE"]["PositionEE"]["LeftArm"].read()
 
     def sensedRightEETransform(self):
-        return self.server["ROBOT_STATE"]["Position"]["RightArm"].read()
+        return self.server["ROBOT_STATE"]["PositionEE"]["RightArm"].read()
 
-    def sensedLeftGripperPosition(self):
+    def sensedGripperPosition(self):
         return self.server["ROBOT_STATE"]["Position"]["LeftGripper"].read()
 
     def sensedRobotq(self):
@@ -81,24 +273,12 @@ class Jarvis:
     def sensedLeftLimbPosition(self):
         return self.server["ROBOT_STATE"]["Position"]["LeftArm"].read()
 
-    def setLeftLimbPosition(self, q):
-        command = self.send_command('self.robot.setLeftLimbPosition', str(q))
-        current_list = self.server['ROBOT_COMMAND'][self.name].read()
-        current_list.append(command)
-        self.server['ROBOT_COMMAND'][self.name] = current_list
-
-    def setBaseVelocity(self, q):
-        command = self.send_command('self.robot.setBaseVelocity', str(q))
-        queue = self.server['ROBOT_COMMAND'][self.name].read()
-        queue.append(command)
-        self.server['ROBOT_COMMAND'][self.name] = queue
-
     def getActivityStatus(self):
         return self.server['ACTIVITY_STATUS'][self.name].read()
 
     def get_point_clouds(self):
         return self.sensor_module.get_point_clouds()
-    
+
     def get_rgbd_images(self):
         return self.sensor_module.get_rgbd_images()
 
@@ -126,7 +306,7 @@ class Jarvis:
     ################################## All Mighty divider between motion and UI###############################
 
     def sendRayClickUI(self):
-        """once this function is called, the UI will ask the user to click twice on the map, and sending back 
+        """once this function is called, the UI will ask the user to click twice on the map, and sending back
         2 ray objects according to the user clicks. first one for destination, second one for calibration
         return:
             id: (str) id for ui feedback
@@ -138,9 +318,9 @@ class Jarvis:
         # ask the user to click on a destination in the map, returns 2 rays in reem
         self._do_rpc({'funcName': 'getRayClick', 'args': {'id': str(id)}})
         return id
-        
+
     def getRayClickUI(self,id):
-        """get the feedback of Ray Click of id. 
+        """get the feedback of Ray Click of id.
         return:
             'NOT READY': (str) if the msg is not ready
             or
@@ -156,11 +336,11 @@ class Jarvis:
         return self.getFeedback(id)
 
     def sendAndGetRayClickUI(self):
-        """once this function is called, the UI will ask the user to click twice on the map, and sending back 
+        """once this function is called, the UI will ask the user to click twice on the map, and sending back
         2 ray objects according to the user clicks. first one for destination, second one for calibration
-        
+
         return:
-            
+
             {
                 'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
                             'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
@@ -178,14 +358,14 @@ class Jarvis:
         return reply
 
     def addTextUI(self, name, text, color, size):
-        """add text to specfified location on UI screen. 
+        """add text to specfified location on UI screen.
         args:
             name: (str) id for the text object
             text: (str) content you wish to add
             color: (list) rgb value [0,0,0]
             size: (int) font size
         return:
-            name: (str) the name/id the user gave 
+            name: (str) the name/id the user gave
         blocking?:
             no
         """
@@ -194,8 +374,8 @@ class Jarvis:
         return name
 
     def sendConfirmationUI(self,title,text):
-        """once this function is called, the UI will display a confimation window with specified title and text, 
-        
+        """once this function is called, the UI will display a confimation window with specified title and text,
+
         return:
             id: (str) id for ui feedback
         blocking?:
@@ -206,9 +386,9 @@ class Jarvis:
         self._do_rpc({'funcName': 'addConfirmation', 'args': {
                      'id': str(id), 'title': title, 'text': text}})
         return id
-        
+
     def getConfirmationUI(self,id):
-        """get the feedback of Confirmation Window of id. 
+        """get the feedback of Confirmation Window of id.
         return:
             'NOT READY': (str) if the msg is not ready
             or
@@ -220,7 +400,7 @@ class Jarvis:
 
 
     def sendAndGetConfirmationUI(self,title,text):
-        """once this function is called, the UI will display a confimation window with specified title and text, 
+        """once this function is called, the UI will display a confimation window with specified title and text,
             a string of 'YES' or "NO" is returned
         args:
             text: (str) content you wish to add
@@ -238,8 +418,8 @@ class Jarvis:
         return reply
 
     def sendTrajectoryUI(self,trajectory,animate = False):
-        """send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once 
-        
+        """send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once
+
         args:
             trajectory: (klampt obj) the traj calculated
             animate: (bool) if user wants to animate the path
@@ -260,7 +440,7 @@ class Jarvis:
             text: (str) button label text
         return:
             name: the id user gave
-        
+
         blocking?:
             no
         """
@@ -275,7 +455,7 @@ class Jarvis:
             name: (str) id for the button object
         return:
             (bool) True or False
-        
+
         blocking?:
             no
         """
