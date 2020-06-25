@@ -292,8 +292,8 @@ class Camera_Robot:
             # print('updating_sim')
             try:
                 q = self.jarvis.sensedRobotq()
-                self.Rrotation, self.Rtranslation = self.jarvis.sensedRightLimbPosition()
-                self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftLimbPosition()
+                self.Rrotation, self.Rtranslation = self.jarvis.sensedRightEETransform()
+                self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftEETransform()
             except Exception as e:
                 print('error updating robot state')
                 print(e)
