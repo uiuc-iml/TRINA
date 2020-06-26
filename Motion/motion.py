@@ -162,7 +162,7 @@ class Motion:
         self.stop_motion_flag = False
         self.stop_motion_sent = False
         self.shut_down_flag = False
-        self.cartedian_drive_failure = False
+        self.cartesian_drive_failure = False
         self._controlLoopLock = RLock()
         #signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
 
@@ -1305,7 +1305,20 @@ class Motion:
         ------------
         bool
         """
-        return self.left_limb.moving() or self.right_limb.moving() or self.base.moving() or self.left_gripper.moving() or self.torso.moving()
+
+        if self.mode == 'Physical':
+            flag = False
+            if self.left_limb_enabled:
+                flag = flag or self.left_limb.moving()
+            if self.right_limb_enabled:
+                flag = flag or self.right_limb.moving()
+            if self.base_enabled:
+                flag = flag or self.base.moving()
+            if self.torso_enabled:
+                flag = flag or self.torso.moving()
+            return flag
+        else:
+            return self.simulated_robot.moving()
 
     def mode(self):
         """Returns the current mode. "Kinematic" or "Physical"
