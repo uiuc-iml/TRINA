@@ -277,6 +277,12 @@ class KinematicController:
     #need to implemented this....
     def _limitConfigPosition(self,q):
         return q
+
+    def moving(self):
+        eps = 1e-5
+        return (vectorops.norm(self.base_state.measuredVel) > eps) or (vectorops.norm(self.left_limb_state.senseddq) > eps) or \
+            (vectorops.norm(self.right_limb_state.senseddq) > eps)
+
 if __name__=="__main__":
     robot = KinematicController()
     robot.start()
