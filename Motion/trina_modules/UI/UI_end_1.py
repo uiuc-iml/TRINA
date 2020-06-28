@@ -24,8 +24,7 @@ if glinit._PyQtAvailable:
         from PyQt5.QtWidgets import *
     else:
         from PyQt4.QtGui import *
-
-
+import redis
 
 # outer box
 class MyQtMainWindow(QMainWindow):
@@ -372,7 +371,7 @@ class UI_end_1:
         self.server["UI_END_COMMAND"] = []
         self.server['UI_FEEDBACK'] = {}
         self.global_state = {'collectRaySignal':[False,False],'feedbackId':{'getRayClick':''}}
-        self.jarvis = Jarvis(str("UI"))
+        self.jarvis = Jarvis(str("UI"),trina_queue = TrinaQueue(str("UI")))
         self.screenElement = set([])
         self._serveVis()
 
@@ -422,7 +421,12 @@ class UI_end_1:
         # clean up
         del g_mainwindow
 
-    
+class TrinaQueue(object):
+	def __init__(self,key, host = 'localhost', port = 6379):
+		self.r = redis.Redis(host = host, port = port)
+		self.key = key
+	def push(self,item):
+		self.r.rpush(self.key,item) 
 
 
 

@@ -270,7 +270,7 @@ class PointClickNav:
 		pose_history = []
 		
 		while not self.exit_flag:
-			print('fromPointClick:',self.state)
+			# print('fromPointClick:',self.state)
 			loop_start_time = time.time()
 			self.last_timestamp = time.time()
 			if self.terminate_command:

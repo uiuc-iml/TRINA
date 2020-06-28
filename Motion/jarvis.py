@@ -29,10 +29,11 @@ else:
 
 class Jarvis:
 
-	def __init__(self, name,sensor_module = []):
+	def __init__(self, name,sensor_module = [],trina_queue = []):
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
+		self.trina_queue  = trina_queue
 		self.name = str(name)
 		self.server['ACTIVITY_STATUS'][self.name] = str('idle')
 		self.sensor_module = sensor_module
@@ -48,123 +49,71 @@ class Jarvis:
 
 	def setLeftLimbPosition(self,q):
 		command = self.send_command('self.robot.setLeftLimbPosition', str(q))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setLeftLimbPosition(q)
+
 		return 0
 
 	def setRightLimbPosition(self,q):
 		command = self.send_command('self.robot.setRightLimbPosition', str(q))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setRightLimbPosition(q)
+
 		return 0
 
 	def setLeftLimbPositionLinear(self,q,duration):
 		command = self.send_command('self.robot.setLeftLimbPositionLinear', str(q), str(duration))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setLeftLimbPositionLinear(q,duration)
+
 		return 0
 
 	def setRightLimbPositionLinear(self,q,duration):
 		command = self.send_command('self.robot.setRightLimbPositionLinear', str(q), str(duration))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setRightLimbPositionLinear(q,duration)
+
 		return 0
 
 	def setVelocity(self,qdot):
 		command = self.send_command('self.robot.setVelocity', str(qdot))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setVelocity(qdot)
 
 	def setLeftLimbVelocity(self,qdot):
 		command = self.send_command('self.robot.setLeftLimbVelocity', str(qdot))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setLeftLimbVelocity(qdot)
 
 	def setRightLimbVelocity(self,qdot):
 		command = self.send_command('self.robot.setRightLimbVelocity', str(qdot))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setRightLimbVelocity(qdot)
+
 
 	def setLeftEEInertialTransform(self,Ttarget,duration):
 		command = self.send_command('self.robot.setLeftEEInertialTransform', str(Ttarget), str(duration))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# return self.s.setLeftEEInertialTransform(Ttarget,duration)
 
 	def setLeftEEVelocity(self,v,tool):
 		if not tool:
 			tool = [0,0,0]
 		command = self.send_command('self.robot.setLeftEEVelocity', str(v), str(tool))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setLeftEEVelocity(v,tool)
+
 
 	def setRightEEInertialTransform(self,Ttarget,duration):
 		command = self.send_command('self.robot.setRightEEInertialTransform', str(Ttarget), str(duration))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# return self.s.setRightEEInertialTransform(Ttarget,duration)
+
 
 	def setRightEEVelocity(self, v ,tool):
 		if not tool:
 			tool = [0,0,0]
 		command = self.send_command('self.robot.setRightEEVelocity', str(v), str(tool))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setRightEEVelocity(v,tool)
+
 
 	def setBaseTargetPosition(self, q, vel):
 		command = self.send_command('self.robot.setBaseTargetPosition', str(q), str(vel))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setBaseTargetPosition(q,vel)
+
 
 	def setBaseVelocity(self, q):
 		command = self.send_command('self.robot.setBaseVelocity', str(q))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setBaseVelocity(q)
+
 
 	def setTorsoTargetPosition(self, q):
 		command = self.send_command('self.robot.setTorsoTargetPosition', str(q))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setTorsoTargetPosition(q)
+
 
 	def setLeftGripperPosition(self, position):
 		command = self.send_command('self.robot.setLeftGripperPosition', str(position))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setLeftGripperPosition(position)
+
 
 	def setLeftGripperVelocity(self,velocity):
 		command = self.send_command('self.robot.setLeftGripperVelocity', str(velocity))
-		current_list = self.server['ROBOT_COMMAND'][self.name].read()
-		current_list.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = current_list
-		# self.s.setLeftGripperVelocity(velocity)
 
 	# def shutdown(self):
 	# 	self.shut_down = True
@@ -184,18 +133,11 @@ class Jarvis:
 		return self.server['ROBOT_INFO']['MODE'].read()
 
 	def stopMotion(self):
-		command = self.send_command('self.robot.stopMotion', str(q))
-		queue = self.server['ROBOT_COMMAND'][self.name].read()
-		queue.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = queue
+		command = self.send_command('self.robot.stopMotion')
 		# self.s.stopMotion()
 
 	def resumeMotion(self):
-		command = self.send_command('self.robot.resumeMotion', str(q))
-		queue = self.server['ROBOT_COMMAND'][self.name].read()
-		queue.append(command)
-		self.server['ROBOT_COMMAND'][self.name] = queue
-		# self.s.resumeMotion()
+		command = self.send_command('self.robot.resumeMotion')
 
 	# def mirror_arm_config(self,config):
 	#     command = self.send_command('self.robot.resumeMotion', str(q))
@@ -291,18 +233,14 @@ class Jarvis:
 				final_string += '{}'
 		final_string = (final_string + ')')
 		final_string = final_string.format(*args)
-		return final_string
+		self.trina_queue.push(final_string)
 
 	def log_health(self,status = True):
 		self.server["HEALTH_LOG"][self.name] = [status,time.time()]
 
 	def changeActivityStatus(self,to_activate,to_deactivate = []):
 		command = self.send_command('self.switch_module_activity',str(to_activate),str(to_deactivate))
-		queue = self.server['ROBOT_COMMAND'][self.name].read()
-		print(command)
-		queue.append(command)
-		print(command)
-		self.server['ROBOT_COMMAND'][self.name] = queue
+
 	################################## All Mighty divider between motion and UI###############################
 
 	def sendRayClickUI(self):
@@ -491,19 +429,6 @@ class Jarvis:
 		id = '$'+ uuid.uuid1().hex
 		# TODO
 		return id
-
-
-	# helper func
-	def send_command(self,command,*args):
-		final_string = str(command)+ '('
-		for index,arg in enumerate(args):
-			if(index != len(args)-1):
-				final_string += '{},'
-			else:
-				final_string += '{}'
-		final_string = (final_string + ')')
-		final_string = final_string.format(*args)
-		return final_string
 
 	def checkFeedback(self,id):
 		while not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():

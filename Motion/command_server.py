@@ -26,6 +26,7 @@ else:
 	from motion_client_python3 import MotionClient
 	from importlib import reload
 from jarvis import Jarvis
+import redis
 
 robot_ip = 'http://localhost:8080'
 
@@ -63,7 +64,7 @@ class CommandServer:
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
-		self.server["ROBOT_STATE"] = 0
+		# self.server["ROBOT_STATE"] = 0
 		self.server['ROBOT_COMMAND'] = {}
 		self.server['HEALTH_LOG'] = {}
 		self.server['ACTIVITY_STATUS'] = {}
@@ -112,7 +113,6 @@ class CommandServer:
 		self.active_modules = manager.dict()
 		self.active_modules['UI'] = True
 		self.start_modules()
-
 
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
 		stateRecieverThread.start()
@@ -205,7 +205,8 @@ class CommandServer:
 
 
 	def start_module(self,module,name):
-		module_jarvis = Jarvis(name,self.sensor_module)
+		module_trina_queue = TrinaQueue(str(name))
+		module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue)
 		a = module(module_jarvis)
 		return a.return_processes()
 
@@ -230,7 +231,6 @@ class CommandServer:
 								self.active_modules[name] = True
 
 				self.server['HEALTH_LOG'] = self.health_dict
-				self.server['ROBOT_COMMAND'] = command_dict
 				self.server['ACTIVITY_STATUS'] = activity_dict
 				self.empty_command = command_dict
 			else:
@@ -373,17 +373,22 @@ class CommandServer:
 		print('\n\n\n\nstopped updating state!!! \n\n\n\n')
 
 	def commandReciever(self,robot,active_modules):
-		self.dt = 0.01
+		self.trina_queue_reader = TrinaQueueReader()
+		self.dt = 0.0001
 		self.robot = robot
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
 		self.active_modules = active_modules
+		self.init_time = time.time()
+		self.loop_counter = 0
 		while(True):
+			self.loop_counter +=1
 			self.active_modules['UI'] = True
 			loopStartTime = time.time()
 			self.robot_command = self.server['ROBOT_COMMAND'].read()
-			if(self.empty_command.keys() != self.robot_command.keys()):
+			if(len(self.empty_command.keys()) != len(self.robot_command.keys())):
+				print(self.empty_command.keys(),self.robot_command.keys())
 				print('updating list of modules')
 				empty_command = {}
 				for key in self.robot_command.keys():
@@ -396,17 +401,24 @@ class CommandServer:
 						else:
 							self.active_modules[str(key)] = True
 				self.empty_command = empty_command
-			self.server['ROBOT_COMMAND'] = self.empty_command
+			# self.server['ROBOT_COMMAND'] = self.empty_command
 
 			for i in self.robot_command.keys():
-				if (self.robot_command[str(i)] != []):
+				robot_command = self.trina_queue_reader.read(str(i))
+				if (robot_command != []):
 					if(self.active_modules[str(i)]):
-						commandList = self.robot_command[str(i)]
+						commandList = robot_command
 						for command in commandList:
 							self.run(command)
 					else:
-						print('ignoring commands from ',str(i),self.robot_command[str(i)])
-			elapsedTime = time.time() - loopStartTime
+						print('ignoring commands from {} because it is inactive'.format(str(i)),robot_command)
+			elapsedTime = time.time() - loopStartTime	# helper func
+			if((time.time()-self.init_time) > 5):
+				all_loops_time = time.time() - self.init_time
+				self.init_time = time.time()
+				print('\nLoop Execution Frequency = {} \n'.format(self.loop_counter/all_loops_time))
+				self.loop_counter = 0
+
 			# print('\n\n Frequency of execution loop:', 1/elapsedTime,'\n\n')
 			if elapsedTime < self.dt:
 				time.sleep(self.dt-elapsedTime)
@@ -527,6 +539,24 @@ class CommandServer:
 		self.gmapping = subprocess.Popen(gmapping_args)
 		print('executed gmapping')
 		os.chdir(origWD)
+
+class TrinaQueue(object):
+	def __init__(self,key, host = 'localhost', port = 6379):
+		self.r = redis.Redis(host = host, port = port)
+		self.key = key
+	def push(self,item):
+		self.r.rpush(self.key,item)
+	
+class TrinaQueueReader(object):
+	def __init__(self, host = 'localhost', port = 6379):
+		self.r = redis.Redis(host = host, port = port)
+	def read(self,key):
+		with self.r.pipeline() as pipe:
+			times = self.r.llen(key)
+			for i in range(times):
+				pipe.lpop(key)
+			res = pipe.execute()
+		return res
 
 if __name__=="__main__":
 	server = CommandServer()
