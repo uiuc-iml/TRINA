@@ -186,9 +186,10 @@ if __name__ == '__main__':
 
     list_object = vision_segment(scene)
     for object in list_object:
+        i = 0
         o3d.visualization.draw_geometries([object])
-
-
+        o3d.io.write_point_cloud("Segmented_Object_" + i.str() + ".pcd", pcd)
+        i+=1
     # scene = remove_plane(scene)
     # scene = remove_noise(scene)
     # o3d.visualization.draw_geometries([scene])
