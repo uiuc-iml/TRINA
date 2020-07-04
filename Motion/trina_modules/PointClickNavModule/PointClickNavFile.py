@@ -176,9 +176,6 @@ class PointClickNav:
 		state_thread.start()
 		main_thread.start()
 
-		#debugging
-		#self.activate()
-		#print('active called')
 
 	def sigint_handler(self, signum, frame):
 		""" Catch Ctrl+C tp shutdown the api,
@@ -235,21 +232,20 @@ class PointClickNav:
 				#TODO get terminate flag question
 				#terminate_flag = self.jarvis.get
 				
-				self._sharedLock.acquire()
+				#self._sharedLock.acquire()
 
 				if(status == 'active'):
 					if(self.status == 'idle'):
 						print('\n\n\n\n starting up Autonomous Navigation Module! \n\n\n\n\n')
-						self.status = 'active'
 						self.activate()
-
 				elif(status == 'idle'):
 					if self.status == 'active':
 						self.deactivate()
-						self.status = 'idle'
-					
+				
 				#if terminate_flag:
 					#self.terminate_command = True
+
+				self._sharedLock.acquire()
 				self.curr_pose = base_q
 				self._sharedLock.release()
 				self.jarvis.log_health()	
@@ -277,39 +273,26 @@ class PointClickNav:
 				self._sharedLock.acquire()
 				self.state = 'idle'
 				self.jarvis.setBaseVelocity([0,0])
-				self.new_ray = False
-				self.ray_request_sent = False
-				self.confirm_request_sent = False
-				self.new_confirmation = False
 				self.terminate_command = False #flag for if user commanded a termination
+				self.global_path = None
+				self.end = None
+				self.start = None
+				self.end_theta = None
 				self.global_path_parent_conn.send((self.gridmap, self.start,self.end,False,False))
 				self._sharedLock.release()
 
 			if self.state == 'idle':							
 				# print("_mainLoop: idling")
-				a = 1
 				pass
 			elif self.state == 'active':
 				print('_mainLoop:active')
-
-
 				#ask for a ray
 				self.ray = self.jarvis.sendAndGetRayClickUI()
-				self.new_ray = True
-				# self._sharedLock.acquire()
-				#if not self.ray_request_sent:
-					#self.jarvis.sendRayRequest()
-					#self.ray_request_sent = True
-				# self._sharedLock.release()
-				#if a new ray has arrived, start planning
-				if self.new_ray:
-					self._sharedLock.acquire()
-					self.new_ray = False
-					self.state = 'planning'
-					# self.ray_request_sent = False
-					planning_request_sent = False
-					print("_mainLoop: newRay received")
-					self._sharedLock.release()
+				self._sharedLock.acquire()
+				self.state = 'planning'
+				planning_request_sent = False
+				print("_mainLoop: newRay received")
+				self._sharedLock.release()
 				
 
 			elif self.state == 'planning':
@@ -321,26 +304,15 @@ class PointClickNav:
 						self.end = intify(transform_coordinates((4,8), self.grid))
 						self.end_theta = 0
 					else:
-						self._sharedLock.acquire()
-						#TODO
 						end = self._groundIntersect((self.ray['FIRST_RAY']['source'],self.ray['FIRST_RAY']['destination']))
 						direction = vectorops.sub(self._groundIntersect((self.ray['SECOND_RAY']['source'],self.ray['SECOND_RAY']['destination'])),end)
-						self.end = intify(transform_coordinates((end[0],end[1]),self.grid))
-						self.end_theta = math.atan2(direction[1],direction[0])
-
-						#print(self.ray)
-
-						# self.end = intify(transform_coordinates((-4,4),self.grid))
-						# self.end_theta = 0.0
-						self._sharedLock.release()
-
-					
-
 					#get the most recent map and send the request
 					new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
 					if new_grid is not None: #this should always find a map if things go right
 						self.grid = new_grid
 						self.gridmap = build_2d_map(self.grid).T
+						self.end = intify(transform_coordinates((end[0],end[1]),self.grid))
+						self.end_theta = math.atan2(direction[1],direction[0])
 						self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
 						self.global_path_parent_conn.send((self.gridmap, self.start,self.end,True,False))
 						planning_request_sent = True
@@ -348,7 +320,6 @@ class PointClickNav:
 					else:
 						print("no map found by gmapping during planning...")
 						self.jarvis.sendConfirmationUI('Error','A gmapping error has occurred....Returning to idle')
-						
 						self.state = 'idle'
 
 				#if the planning request is already sent to process, then just check if planning has finished
@@ -363,25 +334,12 @@ class PointClickNav:
 							continue
 
 						#stop planning and waiting for user confirmation
-						start_time = time.time()
 						self.global_path_parent_conn.send((None,self.start,self.end,False,False))			
-						print("sending global path took:",time.time() - start_time)
 						self.global_path = new_global_path
 
 						#This means that the process is ready to accept a new planning request
 						self.can_send_gridmap = True
 						end_v = 0.5
-						##send path for user to check
-						# self._sharedLock.acquire()
-						# if self.debugging:
-						# 	pass
-						# else:
-						# 
-						# 	pass
-						# # self.confirmation_request_sent = True
-						# self.state = 'waiting' #now wait for user confirmation
-						# self._sharedLock.release()
-
 						if not self.debugging:
 							print('sending the trajectory.....')
 							self.jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
@@ -397,12 +355,10 @@ class PointClickNav:
 								self.curr_theta = self.curr_pose[2]
 								at_end = False
 								print("_mainloop: confirmation received and start executing")
-
-
 								##for testing
 								self.execution_start_time = time.time()
 							else:
-								pass
+								self.deactivate()
 								#TODO implemented a way to replan
 
 			# elif self.state == 'waiting':
@@ -423,17 +379,6 @@ class PointClickNav:
 
 			elif self.state == 'executing':
 				print("_mainLoop: executing")
-				# if time.time() - self.execution_start_time < 10:
-				# 	self.jarvis.setBaseVelocity([0,0.1])
-				# 	time.sleep(0.05)
-				# else:
-				# 	print('Execution complete')
-				# 	self._sharedLock.acquire()
-				# 	self.state = 'idle'
-				# 	self.jarvis.setBaseVelocity([0,0])
-				# 	time.sleep(0.1)
-				# 	self._sharedLock.release()
-				# 	
 				#####compute local action and send to robot
 				#check collision
 				collision = self.curr_point.collides(self.gridmap.T)
@@ -444,7 +389,6 @@ class PointClickNav:
 				#check if the global path his been completed
 				dist_to_goal = l2_dist(self.curr_point.center, self.end)
 				if dist_to_goal < 0.2 / self.res or at_end:
-					#if complete, let user know it is complete
 					self._sharedLock.acquire()
 					if self.debugging:
 						print('at end')
@@ -454,33 +398,14 @@ class PointClickNav:
 						self.jarvis.changeActivityStatus(['UI'],['PointClickNav'])
 						print('execution has completed')
 					self.state = 'idle'
+					self.global_path = None
+					self.end = None
+					self.start = None
+					self.end_theta = None
 					#stop calculating global path
 					self.global_path_parent_conn.send((None,self.start,self.end,False,False))	
 					self._sharedLock.release()
 					self.jarvis.changeActivityStatus(['UI'],['PointClickNav'])
-				#####compute local action and send to robot
-				#check collision
-				collision = self.curr_point.collides(self.gridmap.T)
-				if collision:
-					print("collided...this should not have happened")
-					break
-
-				#check if the global path his been completed
-				dist_to_goal = l2_dist(self.curr_point.center, self.end)
-				if dist_to_goal < 0.2 / self.res or at_end:
-					#if complete, let user know it is complete
-					self._sharedLock.acquire()
-					if self.debugging:
-						print('at end')
-					else:
-						self.jarvis.sendConfirmationUI('info','Path has finished')
-						self.jarvis.setBaseVelocity([0,0]) 
-
-					self.state = 'idle'
-					#stop calculating global path
-					self.global_path_parent_conn.send((None,self.start,self.end,False,False))	
-					self._sharedLock.release()
-					continue
 
 				# near goal, run a special controller?
 				if dist_to_goal < 1.0 / self.res:
@@ -553,6 +478,9 @@ class PointClickNav:
 						self._sharedLock.acquire()
 						self.state = 'idle'
 						self.jarvis.setBaseVelocity([0,0])
+						self.global_path = None
+						self.end = None
+						self.start = None
 						self._sharedLock.release()
 						break
 					iteration_start = time.time()
@@ -560,8 +488,6 @@ class PointClickNav:
 
 					if not at_end and iteration_start - start_time > time_thresh:
 						end_v = min(max_v, end_v)
-						#self.jarvis.setBaseVelocity([0,0])
-
 						break
 
 					self._sharedLock.acquire()
@@ -588,7 +514,6 @@ class PointClickNav:
 						self.simulated_robot.setBaseVelocity(vel)
 					else:
 						self.jarvis.setBaseVelocity(vel)
-						pass
 
 					new_pose = deepcopy(self.curr_pose)
 					new_pose = transform_coordinates(new_pose, self.grid)
@@ -638,11 +563,6 @@ class PointClickNav:
 						self.global_path = new_global_path
 						self.jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
 					else:
-						# plt.plot(self.start)
-						# plt.plot(self.end)
-						# self.curr_point.plot(plt)
-						# plt.imshow(self.gridmap.T, origin="lower", cmap="inferno")
-						# plt.show()
 						print("new global path is empty")
 						self.jarvis.sendConfirmationUI('Error','A global path does not seem to be possible....Returning to idle')
 						self.jarvis.setBaseVelocity([0,0])
@@ -734,10 +654,11 @@ class PointClickNav:
 		self._sharedLock.acquire()
 		self.state = 'idle'
 		self.jarvis.setBaseVelocity([0,0])
-		self.new_ray = False
-		self.ray_request_sent = False
 		self.confirm_request_sent = False
-		self.new_confirmation = False
+		self.global_path = None
+		self.end = None
+		self.start = None
+		self.end_theta = None
 		self.terminate_command = False #flag for if user commanded a termination
 		self.global_path_parent_conn.send(([],[],[],False,False))
 		self._sharedLock.release()
