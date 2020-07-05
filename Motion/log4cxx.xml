@@ -4,7 +4,7 @@
   <!-- Output the log message to log file
     -->
   <appender name="appxNormalAppender" class="org.apache.log4j.FileAppender">
-    <param name="file" value="./klampt_logs/klmapt_logs.log" />
+    <param name="file" value="./klampt_logs/klampt_logs.log" />
     <param name="append" value="true" />
     <layout class="org.apache.log4j.PatternLayout">
       <param name="ConversionPattern" value="%d %-5p %C{2} (%F:%L) - %m%n" />
