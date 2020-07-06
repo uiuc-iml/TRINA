@@ -9,8 +9,13 @@ echo 'server started'
 
 echo "starting command server"
 
-python3 $PWD/robot_v2/robot.py & sleep 2
+cd ~/TRINA
+python2 command_server.py & sleep 10
 
-python3 UIController_reem.py & 
+echo "command_server_started"
 
-python3 Robot_visualizer.py &
+echo "starting GUI"
+
+cd trina_modules/UI
+
+python2 UI_end_1.py
