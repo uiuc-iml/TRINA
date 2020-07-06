@@ -168,6 +168,8 @@ class MyGLViewer(GLWidgetProgram):
         q = self.robotPoser.get()
         left_limb_command = q[10:16]
         right_limb_command = q[35:41]
+        if(not os.path.exists('./GUI_log')):
+            os.mkdir('./GUI_log')
         self.fileName = 'GUI_log/motion' + ''.join(str(e) for e in left_limb_command + right_limb_command) + '.csv'
         self.saveStartTime =  datetime.datetime.utcnow()
         self.saveEndTime = datetime.datetime.utcnow() + datetime.timedelta(0,3.1)
