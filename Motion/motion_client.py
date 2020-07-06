@@ -170,8 +170,8 @@ class MotionClient:
 	def mirror_arm_config(self,config):
 		return self.s.mirror_arm_config(config)
 
-	def getWorld(self):
-		return self.world
+	# def getWorld(self):
+	# 	return self.world
 
 	def cartesianDriveFail(self):
 		return self.s.cartesianDriveFail()
@@ -181,6 +181,12 @@ class MotionClient:
 
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
 		return self.s.sensedRightEEVelcocity(local_pt)
+
+	def sensedLeftEEWrench(self,frame):
+		return self.s.sensedLeftEEWrench(frame)
+
+	def sensedRightEEWrench(self,frame):
+		return self.s.sensedRightEEWrench(frame)
 
 if __name__=="__main__":
 	motion = MotionClient()

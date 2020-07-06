@@ -54,15 +54,13 @@ class PointClickNav:
 		#if true, run a test locally, otherwise, communicate with Jarvis to get state
 		self.debugging = debugging
 		self.last_timestamp = 0.0
-		self.state = 'idle' #states are " idle, active"
+		self.state = 'idle' #states are used internally, there are idle, active, planning etc
+		self.status = 'idle' # idle: state == idle; active: state: active/planning/executing etc
 		self.infoLoop_rate = 0.02
-		self.new_confirmation = False
 		self.can_send_gridmap = False
 		self.exit_flag = False
 		self.mode = mode
-		self.visualization = False
-		self.received_first_gridmap_flag = False
-		self.status = 'idle'
+		self.visualization = False		
 		time.sleep(10)
 		if self.debugging:
 
@@ -93,63 +91,40 @@ class PointClickNav:
 				vis.show()
 		else:
 			self.jarvis = Jarvis
-			#get current pose of the robot
-			# left_q = self.jarvis.sensedLeftLimbPosition()
-			# right_q = self.jarvis.sensedRightLimbPosition()
 			base_q = self.jarvis.sensedBasePosition()
-			#print(base_q)
 			self.curr_pose = base_q
-			#start visualizer
-			self.vis_world = WorldModel()
-			self.vis_world.readFile('data/TRINA_world_anthrax_PointClick.xml')
-			self.vis_robot = self.vis_world.robot(0)
-			self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
-			print('flag2')
+			
 			if self.visualization:
+				#start visualizer
+				self.vis_world = WorldModel()
+				self.vis_world.readFile('data/TRINA_world_anthrax_PointClick.xml')
+				self.vis_robot = self.vis_world.robot(0)
+				self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
 				vis.add("world",self.vis_world)
 
 			if self.mode == 'Kinematic':
-				#simulate lidar data here
-				#self.sim = klampt.Simulator(self.vis_world)
-				#self.lidar = self.sim.controller(0).sensor("lidar")
 				if self.visualization:
 					vis.add("lidar",self.lidar)
-
 					vis.show()
 			elif self.mode == 'Physical':
 				pass
+				#TODO
 
 			self.system_start_time = time.time()
-
-
 		#goal for navigation from user
-		self.new_ray = False
-		self.ray_request_sent = False
-		self.confirm_request_sent = False
-		self.new_confirmation = False
 		self.terminate_command = False #flag for if user commanded a termination
 		self.ray1 = ([],[]) #source and direction
 		self.ray2 = ([],[])
 
-
-		#start the process that sends laser scans to gmapping
-		#commented this out becuase there will be handled by sensing module
-		# self.ros_parent_conn, self.ros_child_conn = Pipe()
-		# self.gmapping_proc = Process(target=self._publishGmappingStuff, args=(self.ros_child_conn, ))
-		# self.gmapping_proc.start()
-
 		#start the parent ros node
 		rospy.init_node("sensing_test_parent")
-
 		#get the first grid
 		self.grid = None	
 		while self.grid == None:
-			# self.lidar.kinematicSimulate(self.vis_world,0.001)
-			# ros_msg = convertMsg(self.lidar, frame="/base_scan")
-			# self.ros_parent_conn.send([ros_msg, self.curr_pose,False]) 
 			#grid and the gridmap info
 			self.grid = get_occupancy_grid("dynamic_map")
 			print("\n\n\n It seems that we cannot get a grid from gmapping, it there something wrong? - Changing for Yifan\n\n\n\n")
+			time.sleep(0.5)
 
 		self.res = self.grid.info.resolution
 		self.radius = 0.5588/2/self.res * 2.0 #radius in terms of grids
@@ -161,7 +136,6 @@ class PointClickNav:
 		self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
 		#wait for user to give goal
 		self.end = []
-
 		self._sharedLock = RLock()
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
 	
@@ -248,7 +222,6 @@ class PointClickNav:
 				self._sharedLock.acquire()
 				self.curr_pose = base_q
 				self._sharedLock.release()
-				self.jarvis.log_health()	
 
 			elapsed_time = time.time() - loop_start_time
 			if elapsed_time < self.infoLoop_rate:
@@ -348,8 +321,8 @@ class PointClickNav:
 							if ans == 'YES':
 								self.state = 'executing'
 								self.jarvis.sendConfirmationUI('info','Path has started executing')
-								#unpause the planning process
-								self.global_path_parent_conn.send((self.gridmap,self.start,self.end,True,False))
+								#unpause the planning process, #actually I don't think this is needed
+								#self.global_path_parent_conn.send((self.gridmap,self.start,self.end,True,False))
 								#The current disc of the robot. Used for planning
 								self.curr_point = Circle(self.start[::-1], self.radius)
 								self.curr_theta = self.curr_pose[2]
@@ -534,14 +507,13 @@ class PointClickNav:
 
 
 				#check status
-				if self.status == 'idle':
+				if self.state == 'idle':
 					self.jarvis.setBaseVelocity([0,0])
 					continue
 
 				##### receive new map and replan global path
 				new_grid = get_occupancy_grid("dynamic_map", timeout=0.001)
-				#print("before", self.can_send_gridmap)
-				if self.can_send_gridmap and new_grid is not None and self.received_first_gridmap_flag:
+				if self.can_send_gridmap and new_grid is not None:
 					self.grid = new_grid
 					self.gridmap = build_2d_map(self.grid).T
 					self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
@@ -554,10 +526,8 @@ class PointClickNav:
 
 				if new_grid is None:
 					print("no map found from gmapping..")
-				#print("after", self.can_send_gridmap)
 
 				if self.global_path_parent_conn.poll():
-					self.received_first_gridmap_flag = True
 					new_global_path = self.global_path_parent_conn.recv()
 					if new_global_path:	
 						self.global_path = new_global_path
@@ -578,25 +548,6 @@ class PointClickNav:
 		print('----------')
 		print('PointClickNav: main thread exited')
 
-
-	def _publishGmappingStuff(self,conn):
-		rospy.init_node("sensing_test_child")
-		pub = rospy.Publisher("base_scan", sensor_msgs.msg.LaserScan)
-
-		ros_msg = None
-		curr_pose_child = None
-		exit = False
-		while not exit:
-			if conn.poll():
-				ros_msg, curr_pose_child, exit = conn.recv()
-				if exit:
-					break
-			if ros_msg is not None and curr_pose_child is not None:
-				pub.publish(ros_msg)
-				self._publishTf(curr_pose_child)
-			time.sleep(0.001)
-		print('----------')
-		print('PointClickNav: publish gmapping path exited')
 	def _computeGlobalPath(self,conn, end, radius, active):
 		gridmap = None
 		exit = False
@@ -605,17 +556,17 @@ class PointClickNav:
 				gridmap, start,end,active,exit= conn.recv()
 				if exit:
 					break
-
-			if active:
-				if gridmap is not None:
-					preprocessed_gridmap = preprocess(gridmap, radius)
-					dists, parents = navigation_function(preprocessed_gridmap, end, radius)
-					global_path = get_path(parents, start, end)
-					conn.send(global_path)
-					gridmap = None
-				time.sleep(0.001)
-			else:
-				time.sleep(0.01)
+				#makes more sense that you only compute path when a request is sent
+				if active:
+					if gridmap is not None:
+						preprocessed_gridmap = preprocess(gridmap, radius)
+						dists, parents = navigation_function(preprocessed_gridmap, end, radius)
+						global_path = get_path(parents, start, end)
+						conn.send(global_path)
+						gridmap = None
+					time.sleep(0.001)
+				else:
+					time.sleep(0.01)
 		print('----------')
 		print('PointClickNav: compute global path exited')
 

@@ -171,7 +171,8 @@ class LimbController:
         UR5 keyword arguments
         - rtde_port: port for RTDE, default 30004
         - command_port: port for commands, default 30002
-        - tcp: tool center point in wrist frame (default 0,0,0.04,0,0,0)
+        #- tcp: tool center point in wrist frame (default 0,0,0.04,0,0,0)
+        - cog: center of grappy for payload (default 0,0,0) #the outward direction of the EE flange is z-axis
         - payload: estimated payload in kg
         - gravity: estimated gravity in base frame in N, default [0,0,9.81]
         """

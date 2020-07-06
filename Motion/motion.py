@@ -111,11 +111,12 @@ class Motion:
             for component in components:
                 if component == 'left_limb':
                     self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright,\
-                        payload = TRINAConfig.left_limb_payload,tcp = TRINAConfig.left_limb_TCP)
+                        payload = TRINAConfig.left_limb_payload,cog = TRINAConfig.left_limb_cog)
                     self.left_limb_enabled = True
                     logger.debug('left limb enabled')
                 elif component == 'right_limb':
-                    self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright)
+                    self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright,\
+                        payload = TRINAConfig.right_limb_payload,cog = TRINAConfig.right_limb_cog)
                     self.right_limb_enabled = True
                     logger.debug('right limb enabled')
                 elif component == 'base':
@@ -211,9 +212,9 @@ class Motion:
                         pass
                     else:
                         tilt_angle = 0.0
-                    R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
-                    R_local_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
-                    R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)
+                    #R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
+                    #R_local_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
+                    #R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)
                     #gravity_left = so3.apply(so3.inv(R_local_global_left),[0,0,-9.81])
                     #gravity_right = so3.apply(so3.inv(R_local_global_right),[0,0,-9.81])
                     #self.left_limb.setGravity(gravity_left)
@@ -232,6 +233,7 @@ class Motion:
                         self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
                         self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
                         self.left_limb_state.sensedWrench =self.left_limb.getWrench()
+
                 if self.right_limb_enabled:
                     res = self.right_limb.start()
                     time.sleep(1)
@@ -713,6 +715,9 @@ class Motion:
             logger.warning('Right limb not enabled')
             print("motion.setRightLimbPosition():Right limb not enabled")
         return
+
+
+
 
     def sensedLeftLimbPosition(self):
         """The current joint positions of the left limb
@@ -1258,6 +1263,47 @@ class Motion:
         """
         #return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq,base = self.base_state.measuredPos)
         return self.robot_model.getConfig()
+    
+    
+    def sensedLeftEEWrench(self,frame = 'global'):
+        """
+        Parameters:
+        ------------------
+        frame: string, 'global' or 'local'
+
+        Return:
+        ------------------
+        wrench: list of 6 floats, expressed either in global or local EE coordinate
+
+        Note:
+        #TODO
+        Need to check if the returned wrench would offset the added tool. Even if it does, then it means that we need to measure the added tool weight and cog carefully..
+        In the case that the added tool weight is not corrected for, we need to do that ourselves. Not implemented yet.
+        """
+        wrench = self.left_limb_state.sensedWrench() #this wrench is expressed in the robot base frame
+        tilt_angle = 0.0
+        R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
+        R_base_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
+        #R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)    
+        wrench_global = so3.apply(R_base_global_left,wrench[0:3]) + so3.apply(R_base_global_left,wrench[3:6])  #this is expressed in the global frame
+        if frame == 'global':
+            return wrench_global
+        elif frame == 'local':
+            R_EE = self.sensedLeftEETransform()[0]      
+            wrench_EE = so3.apply(so3.inv(R_EE),wrench_global) 
+            return wrench_EE
+        else:
+            #TODO, add logger
+            print('sensedLeftEEWrench: wrong input frame')
+            return 
+
+    def sensedRightEEWrench(self,frame = 'global'):
+        pass
+        #TODO
+    
+    
+    
+    
     def shutdown(self):
         """Shutdown the componets.
 
