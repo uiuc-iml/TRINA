@@ -62,7 +62,8 @@ def rtde_control_loop():
     set_input_actions_to_default()
 
     # tool configuration
-    set_tcp(p[{tcp[0]}, {tcp[1]}, {tcp[2]}, {tcp[3]}, {tcp[4]}, {tcp[5]}])
+    #set_tcp(p[{tcp[0]}, {tcp[1]}, {tcp[2]}, {tcp[3]}, {tcp[4]}, {tcp[5]}])
+    set_payload_cog([{cog[0]}, {cog[1]}, {cog[2]}])
     set_payload({payload})
     set_gravity([{gravity[0]}, {gravity[1]}, {gravity[2]}])
 
@@ -153,7 +154,7 @@ class UR5Controller(object):
         self._velocity = 0
         self._speed_scale = None
 
-        self._tcp = kwargs.pop('tcp', [0.0,0,0.0,0,0,0])
+        self._cog = kwargs.pop('cog', [0.0,0.0,0.0])
         self._payload = kwargs.pop('payload', 0.0)
         self._gravity = kwargs.pop('gravity', [0, 0, 9.82])
 
@@ -202,7 +203,7 @@ class UR5Controller(object):
         # start the controller program
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self._robot_host, self._command_port))
-        program = _CONTROLLER_PROGRAM.format(tcp=self._tcp, payload=self._payload, gravity=self._gravity)
+        program = _CONTROLLER_PROGRAM.format(cpg=self._cog, payload=self._payload, gravity=self._gravity)
         logger.info('controller program:\n{}'.format(program))
         self._sock.sendall(program.encode('ascii') + b'\n')
 
