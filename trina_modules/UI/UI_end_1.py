@@ -18,7 +18,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 from klampt.vis import glinit
 sys.path.append(os.path.abspath('../../'))
-from jarvis import Jarvis
+from Jarvis import Jarvis
 if glinit._PyQtAvailable:
     if glinit._PyQt5Available:
         from PyQt5.QtWidgets import *
@@ -356,7 +356,7 @@ class MyGLPlugin(vis.GLPluginInterface):
 class UI_end_1:
     def __init__(self,placeholder):
         # file_dir = "../../data/TRINA_world.xml"
-        file_dir = "../../data/TRINA_world_anthrax_PointClick.xml"
+        file_dir = "../../Motion/data/TRINA_world_anthrax_PointClick.xml"
         world = klampt.WorldModel()
         res = world.readFile(file_dir)
         self.world = world
