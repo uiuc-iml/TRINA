@@ -164,7 +164,7 @@ class PointClickNav:
 		#self.ros_parent_conn.send([[],[],True]) 
 
 	def return_threads(self):
-		return [self._infoLoop,self._mainloop]
+		return [self._infoLoop,self._mainLoop]
 
 	def return_processes(self):
 		return [self.global_path_proc]

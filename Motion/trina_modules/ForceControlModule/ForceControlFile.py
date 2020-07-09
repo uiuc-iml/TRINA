@@ -5,69 +5,84 @@ import math
 from threading import Thread, Lock, RLock
 import threading
 import numpy as np
-from multiprocessing import Process, Pipe
 import logging
 from copy import deepcopy,copy
 from klampt.math import vectorops,so3
-from klampt.model import ik, collide
 from klampt import WorldModel, vis
 from TRINAConfig import *
-import sensor_msgs
 from motion import Motion
-from matplotlib import pyplot as plt
 
 class ForceControl:
-	def __init__(self,Jarvis = None, debugging = False, mode = 'Kinematic'):
+	def __init__(self,Jarvis = None,EE_2_task= None):
 		#if true, run a test locally, otherwise, communicate with Jarvis to get state
-		self.debugging = debugging
-		self.state = 'idle' #states are " idle, active"
+		self.status = 'idle'
+		self.state = 'idle'
 		self.infoLoop_rate = 0.02
 		self.exit_flag = False
-		self.mode = mode
-		self.status = 'idle'
-		time.sleep(10)
-		if self.debugging:
-			pass
-		else:
-			self.jarvis = Jarvis
+		self.dt = 0.01
 
+		self.EE_2_task = EE_2_task
 
+		#Start Jarvis
+		self.jarvis = Jarvis
+
+		#For safety
+		self.max_velocity = np.array([0.3,0.3,0.3,0.5,0.5,0.5])
+		self.min_velocity = -np.array([0.3,0.3,0.3,0.5,0.5,0.5])
+		self.max_force = 20
+
+		#parameters for PD controller
 		self.kp = None
 		self.kd = None
-		self.ki = None
-		self.max_velocity = None
-		self.min_velocity = None
+		
+		self.max_force = None
+		self.current_time = 0.0
+		self.total_time = 0.0
+		self.T = None
+		self.Y = None
+		self.command_type = None
 
-		self.dt
+		self.wrench_error = None
+		self.last_error = None
+		#self.accumulated_error = None #doing only PD
 
+		#for 'point' type
+		self.pos_des = None
+		self.w_des = None
+		#for 'trajectory' type
+		self.trajectory = None
+		self.w_trajectory = None
+		#warm up the sensor
 
+		self._sharedLock = RLock()
 		main_thread = threading.Thread(target = self._mainLoop)
 		state_thread = threading.Thread(target = self._infoLoop)
 		state_thread.start()
 		main_thread.start()
 
 	def return_threads(self):
-		return [self._infoLoop,self._mainloop]
+		return [self._infoLoop,self._mainLoop]
 
 	def _infoLoop(self):
-		if self.debugging:
-			pass
-
 		while not self.exit_flag:
 			self.jarvis.log_health()
 			loop_start_time = time.time()
 			#check if there is new information
-			if self.debugging:
-				pass
-			else:
-				status = self.jarvis.getActivityStatus()
-				if(status == 'active'):
-					if(self.status == 'idle'):
-						print('\n\n\n\n starting up Autonomous Navigation Module! \n\n\n\n\n')
-						self.activate()
-				elif(status == 'idle'):
-					if self.status == 'active':
-						self.deactivate()
+			
+			status = self.jarvis.getActivityStatus()
+			if(status == 'active'):
+				if(self.status == 'idle'):
+					print('\n\n\n\n starting up Autonomous Navigation Module! \n\n\n\n\n')
+					self.activate()
+			elif(status == 'idle'):
+				if self.status == 'active':
+					self.deactivate()
+
+			if self.state == 'executing':
+				if self.jarvis.cartesianDriveFail():
+					print("singular configuration encountered")
+					#TODO do something here to handle the case where cartesian drive failed
+
 
 			elapsed_time = time.time() - loop_start_time
 			if elapsed_time < self.infoLoop_rate:
@@ -85,6 +100,8 @@ class ForceControl:
 
 	def _mainLoop(self):
 		while not self.exit_flag:
+			self._sharedLock.acquire()
+
 			loop_start_time = time.time()
 			self.last_timestamp = time.time()
 			if self.state == 'idle':							
@@ -93,60 +110,44 @@ class ForceControl:
 				#self.current_time = 0.0
 				#self.state = 'executing'
 				pass
-
+			
 			if self.state == 'executing':
-				if self.input_mode == 'debugging':
-					self.total_time = 10.0
-
 				if self.current_time <= self.total_time:
-					if self.input_mode == 'debugging':
-						v_des = ForceControl.getVelocity(current_time,current_task_transform)
-						w_des = ForceControl.getWrench(current_time)
-						T,Y = ForceControl.getSelectionMatrices()
-						kp = 
-						ki = 
-						kd = 
-						max_velocity = np.array([0.05,0.05,0.05]) #need to have the correct dimension
-						min_velocity = np.array([0.05,0.05,0.05]) #need to have the correct dimension
-						task_transform = ForceControl.getTaskFrameTransform()
-						
-					elif self.input_mode == 'trajectory':
-						self._sharedLock.acquire()
-						#TODO calculate v_des from trajectory
-						v_des = copy(self.v_des)
+					#get the current state, and EE transform
+					current_EE_transform = self.jarvis.sensedLeftEETransform()
+					current_task_transform = so3.mul(current_EE_transform,self.EE_2_task)
+					current_wrench_EE = self.jarvis.sensedLeftEEWrench(frame = 'local')  #this one should have already been filtered
+					current_q = self.jarvis.sensedLeftLimbPosition() 
+					#TODO: check for safety
+					if np.linalg.norm(current_wrench_EE[0:3]) > self.max_force:
+						self.resetParameters()
+						self.jarvis.setLeftLimbPosition(current_q) #this is less computationally heavy than set the v = 0
+						pass
+
+					current_wrench = np.array(ForceControl.EEtoTask(current_wrench_EE,self.EE_2_task)) #get wrench in the task frame 
+					if self.command_type == 'point':
+						v_des = self.pos_des - self.T.T@np.array(current_task_transform[1] + so3.moment(current_task_transform[0]))
 						w_des = copy(self.w_des)
+					elif self.command_type == 'trajectory':
+						target_point = self.trajectory.eval(self.current_time)
+						v_des = np.array(target_point) - self.T.T@np.array(current_task_transform[1] + so3.moment(current_task_transform[0]))
+						w_des = np.array(self.w_trajectory.eval(self.current_time))
+					
+				self.last_error = copy(self.wrench_error)
+				self.wrench_error = w_des - self.Y@np.array(current_wrench)
+				d_error = (self.wrench_error-self.last_error)/self.dt	
+				v_des_from_wrench = np.dot(self.kp,self.wrench_error) + np.dot(self.kd,d_error) #PID gains
+				v_des_total = self.T.T@v_des + self.Y.T@v_des_from_wrench #the 6D velocity vector
 
-				#check validity
-				if np.linalg.norm(T.T@Y) > 1e-10:
-					raise RuntimeError('Wrong selection matrices given')
-
-
-				#get the current EE transform
-				current_EE_transform = self.Jarvis.sensedLeftEETransform()
-				current_task_transform = so3.mul(current_EE_transform,task_transform)
-				current_raw_wrench = self.Jarvis.sensedLeftEEWrench(frame = 'local') 
-				current_wrench = ForceControl.EEtoTask(current_raw_wrench,task_transform) #get wrench in the task frame
-
-				self.last_error = copy(wrench_error)
-				self.wrench_error = np.array(w_des) - Y@np.array(current_wrench)
-				d_error = (wrench_error-last_error)/dt
-				self.accumulated_error = accumulated_error + wrench_error
-
-				v_des_from_wrench = np.dot(kp,wrench_error) + np.dot(kd,d_error) + np.dot(ki,accumulated_error)
 				#clip the velocities for safety
-				v_des_total = np.clip(v_des_total,min_velocity,max_velocity)
-				v_des_total = T.T@np.array(v_des) + Y.T@v_des_from_wrench
-				
-				self.Jarvis.setLeftEEVelocity(v_des_total.tolist(), tool = task_transform[1])
-				#add things to handle the case where cartesianDrive failed
-				if self.Jarvis.cartesianDriveFail():
-					print("singular configuration encountered")
-					break
-
-			self.current_time += self.dt
+				v_des_total = np.clip(v_des_total,self.min_velocity,self.max_velocity)
+				#send the velocity to motion
+				self.jarvis.setLeftEEVelocity(v_des_total.tolist(), tool = self.EE_2_task[1])
+				self.current_time += self.dt
+			self._sharedLock.release()
 			elapsed_time = time.time() - loop_start_time
-			if elapsed_time < dt:
-				time.sleep(-elapsed_time + dt)
+			if elapsed_time < self.dt:
+				time.sleep(-elapsed_time + self.dt)
 			else:
 				time.sleep(0.0001)
 
@@ -154,69 +155,7 @@ class ForceControl:
 		self._sharedLock.acquire()
 		self.exit_flag = True
 		self._sharedLock.release()
-		if self.visualization:
-			vis.kill()
 		return
-
-
-	# def debugMain(self,v_des,w_des,T,Y,kp,ki,kd,max_velocity,min_velocity,task_transform):
-	# 	"""
-	# 	Right now, we assume it is the left EE only for debugging
-	# 	"""
-	# 	#T,Y = ForceControl.getSelectionMatrices()
-		
-	# 	#check validity
-	# 	if np.linalg.norm(T.T@Y) > 1e-10:
-	# 		raise RuntimeError('Wrong selection matrices given')
-	# 	(_,size_k) = np.shape(T)
-	# 	kp = 
-	# 	ki = 
-	# 	kd = 
-	# 	max_velocity = np.array([0.05,0.05,0.05]) #need to have the correct dimension
-	# 	min_velocity = np.array([0.05,0.05,0.05]) #need to have the correct dimension
-	# 	task_transform = ForceControl.getTaskFrameTransform()
-	# 	dt = 0.01
-	# 	current_time = 0.0
-	# 	total_time = 10
-	# 	wrench_error = np.zeros(size_k)
-	# 	last_error = np.zeros(size_k)
-	# 	accumulated_error = np.zeros(size_k)
-	# 	while current_time <= total_time:	
-	# 		loop_start_time = time.time()
-	# 		#get the current EE transform
-	# 		current_EE_transform = self.Jarvis.sensedLeftEETransform()
-	# 		current_task_transform = so3.mul(current_EE_transform,task_transform)
-	# 		v_des = ForceControl.getVelocity(current_time,current_task_transform)
-	# 		w_des = ForceControl.getWrench(current_time)
-
-	# 		current_raw_wrench = self.Jarvis.sensedLeftEEWrench(frame = 'local') 
-	# 		current_wrench = ForceControl.EEtoTask(current_raw_wrench,task_transform) #get wrench in the task frame
-
-	# 		last_error = copy(wrench_error)
-	# 		wrench_error = np.array(w_des) - Y@np.array(current_wrench)
-	# 		d_error = (wrench_error-last_error)/dt
-	# 		accumulated_error = accumulated_error + wrench_error
-
-	# 		v_des_from_wrench = np.dot(kp,wrench_error) + np.dot(kd,d_error) + np.dot(ki,accumulated_error)
-	# 		#clip the velocities for safety
-	# 		v_des_total = np.clip(v_des_total,min_velocity,max_velocity)
-
-	# 		v_des_total = T.T@np.array(v_des) + Y.T@v_des_from_wrench
-			
-	# 		self.Jarvis.setLeftEEVelocity(v_des_total.tolist(), tool = task_transform[1])
-	# 		#add things to handle the case where cartesianDrive failed
-	# 		if self.Jarvis.cartesianDriveFail():
-	# 			print("singular configuration encountered")
-	# 			break
-
-
-	# 		current_time += dt
-	# 		elapsed_time = time.time() - loop_start_time
-	# 		if elapsed_time < dt:
-	# 			time.sleep(-elapsed_time + dt)
-	# 		else:
-	# 			time.sleep(0.0001)
-
 	
 		
 	@classmethod
@@ -225,14 +164,13 @@ class ForceControl:
 		Parameters:
 		-----------
 		wrench: a list of 6 elements 
-		T: the task frame transform w.r.t. the EE frame
+		T: the task frame transform w.r.t. the EE frame, right now we assume T[0] == I
 
 		Return:
 		-----------
 		"""
+		#TODO
 		return
-
-
 
 	def _desiredVelocity(self):
 		return
@@ -245,61 +183,67 @@ class ForceControl:
 	def deactivate(self):
 		self._sharedLock.acquire()
 		self.state = 'idle'
-		self.global_path_parent_conn.send(([],[],[],False,False))
+		self.resetParameters()
+		current_q = self.jarvis.sensedLeftLimbPosition() 
+		self.jarvis.setLeftLimbPosition(current_q) #this is less computationally heavy than set the v = 0
 		self._sharedLock.release()
 
-	def setTrajectory(self,traj,w_traj,T,Y,kp = None,ki = None, kd = None,max_velocity = None,min_velocity = None):
-		
-
+	def setTrajectory(self,traj,w_traj,T,Y,kp = None,kd = None):
 		self._sharedLock.acquire()
-		self.trajectory = traj
-		self.total_time = trajectory
+		self.trajectory = deepcopy(traj)
+		self.w_traj = deepcopy(w_traj)
+		#self.total_time
+		#force_dim = 
+		self.T = copy(T)
+		self.Y = copy(Y)
+		#TODO, check for consistency
+		#assert
+		
+		#TODO: finish this up
+		if kp == None:
+			self.kp = np.array([1]*force_dim)
+			self.kd = np.array([0.1]*force_dim)
+		else:
+			self.kp = copy(kp)
+			self.kd = copy(kd)
+
 		self.current_time = 0.0
+		self.command_type = 'trajectory'
+		self.wrench_error = np.zeros(force_dim)
+		self.last_error = np.zeros(force_dim)
 		self._sharedLock.release()
 
-
-	##Below are functions that are not really used
-	@classmethod
-	def getVelocity(cls,t,transform):
-		"""
-		Return:
-		----------
-		Desired veloctiy of the task frame at time t, dimension k
-		"""
 		return
 
-	@classmethod
-	def getTaskFrameTransform(cls):
-		"""
-		Return:
-		----------
-		Get the task frame transform w.r.t the EE, lets assume R= I
-		"""
-		return ([1,0,0,0,1,0,0,0,1],[0,0,0])
-
-	@classmethod
-	def getWrench(cls,t):
-		"""
-		Return:
-		---------
-		Desired force/torque of the task frame at time t, dimension 6-k
-		"""
+	#TODO
+	def setTargetPoint(self):
 		return
 
-	@classmethod
-	def getSelectionMatrices(cls):
-		"""
-		Return:
-		--------
-		T,Y: the desired selection matrix at the task frame for desired velocity and force, 
-		6xK and 6x(6-k)
-		"""
-		T = np.array(([[]]))  #desired velocity
-		Y = np.array(([[]]))  #desired force
-		return T,Y
+	def resetParameters(self):
+		self._sharedLock.acquire()
+		#parameters for PD controller
+		self.kp = None
+		self.kd = None
+		self.current_time = 0.0
+		self.total_time = 0.0
+		self.T = None
+		self.Y = None
+		self.command_type = None
+		self.wrench_error = None
+		self.last_error = None
+		#for 'point' type
+		self.pos_des = None
+		self.w_des = None
+		#for 'trajectory' type
+		self.trajectory = None
+		self.w_trajectory = None
+		self._sharedLock.release()
+		return
+
+	def setMaxMinVel(self,maxVel,minVel):
+		#TODO
+		return
+
 
 if __name__=="__main__":
-	demo = PointClickNav(debugging = False)
-	#time.sleep(10)
-	#print('\n\n\n\n\n\n calling shutdown, boys! \n\n\n\n\n\n\n')
-	#demo._shutdown()
+	pass
