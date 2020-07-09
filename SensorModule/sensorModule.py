@@ -11,7 +11,6 @@ import klampt
 import numpy
 import time
 from klampt.math import se3
-from motion_client_python3 import MotionClient
 from klampt import vis, Geometry3D
 from klampt.model import sensing
 from threading import Thread
@@ -19,7 +18,7 @@ import threading
 import copy
 from OpenGL.GLUT import *
 from OpenGL.GL import *
-from jarvis import Jarvis
+from Jarvis import Jarvis
 import rospy
 from sensor_msgs.msg import LaserScan
 from klampt.math import vectorops,so3

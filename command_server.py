@@ -16,16 +16,16 @@ import sys, inspect
 import atexit
 import subprocess
 from TRINAConfig import *
-from sensorModule2 import Camera_Robot
+from SensorModule import Camera_Robot
 from klampt import WorldModel,Geometry3D
 import rosgraph
 if(sys.version_info[0] < 3):
 	from future import *
-	from motion_client import MotionClient
+	from Motion import MotionClient
 else:
-	from motion_client_python3 import MotionClient
+	from Motion  import MotionClient
 	from importlib import reload
-from jarvis import Jarvis
+from Jarvis import Jarvis
 import redis
 
 robot_ip = 'http://localhost:8080'
@@ -36,7 +36,7 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 
 class CommandServer:
 
-	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './data/TRINA_world_anthrax_PointClick.xml'):
+	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml'):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")

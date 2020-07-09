@@ -200,7 +200,8 @@ class PointClickNav:
 				# right_q = self.jarvis.sensedRightLimbPosition()
 				base_q = self.jarvis.sensedBasePosition()
 				self.curr_vel = self.jarvis.sensedBaseVelocity()
-				self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
+				if(self.visualization):
+					self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
 				status = self.jarvis.getActivityStatus()
 				
 				#TODO get terminate flag question
