@@ -1276,6 +1276,7 @@ class Motion:
         wrench: list of 6 floats, expressed either in global or local EE coordinate
 
         Note:
+        #The wrench read here is already filtered, done in the limbController.py file
         #TODO
         Need to check if the returned wrench would offset the added tool. Even if it does, then it means that we need to measure the added tool weight and cog carefully..
         In the case that the added tool weight is not corrected for, we need to do that ourselves. Not implemented yet.

@@ -2,9 +2,10 @@
 from klampt.math import vectorops
 from ur5_controller import *
 import ur5_config as UR5_CONSTANTS
-from threading import Thread, Lock
+from threading import Thread, Lock, RLock
 import CRC16
 import time
+from copy import copy
 
 def addCRC(myHex):
     #takes a hex string and adds a modbus CRC to it
@@ -191,13 +192,32 @@ class LimbController:
         self._gravity = kwargs.pop('gravity', [0, 0, 9.82])
         self._wrench=[]
         self._started = False
+
+        #TODO
+        #Filter wrench 
+        self._filter_flag = False
+        if self._filter_flag:
+            from scipy import signal
+            self._filtered_wrench = []
+            self._history_Fx = []
+            self._history_Fy = []
+            self._history_Fz = []
+            self._history_tx = []
+            self._history_ty = []
+            self._history_tz = []
+            self._history_length = 50
+
+            ## filter parameters
+            Wn=0.08
+            [self.b,self.a]=signal.butter(5,Wn,'low')
+
         #debugging
         self._speed_fraction=0.0
         self._min_joints = UR5_CONSTANTS.MIN_JOINTS
         self._max_joints = UR5_CONSTANTS.MAX_JOINTS
         self._min_velocities = UR5_CONSTANTS.MIN_VEL
         self._max_velocities = UR5_CONSTANTS.MAX_VEL        
-        self._command_lock = Lock()
+        self._command_lock = RLock()
         self._state_read = False 
 
     def start(self):
@@ -240,8 +260,12 @@ class LimbController:
     def getCurrentTime(self):
         return self._last_t
     
-    def getWrench(self):
-        return self._wrench
+    def getWrench(self,filtered = False):
+        if filtered:
+            return self._filtered_wrench
+        else:
+            return self._wrench
+            
     #FOR DEBUGGIN PURPOSES
     def getSpeedFraction(self):
         return self._speed_fraction
@@ -284,7 +308,59 @@ class LimbController:
         q_curr = state.actual_q
         q_gripper = (0 if self.gripper is None else self.gripper.read())
         self._wrench=state.actual_TCP_force	
+        
+
+        #Add and filter wrench here
+        if self._filter_flag:
+            if len(self._history_Fx) < self._history_length:
+                self._history_Fx.append(self._wrench[0])
+                self._history_Fy.append(self._wrench[1])
+                self._history_Fz.append(self._wrench[2])
+                self._history_tx.append(self._wrench[3])
+                self._history_ty.append(self._wrench[4])
+                self._history_tz.append(self._wrench[5])
+                tmp_wrench = copy(self._wrench)
+
+            else:
+                assert len(self._history_Fx) == self._history_length
+                assert len(self._history_Fy) == self._history_length
+                assert len(self._history_Fz) == self._history_length
+                assert len(self._history_tx) == self._history_length
+                assert len(self._history_ty) == self._history_length
+                assert len(self._history_tz) == self._history_length
+                self._history_Fx[0:self._history_length - 1] = self._history_Fx[1:self._history_length]
+                self._history_Fx[self._history_length - 1] = self._wrench[0] 
+                self._history_Fy[0:self._history_length - 1] = self._history_Fy[1:self._history_length]
+                self._history_Fy[self._history_length - 1] = self._wrench[1] 
+                self._history_Fz[0:self._history_length - 1] = self._history_Fz[1:self._history_length]
+                self._history_Fz[self._history_length - 1] = self._wrench[2] 
+                self._history_tx[0:self._history_length - 1] = self._history_tx[1:self._history_length]
+                self._history_tx[self._history_length - 1] = self._wrench[3] 
+                self._history_ty[0:self._history_length - 1] = self._history_ty[1:self._history_length]
+                self._history_ty[self._history_length - 1] = self._wrench[4] 
+                self._history_tz[0:self._history_length - 1] = self._history_tz[1:self._history_length]
+                self._history_tz[self._history_length - 1] = self._wrench[5] 
+
+                #debug
+                start_time = time.time()
+
+                tmp_wrench = [0.0]*6
+                tmp_wrench[0] = signal.lfilter(self.b,self.a,self._history_Fx)[self._history_length -1]
+                tmp_wrench[1] = signal.lfilter(self.b,self.a,self._history_Fy)[self._history_length -1]
+                tmp_wrench[2] = signal.lfilter(self.b,self.a,self._history_Fz)[self._history_length -1]
+                tmp_wrench[3] = signal.lfilter(self.b,self.a,self._history_tx)[self._history_length -1]
+                tmp_wrench[4] = signal.lfilter(self.b,self.a,self._history_ty)[self._history_length -1]
+                tmp_wrench[5] = signal.lfilter(self.b,self.a,self._history_tz)[self._history_length -1]
+			    
+                print("filtering took",time.time() - start_time)
+
+
+
+        self._command_lock.acquire()
+        #filtered wrench 
+        self._filtered_wrench = copy(tmp_wrench)
         self._speed_fraction=state.target_speed_fraction
+
         #change of gripper is about (current-previous)/dt
         #gripper does not provide velocity - only position. Velocity is estimated
         if self._q_curr:
@@ -304,10 +380,8 @@ class LimbController:
         self._qdot_curr = qdot_curr
         halt = None
 
-        #check path is non-null
-
         #self._q_commanded is the commanded configuration that the students give. It has 7 parameters (6 for robot, 1 for gripper)
-        self._command_lock.acquire()
+        # self._command_lock.acquire()
         if self._q_commanded:
             #double extra check
             #if students are doing anything wrong
