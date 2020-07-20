@@ -223,13 +223,22 @@ def _sensedRightEEVelocity(local_pt):
 	global robot
 	return robot.sensedRightEEVelocity(local_pt)
 
-def _sensedLeftEEWrench(frame):
+def _sensedLeftEEWrench(frame,format):
 	global robot
-	return robot.sensedLeftEEWrench(frame)
+	return robot.sensedLeftEEWrench(frame,format)
 
-def _sensedRightEEWrench(frame):
+def _sensedRightEEWrench(frame,format):
 	global robot
-	return robot.sensedRightEEWrench(frame)
+	return robot.sensedRightEEWrench(frame,format)
+
+def _zeroLeftFTSensor():
+	global robot
+	return robot.zeroLeftFTSensor()
+
+def _zeroRightFTSensor():
+	global robot
+	return robot.zeroRightFTSensor()
+
 #ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
@@ -286,6 +295,8 @@ server.register_function(_sensedLeftEEVelocity,'sensedLeftEEVelcocity')
 server.register_function(_sensedRightEEVelocity,'sensedRightEEVelcocity')
 server.register_function(_sensedLeftEEWrench,'sensedLeftEEWrench')
 server.register_function(_sensedRightEEWrench,'sensedRightEEWrench')
+server.register_function(_zeroLeftFTSensor,'zeroLeftFTSensor')
+server.register_function(_zeroRightFTSensor,'zeroRightFTSensor')
 ##
 print('#######################')
 print('#######################')

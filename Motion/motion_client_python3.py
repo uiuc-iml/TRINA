@@ -23,7 +23,7 @@ class MotionClient:
 
 	def startServer(self,mode,components,codename):
 		self.s.startServer(mode,components,codename)
-		
+
 	def restartServer(self,mode,components,codename):
 		self.s.restartServer(mode,components,codename)
 
@@ -177,13 +177,21 @@ class MotionClient:
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
 		return self.s.sensedRightEEVelcocity(local_pt)
 
-	
-	def sensedLeftEEWrench(self,frame):
-		return self.s.sensedLeftEEWrench(frame)
 
-	def sensedRightEEWrench(self,frame):
-		return self.s.sensedRightEEWrench(frame)
-		
+	def sensedLeftEEWrench(self,frame = 'global', format = 'corrected'):
+		return self.s.sensedLeftEEWrench(frame,format)
+
+	def sensedRightEEWrench(self,frame = 'global', format = 'corrected'):
+		return self.s.sensedRightEEWrench(frame,format)
+
+	def zeroLeftFTSensor(self):
+		return self.s.zeroLeftFTSensor()
+
+	def zeroRightFTSensor(self):
+		return self.s.zeroRightFTSensor()
+
+
+
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startup()
