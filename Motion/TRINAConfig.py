@@ -1,10 +1,12 @@
 from math import sqrt,pi
 left_limb_address = '10.1.1.30'
 right_limb_address = '10.1.1.20'
-left_limb_payload = 2
+## The payload and cog has to be calibrated...
+left_limb_payload = 2.0
 left_limb_cog = [0.0,0.0,0.05] 
 right_limb_payload = 0.0
 right_limb_cog = [0.0,0.0,0.0] 
+
 ur5e_control_rate = 0.004 #250 Hz
 left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector
 right_limb_gravity_upright = [4.91,-4.91,-6.93672]
@@ -16,6 +18,11 @@ epsilon = 0.01
 limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon]
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
 collision_check_interval = 0.1
+
+#commonly used arm configurations
+left_untucked_config = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+#rightUntuckedConfig = self.mirror_arm_config(leftUntuckedConfig)
+
 def get_left_tool_link_N(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")):
         return 13
@@ -58,7 +65,7 @@ def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
         return None
 
 
-#to add a new robot model:
+###To add a new robot model:
 # create a new world file contained the model_name
 # update the functions defined where
 # when using the motion api, specify the correct model name
