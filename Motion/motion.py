@@ -234,6 +234,7 @@ class Motion:
                         self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
                         self.left_limb_state.sensedWrench =self.left_limb.getWrench()
 
+                        
                 if self.right_limb_enabled:
                     res = self.right_limb.start()
                     time.sleep(1)
@@ -555,6 +556,30 @@ class Motion:
                     self.simulated_robot.setLeftGripperPosition(self.left_gripper_state.command_finger_set)
                     robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq)
                     self.robot_model.setConfig(robot_model_Q)
+
+                    #If first loop, do stuff for correcting the wrench:
+                    if self.left_limb_state.first_loop:
+                        (self.left_limb_state.initial_R,_) = self.sensedLeftEETransform() #EE in the global frame
+                        self.left_limb_state.first_loop = False
+                        #TODO change this when torso is actuated
+                        tilt_angle = 0.0
+                        R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
+                        R_base_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left) #Robot's base frame in global frame
+                        R_global_base_left = so3.inv(R_base_global_left)
+
+                        G = [0,0,-TrinaConfig.left_limb_payload*9.81] #global frame
+                        G_base = so3.apply(R_global_base_left,G) #Base frame
+
+                        R_EE_base_left = so3.mul(R_global_base_left,self.left_limb_state.initial_R)
+                        r = so3.aply(R_EE_base_left,TRINAConfig.left_limb_cog)#CoM in the EE frame, expressed in the robot base frame
+                        tau = vectorops.cross(r,G_base)
+
+                        self.left_limb_state.wrench_offset = copy(G_base + tau)#in the robot base frame
+
+                    # if self.right_limb_state.first_loop:
+                    #     (self.right_limb_state.initial_R,_) = self.sensedRightEETransform() 
+                    #     self.right_limb_state.first_loop = False
+
             self._controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
             self.t = time.time() - self.startTime
@@ -1265,12 +1290,12 @@ class Motion:
         return self.robot_model.getConfig()
     
     
-    def sensedLeftEEWrench(self,frame = 'global'):
+    def sensedLeftEEWrench(self,frame = 'global', format = 'corrected'):
         """
         Parameters:
         ------------------
         frame: string, 'global' or 'local'
-
+        format: string, 'raw' or 'corrected'
         Return:
         ------------------
         wrench: list of 6 floats, expressed either in global or local EE coordinate
@@ -1278,25 +1303,44 @@ class Motion:
         Note:
         #The wrench read here is already filtered, done in the limbController.py file
         #TODO
-        Need to check if the returned wrench would offset the added tool. Even if it does, then it means that we need to measure the added tool weight and cog carefully..
-        In the case that the added tool weight is not corrected for, we need to do that ourselves. Not implemented yet.
+        #debug....
         """
-        wrench = self.left_limb_state.sensedWrench() #this wrench is expressed in the robot base frame
-        tilt_angle = 0.0
-        R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
-        R_base_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
-        #R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)    
-        wrench_global = so3.apply(R_base_global_left,wrench[0:3]) + so3.apply(R_base_global_left,wrench[3:6])  #this is expressed in the global frame
-        if frame == 'global':
-            return wrench_global
-        elif frame == 'local':
-            R_EE = self.sensedLeftEETransform()[0]      
-            wrench_EE = so3.apply(so3.inv(R_EE),wrench_global) 
-            return wrench_EE
-        else:
-            #TODO, add logger
-            print('sensedLeftEEWrench: wrong input frame')
-            return 
+        
+        #TODO
+        #add assert
+
+        wrench_raw = self.left_limb_state.sensedWrench() #this wrench is expressed in the robot base frame
+        (R,_) = self.sensedLeftEETransform() #current EE R in global frame
+        R_base_global_left = copy(TRINAConfig.R_local_global_upright_left)
+        R_global_base_left = so3.inv(R_base_global_left)
+        R_EE_base_left = so3.mul(R_global_base_left,R)
+
+        if format == 'raw':
+            if frame == 'global':
+                return so3.apply(R_base_global_left,wrench_raw)
+            elif frame == 'local':     
+                return so3.apply(so3.inv(R_EE_base_left),wrench_raw)
+
+        elif format == 'corrected':
+            r = so3.aply(R_EE_base_left,TRINAConfig.left_limb_cog) #CoM in the EE frame, expressed in the robot base frame
+            G = [0,0,-TRINAConfig.left_limb_payload*9.81] #global frame
+            G_base = so3.apply(R_global_base_left,G) #Base frame
+            tau = vectorops.cross(r,G_base) #base frame
+
+            wrench_0 = vectorops.sub(G_base + tau,self.left_limb_state.wrench_offset) #what the sensor would read if no external wrench
+
+            #in the base frame
+            wrench = vectorops.sub(wrench_raw,wrench_0)
+            #this is expressed in the global frame
+            wrench_global = so3.apply(R_base_global_left,wrench[0:3]) + so3.apply(R_base_global_left,wrench[3:6])  
+
+            if frame == 'global':
+                return wrench_global
+            elif frame == 'local':     
+                wrench_EE = so3.apply(so3.inv(R),wrench_global) 
+                return wrench_EE
+
+        return 
 
     def sensedRightEEWrench(self,frame = 'global'):
         pass
