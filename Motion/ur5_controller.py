@@ -21,16 +21,16 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 SETPOINT_HALT     = 0
 SETPOINT_POSITION = 1
 SETPOINT_VELOCITY = 2
-
-
+#set_tcp(p[{tcp[0]}, {tcp[1]}, {tcp[2]}, {tcp[3]}, {tcp[4]}, {tcp[5]}])
+#zero_ftsensor()
 _CONTROLLER_PROGRAM = '''
 stop program
 set unlock protective stop
 
 def rtde_control_loop():
     #Tear the FT sensor
+    #using zero_ftsensor() does not seem to work....
     zero_ftsensor()
-
     # constants
     SETPOINT_TIMEOUT  = 20
     SETPOINT_HALT     = 0
@@ -62,7 +62,7 @@ def rtde_control_loop():
     set_input_actions_to_default()
 
     # tool configuration
-    #set_tcp(p[{tcp[0]}, {tcp[1]}, {tcp[2]}, {tcp[3]}, {tcp[4]}, {tcp[5]}])
+
     set_payload_cog([{cog[0]}, {cog[1]}, {cog[2]}])
     set_payload({payload})
     set_gravity([{gravity[0]}, {gravity[1]}, {gravity[2]}])
@@ -203,7 +203,7 @@ class UR5Controller(object):
         # start the controller program
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self._robot_host, self._command_port))
-        program = _CONTROLLER_PROGRAM.format(cpg=self._cog, payload=self._payload, gravity=self._gravity)
+        program = _CONTROLLER_PROGRAM.format(cog=self._cog, payload=self._payload, gravity=self._gravity)
         logger.info('controller program:\n{}'.format(program))
         self._sock.sendall(program.encode('ascii') + b'\n')
 
