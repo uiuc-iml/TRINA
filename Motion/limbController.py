@@ -6,6 +6,7 @@ from threading import Thread, Lock, RLock
 import CRC16
 import time
 from copy import copy
+from scipy import signal as scipysignal
 
 def addCRC(myHex):
     #takes a hex string and adds a modbus CRC to it
@@ -192,12 +193,13 @@ class LimbController:
         self._gravity = kwargs.pop('gravity', [0, 0, 9.82])
         self._wrench=[]
         self._started = False
-
-        #TODO
+	
         #Filter wrench 
-        self._filter_flag = False
+	self._wrench_offset = [0.0]*6
+	self._set_wrench_offset_flag = False        
+	self._filter_flag = True
         if self._filter_flag:
-            from scipy import signal
+            
             self._filtered_wrench = []
             self._history_Fx = []
             self._history_Fy = []
@@ -209,7 +211,7 @@ class LimbController:
 
             ## filter parameters
             Wn=0.08
-            [self.b,self.a]=signal.butter(5,Wn,'low')
+            [self.b,self.a]=scipysignal.butter(5,Wn,'low')
 
         #debugging
         self._speed_fraction=0.0
@@ -262,9 +264,14 @@ class LimbController:
     
     def getWrench(self,filtered = False):
         if filtered:
-            return self._filtered_wrench
+            return vectorops.sub(self._filtered_wrench,self._wrench_offset)
         else:
-            return self._wrench
+            return vectorops.sub(self._wrench,self._wrench_offset)
+
+    def zeroFTSensor(self):
+	self._command_lock.acquire()
+	self._wrench_offset = copy(self._filtered_wrench)
+	self._command_lock.release()
             
     #FOR DEBUGGIN PURPOSES
     def getSpeedFraction(self):
@@ -309,6 +316,8 @@ class LimbController:
         q_gripper = (0 if self.gripper is None else self.gripper.read())
         self._wrench=state.actual_TCP_force	
         
+	#debug
+	#print(self._wrench)
 
         #Add and filter wrench here
         if self._filter_flag:
@@ -320,7 +329,6 @@ class LimbController:
                 self._history_ty.append(self._wrench[4])
                 self._history_tz.append(self._wrench[5])
                 tmp_wrench = copy(self._wrench)
-
             else:
                 assert len(self._history_Fx) == self._history_length
                 assert len(self._history_Fy) == self._history_length
@@ -341,24 +349,24 @@ class LimbController:
                 self._history_tz[0:self._history_length - 1] = self._history_tz[1:self._history_length]
                 self._history_tz[self._history_length - 1] = self._wrench[5] 
 
-                #debug
-                start_time = time.time()
-
+		
+		#filtering all 6 of these takes about 0.1 ms
                 tmp_wrench = [0.0]*6
-                tmp_wrench[0] = signal.lfilter(self.b,self.a,self._history_Fx)[self._history_length -1]
-                tmp_wrench[1] = signal.lfilter(self.b,self.a,self._history_Fy)[self._history_length -1]
-                tmp_wrench[2] = signal.lfilter(self.b,self.a,self._history_Fz)[self._history_length -1]
-                tmp_wrench[3] = signal.lfilter(self.b,self.a,self._history_tx)[self._history_length -1]
-                tmp_wrench[4] = signal.lfilter(self.b,self.a,self._history_ty)[self._history_length -1]
-                tmp_wrench[5] = signal.lfilter(self.b,self.a,self._history_tz)[self._history_length -1]
-			    
-                print("filtering took",time.time() - start_time)
-
-
+		tmp_wrench[0] = scipysignal.lfilter(self.b,self.a,self._history_Fx)[self._history_length -1]
+                tmp_wrench[1] = scipysignal.lfilter(self.b,self.a,self._history_Fy)[self._history_length -1]
+                tmp_wrench[2] = scipysignal.lfilter(self.b,self.a,self._history_Fz)[self._history_length -1]
+                tmp_wrench[3] = scipysignal.lfilter(self.b,self.a,self._history_tx)[self._history_length -1]
+                tmp_wrench[4] = scipysignal.lfilter(self.b,self.a,self._history_ty)[self._history_length -1]
+                tmp_wrench[5] = scipysignal.lfilter(self.b,self.a,self._history_tz)[self._history_length -1]
+			   
+		if not self._set_wrench_offset_flag:
+			self._wrench_offset = copy(tmp_wrench)
+			self._set_wrench_offset_flag = True
 
         self._command_lock.acquire()
-        #filtered wrench 
-        self._filtered_wrench = copy(tmp_wrench)
+        #filtered wrench
+	if self._filter_flag: 
+        	self._filtered_wrench = copy(tmp_wrench)
         self._speed_fraction=state.target_speed_fraction
 
         #change of gripper is about (current-previous)/dt
@@ -487,25 +495,44 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gripper', type=bool, help='enable gripper', default=True)
 
     args = parser.parse_args()  
-    ur5 = LimbController(args.robot, gripper=False, gravity=[0,0,9.8])
+    ur5 = LimbController(args.robot, gripper=False, gravity=[0,0,9.82])
     ur5.start()
     time.sleep(1)
-    print(ur5.getSpeedFraction())
     
     start_time=time.time()
-    while time.time()-start_time < 15:
-        t=time.time()-start_time
-        q1=0.3*math.sin(t/0.5)
-        q3=0.3*math.sin(t/0.5)
-        q7=abs(math.sin(0.5*t))
-        position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
-        ur5.setConfig(position)
-        #print ur5.getCurrentTime()
-        #print ur5.getWrench()
-        time.sleep(0.002)
-    
-    ur5.stop()
 
+    fx = []
+    fx_filtered = []
+    indeces = []
+    counter = 0
+    while time.time()-start_time < 5:
+        #t=time.time()-start_time
+        #q1=0.3*math.sin(t/0.5)
+        #q3=0.3*math.sin(t/0.5)
+        #q7=abs(math.sin(0.5*t))
+        #position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
+        #ur5.setConfig(position)
+        #print ur5.getCurrentTime()
+        #print('unfiltered:',ur5.getWrench())
+	#print('filtered:',ur5.getWrench(filtered = True))
+	fx.append(ur5.getWrench()[0])
+	fx_filtered.append(ur5.getWrench(filtered = True)[0])
+	indeces.append(counter)
+        time.sleep(0.01)
+    	counter += 1
+    #ur5.stop()
+
+    import matplotlib.pyplot as plt
+    plt.plot(indeces,fx,'r',indeces,fx_filtered,'b')
+    plt.show()
+
+    ur5.zeroFTSensor()
+
+    for i in range(10):
+	print(ur5.getWrench(filtered = True))
+	time.sleep(0.01)
+
+    ur5.stop()
     # gripper = Robotiq2Controller()
     # gripper.start()
     # start_time=time.time()
