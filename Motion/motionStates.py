@@ -28,6 +28,11 @@ class LimbState:
         self.cartesianMode = 0 # 0 means both translation and rotation, 2 only rotation, 1 only position
         self.toolCenter = [0,0,0]
         
+        #variables for handling wrench readings
+        self.first_loop = True
+        self.initial_R = [1.0,0,0,0,1.0,0,0,0,1.0] #in the global frame
+        self.wrench_offset = [0.0]*6
+
 class BaseState():
     def __init__(self):
         self.measuredPos = [0.0, 0.0, 0.0] #[x, y, yaw]
