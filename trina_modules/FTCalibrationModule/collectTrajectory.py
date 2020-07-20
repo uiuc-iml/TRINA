@@ -4,15 +4,18 @@ For ease of testing, use motion client/server instead of Jarvis.
 Note:
 When the robot is started, the gripper should already be attached
 """
-
-from Motion  import MotionClient
+import sys
+sys.path.append('../../Motion/')
+from motion_client import MotionClient
 from copy import copy,deepcopy
 import TRINAConfig
 from klampt.model.trajectory import SO3Trajectory,Trajectory
+import time
 #Start the robot
 robot = MotionClient(address = 'http://localhost:8080')
-robot.startServer(mode = 'physical',components = ['left_limb'])
+robot.startServer(mode = 'Physical',components = ['left_limb'],codename = 'anthrax')
 robot.startup()
+
 
 initial_config = copy(TRINAConfig.left_untucked_config)
 robot.setLeftLimbPositionLinear(initial_config,5)
@@ -43,7 +46,7 @@ while current_time <= total_time:
     R_history.append(R)
     t_history.append(current_time)
     wrench_history.append(wrench)
-    
+
     w = desired_w(current_time)
     robot.setLeftEEVelocity([0,0,0]+w,tool = [0,0,0])
     current_time += dt
@@ -56,12 +59,3 @@ loader.save(trajectory,'auto','R_trajectory')
 loader.save(wrenches,'auto','wrenches')
 
 robot.shutdown()
-
- 
-
-
-
-
-
-
-

@@ -70,12 +70,16 @@ class Motion:
                     f.close()
 
             self.log_file = open(self.logging_file,'a')
+
+        print('flag1')
         #Klampt world and robot and  used for computation
         self.world = WorldModel()
         res = self.world.readFile(self.computation_model_path)
         if not res:
             logger.error('unable to load model')
             raise RuntimeError("unable to load model")
+
+        print('flag2')
         #Initialize collision detection
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
@@ -89,11 +93,13 @@ class Motion:
 
         #Enable some components of the robot
         self.left_limb_enabled = False
+
         self.right_limb_enabled = False
         self.base_enabled = False
         self.torso_enabled = False
         self.left_gripper_enabled = False
         self.right_gripper_enabled = False
+
         #Initialize components
         if self.mode == "Kinematic":
             self.left_limb_enabled = True
@@ -141,7 +147,6 @@ class Motion:
         else:
             logger.error('Wrong Mode specified')
             raise RuntimeError('Wrong Mode specified')
-
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
 
@@ -652,7 +657,6 @@ class Motion:
         logger.debug('number of joint positions sent : %d and duration is %d', len(q), duration)
         assert len(q) == 6, "motion.setLeftLimbPositionLinear(): Wrong number of joint positions sent"
         assert duration > 0, "motion.setLeftLimbPositionLinear(): Duration needs to be a positive number"
-        print(q)
         #TODO:add velocity check. Maybe not be able to complete the motion within the duration"
         #TODO:Also collision checks
         if self.left_limb_enabled:
@@ -680,7 +684,7 @@ class Motion:
         else:
             logger.warning('Left limb not enabled')
             print("motion.setLeftLimbPosition():Left limb not enabled")
-        print 
+        print
 
     def setRightLimbPositionLinear(self,q,duration):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
@@ -1263,8 +1267,8 @@ class Motion:
         """
         #return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq,base = self.base_state.measuredPos)
         return self.robot_model.getConfig()
-    
-    
+
+
     def sensedLeftEEWrench(self,frame = 'global'):
         """
         Parameters:
@@ -1285,26 +1289,26 @@ class Motion:
         tilt_angle = 0.0
         R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
         R_base_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left)
-        #R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)    
+        #R_local_global_right = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_right)
         wrench_global = so3.apply(R_base_global_left,wrench[0:3]) + so3.apply(R_base_global_left,wrench[3:6])  #this is expressed in the global frame
         if frame == 'global':
             return wrench_global
         elif frame == 'local':
-            R_EE = self.sensedLeftEETransform()[0]      
-            wrench_EE = so3.apply(so3.inv(R_EE),wrench_global) 
+            R_EE = self.sensedLeftEETransform()[0]
+            wrench_EE = so3.apply(so3.inv(R_EE),wrench_global)
             return wrench_EE
         else:
             #TODO, add logger
             print('sensedLeftEEWrench: wrong input frame')
-            return 
+            return
 
     def sensedRightEEWrench(self,frame = 'global'):
         pass
         #TODO
-    
-    
-    
-    
+
+
+
+
     def shutdown(self):
         """Shutdown the componets.
 
@@ -1804,7 +1808,7 @@ if __name__=="__main__":
     #robot.setLeftLimbPosition(leftUntuckedConfig)
     #robot.setRightLimbPosition(rightUntuckedConfig)
     startTime = time.time()
-    
+
     while (time.time()-startTime < 5):
         vis.lock()
         #robot.setBaseVelocity([0.5,0.1])

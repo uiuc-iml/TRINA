@@ -17,6 +17,7 @@ def _startServer(mode = "Kinematic", components = [] , codename = "seed"):
 	##global variable
 	global robot
 	global server_started
+
 	if server_started:
 		logging.info("server is already activated")
 		print("server already started ")
