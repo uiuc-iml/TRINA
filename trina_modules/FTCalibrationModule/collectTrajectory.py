@@ -24,13 +24,13 @@ robot.setLeftLimbPositionLinear(initial_config,5)
 time.sleep(5)
 print('Robot Moved to Initial Config, start collecting data')
 
-
 def desired_w(t):
     assert t >= 0, "time should be positive"
-    m1 = 5.0
-    m2 = 10.0
+    m1 = 10.0
+    m2 = 20.0
     if t <= m1:
-        return [0,-math.pi/3.0/m1,-math.pi/3.0/m1]
+        #return [0,-math.pi/3.0/m1,-math.pi/3.0/m1]
+        return [0,-math.pi/3.0/m1,0]
     elif t> m1 and t<= m2:
         return [-math.pi/3.0/(m2-m1),math.pi/3.0/(m2-m1),0]
     else:
@@ -38,28 +38,35 @@ def desired_w(t):
 
 
 current_time = 0
-dt = 0.5
+dt = 0.02
 total_time = 10.0
 R_history = []
 t_history = []
 wrench_history = []
+wrench_global_history = []
 while current_time <= total_time:
-    (R,_) = robot.sensedLeftEETransform()
-    wrench = robot.sensedLeftEEWrench(frame = 'local',format = 'raw')
-    R_history.append(R)
-    t_history.append(current_time)
-    wrench_history.append(wrench)
 
-    w = desired_w(current_time)
-    print('velocity:',[0,0,0]+w)
-    robot.setLeftEEVelocity([0,0,0]+w,tool = [0,0,0.0])
+    if current_time > 1:
+        (R,_) = robot.sensedLeftEETransform()
+        wrench_global = robot.sensedLeftEEWrench(frame = 'global',format = 'raw')
+        wrench = robot.sensedLeftEEWrench(frame = 'local', format = 'raw')
+        R_history.append(R)
+        t_history.append(current_time)
+        wrench_global_history.append(wrench_global)
+        wrench_history.append(wrench)
+        w = desired_w(current_time)
+        robot.setLeftEEVelocity([0,0,0]+w,tool = [0,0,0.0])
     current_time += dt
     time.sleep(dt)
 
 trajectory = SO3Trajectory(times = t_history,milestones = R_history)
 wrenches = Trajectory(times = t_history,milestones = wrench_history)
+wrenches_global = Trajectory(times = t_history,milestones = wrench_global_history)
 
 loader.save(trajectory,'auto','R_trajectory')
 loader.save(wrenches,'auto','wrenches')
+loader.save(wrenches_global,'auto','wrenches_global')
 
+robot.setLeftLimbPositionLinear(initial_config,5)
+time.sleep(5)
 robot.shutdown()
