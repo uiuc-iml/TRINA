@@ -30,8 +30,8 @@ set unlock protective stop
 def rtde_control_loop():
     #Tear the FT sensor
     #using zero_ftsensor() does not seem to work....
-    zero_ftsensor()
     # constants
+    zero_ftsensor()
     SETPOINT_TIMEOUT  = 20
     SETPOINT_HALT     = 0
     SETPOINT_POSITION = 1

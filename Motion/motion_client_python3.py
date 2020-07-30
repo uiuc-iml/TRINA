@@ -178,10 +178,10 @@ class MotionClient:
 		return self.s.sensedRightEEVelcocity(local_pt)
 
 
-	def sensedLeftEEWrench(self,frame = 'global', format = 'corrected'):
+	def sensedLeftEEWrench(self,frame = 'global'):
 		return self.s.sensedLeftEEWrench(frame,format)
 
-	def sensedRightEEWrench(self,frame = 'global', format = 'corrected'):
+	def sensedRightEEWrench(self,frame = 'global'):
 		return self.s.sensedRightEEWrench(frame,format)
 
 	def zeroLeftFTSensor(self):

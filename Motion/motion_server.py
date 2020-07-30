@@ -223,13 +223,13 @@ def _sensedRightEEVelocity(local_pt):
 	global robot
 	return robot.sensedRightEEVelocity(local_pt)
 
-def _sensedLeftEEWrench(frame,format):
+def _sensedLeftEEWrench(frame):
 	global robot
-	return robot.sensedLeftEEWrench(frame,format)
+	return robot.sensedLeftEEWrench(frame)
 
-def _sensedRightEEWrench(frame,format):
+def _sensedRightEEWrench(frame):
 	global robot
-	return robot.sensedRightEEWrench(frame,format)
+	return robot.sensedRightEEWrench(frame)
 
 def _zeroLeftFTSensor():
 	global robot

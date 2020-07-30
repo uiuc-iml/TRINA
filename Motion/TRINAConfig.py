@@ -2,16 +2,23 @@ from math import sqrt,pi
 left_limb_address = '10.1.1.30'
 right_limb_address = '10.1.1.20'
 ## The payload and cog has to be calibrated...
-left_limb_payload = 0.0
-left_limb_cog = [0.0,0.0,0.0] 
+# calibrated result for robotiq gripper, in klampt frame x: array([ 0.86125143,  0.05865107,  0.00479324, -0.00341504])
+# The klampt in UR EE frame rotation matrix is
+# 0 -0.707   0.707
+# 0 - 0.707  -0.707
+# 1  0        0
+left_limb_payload = 0.86125
+left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
 right_limb_payload = 0.0
 right_limb_cog = [0.0,0.0,0.0]
 
 ur5e_control_rate = 0.004 #250 Hz
 left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector
 right_limb_gravity_upright = [4.91,-4.91,-6.93672]
-R_local_global_upright_left = [sqrt(0.5),sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),sqrt(0.25),0,-sqrt(0.5),sqrt(0.5)]
-R_local_global_upright_right = [sqrt(0.5),-sqrt(0.25),sqrt(0.25),sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
+R_local_global_upright_left = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
+R_local_global_upright_right = [-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,-sqrt(0.5),-sqrt(0.5)]
+# R_local_global_upright_left = [sqrt(0.5),sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),sqrt(0.25),0,-sqrt(0.5),sqrt(0.5)] ## this is used when dealing with gravity vector
+#R_local_global_upright_right = [sqrt(0.5),-sqrt(0.25),sqrt(0.25),sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
 simulated_robot_control_rate = 0.004 #250Hz
 limb_velocity_limits = [2.0,2.0,2.0,2.0,2.0,2.0]
 epsilon = 0.01

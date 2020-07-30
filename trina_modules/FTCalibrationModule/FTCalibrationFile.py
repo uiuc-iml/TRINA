@@ -64,8 +64,8 @@ error_func_grad = grad(error_func)
 def callback_func(x):
     return
 
-print(error_func(np.array([-1.6,-0.02,0,0])))
-x0 = np.array([-1.8,0.05,0,0])# np.zeros(4)
+print(error_func(np.array([0.8,0.02,0,0])))
+x0 = np.array([0.8,0.0,0,0])# np.zeros(4)
 res = opt.minimize(fun = error_func,x0 = x0,jac = error_func_grad)#,callback = callback_func)
 #
 print(res)

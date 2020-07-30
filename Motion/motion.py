@@ -71,7 +71,6 @@ class Motion:
 
             self.log_file = open(self.logging_file,'a')
 
-        print('flag1')
         #Klampt world and robot and  used for computation
         self.world = WorldModel()
         res = self.world.readFile(self.computation_model_path)
@@ -569,31 +568,27 @@ class Motion:
                     robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq)
                     self.robot_model.setConfig(robot_model_Q)
 
-                    #If first loop, do stuff for correcting the wrench:
-                    if self.left_limb_state.first_loop:
-                        (self.left_limb_state.initial_R,_) = self.sensedLeftEETransform() #EE in the global frame
-                        self.left_limb_state.first_loop = False
+                    #not needed any more
+                    #If first loop, do stuff for correcting the wrench
+                    # if self.left_limb_state.first_loop:
+                    #     (self.left_limb_state.initial_R,_) = self.sensedLeftEETransform() #EE in the global frame
+                    #     self.left_limb_state.first_loop = False
+                    #
+                    #     #TODO change this when torso is actuated
+                    #     tilt_angle = 0.0
+                    #     R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
+                    #     R_base_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left) #Robot's base frame in global frame
+                    #     R_global_base_left = so3.inv(R_base_global_left)
+                    #
+                    #     G = [0,0,-TRINAConfig.left_limb_payload*9.81] #global frame
+                    #     G_base = so3.apply(R_global_base_left,G) #Base frame
+                    #
+                    #     R_EE_base_left = so3.mul(R_global_base_left,self.left_limb_state.initial_R)
+                    #     r = so3.apply(R_EE_base_left,TRINAConfig.left_limb_cog)#CoM in the EE frame, expressed in the robot base frame
+                    #     tau = vectorops.cross(r,G_base)
+                    #
+                    #     self.left_limb_state.wrench_offset = copy(G_base + tau)#in the robot base frame
 
-                        #TODO change this when torso is actuated
-                        tilt_angle = 0.0
-                        R_tilt = so3.from_axis_angle(([0,1,0],tilt_angle))
-                        R_base_global_left = so3.mul(R_tilt,TRINAConfig.R_local_global_upright_left) #Robot's base frame in global frame
-                        R_global_base_left = so3.inv(R_base_global_left)
-
-                        G = [0,0,-TRINAConfig.left_limb_payload*9.81] #global frame
-                        G_base = so3.apply(R_global_base_left,G) #Base frame
-
-                        R_EE_base_left = so3.mul(R_global_base_left,self.left_limb_state.initial_R)
-                        r = so3.apply(R_EE_base_left,TRINAConfig.left_limb_cog)#CoM in the EE frame, expressed in the robot base frame
-                        tau = vectorops.cross(r,G_base)
-
-                        self.left_limb_state.wrench_offset = copy(G_base + tau)#in the robot base frame
-
-                    #TODO:
-                    #do this for the right arm
-                    # if self.right_limb_state.first_loop:
-                    #     (self.right_limb_state.initial_R,_) = self.sensedRightEETransform()
-                    #     self.right_limb_state.first_loop = False
 
             self._controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
@@ -602,7 +597,6 @@ class Motion:
                 time.sleep(self.dt-elapsedTime)
             else:
                 pass
-            #print("Elapsed Time:", time.time() - loopStartTime)
         logger.info('controlThread exited.')
         print("motion.controlThread: exited")
 
@@ -1352,21 +1346,21 @@ class Motion:
         return self.robot_model.getConfig()
 
 
-    def sensedLeftEEWrench(self,frame = 'global', format = 'corrected'):
+    def sensedLeftEEWrench(self,frame = 'global'):
         """
         Parameters:
         ------------------
         frame:  1 = 'global' or 0 = 'local'
-        format: 0 = 'raw' or 1 ='corrected'
         Return:
         ------------------
-        wrench: list of 6 floats, expressed either in global or local EE coordinate
+        wrench: list of 6 floats, expressed either in global or local EE coordinate, gravity of the attachement compensated for
 
         Note:
-        #The wrench read here is already filtered, done in the limbController.py file
-        #TODO
-        #debug....
+        The attachment weight to the ft sensor can be corrected by U5 directly
         """
+        if not self.left_limb_enabled:
+            logger.info("sensedLeftEEWrench:left limb not enabled")
+            return [0,0,0,0,0,0]
 
         wrench_raw = self.left_limb_state.sensedWrench #this wrench is expressed in the robot base frame
         (R,_) = self.sensedLeftEETransform() #current EE R in global frame
@@ -1374,36 +1368,58 @@ class Motion:
         R_global_base_left = so3.inv(R_base_global_left)
         R_EE_base_left = so3.mul(R_global_base_left,R)
 
-        if format == 'raw':
-            if frame == 'global':
-                return so3.apply(R_base_global_left,wrench_raw[0:3]) + so3.apply(R_base_global_left,wrench_raw[3:6])
-            elif frame == 'local':
-                return so3.apply(so3.inv(R_EE_base_left),wrench_raw[0:3]) + so3.apply(so3.inv(R_EE_base_left),wrench_raw[3:6])
 
-        elif format == 'corrected':
-            r = so3.aply(R_EE_base_left,TRINAConfig.left_limb_cog) #CoM in the EE frame, expressed in the robot base frame
-            G = [0,0,-TRINAConfig.left_limb_payload*9.81] #global frame
-            G_base = so3.apply(R_global_base_left,G) #Base frame
-            tau = vectorops.cross(r,G_base) #base frame
+        if frame == 'global':
+            return so3.apply(R_base_global_left,wrench_raw[0:3]) + so3.apply(R_base_global_left,wrench_raw[3:6])
+        elif frame == 'local':
+            return so3.apply(so3.inv(R_EE_base_left),wrench_raw[0:3]) + so3.apply(so3.inv(R_EE_base_left),wrench_raw[3:6])
 
-            wrench_0 = vectorops.sub(G_base + tau,self.left_limb_state.wrench_offset) #what the sensor would read if no external wrench
-
-            #in the base frame
-            wrench = vectorops.sub(wrench_raw,wrench_0)
-            #this is expressed in the global frame
-            wrench_global = so3.apply(R_base_global_left,wrench[0:3]) + so3.apply(R_base_global_left,wrench[3:6])
-
-            if frame == 'global':
-                return wrench_global
-            elif frame == 'local':
-                wrench_EE = so3.apply(so3.inv(R),wrench_global[0:3]) + so3.apply(so3.inv(R),wrench_global[3:6])
-                return wrench_EE
+        #not needed any more since UR already does gravity compensation.
+        # elif format == 'corrected':
+        #     r = so3.aply(R_EE_base_left,TRINAConfig.left_limb_cog) #CoM in the EE frame, expressed in the robot base frame
+        #     G = [0,0,-TRINAConfig.left_limb_payload*9.81] #global frame
+        #     G_base = so3.apply(R_global_base_left,G) #Base frame
+        #     tau = vectorops.cross(r,G_base) #base frame
+        #
+        #     wrench_0 = vectorops.sub(G_base + tau,self.left_limb_state.wrench_offset) #what the sensor would read if no external wrench
+        #
+        #     #in the base frame
+        #     wrench = vectorops.sub(wrench_raw,wrench_0)
+        #     #this is expressed in the global frame
+        #     wrench_global = so3.apply(R_base_global_left,wrench[0:3]) + so3.apply(R_base_global_left,wrench[3:6])
+        #
+        #     if frame == 'global':
+        #         return wrench_global
+        #     elif frame == 'local':
+        #         wrench_EE = so3.apply(so3.inv(R),wrench_global[0:3]) + so3.apply(so3.inv(R),wrench_global[3:6])
+        #         return wrench_EE
 
         return
 
     def sensedRightEEWrench(self,frame = 'global'):
-        pass
-        #TODO
+        """
+        Parameters:
+        ------------------
+        frame:  1 = 'global' or 0 = 'local'
+        Return:
+        ------------------
+        wrench: list of 6 floats, expressed either in global or local EE coordinate
+
+        """
+        if not self.right_limb_enabled:
+            logger.info("sensedRightEEWrench:right limb not enabled")
+            return [0,0,0,0,0,0]
+        wrench_raw = self.right_limb_state.sensedWrench #this wrench is expressed in the robot base frame
+        (R,_) = self.sensedRightEETransform() #current EE R in global frame
+        R_base_global_right = copy(TRINAConfig.R_local_global_upright_right)
+        R_global_base_right = so3.inv(R_base_global_right)
+        R_EE_base_right = so3.mul(R_global_base_right,R)
+
+
+        if frame == 'global':
+            return so3.apply(R_base_global_right,wrench_raw[0:3]) + so3.apply(R_base_global_right,wrench_raw[3:6])
+        elif frame == 'local':
+            return so3.apply(so3.inv(R_EE_base_right),wrench_raw[0:3]) + so3.apply(so3.inv(R_EE_base_right),wrench_raw[3:6])
 
 
 
@@ -1569,7 +1585,7 @@ class Motion:
         else:
             logger.info("zeroLeftFTSensor:left limb not enabled")
 
-        return
+        return 0
 
     def zeroRightFTSensor(self):
         """
@@ -1580,7 +1596,7 @@ class Motion:
         else:
             logger.info("zeroRightFTSensor:right limb not enabled")
 
-        return
+        return 0
 
     ###Below are internal helper functions
     def _purge_commands(self):
@@ -1931,11 +1947,9 @@ if __name__=="__main__":
 
 
     #################################
-    robot = Motion(mode = 'Physical',components = ['left_limb'],codename = "anthrax")
+    robot = Motion(mode = 'Physical',components = ['right_limb'],codename = "anthrax")
     robot.startup()
-    # logger.info('Robot start() called')
-    # print('Robot start() called')
-    time.sleep(0.2)
+    time.sleep(0.0)
     leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
     leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
     rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
@@ -1945,67 +1959,31 @@ if __name__=="__main__":
     #vis.show()
 
     #move to untucked position
-    robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+    #robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
     #robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
     #robot.setLeftLimbPosition(leftUntuckedConfig)
     #robot.setRightLimbPosition(rightUntuckedConfig)
-    startTime = time.time()
+    #time.sleep(5)
+    #startTime = time.time()
 
-    while (time.time()-startTime < 5):
-        vis.lock()
-        #robot.setBaseVelocity([0.5,0.1])
-        vis.unlock()
-        time.sleep(0.02)
+    # while (time.time()-startTime < 5):
+    #     vis.lock()
+    #     #robot.setBaseVelocity([0.5,0.1])
+    #     vis.unlock()
+    #     time.sleep(0.02)
+    #
+    # #robot.setRightEEVelocity([0.05,0,0,0,0.1,0])
+    # robot.setLeftEEVelocity([0, 0, 0, 0, -0.3141592653589793, -0.3141592653589793])
+    # startTime = time.time()
+    # while (time.time()-startTime < 2):
+    #     vis.lock()
+    #     #robot.setBaseVelocity([0.5,0.1])
+    #     vis.unlock()
+    #     time.sleep(0.01)
+    # robot.setLeftLimbPosition(robot.sensedLeftLimbPosition())
 
-    #robot.setRightEEVelocity([0.05,0,0,0,0.1,0])
-    robot.setLeftEEVelocity([0, 0, 0, 0, -0.3141592653589793, -0.3141592653589793])
-    startTime = time.time()
-    while (time.time()-startTime < 2):
-        vis.lock()
-        #robot.setBaseVelocity([0.5,0.1])
-        vis.unlock()
-        time.sleep(0.01)
-    robot.setLeftLimbPosition(robot.sensedLeftLimbPosition())
+    for i in range(100):
+        #print('wrench in the local frame:',robot.sensedRightEEWrench(frame = 'local'))
+        print('wrench in the global frame:',robot.sensedRightEEWrench(frame = 'global'))
+        time.sleep(0.05)
     robot.shutdown()
-    #     print(time.time()-startTime)
-    # robot.setBaseVelocity([0,0])
-    # robot.setGripperPosition([1,1,1,0])
-    # startTime = time.time()
-    # world = robot.getWorld()
-    # vis.add("world",world)
-    # vis.show()
-    # while (time.time()-startTime < 5):
-    #     vis.lock()
-    #     #robot.setBaseVelocity([0.5,0.1])
-    #     vis.unlock()
-    #     time.sleep(0.02)
-    #
-    # #     print(time.time()-startTime)
-    # # robot.setBaseVelocity([0,0])
-    # # robot.setGripperPosition([1,1,1,0])
-    # # startTime = time.time()
-    # # while (time.time()-startTime < 5):
-    # #     vis.lock()
-    # #     #robot.setBaseVelocity([0.5,0.1])
-    # #     vis.unlock()
-    # #     time.sleep(0.02)
-    # ##cartesian drive...
-    # startTime = time.time()
-    # # [0.0,-0.05,0],[0,0,0]
-    # robot.setLeftEEInertialTransform([[-0.06720643425243836, -0.7527169832325281, -0.6549047716766548, 0.9749095012575034, -0.18912346734793367, 0.11732283620745665, -0.2121687525365566, -0.6305869228358743, 0.7465423645978749],[0.5536765011424929, 0.10578081079393827, 0.5977151817981915]],3)
-    # while (time.time()-startTime < 5):
-    #     vis.lock()
-    #     #robot.setBaseVelocity([0.5,0.1])
-    #     vis.unlock()
-    #     time.sleep(0.02)
-    #     try:
-    #         robot.getKlamptSensedPosition()
-    #     except:
-    #         print("except")
-    #     if robot.cartesianDriveFail():
-    #         break
-    #     print(time.time()-startTime)
-    #
-    # vis.kill()
-
-    # robot.shutdown()

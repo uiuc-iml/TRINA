@@ -195,9 +195,9 @@ class LimbController:
         self._started = False
 
         #Filter wrench
-	self._wrench_offset = [0.0]*6
-	self._set_wrench_offset_flag = False
-	self._filter_flag = True
+    	self._wrench_offset = [0.0]*6
+    	#self._set_wrench_offset_flag = False
+    	self._filter_flag = True
         if self._filter_flag:
 
             self._filtered_wrench = []
@@ -263,15 +263,18 @@ class LimbController:
         return self._last_t
 
     def getWrench(self,filtered = False):
+        ### DEBUG:
+        #print("wrench offset:",self._wrench_offset)
+        #print("wrench before offset:",self._filtered_wrench)
         if filtered:
-            return vectorops.sub(self._filtered_wrench,self._wrench_offset)
+            return self._filtered_wrench
         else:
-            return vectorops.sub(self._wrench,self._wrench_offset)
+            return self._wrench
 
     def zeroFTSensor(self):
-	self._command_lock.acquire()
-	self._wrench_offset = copy(self._filtered_wrench)
-	self._command_lock.release()
+    	self._command_lock.acquire()
+    	self._wrench_offset = copy(self._filtered_wrench)
+    	self._command_lock.release()
 
     #FOR DEBUGGIN PURPOSES
     def getSpeedFraction(self):
@@ -316,6 +319,10 @@ class LimbController:
         q_gripper = (0 if self.gripper is None else self.gripper.read())
         self._wrench=state.actual_TCP_force
 
+
+        ##DEGBUG:
+        # print('wrench',self._wrench)
+        # print('offset',self._wrench_offset)
         #Add and filter wrench here
         if self._filter_flag:
             if len(self._history_Fx) < self._history_length:
@@ -353,9 +360,9 @@ class LimbController:
                 tmp_wrench[3] = scipysignal.lfilter(self.b,self.a,self._history_tx)[self._history_length -1].tolist()
                 tmp_wrench[4] = scipysignal.lfilter(self.b,self.a,self._history_ty)[self._history_length -1].tolist()
                 tmp_wrench[5] = scipysignal.lfilter(self.b,self.a,self._history_tz)[self._history_length -1].tolist()
-            if not self._set_wrench_offset_flag:
-                self._wrench_offset = copy(tmp_wrench)
-                self._set_wrench_offset_flag = True
+                # if not self._set_wrench_offset_flag:
+                #     self._wrench_offset = copy(tmp_wrench)
+                #     self._set_wrench_offset_flag = True
 
         self._command_lock.acquire()
         #filtered wrench
@@ -489,44 +496,46 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gripper', type=bool, help='enable gripper', default=True)
 
     args = parser.parse_args()
-    ur5 = LimbController(args.robot, gripper=False, gravity=[0,0,9.82])
+    ur5 = LimbController(args.robot, gripper=False, gravity=[-4.91,-4.91,-6.93672],payload =2.5,cog = [0,0,0.05])
     ur5.start()
     time.sleep(1)
 
-    start_time=time.time()
+    for i in range(20):
+        print(ur5.getWrench())
+        time.sleep(0.05)
 
-    fx = []
-    fx_filtered = []
-    indeces = []
-    counter = 0
-    while time.time()-start_time < 5:
-        #t=time.time()-start_time
-        #q1=0.3*math.sin(t/0.5)
-        #q3=0.3*math.sin(t/0.5)
-        #q7=abs(math.sin(0.5*t))
-        #position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
-        #ur5.setConfig(position)
-        #print ur5.getCurrentTime()
-        #print('unfiltered:',ur5.getWrench())
-	#print('filtered:',ur5.getWrench(filtered = True))
-	fx.append(ur5.getWrench()[0])
-	fx_filtered.append(ur5.getWrench(filtered = True)[0])
-	indeces.append(counter)
-        time.sleep(0.01)
-    	counter += 1
-    #ur5.stop()
+    # start_time=time.time()
+    # fx = []
+    # fx_filtered = []
+    # indeces = []
+    # counter = 0
+    # while time.time()-start_time < 5:
+    #     #t=time.time()-start_time
+    #     #q1=0.3*math.sin(t/0.5)
+    #     #q3=0.3*math.sin(t/0.5)
+    #     #q7=abs(math.sin(0.5*t))
+    #     #position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
+    #     #ur5.setConfig(position)
+    #     #print ur5.getCurrentTime()
+    #     #print('unfiltered:',ur5.getWrench())
+    # 	#print('filtered:',ur5.getWrench(filtered = True))
+    # 	fx.append(ur5.getWrench()[0])
+    # 	fx_filtered.append(ur5.getWrench(filtered = True)[0])
+    # 	indeces.append(counter)
+    #     time.sleep(0.01)
+    # 	counter += 1
+    # #ur5.stop()
+    #
+    # import matplotlib.pyplot as plt
+    # plt.plot(indeces,fx,'r',indeces,fx_filtered,'b')
+    # plt.show()
 
-    import matplotlib.pyplot as plt
-    plt.plot(indeces,fx,'r',indeces,fx_filtered,'b')
-    plt.show()
+    #ur5.zeroFTSensor()
 
-    ur5.zeroFTSensor()
-
-    for i in range(10):
-	print(ur5.getWrench(filtered = True))
-	time.sleep(0.01)
 
     ur5.stop()
+
+    ###Test gripper
     # gripper = Robotiq2Controller()
     # gripper.start()
     # start_time=time.time()

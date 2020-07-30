@@ -64,8 +64,8 @@ wrenches = Trajectory(times = t_history,milestones = wrench_history)
 wrenches_global = Trajectory(times = t_history,milestones = wrench_global_history)
 
 loader.save(trajectory,'auto','R_trajectory')
-loader.save(wrenches,'auto','wrenches')
-loader.save(wrenches_global,'auto','wrenches_global')
+loader.save(wrenches,'auto','wrenches_no_weight')
+loader.save(wrenches_global,'auto','wrenches_global_no_weight')
 
 robot.setLeftLimbPositionLinear(initial_config,5)
 time.sleep(5)
