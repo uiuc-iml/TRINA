@@ -18,6 +18,7 @@ class LimbState:
         #for kinematic to use...
         self.lastSensedq = []
 
+
         ##cartesian velocity drive
         self.cartesianDrive = False
         self.cartesianDriveV = [0,0,0]
@@ -28,10 +29,15 @@ class LimbState:
         self.cartesianMode = 0 # 0 means both translation and rotation, 2 only rotation, 1 only position
         self.toolCenter = [0,0,0]
         
-        #variables for handling wrench readings
-        self.first_loop = True
-        self.initial_R = [1.0,0,0,0,1.0,0,0,0,1.0] #in the global frame
-        self.wrench_offset = [0.0]*6
+        ##handling impedance control
+        self.impedanceControl = False
+        self.Tg = []
+        self.xg = []
+        self.Tcomm = []
+        self.K = []
+        self.Kinv = [] 
+        self.B = []
+
 
 class BaseState():
     def __init__(self):

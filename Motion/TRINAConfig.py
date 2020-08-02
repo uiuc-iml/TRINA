@@ -21,6 +21,7 @@ R_local_global_upright_right = [-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqr
 #R_local_global_upright_right = [sqrt(0.5),-sqrt(0.25),sqrt(0.25),sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
 simulated_robot_control_rate = 0.004 #250Hz
 limb_velocity_limits = [2.0,2.0,2.0,2.0,2.0,2.0]
+limb_EE_velocity_limits = [1.0,1.0,1.0,1.0,1.0,1.0]
 epsilon = 0.01
 limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon]
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
