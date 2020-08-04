@@ -1,6 +1,6 @@
 #RobotController.py
 from klampt.math import vectorops
-from ur5_controller import *
+from ur5_gripper_controller import *
 import ur5_config as UR5_CONSTANTS
 from threading import Thread, Lock, RLock
 import CRC16
@@ -161,6 +161,25 @@ class Robotiq2Controller:
         max_virt = UR5_CONSTANTS.MAX_JOINTS[UR5_CONSTANTS.GRIPPER_INDEX]
         return (virtual_value-min_virt)*(max_phys - min_phys) + min_phys
 
+# Gripper Variables
+# used for controlling the suction gripper
+ACT = "ACT"
+GTO = "GTO"
+ATR = "ATR"
+ARD = "ARD"
+FOR = "FOR"
+SPE = "SPE"
+OBJ = "OBJ"
+STA = "STA"
+FLT = "FLT"
+POS = "POS"
+
+SOCKET_HOST = "127.0.0.1"
+SOCKET_PORT = 63352
+SOCKET_NAME = "gripper_socket"
+
+
+
 
 class LimbController:
     def __init__(self, host, **kwargs):
@@ -184,6 +203,10 @@ class LimbController:
         else:
             self.gripper = None
 
+        if kwargs.pop('suction_gripper', True):
+            self.suction_gripper = True
+        else:
+            self.suction_gripper = False
 
         self._start_time = None
         self._last_t = 0
@@ -223,13 +246,21 @@ class LimbController:
         self._command_lock = RLock()
         self._state_read = False
 
+        self._new_gripper_action = False
+        self._gripper_action = 1 #1 close 2 open
+
     def start(self):
         #start the gripper
         if self.gripper:
             self.gripper.start()
 
         res = self.ur5.start()
-        time.sleep(0.2)
+        ##sleeping more because of the gripper
+        if self.suction_gripper:
+            time.sleep(1.0)
+        else:
+            time.sleep(0.2)
+
         #wait for controller to initialize so that we can start in a valid config
         current_config=self.getConfig()
         self.setConfig(current_config)
@@ -305,6 +336,18 @@ class LimbController:
                 self._command_lock.release()
             else:
                 print("Warning, velocity not set - outside of limits")
+
+    def openSuctionGripper(self):
+        self._command_lock.acquire()
+        self._new_gripper_action = True
+        self._gripper_action = 2
+        self._command_lock.release()
+
+    def closeSuctionGripper(self):
+        self._command_lock.acquire()
+        self._new_gripper_action = True
+        self._gripper_action = 1
+        self._command_lock.release()
 
     def _update(self,state):
         self._state_read = False
@@ -456,6 +499,16 @@ class LimbController:
         if self.gripper is not None:
             #gripper.command requires a list of one value like -> [0]
             self.gripper.command(q=gripper_q_commanded, qd=gripper_qd_commanded)
+
+        #deal with the suction gripper
+        if self.suction_gripper:
+            if self._new_gripper_action:
+                if self._gripper_action == 1:
+                    self.ur5.closeSuctionGripper()
+                elif:
+                    self.ur5.openSuctionGripper()
+                self._new_gripper_action = False
+
 
     def inLimits(self, q, min_limits=None, max_limits=None):
         for i in range(0, len(q)):
