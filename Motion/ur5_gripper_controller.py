@@ -1,5 +1,5 @@
 #!/usr/bin/python27
-#This file also contains functionalities to control the gripper. This builds upon ur5_controller.py and python-urx. 
+#This file also contains functionalities to control the gripper. This builds upon ur5_controller.py and python-urx.
 
 import socket
 import logging
@@ -28,9 +28,8 @@ set unlock protective stop
 
 def rtde_control_loop():
     #Tear the FT sensor
-    #using zero_ftsensor() does not seem to work....
-    # constants
     zero_ftsensor()
+    # constants
     SETPOINT_TIMEOUT  = 20
     SETPOINT_HALT     = 0
     SETPOINT_POSITION = 1
@@ -62,10 +61,13 @@ def rtde_control_loop():
     set_analog_outputdomain(0, 0)
     set_analog_outputdomain(1, 0)
 
-    if GRIPPER_FLAG:
-        set_tool_voltage(24)
-    else:
-        set_tool_voltage(0)
+    #if GRIPPER_FLAG:
+    #    set_tool_voltage(24)
+    #else:
+    #    set_tool_voltage(0)
+
+    set_tool_communication(True,115200,0,1,1.5,3.5)
+    socket_open("127.0.0.1",63352,"gripper_socket")
 
     set_input_actions_to_default()
 
@@ -82,11 +84,24 @@ def rtde_control_loop():
     rtde_set_watchdog("input_int_register_0", RTDE_WATCHDOG_FREQUENCY, "stop")
 
     #activate the gripper
-    if GRIPPER_FLAG:
-        socket_set_var(“ACT”, 1, "gripper_socket")  # Activate the gripper
-        sleep(1.0) 
-        socket_set_var("GTO", 1, "gripper_socket")  # Enable the gripper
+    #if GRIPPER_FLAG:
+    #    socket_set_var("ACT", 1, "gripper_socket")  # Activate the gripper
+    #    sleep(1.0)
+    #    socket_set_var("GTO", 1, "gripper_socket")  # Enable the gripper
 
+    #activate the gripper
+    #if GRIPPER_FLAG:
+    socket_set_var("ACT", 1, "gripper_socket")  # Activate the gripper
+    sleep(1.0)
+    socket_set_var("GTO", 1, "gripper_socket")  # Enable the gripper
+    sleep(1.0)
+    socket_set_var("POS", 0, "gripper_socket")
+    sleep(5.0)
+    socket_set_var("POS", 255, "gripper_socket")
+    sleep(5.0)
+    # socket_set_var("POS", 1, "gripper_socket")
+    # sleep(3.0)
+    
     while True:
         # I don't actually now what this does.. (Yifan)
         #write_output_integer_register(7, 5)
@@ -122,11 +137,12 @@ def rtde_control_loop():
         set_gravity(G)
 
         #gripper
-        gripper_action = read_input_integer_register(REG_GRIPPER)
-        if gripper_action == 1:
-            self._socket_set_var("POS", 0, "gripper_socket")
-        elif gripper_action == 2:
-            self._socket_set_var("POS", 255, "gripper_socket")
+        #gripper_action = read_input_integer_register(REG_GRIPPER)
+        #if gripper_action == 1:
+        #    popup("gripper action", title="PyUniversalRobot", error=False)
+        #    self._socket_set_var("POS", 0, "gripper_socket")
+        #elif gripper_action == 2:
+         #    self._socket_set_var("POS", 255, "gripper_socket")
 
         type = read_input_integer_register(REG_TYPE)
         if type == SETPOINT_HALT:
@@ -235,10 +251,12 @@ class UR5Controller(object):
         # start the controller program
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self._robot_host, self._command_port))
-        program = _CONTROLLER_PROGRAM.format(cog=self._cog, payload=self._payload, gravity=self._gravity , gripper_flag = self._suction_gripper)
+        program = _CONTROLLER_PROGRAM.format(cog=self._cog, payload=self._payload, gravity=self._gravity)# , gripper_flag = self._suction_gripper)
         logger.info('controller program:\n{}'.format(program))
         self._sock.sendall(program.encode('ascii') + b'\n')
 
+        #debug
+        print('program sent')
         self._max_speed_scale = None
         if self._suction_gripper:
             controlThread = threading.Thread(target = self.controlLoop, args=[[target, setpoint_id, target_type, velocity, acceleration, lookahead, gain, speed_slider,gravity,\
@@ -369,12 +387,13 @@ class UR5Controller(object):
             self._conn.send(speed_slider)
 
             #send gripper action
-            if self._new_gripper_action:
-                gripper_action.input_int_register_2 = self._gripper_action
-                self._new_gripper_action = False
-            else:
-                gripper_action.input_int_register_2 = 0
-            self._conn_send(gripper_action)
+            if self._suction_gripper:
+                if self._new_gripper_action:
+                    gripper_action.input_int_register_2 = self._gripper_action
+                    self._new_gripper_action = False
+                else:
+                    gripper_action.input_int_register_2 = 0
+                self._conn.send(gripper_action)
 
         self._quit = True
         print("ending control loop")

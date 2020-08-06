@@ -70,10 +70,10 @@ def rtde_control_loop():
     missed_setpoints = 0
 
     rtde_set_watchdog("input_int_register_0", RTDE_WATCHDOG_FREQUENCY, "stop")
+
     while True:
         # I don't actually now what this does.. (Yifan)
         #write_output_integer_register(7, 5)
-
         setpoint_number = read_input_integer_register(REG_SETPOINT)
         if setpoint_number == last_setpoint_number:
             missed_setpoints = missed_setpoints + 1

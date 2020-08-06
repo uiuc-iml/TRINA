@@ -505,7 +505,7 @@ class LimbController:
             if self._new_gripper_action:
                 if self._gripper_action == 1:
                     self.ur5.closeSuctionGripper()
-                elif:
+                elif self._gripper_action == 2:
                     self.ur5.openSuctionGripper()
                 self._new_gripper_action = False
 
@@ -550,43 +550,13 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gripper', type=bool, help='enable gripper', default=True)
 
     args = parser.parse_args()
-    ur5 = LimbController(args.robot, gripper=False, gravity=[-4.91,-4.91,-6.93672],payload =2.5,cog = [0,0,0.05])
+    ur5 = LimbController(args.robot, gripper=False, gravity=[4.91,-4.91,-6.93672],payload =0.3,cog = [0,0,0.05],suction_gripper = False)
     ur5.start()
     time.sleep(1)
-
-    for i in range(20):
-        print(ur5.getWrench())
-        time.sleep(0.05)
-
-    # start_time=time.time()
-    # fx = []
-    # fx_filtered = []
-    # indeces = []
-    # counter = 0
-    # while time.time()-start_time < 5:
-    #     #t=time.time()-start_time
-    #     #q1=0.3*math.sin(t/0.5)
-    #     #q3=0.3*math.sin(t/0.5)
-    #     #q7=abs(math.sin(0.5*t))
-    #     #position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
-    #     #ur5.setConfig(position)
-    #     #print ur5.getCurrentTime()
-    #     #print('unfiltered:',ur5.getWrench())
-    # 	#print('filtered:',ur5.getWrench(filtered = True))
-    # 	fx.append(ur5.getWrench()[0])
-    # 	fx_filtered.append(ur5.getWrench(filtered = True)[0])
-    # 	indeces.append(counter)
-    #     time.sleep(0.01)
-    # 	counter += 1
-    # #ur5.stop()
-    #
-    # import matplotlib.pyplot as plt
-    # plt.plot(indeces,fx,'r',indeces,fx_filtered,'b')
-    # plt.show()
-
-    #ur5.zeroFTSensor()
-
-
+    ur5.closeSuctionGripper()
+    time.sleep(2.0)
+    ur5.openSuctionGripper()
+    time.sleep(2.0)
     ur5.stop()
 
     ###Test gripper

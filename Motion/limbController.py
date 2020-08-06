@@ -497,13 +497,13 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gripper', type=bool, help='enable gripper', default=True)
 
     args = parser.parse_args()
-    ur5 = LimbController(args.robot, gripper=False, gravity=[-4.91,-4.91,-6.93672],payload =2.5,cog = [0,0,0.05])
+    ur5 = LimbController(args.robot, gripper=False,  gravity=[4.91,-4.91,-6.93672],payload =0.3,cog = [0,0,0.05])
     ur5.start()
-    time.sleep(1)
+    time.sleep(15)
 
-    for i in range(20):
-        print(ur5.getWrench())
-        time.sleep(0.05)
+    # for i in range(20):
+    #     print(ur5.getWrench())
+    #     time.sleep(0.05)
 
     # start_time=time.time()
     # fx = []
