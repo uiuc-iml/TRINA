@@ -340,9 +340,9 @@ class Motion:
                                 if tmp <= self.left_limb_state.commandedQueueDuration:
                                     #? what is the simulated robot doing here...
                                     #self.simulated_robot.setLeftLimbConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,tmp/self.left_limb_state.commandedQueueDuration)))
-                                    self.left_limb.setConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,tmp/self.left_limb_state.commandedQueueDuration)) + [0.0])
+                                    self.left_limb.setConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,tmp/self.left_limb_state.commandedQueueDuration)))
                                 else:
-                                    self.left_limb.setConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)) + [0.0])
+                                    self.left_limb.setConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
                                     #self.simulated_robot.setLeftLimbConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
                                     self.setLeftLimbPosition(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
                         #### cartesian drive mode
@@ -366,7 +366,7 @@ class Motion:
                                     flag = 1
                                 elif res == 2:
                                     flag = 0
-                                    self.left_limb.setConfig(target_config + [0.0])
+                                    self.left_limb.setConfig(target_config)
                         elif self.left_limb_state.impedanceControl:
                             res,target_config = self._left_limb_imdepance_drive()
                             if res == 0:
@@ -379,15 +379,15 @@ class Motion:
                                 self.left_limb_state.commandedqQueue = []
                                 self.left_limb_state.impedanceControl = False
                             elif res == 1:
-                                self.left_limb.setConfig(target_config + [0.0])
+                                self.left_limb.setConfig(target_config)
 
                         else:
                             if not self.left_limb_state.commandSent:
                                 ###setting position will clear velocity commands
                                 if self.left_limb_state.commandType == 0:
-                                    self.left_limb.setConfig(self.left_limb_state.commandedq+[0.0])
+                                    self.left_limb.setConfig(self.left_limb_state.commandedq)
                                 elif self.left_limb_state.commandType == 1:
-                                    self.left_limb.setVelocity(self.left_limb_state.commandeddq + [0.0])
+                                    self.left_limb.setVelocity(self.left_limb_state.commandeddq)
                                 self.left_limb_state.commandSent = True
                     if self.right_limb_enabled:
                         if self.right_limb_state.commandQueue:
@@ -398,7 +398,7 @@ class Motion:
                                     self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,tmp/self.right_limb_state.commandedQueueDuration))+ [0.0])
                                 else:
                                     #self.simulated_robot.setRightLimbConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
-                                    self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)) + [0.0])
+                                    self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0))])
                                     self.setRightLimbPosition(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
                         elif self.right_limb_state.cartesianDrive:
                             flag = 1
@@ -420,7 +420,7 @@ class Motion:
                                     flag = 1
                                 elif res == 2:
                                     flag = 0
-                                    self.right_limb.setConfig(target_config + [0.0])
+                                    self.right_limb.setConfig(target_config)
 
                         elif self.right_limb_state.impedanceControl:
                             res,target_config = self._right_limb_imdepance_drive()
@@ -434,14 +434,14 @@ class Motion:
                                 self.right_limb_state.commandedqQueue = []
                                 self.right_limb_state.impedanceControl = False
                             elif res == 1:
-                                self.right_limb.setConfig(target_config + [0.0])
+                                self.right_limb.setConfig(target_config)
                         else:
                             if not self.right_limb_state.commandSent:
                                 ###setting position will clear velocity commands
                                 if self.right_limb_state.commandType == 0:
-                                    self.right_limb.setConfig(self.right_limb_state.commandedq+[0.0])
+                                    self.right_limb.setConfig(self.right_limb_state.commandedq)
                                 elif self.right_limb_state.commandType == 1:
-                                    self.right_limb.setVelocity(self.right_limb_state.commandeddq + [0.0])
+                                    self.right_limb.setVelocity(self.right_limb_state.commandeddq)
                                 self.right_limb_state.commandSent = True
 
                     #TODO:Base add set path later
@@ -2238,7 +2238,7 @@ if __name__=="__main__":
 
     target = copy(robot.sensedLeftEETransform())
     target[1][0] += 0.1
-    
+
     robot.setLeftEETransformImpedance(target,K)
     start_time = time.time()
     print('start')
