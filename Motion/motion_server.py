@@ -239,6 +239,22 @@ def _zeroRightFTSensor():
 	global robot
 	return robot.zeroRightFTSensor()
 
+def _openLeftRobotiqGripper()
+	global robot
+	return robot.openLeftRobotiqGripper()
+
+def _closeLeftRobotiqGripper()
+	global robot
+	return robot.closeLeftRobotiqGripper()
+
+def _openRightRobotiqGripper()
+	global robot
+	return robot.openRightRobotiqGripper()
+
+def _closeRightRobotiqGripper()
+	global robot
+	return robot.closeRightRobotiqGripper()
+
 #ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
@@ -297,6 +313,10 @@ server.register_function(_sensedLeftEEWrench,'sensedLeftEEWrench')
 server.register_function(_sensedRightEEWrench,'sensedRightEEWrench')
 server.register_function(_zeroLeftFTSensor,'zeroLeftFTSensor')
 server.register_function(_zeroRightFTSensor,'zeroRightFTSensor')
+server.register_function(_openLeftRobotiqGripper,'openLeftRobotiqGripper')
+server.register_function(_closeLeftRobotiqGripper,'closeLeftRobotiqGripper')
+server.register_function(_openRightRobotiqGripper,'openRightRobotiqGripper')
+server.register_function(_closeRightRobotiqGripper,'closeRightRobotiqGripper')
 ##
 print('#######################')
 print('#######################')

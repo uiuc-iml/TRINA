@@ -150,7 +150,7 @@ class LimbController:
 
     def openGripper(self):
         """
-        Close the parallel gripper or release the vacuum gripper
+        Open the parallel gripper or release the vacuum gripper
         """
         if self._gripper:
             self._command_lock.acquire()

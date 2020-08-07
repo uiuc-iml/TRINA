@@ -196,6 +196,18 @@ class MotionClient:
 		self.s.zeroRightFTSensor()
 		return
 
+	def openLeftRobotiqGripper(self):
+		self.s.openLeftRobotiqGripper()
+
+	def closeLeftRobotiqGripper(self):
+		self.s.closeLeftRobotiqGripper()		
+
+	def openRightRobotiqGripper(self):
+		self.s.openRightRobotiqGripper()
+
+	def closeRightRobotiqGripper(self):
+		self.s.closeRightRobotiqGripper()	
+
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startServer(mode = "Kinematic", components = ['left_limb'])

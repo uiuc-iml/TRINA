@@ -114,13 +114,13 @@ class Motion:
             from gripperController import GripperController
             for component in components:
                 if component == 'left_limb':
-                    self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=False,gravity = TRINAConfig.left_limb_gravity_upright,\
-                        payload = TRINAConfig.left_limb_payload,cog = TRINAConfig.left_limb_cog)
+                    self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=TRINAConfig.left_Robotiq,type = TRINAConfig.left_Robotiq_type,\
+                        gravity = TRINAConfig.left_limb_gravity_upright,payload = TRINAConfig.left_limb_payload,cog = TRINAConfig.left_limb_cog)
                     self.left_limb_enabled = True
                     logger.debug('left limb enabled')
                 elif component == 'right_limb':
-                    self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=False,gravity = TRINAConfig.right_limb_gravity_upright,\
-                        payload = TRINAConfig.right_limb_payload,cog = TRINAConfig.right_limb_cog)
+                    self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=TRINAConfig.right_Robotiq,type = TRINAConfig.right_Robotiq_type,\
+                        gravity = TRINAConfig.right_limb_gravity_upright,payload = TRINAConfig.right_limb_payload,cog = TRINAConfig.right_limb_cog)
                     self.right_limb_enabled = True
                     logger.debug('right limb enabled')
                 elif component == 'base':
@@ -1392,6 +1392,42 @@ class Motion:
         else:
             logger.warning('Torso not enabled.')
             print('Torso not enabled.')
+
+    def openLeftRobotiqGripper(self):
+        """ Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm. 
+        """
+        if self.left_limb_enabled:
+            self.left_limb.openGripper()
+        else:
+            logger.warning('Left limb not enabled.')
+            print('Left limb not enabled.')
+
+    def closeLeftRobotiqGripper(self):
+        """ close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm. 
+        """
+        if self.left_limb_enabled:
+            self.left_limb.closeGripper()
+        else:
+            logger.warning('Left limb not enabled.')
+            print('Left limb not enabled.')       
+
+    def openRightRobotiqGripper(self):
+        """ Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm. 
+        """
+        if self.right_limb_enabled:
+            self.right_limb.openGripper()
+        else:
+            logger.warning('Right limb not enabled.')
+            print('Right limb not enabled.')
+
+    def closeRightRobotiqGripper(self):
+        """ close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm. 
+        """
+        if self.right_limb_enabled:
+            self.right_limb.closeGripper()
+        else:
+            logger.warning('Right limb not enabled.')
+            print('Right limb not enabled.')     
 
     def setLeftGripperPosition(self, position):
         """Set the position of the gripper. Moves as fast as possible.

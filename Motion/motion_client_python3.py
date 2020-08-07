@@ -190,7 +190,17 @@ class MotionClient:
 	def zeroRightFTSensor(self):
 		return self.s.zeroRightFTSensor()
 
+	def openLeftRobotiqGripper(self):
+		self.s.openLeftRobotiqGripper()
 
+	def closeLeftRobotiqGripper(self):
+		self.s.closeLeftRobotiqGripper()		
+
+	def openRightRobotiqGripper(self):
+		self.s.openRightRobotiqGripper()
+
+	def closeRightRobotiqGripper(self):
+		self.s.closeRightRobotiqGripper()	
 
 if __name__=="__main__":
 	motion = MotionClient()
