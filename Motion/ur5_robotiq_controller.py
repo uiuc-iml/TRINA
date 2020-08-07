@@ -30,15 +30,15 @@ def rtde_control_loop():
     #Tear the FT sensor
     zero_ftsensor()
     # constants
-    SETPOINT_TIMEOUT  = 20
+    SETPOINT_TIMEOUT  = 30
     SETPOINT_HALT     = 0
     SETPOINT_POSITION = 1
     SETPOINT_VELOCITY = 2
     CONTROL_PERIOD = 0.004
     RTDE_WATCHDOG_FREQUENCY = 1
 
-    # suction gripper
-    GRIPPER_FLAG = gripper_flag
+    # robotiq gripper
+    GRIPPER_FLAG = {gripper_flag}
 
     # integer registers
     REG_SETPOINT = 0
@@ -60,19 +60,17 @@ def rtde_control_loop():
     set_tool_analog_input_domain(1, 1)
     set_analog_outputdomain(0, 0)
     set_analog_outputdomain(1, 0)
-
-    #if GRIPPER_FLAG:
-    #    set_tool_voltage(24)
-    #else:
-    #    set_tool_voltage(0)
-
-    set_tool_communication(True,115200,0,1,1.5,3.5)
-    socket_open("127.0.0.1",63352,"gripper_socket")
-
     set_input_actions_to_default()
 
-    # tool configuration
+    if GRIPPER_FLAG:
+       set_tool_voltage(24)
+       set_tool_communication(True,115200,0,1,1.5,3.5)
+       socket_open("127.0.0.1",63352,"gripper_socket")
+    else:
+       set_tool_voltage(0)
+    end
 
+    # tool configuration
     set_payload_cog([{cog[0]}, {cog[1]}, {cog[2]}])
     set_payload({payload})
     set_gravity([{gravity[0]}, {gravity[1]}, {gravity[2]}])
@@ -84,28 +82,13 @@ def rtde_control_loop():
     rtde_set_watchdog("input_int_register_0", RTDE_WATCHDOG_FREQUENCY, "stop")
 
     #activate the gripper
-    #if GRIPPER_FLAG:
-    #    socket_set_var("ACT", 1, "gripper_socket")  # Activate the gripper
-    #    sleep(1.0)
-    #    socket_set_var("GTO", 1, "gripper_socket")  # Enable the gripper
+    if GRIPPER_FLAG:
+       socket_set_var("ACT", 1, "gripper_socket")  # Activate the gripper
+       socket_set_var("GTO", 1, "gripper_socket")  # Enable the gripper
+       sleep(1.0)
+    end
 
-    #activate the gripper
-    #if GRIPPER_FLAG:
-    socket_set_var("ACT", 1, "gripper_socket")  # Activate the gripper
-    sleep(1.0)
-    socket_set_var("GTO", 1, "gripper_socket")  # Enable the gripper
-    sleep(1.0)
-    socket_set_var("POS", 0, "gripper_socket")
-    sleep(5.0)
-    socket_set_var("POS", 255, "gripper_socket")
-    sleep(5.0)
-    # socket_set_var("POS", 1, "gripper_socket")
-    # sleep(3.0)
-    
     while True:
-        # I don't actually now what this does.. (Yifan)
-        #write_output_integer_register(7, 5)
-
         setpoint_number = read_input_integer_register(REG_SETPOINT)
         if setpoint_number == last_setpoint_number:
             missed_setpoints = missed_setpoints + 1
@@ -136,13 +119,14 @@ def rtde_control_loop():
         G[2] = read_input_float_register(REG_G + 2)
         set_gravity(G)
 
-        #gripper
-        #gripper_action = read_input_integer_register(REG_GRIPPER)
-        #if gripper_action == 1:
-        #    popup("gripper action", title="PyUniversalRobot", error=False)
-        #    self._socket_set_var("POS", 0, "gripper_socket")
-        #elif gripper_action == 2:
-         #    self._socket_set_var("POS", 255, "gripper_socket")
+        if GRIPPER_FLAG:
+            gripper_action = read_input_integer_register(REG_GRIPPER)
+            if gripper_action == 1:
+                socket_set_var("POS", 0, "gripper_socket")
+            elif gripper_action == 2:
+                socket_set_var("POS", 255, "gripper_socket")
+            end
+        end
 
         type = read_input_integer_register(REG_TYPE)
         if type == SETPOINT_HALT:
@@ -210,10 +194,7 @@ class UR5Controller(object):
         self._running = False
         self._no_connection = False
 
-        if kwargs.pop('suction_gripper', True):
-            self._suction_gripper = True
-        else:
-            self._suction_gripper = False
+        self._gripper = kwargs.get('gripper', False)
 
         self._new_gripper_action = False
         self._gripper_action = 1 #1 close 2 open
@@ -242,7 +223,7 @@ class UR5Controller(object):
         gravity=self._conn.send_input_setup(['input_double_register_{}'.format(i+10) for i in range(3)], ['DOUBLE']*3)
         #set up gripper here
 
-        if self._suction_gripper:
+        if self._gripper:
             gripper_action = self._conn.send_input_setup(['input_int_register_2'], ['INT32'])
 
         # start RTDE
@@ -251,14 +232,12 @@ class UR5Controller(object):
         # start the controller program
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._sock.connect((self._robot_host, self._command_port))
-        program = _CONTROLLER_PROGRAM.format(cog=self._cog, payload=self._payload, gravity=self._gravity)# , gripper_flag = self._suction_gripper)
+        program = _CONTROLLER_PROGRAM.format(cog=self._cog, payload=self._payload, gravity=self._gravity, gripper_flag = self._gripper)
         logger.info('controller program:\n{}'.format(program))
         self._sock.sendall(program.encode('ascii') + b'\n')
 
-        #debug
-        print('program sent')
         self._max_speed_scale = None
-        if self._suction_gripper:
+        if self._gripper:
             controlThread = threading.Thread(target = self.controlLoop, args=[[target, setpoint_id, target_type, velocity, acceleration, lookahead, gain, speed_slider,gravity,\
                 gripper_action]])
         else:
@@ -269,7 +248,7 @@ class UR5Controller(object):
         return True
 
     def controlLoop(self, args):
-        if self._suction_gripper:
+        if self._gripper:
             if not len(args) == 10:
                 print("Error in thread configuration, should have 10 inputs")
                 self._sock.sendall(b'stop program\n')
@@ -296,7 +275,7 @@ class UR5Controller(object):
         speed_slider = args[7]
         gravity = args[8]
 
-        if self._suction_gripper:
+        if self._gripper:
             gripper_action = args[9]
 
 
@@ -362,9 +341,6 @@ class UR5Controller(object):
                 logger.warn('missing setpoint -> stopping')
                 break
 
-            # send gravity
-            self._conn.send(l2r2(self._gravity,gravity,10))
-
             # kick watchdog
             setpoint_number += 1
             setpoint_id.input_int_register_0 = setpoint_number
@@ -386,8 +362,11 @@ class UR5Controller(object):
             speed_slider.speed_slider_fraction = self._speed_scale
             self._conn.send(speed_slider)
 
+            # send gravity
+            self._conn.send(l2r2(self._gravity,gravity,10))
+
             #send gripper action
-            if self._suction_gripper:
+            if self._gripper:
                 if self._new_gripper_action:
                     gripper_action.input_int_register_2 = self._gripper_action
                     self._new_gripper_action = False
@@ -399,7 +378,6 @@ class UR5Controller(object):
         print("ending control loop")
         #if this loop exits, disconnect
         self._sock.sendall(b'stop program\n')
-
         self._conn.send_pause()
         self._conn.disconnect()
         print("disconnecting")
@@ -445,6 +423,10 @@ class UR5Controller(object):
     	pass
 
     def stop(self):
+        # if self._gripper:
+        #     self._new_gripper_action = True
+        #     self._gripper_action = 2
+        #     time.sleep(0.05)
         self._quit = True
 
     def inLimits(self, q, min_limits=None, max_limits=None):
@@ -475,11 +457,11 @@ class UR5Controller(object):
     def setGravity(self,g):
             self._gravity = deepcopy(g)
 
-    def openSuctionGripper(self):
+    def openGripper(self):
         self._new_gripper_action = True
         self._gripper_action = 2
 
-    def closeSuctionGripper(self):
+    def closeGripper(self):
         self._new_gripper_action = True
         self._gripper_action = 1
 

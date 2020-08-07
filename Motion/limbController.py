@@ -1,166 +1,11 @@
 #RobotController.py
 from klampt.math import vectorops
-from ur5_controller import *
+from ur5_robotiq_controller import *
 import ur5_config as UR5_CONSTANTS
 from threading import Thread, Lock, RLock
-import CRC16
 import time
 from copy import copy
 from scipy import signal as scipysignal
-
-def addCRC(myHex):
-    #takes a hex string and adds a modbus CRC to it
-    crc = CRC16.calcString(myHex, CRC16.INITIAL_MODBUS)
-    flipped_res = "{0:#0{1}x}".format(crc, 6)
-    res = flipped_res[4:6] + flipped_res[2:4]
-    add_on = res.decode('hex')
-    newHex = myHex + add_on
-    return newHex
-
-class Robotiq2Controller:
-    def __init__(self,port='/dev/ttyUSB0'):
-        self.port = port
-        self._gripper_ser = None
-        #1 is open, 0 is closed
-
-        #keeps track of the last read state of the gripper in case of gripper failure
-        #happened occasionally was hard to determine cause
-        self._last_gripper = 0
-        #openGripper is 00
-        #closeGripper is FF
-
-    def start(self):
-        try:
-            self._gripper_ser = serial.Serial(port=self.port,baudrate=115200,timeout=0.005,parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,bytesize=serial.EIGHTBITS)
-
-            #sends a gripper command to initiate the gripper
-            #self._gripper_ser.write("\x09\x10\x03\xE8\x00\x03\x06\x00\x00\x00\x00\x00\x00\x73\x30")
-            start_command = "\x09\x10\x03\xE8\x00\x03\x06\x01\x00\x00\x00\x00\x00"
-            start_command_with_crc = addCRC(start_command)
-            self._gripper_ser.write(start_command_with_crc)
-
-            data_raw = self._gripper_ser.readline()
-            time.sleep(2)
-            #sends a command to check the status
-            # self._gripper_ser.write("\x09\x03\x07\xD0\x00\x01\x85\xCF")
-            # data_raw =self._gripper_ser.readline()
-            # time.sleep(1)
-            # This command makes the gripper start in the open configuration on startup
-            self._gripper_ser.write("\x09\x10\x03\xE8\x00\x03\x06\x09\x00\x00\x00\xFF\xFF\x72\x19")
-            data_raw = self._gripper_ser.readline()
-            time.sleep(1)
-
-            # self._gripper_ser.write("\x09\x03\x07\xD0\x00\x03\x04\x0E")
-            # data_raw = self._gripper_ser.readline()
-            # time.sleep(0.1)
-        except:
-            print(sys.exc_info()[0])
-            raise RuntimeError("Warning, gripper not set up")
-
-    def command(self, q=None, qd=None, delay_t=UR5_CONSTANTS.DEFAULT_GRIPPER_DELAY):
-        if sum([ x is not None for x in [q, qd]]) == 1:
-            if(not self._gripper_ser):
-                print("Error, gripper not enabled")
-                return
-            #we are doing either q or qd
-            #            0   1   2   3   4   5   6   7   8   9  10  11  12
-            command = "\x09\x10\x03\xE8\x00\x03\x06\x09\x00\x00\xFF\xFF\xFF\x42\x29"
-            # default command for gripper                 position^   ^speed
-            #            write to 3 registers^   ^6 bytes total     force^    ^CRC
-            #00 is min speed, also min position (open)
-            #FF is max speed, also max position (close)
-            if q:
-                if len(q) == 1:
-                    gripper_pos = q[0]
-                    #need to conver 0.0-1.0 to 3/255-230/255
-                    gripper_pos = self._translate_virtual_to_physical(gripper_pos)
-                    if gripper_pos <= 1 and gripper_pos >= 0:
-                        gripper_command = chr(int(gripper_pos*255))
-                        gripper_vel_command = "\xFF"
-                        #if position is set, we set command to maximum velocity
-                        command = command[0:10] + gripper_command + gripper_vel_command + command[12]
-            elif qd:
-                if len(qd) == 1:
-                    gripper_vel = qd[0]
-                    if abs(gripper_vel) <= 1 and abs(gripper_vel) > 0:
-                        if(gripper_vel < 0):
-                            #if vel negative, open (go towards 0)
-                            gripper_vel_command = chr(int(abs(gripper_vel)*255))
-                            gripper_command = chr(int(00))
-                            command = command[0:10] + gripper_command + gripper_vel_command + command[12]
-                        else:
-                            #if vel positive, close (go towards 1)
-                            gripper_vel_command = chr(int(abs(gripper_vel)*255))
-                            gripper_command = chr(int(255))
-                            command = command[0:10] + gripper_command + gripper_vel_command + command[12]
-                    elif gripper_vel == 0:
-                        #if vel is 0, stop gripper
-                        gripper_vel_command = chr(int(00))
-                        current_position = self._readGripper()
-                        gripper_command = chr(int(current_position*255))
-                        command = command[0:10] + gripper_command + gripper_vel_command + command[12]
-                        #set gripper to "0"
-                        #really set gripper to minspeed and stop moving
-            else:
-                #can return without setting gripper
-                #if we get here, something has gone wrong
-                print("Warning, neither q nor dq set for gripper")
-                return
-            #command for adding CRC is at the top of file
-            #takes full command, appends CRC and returns appended command
-            #Gripper needs CRC for error checking
-            command = addCRC(command)
-            self._gripper_ser.write(command)
-            data = self._gripper_ser.read(8)
-
-    #students don't use these functions. They interface with the robot through setConfig and setVelocity
-    def read(self):
-        #returns float 0-1
-        #0 is open, 1 is closed
-        if(not self._gripper_ser):
-            print("Error, gripper not enabled")
-            return 0
-        #self._gripper_ser.flush()
-        self._gripper_ser.write("\x09\x03\x07\xD0\x00\x03\x04\x0E")
-        #this says read three registers starting from 07D0
-        #response should be like:
-        #09 03 06 E000 0000 0000 0000
-        #         dat1 dat2 dat3 CRC
-        #dat1 = Gripper Status, Object Detection,
-        #dat2 = Fault Status and Position Request Echo
-        #dat3 = Position, Current
-        float_position = self._last_gripper
-        data_raw = self._gripper_ser.readline()
-        data = binascii.hexlify(data_raw)
-        if len(data) < 16:
-            position = data[14:16]
-            try:
-                int_position = int(position, 16)
-                #translate back from 3/255-230/255 to 0.0-1.0
-                float_position = self._translate_physical_to_virtual(int_position/255.0)
-                self._last_gripper = float_position
-                #sometimes, the gripper has trouble reading quickly
-            except:
-                print("gripper read exception")
-                return float_position
-        return float_position
-
-    def _translate_physical_to_virtual(self, physical_value):
-        #physical gripper can move 3/255 - 240/255
-        #virtual gripper can move 0.0-1.0
-        min_phys =UR5_CONSTANTS.MIN_GRIPPER_PHYSICAL
-        max_phya =UR5_CONSTANTS.MAX_GRIPPER_PHYSICAL
-        min_virt = UR5_CONSTANTS.MIN_JOINTS[UR5_CONSTANTS.GRIPPER_INDEX]
-        max_virt = UR5_CONSTANTS.MAX_JOINTS[UR5_CONSTANTS.GRIPPER_INDEX]
-        return (physical_value-min_phys)/(max_phys-min_phys) + min_virt
-
-    def _translate_virtual_to_physical(self, virtual_value):
-        min_phys =UR5_CONSTANTS.MIN_GRIPPER_PHYSICAL
-        max_phys =UR5_CONSTANTS.MAX_GRIPPER_PHYSICAL
-        min_virt = UR5_CONSTANTS.MIN_JOINTS[UR5_CONSTANTS.GRIPPER_INDEX]
-        max_virt = UR5_CONSTANTS.MAX_JOINTS[UR5_CONSTANTS.GRIPPER_INDEX]
-        return (virtual_value-min_virt)*(max_phys - min_phys) + min_phys
-
 
 class LimbController:
     def __init__(self, host, **kwargs):
@@ -178,12 +23,10 @@ class LimbController:
         - payload: estimated payload in kg
         - gravity: estimated gravity in base frame in N, default [0,0,9.81]
         """
-        self.ur5 = UR5Controller(host,filters=[self._update],**kwargs)
-        if kwargs.pop('gripper', True):
-            self.gripper = Robotiq2Controller()
-        else:
-            self.gripper = None
 
+        self.ur5 = UR5Controller(host,filters=[self._update],**kwargs)
+        self._gripper = kwargs.get('gripper', False)
+        self._type = kwargs.get('type','vacuum')
 
         self._start_time = None
         self._last_t = 0
@@ -223,28 +66,27 @@ class LimbController:
         self._command_lock = RLock()
         self._state_read = False
 
-    def start(self):
-        #start the gripper
-        if self.gripper:
-            self.gripper.start()
+        self._new_gripper_action = False
+        self._gripper_action = 1 #1 close 2 open
 
+    def start(self):
         res = self.ur5.start()
-        time.sleep(0.2)
         #wait for controller to initialize so that we can start in a valid config
-        current_config=self.getConfig()
-        self.setConfig(current_config)
-        # wait for the robot to initialize itself
-        time.sleep(1)
+        ##sleeping more because of the gripper activation
+        if self._gripper:
+            time.sleep(2.3)
+        else:
+            time.sleep(1.3)
         if res and self.ur5.running():
+            current_config=self.getConfig()
+            self.setConfig(current_config)
             self._started = True
-            #return started running
             return True
         else:
             return False
 
     def stop(self):
         self.ur5.stop()
-
     ####
     def stopMotion(self):
         self.setConfig(self._q_curr)
@@ -264,15 +106,15 @@ class LimbController:
         return self._last_t
 
     def getWrench(self,filtered = False):
-        ### DEBUG:
-        #print("wrench offset:",self._wrench_offset)
-        #print("wrench before offset:",self._filtered_wrench)
         if filtered:
             return self._filtered_wrench
         else:
             return self._wrench
 
     def zeroFTSensor(self):
+        """
+        Currently this does not have any effect
+        """
     	self._command_lock.acquire()
     	self._wrench_offset = copy(self._filtered_wrench)
     	self._command_lock.release()
@@ -306,6 +148,36 @@ class LimbController:
             else:
                 print("Warning, velocity not set - outside of limits")
 
+    def openGripper(self):
+        """
+        Close the parallel gripper or release the vacuum gripper
+        """
+        if self._gripper:
+            self._command_lock.acquire()
+            self._new_gripper_action = True
+            if self._type == 'vacuum':
+                self._gripper_action = 2
+            else:
+                self._gripper_action = 1
+            self._command_lock.release()
+        else:
+            print("limbController:gripper not enabled")
+
+    def closeGripper(self):
+        """
+        Close the parallel gripper or start the vacuum gripper
+        """
+        if self._gripper:
+            self._command_lock.acquire()
+            self._new_gripper_action = True
+            if self._type == 'vacuum':
+                self._gripper_action = 1
+            else:
+                self._gripper_action = 2
+            self._command_lock.release()
+        else:
+            print("limbController:gripper not enabled")
+
     def _update(self,state):
         self._state_read = False
         if self._start_time is None:
@@ -317,13 +189,8 @@ class LimbController:
 
         #update current notion of state
         q_curr = state.actual_q
-        q_gripper = (0 if self.gripper is None else self.gripper.read())
         self._wrench=state.actual_TCP_force
 
-
-        ##DEGBUG:
-        # print('wrench',self._wrench)
-        # print('offset',self._wrench_offset)
         #Add and filter wrench here
         if self._filter_flag:
             if len(self._history_Fx) < self._history_length:
@@ -371,39 +238,22 @@ class LimbController:
             self._filtered_wrench = copy(tmp_wrench)
         self._speed_fraction=state.target_speed_fraction
 
-        #change of gripper is about (current-previous)/dt
-        #gripper does not provide velocity - only position. Velocity is estimated
-        if self._q_curr:
-            dq_gripper = (q_gripper - self._q_curr[-1])*1.0/dt
-        else:
-            #if current state is not existant (at the beginning) speed is 0
-            dq_gripper = 0
-        q_curr.append(q_gripper)
         self._q_curr = q_curr
-        #q_curr is defined by gripper too
-        #if gripper is not connected, gripper state is 0
-
         qdot_curr = state.actual_qd
-        #qdot_curr = qdot_curr + gripperVel
-        # if gripper is not connected, gripper velocity is 0
-        qdot_curr.append(dq_gripper)
         self._qdot_curr = qdot_curr
         halt = None
 
-        #self._q_commanded is the commanded configuration that the students give. It has 7 parameters (6 for robot, 1 for gripper)
-        # self._command_lock.acquire()
         if self._q_commanded:
-            #double extra check
-            #if students are doing anything wrong
             if self.isFormatted(self._q_commanded):
                 if not self.inLimits(self._q_commanded, self._min_joints, self._max_joints):
                     self._q_commanded = []
                     halt = 1
                     print("Warning, exceeding joint limits. Halting")
             else:
+                self._q_commanded = []
                 halt = 1
                 print("Warning, improper position formatting. Halting")
-        #self._qdot_commanded is the commanded velocity that the students give. It has 7 parameters (6 for robot, 1 for gripper)
+
         if self._qdot_commanded:
             if self.isFormatted(self._qdot_commanded):
                 if self.inLimits(self._qdot_commanded, self._min_velocities, self._max_velocities):
@@ -416,6 +266,7 @@ class LimbController:
                         halt = 1
                         print("Warning, exceeding joint limits. Halting")
             else:
+                self._qdot_commanded = []
                 halt = 1
                 print("Warning, improper velocity formatting. Halting")
 
@@ -433,29 +284,26 @@ class LimbController:
 
         servo_q_commanded = None
         servo_qd_commanded = None
-        gripper_q_commanded = None
-        gripper_qd_commanded = None
 
         #put q_commanded into a format that servo can use
         if self._q_commanded and not halt:
             #q_commanded includes the gripper, send to servo only the UR5 configuration
             #UR5_CL = ur5 configuration length
             servo_q_commanded = self._q_commanded[0:UR5_CONSTANTS.UR5_CL]
-            gripper_q_commanded = [self._q_commanded[-1]]
         elif self._qdot_commanded and not halt:
             servo_qd_commanded = self._qdot_commanded[0:UR5_CONSTANTS.UR5_CL]
-            gripper_qd_commanded = [self._qdot_commanded[-1]]
         current_gravity = self._gravity
+
+        #deal with the gripper
+        if self._gripper:
+            if self._new_gripper_action:
+                if self._gripper_action == 1:
+                    self.ur5.closeGripper()
+                elif self._gripper_action == 2:
+                    self.ur5.openGripper()
+                self._new_gripper_action = False
         self._command_lock.release()
-
-        #servo requires a list with six values
-        #self._q_commanded and self._qd_commanded were previously checked for formatting
-        #if halt is selected, the program on the controller terminates
-
         self.ur5.servo(halt=halt, q=servo_q_commanded, qd=servo_qd_commanded, g=current_gravity)
-        if self.gripper is not None:
-            #gripper.command requires a list of one value like -> [0]
-            self.gripper.command(q=gripper_q_commanded, qd=gripper_qd_commanded)
 
     def inLimits(self, q, min_limits=None, max_limits=None):
         for i in range(0, len(q)):
@@ -470,7 +318,7 @@ class LimbController:
     def isFormatted(self, val):
         #do formatting
         if val:
-            if len(val) == config.ROBOT_CONFIG_LEN:
+            if len(val) == config.UR5_CONFIG_LEN:
                 return True
         else:
             print("Error, val: ", val, " is not formatted correctly")
@@ -488,6 +336,7 @@ class LimbController:
 
     def newState(self):
         return (not self._state_read)
+
 if __name__ == "__main__":
 
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
@@ -497,43 +346,15 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--gripper', type=bool, help='enable gripper', default=True)
 
     args = parser.parse_args()
-    ur5 = LimbController(args.robot, gripper=False,  gravity=[4.91,-4.91,-6.93672],payload =0.3,cog = [0,0,0.05])
+    ur5 = LimbController(args.robot, gripper=True, gravity=[4.91,-4.91,-6.93672],type = 'parallel',payload =0.72,cog = [0,0,0.05])
     ur5.start()
-    time.sleep(15)
-
-    # for i in range(20):
-    #     print(ur5.getWrench())
-    #     time.sleep(0.05)
-
-    # start_time=time.time()
-    # fx = []
-    # fx_filtered = []
-    # indeces = []
-    # counter = 0
-    # while time.time()-start_time < 5:
-    #     #t=time.time()-start_time
-    #     #q1=0.3*math.sin(t/0.5)
-    #     #q3=0.3*math.sin(t/0.5)
-    #     #q7=abs(math.sin(0.5*t))
-    #     #position = [q1,-math.pi/2,q3,-math.pi/2,0,0,0]
-    #     #ur5.setConfig(position)
-    #     #print ur5.getCurrentTime()
-    #     #print('unfiltered:',ur5.getWrench())
-    # 	#print('filtered:',ur5.getWrench(filtered = True))
-    # 	fx.append(ur5.getWrench()[0])
-    # 	fx_filtered.append(ur5.getWrench(filtered = True)[0])
-    # 	indeces.append(counter)
-    #     time.sleep(0.01)
-    # 	counter += 1
-    # #ur5.stop()
-    #
-    # import matplotlib.pyplot as plt
-    # plt.plot(indeces,fx,'r',indeces,fx_filtered,'b')
-    # plt.show()
-
-    #ur5.zeroFTSensor()
-
-
+    time.sleep(1)
+    ur5.closeGripper()
+    time.sleep(3.0)
+    # ur5.openGripper()
+    # time.sleep(2.0)
+    # ur5.closeGripper()
+    # time.sleep(3.0)
     ur5.stop()
 
     ###Test gripper
