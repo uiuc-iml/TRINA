@@ -239,19 +239,19 @@ def _zeroRightFTSensor():
 	global robot
 	return robot.zeroRightFTSensor()
 
-def _openLeftRobotiqGripper()
+def _openLeftRobotiqGripper():
 	global robot
 	return robot.openLeftRobotiqGripper()
 
-def _closeLeftRobotiqGripper()
+def _closeLeftRobotiqGripper():
 	global robot
 	return robot.closeLeftRobotiqGripper()
 
-def _openRightRobotiqGripper()
+def _openRightRobotiqGripper():
 	global robot
 	return robot.openRightRobotiqGripper()
 
-def _closeRightRobotiqGripper()
+def _closeRightRobotiqGripper():
 	global robot
 	return robot.closeRightRobotiqGripper()
 

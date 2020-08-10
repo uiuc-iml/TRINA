@@ -60,7 +60,7 @@ class CommandServer:
 		self.start_ros_stuff()
 		self.world_file = world_file
 		# we then proceed with startup as normal
-
+		self.always_active = set(['UI','devel','debug'])
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
@@ -111,7 +111,8 @@ class CommandServer:
 		manager = Manager()
 
 		self.active_modules = manager.dict()
-		self.active_modules['UI'] = True
+		for i in self.always_active:
+			self.active_modules[i] = True
 		self.start_modules()
 
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
@@ -200,6 +201,7 @@ class CommandServer:
 			"KlamptCommandPos" : klampt_command_pos,
 			"KlamptSensedPos" : klampt_sensor_pos
 		}
+		self.server['TrinaTime'] = time.time()
 		# except Exception as e:
 		# 	print(e)
 
@@ -225,10 +227,10 @@ class CommandServer:
 							self.health_dict.update({name:[True,time.time()]})
 							activity_dict.update({name:'idle'})
 							command_dict.update({name:[]})
-							if(name != 'UI'):
+							if(name not in self.always_active):
 								self.active_modules[name] = False
 							else:
-								self.active_modules[name] = True
+								self.active_modules[name] = TrueTrinaQueue(str(name))
 
 				self.server['HEALTH_LOG'] = self.health_dict
 				self.server['ACTIVITY_STATUS'] = activity_dict
@@ -384,7 +386,8 @@ class CommandServer:
 		self.loop_counter = 0
 		while(True):
 			self.loop_counter +=1
-			self.active_modules['UI'] = True
+			for i in self.always_active:
+				self.active_modules[i] = True
 			loopStartTime = time.time()
 			self.robot_command = self.server['ROBOT_COMMAND'].read()
 			if(len(self.empty_command.keys()) != len(self.robot_command.keys())):
@@ -396,7 +399,7 @@ class CommandServer:
 					try:
 						self.active_modules[str(key)]
 					except Exception as e:
-						if(str(key) != str('UI')):
+						if(str(key) not in self.always_active):
 							self.active_modules[str(key)] = False
 						else:
 							self.active_modules[str(key)] = True

@@ -6,9 +6,9 @@ if(sys.version_info[0] < 3):
 else:
     from importlib import reload
 
-from . import jarvis
+from . import jarvis_file
 
-reload(jarvis)
+reload(jarvis_file)
 
-from jarvis import Jarvis
+from .jarvis_file import Jarvis
 

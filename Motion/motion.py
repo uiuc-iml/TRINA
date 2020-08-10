@@ -398,7 +398,7 @@ class Motion:
                                     self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,tmp/self.right_limb_state.commandedQueueDuration))+ [0.0])
                                 else:
                                     #self.simulated_robot.setRightLimbConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
-                                    self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0))])
+                                    self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
                                     self.setRightLimbPosition(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
                         elif self.right_limb_state.cartesianDrive:
                             flag = 1

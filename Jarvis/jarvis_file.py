@@ -17,6 +17,7 @@ import datetime
 import threading
 import sys
 import time
+import redis
 
 # from Modules import *
 # import command_server
@@ -24,15 +25,19 @@ import time
 
 class Jarvis:
 
-	def __init__(self, name,sensor_module = [],trina_queue = []):
-		self.interface = RedisInterface(host="localhost")
+	def __init__(self, name,sensor_module = [],trina_queue = None, host = "localhost"):
+		self.interface = RedisInterface(host=host)
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
-		self.trina_queue  = trina_queue
+		if(trina_queue == None):
+			self.trina_queue = TrinaQueue(str(name))
+		else:
+			self.trina_queue  = trina_queue
 		self.name = str(name)
 		self.server['ACTIVITY_STATUS'][self.name] = str('idle')
 		self.sensor_module = sensor_module
 		self.server['ROBOT_COMMAND'][self.name] = []
+		
 		# should not instantiate commanserver
 		# self.command_server = CommandServer()
 
@@ -442,6 +447,14 @@ class Jarvis:
 		self.server["UI_END_COMMAND"] = commandQueue
 		print("commandQueue", commandQueue)
 		time.sleep(0.0001)
+# extra trina queue class:
+
+class TrinaQueue(object):
+	def __init__(self,key, host = 'localhost', port = 6379):
+		self.r = redis.Redis(host = host, port = port)
+		self.key = key
+	def push(self,item):
+		self.r.rpush(self.key,item)
 
 if __name__=="__main__":
 	server = Jarvis()
