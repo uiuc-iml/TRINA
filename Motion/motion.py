@@ -334,6 +334,9 @@ class Motion:
                        self.left_gripper.mark_read()
                     #Send Commands
                     if self.left_limb_enabled:
+                        #debug
+                        #print(self.left_limb_state.impedanceControl)
+
                         if self.left_limb_state.commandQueue:
                             if self.left_limb_state.commandType == 0:
                                 tmp = time.time() - self.left_limb_state.commandQueueTime
@@ -1202,19 +1205,22 @@ class Motion:
         self.left_limb_state.cartesianDrive = False
         self.left_limb_state.impedanceControl = True
         self.left_limb_state.Xs = [[],[],[],[],[],[]]
-        B = np.eye(6)*0.1
-        #Binv = np.linalg.inv(B)
+        B = np.eye(6)*0.01
+        B[3,3] = 0.0005
+        B[4,4] = 0.0005
+        B[5,5] = 0.0005
+
         self.left_limb_state.B = B
-        m = np.eye(6)*0.01
-        m[3] = 0.002
-        m[4] = 0.002
-        m[5] = 0.002
+        m = np.eye(6)*2.0
+        m[3,3] = 0.05
+        m[4,4] = 0.05
+        m[5,5] = 0.05
         self.left_limb_state.m_inv = np.linalg.inv(m)
-        self.N = 20
+        self.left_limb_state.N = 50
         self._controlLoopLock.release()
         return
 
-    def sensedLeftEETransform(self):
+    def sensedLeftEETransform(self,tool_center= [0,0,0]):
         """Return the transform w.r.t. the base frame
 
         Return:
@@ -1222,8 +1228,10 @@ class Motion:
         (R,t)
         """
         if self.left_limb_enabled:
-            return self.left_EE_link.getTransform()
+            T = self.left_EE_link.getTransform()
+            return (T[0],vectorops.add(T[1],so3.apply(T[0],tool_center)))
         else:
+            return
             logger.warning('Left limb not enabled.')
             print("Left limb not enabled.")
             return
@@ -1414,7 +1422,7 @@ class Motion:
             print('Torso not enabled.')
 
     def openLeftRobotiqGripper(self):
-        """ Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm. 
+        """ Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.
         """
         if self.left_limb_enabled:
             self.left_limb.openGripper()
@@ -1423,16 +1431,16 @@ class Motion:
             print('Left limb not enabled.')
 
     def closeLeftRobotiqGripper(self):
-        """ close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm. 
+        """ close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.
         """
         if self.left_limb_enabled:
             self.left_limb.closeGripper()
         else:
             logger.warning('Left limb not enabled.')
-            print('Left limb not enabled.')       
+            print('Left limb not enabled.')
 
     def openRightRobotiqGripper(self):
-        """ Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm. 
+        """ Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.
         """
         if self.right_limb_enabled:
             self.right_limb.openGripper()
@@ -1441,13 +1449,13 @@ class Motion:
             print('Right limb not enabled.')
 
     def closeRightRobotiqGripper(self):
-        """ close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm. 
+        """ close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.
         """
         if self.right_limb_enabled:
             self.right_limb.closeGripper()
         else:
             logger.warning('Right limb not enabled.')
-            print('Right limb not enabled.')     
+            print('Right limb not enabled.')
 
     def setLeftGripperPosition(self, position):
         """Set the position of the gripper. Moves as fast as possible.
@@ -2126,7 +2134,7 @@ class Motion:
 
         return 1,target_
 
-    def _simulate(self,wrench,m_inv,K,B,x_curr,x_dot_curr,x_g,dt,N)
+    def _simulate(self,wrench,m_inv,K,B,x_curr,x_dot_curr,x_g,dt,N):
         """
         Simulate a mass spring damper under external load, semi-implicit Euler integration
 
@@ -2151,6 +2159,9 @@ class Motion:
         for i in range(N):
             wrench_total = wrench + np.dot(K,x_g - x) - np.dot(B,v)
             a = np.dot(m_inv,wrench_total)
+
+            print('wrench_total:',wrench_total[0])
+            print('a',a[0])
             v = v + a*dt
             x = x + v*dt
             Xs[:,i] = x
@@ -2166,58 +2177,75 @@ class Motion:
         Result flag
         target_config : list of doubles, the target limb config
         """
+        # print('flag')
+        eps = 1e-5
         wrench_raw = self.sensedLeftEEWrench(frame = 'global') #need to correct for tool center torque
-        Tcurr = self.sensedLeftEETransform()
+        #wrench_raw = [6,0,0,0,0,0]
+
+        Tcurr = self.sensedLeftEETransform(self.left_limb_state.toolCenter)
         m_curr = np.array(Tcurr[1]+so3.moment(Tcurr[0]))
-        v_curr = np.array(self.sensedLeftEEVelocity[0] + self.sensedLeftEEVelocity[1])
+        v_curr = np.array(self.sensedLeftEEVelocity()[0] + self.sensedLeftEEVelocity()[1])
         #calculate wrench at the tool frame
         wrench = wrench_raw[0:3] + vectorops.sub(wrench_raw[3:6],vectorops.cross(self.left_limb_state.toolCenter,wrench_raw[0:3]))
         #a 6xN array
         Xs_new = self._simulate(wrench = wrench,m_inv = self.left_limb_state.m_inv,K = self.left_limb_state.K,B = self.left_limb_state.B,\
             x_curr = m_curr,x_dot_curr = v_curr,x_g = self.left_limb_state.mg,dt = self.dt,N = self.left_limb_state.N)
         Xs_new = Xs_new.tolist() #a list of 6 lists
+        #debug
+        # print('m_curr:',m_curr)
+        # print('v_curr:',v_curr)
+        # print('m_g:',self.left_limb_state.mg)
+        print('Xs_new:',Xs_new[0])
+
         x_to_send = []
-        for row in self.Xs:
+        for i in range(6):
+            row = self.left_limb_state.Xs[i]
             if len(row) < 1:
-                self.Xs[i] = Xs_new[i]
-                x_to_send.append(self.Xs[i].pop(0))
+                self.left_limb_state.Xs[i] = Xs_new[i]
+                x_to_send.append(self.left_limb_state.Xs[i].pop(0))
                 continue
-            
-            ratio = (Xs_new[i][-1] - m_curr[i])/(self.Xs[i][0] - m_curr)
-            if ratio <= 1:
-                self.Xs[i] = Xs_new[i]
+            if math.fabs(self.left_limb_state.Xs[i][0] - m_curr[i]) < eps:
+                ratio = 1.0
+            else:
+                ratio = (Xs_new[i][-1] - m_curr[i])/(self.left_limb_state.Xs[i][0] - m_curr[i])
+
+            if i == 0:
+                print(Xs_new[i][-1])
+                print('ratio:',ratio)
+            if ratio < 1.0:
+                self.left_limb_state.Xs[i] = Xs_new[i]
             else:
                 for j in range(self.left_limb_state.N):
-                    if (Xs_new[i][j] - m_curr[i])/(self.Xs[i][0] - m_curr) > 1:
+                    if (Xs_new[i][j] - m_curr[i])/(self.left_limb_state.Xs[i][0] - m_curr[i]) > 1:
                         break
-                self.Xs[i] = Xs_new[i][j:self.left_limb_state.N]
-            x_to_send.append(self.Xs[i].pop(0))
+                if i==0:
+                    print('j',j)
+                self.left_limb_state.Xs[i] = Xs_new[i][j:self.left_limb_state.N]
+            x_to_send.append(self.left_limb_state.Xs[i].pop(0))
+        print('x_to_send:',x_to_send)
+        ### old way of calculating T
+        # mcomm = np.array(self.left_limb_state.mg) + np.dot(self.left_limb_state.Kinv,np.array(wrench)) ##The EE command that we want to send
+        # diff_p = np.max(np.abs(mcomm[0:3] - mcurr[0:3]))
+        # diff_a = np.max(np.abs(mcomm[3:6] - mcurr[3:6]))
+        # direction_p = (mcomm[0:3] - mcurr[0:3])/diff_p
+        # direction_a = (mcomm[3:6] - mcurr[3:6])/diff_a
+        # #this is to avoid sending q whose difference is too small for the EE
+        # threshold_p = 0.005 #this caps the max velocity at 1m/s; threshould = 1m/s*dt
+        # threshold_a = 0.05
+        # m_tosend = np.zeros(6)
+        # if diff_p > threshold_p:
+        #     m_tosend[0:3] = mcurr[0:3] + direction_p*threshold_p
+        # else:
+        #     m_tosend[0:3] = mcomm[0:3]
+        #
+        # if diff_a > threshold_a:
+        #     m_tosend[3:6] = mcurr[3:6] + direction_a*threshold_a
+        # else:
+        #     m_tosend[3:6] = mcomm[3:6]
+        # print(mcomm[3:6],mcurr[3:6])
+        # T = (so3.from_moment(m_tosend[3:6].tolist()),m_tosend[0:3].tolist())
 
-        '''old way of calculating T
-        mcomm = np.array(self.left_limb_state.mg) + np.dot(self.left_limb_state.Kinv,np.array(wrench)) ##The EE command that we want to send
-        diff_p = np.max(np.abs(mcomm[0:3] - mcurr[0:3]))
-        diff_a = np.max(np.abs(mcomm[3:6] - mcurr[3:6]))
-        direction_p = (mcomm[0:3] - mcurr[0:3])/diff_p
-        direction_a = (mcomm[3:6] - mcurr[3:6])/diff_a
-        #this is to avoid sending q whose difference is too small for the EE
-        threshold_p = 0.005 #this caps the max velocity at 1m/s; threshould = 1m/s*dt
-        threshold_a = 0.05
-        m_tosend = np.zeros(6)
-        if diff_p > threshold_p:
-            m_tosend[0:3] = mcurr[0:3] + direction_p*threshold_p
-        else:
-            m_tosend[0:3] = mcomm[0:3]
-
-        if diff_a > threshold_a:
-            m_tosend[3:6] = mcurr[3:6] + direction_a*threshold_a
-        else:
-            m_tosend[3:6] = mcomm[3:6]
-        print(mcomm[3:6],mcurr[3:6])
-        #print('m_tosend:',m_tosend)
-
-        T = (so3.from_moment(m_tosend[3:6].tolist()),m_tosend[0:3].tolist())
-        '''
-        T = (so3.from_moment(x_tosend[3:6].tolist()),x_tosend[0:3].tolist())
+        T = (so3.from_moment(x_to_send[3:6]),x_to_send[0:3])
         C = self.dt*100
         joint_upper_limits = vectorops.add(self.left_limb_state.sensedq,vectorops.mul(\
             TRINAConfig.limb_velocity_limits,C))
@@ -2257,42 +2285,6 @@ class Motion:
         elif right_limb:
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = right_limb)
 if __name__=="__main__":
-    #########Check Collision Detection Speed ###############
-    #robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
-    # computation_model_path = "data/TRINA_world_anthrax.xml"
-    # world = WorldModel()
-    # res = world.readFile(computation_model_path)
-    # if not res:
-    #     logger.error('unable to load model')
-    #     raise RuntimeError("unable to load model")
-    # #Initialize collision detection
-    # collider = collide.WorldCollider(world)
-    # robot_model = world.robot(0)
-
-    # startTime = time.time()
-    # totalN = 100
-    # for i in range(totalN):
-    #     robot_model.randomizeConfig()
-    #     collisions = collider.robotSelfCollisions(robot_model)
-    #     colCounter = 0
-    #     for col in collisions:
-    #         colCounter = colCounter + 1
-    #     #if colCounter > 0:
-    #         #print(i,"collision")
-    #     #else:
-    #         #print(i)
-    # print("average time:", (time.time() - startTime)/float(totalN))
-    ##################################
-    # robot = Motion(mode = 'Kinematic',components = ['left_limb'],codename = "anthrax")
-    # robot.startup()
-    # time.sleep(0.2)
-    # left_limb_q = robot.sensedLeftLimbPosition()
-    # left_limb_q[2] =left_limb_q[2] + 0.01
-    # robot.setLeftLimbPosition(left_limb_q)
-    # time.sleep(1.2)
-    # robot.shutdown()
-
-
     #################################
     robot = Motion(mode = 'Physical',components = ['left_limb'],codename = "anthrax")
     robot.startup()
@@ -2301,9 +2293,6 @@ if __name__=="__main__":
     leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
     rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
     rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
-    #world = robot.getWorld()
-    #vis.add("world",world)
-    #vis.show()
 
     #move to untucked position
     robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
@@ -2313,47 +2302,23 @@ if __name__=="__main__":
     time.sleep(5)
     #startTime = time.time()
 
-    # while (time.time()-startTime < 5):
-    #     vis.lock()
-    #     #robot.setBaseVelocity([0.5,0.1])
-    #     vis.unlock()
-    #     time.sleep(0.02)
-    #
-    # #robot.setRightEEVelocity([0.05,0,0,0,0.1,0])
-    # robot.setLeftEEVelocity([0, 0, 0, 0, -0.3141592653589793, -0.3141592653589793])
-    # startTime = time.time()
-    # while (time.time()-startTime < 2):
-    #     vis.lock()
-    #     #robot.setBaseVelocity([0.5,0.1])
-    #     vis.unlock()
-    #     time.sleep(0.01)
-    # robot.setLeftLimbPosition(robot.sensedLeftLimbPosition())
-
-    # for i in range(100):
-    #     #print('wrench in the local frame:',robot.sensedRightEEWrench(frame = 'local'))
-    #     print('wrench in the global frame:',robot.sensedRightEEWrench(frame = 'global'))
-    #     time.sleep(0.05)
-
-    #print('Right EE Position',robot.sensedRightEETransform()[1])
-    K = np.array([[100.0,0.0,0.0,0.0,0.0,0.0],\
-                [0.0,100.0,0.0,0.0,0.0,0.0],\
-                [0.0,0.0,100.0,0.0,0.0,0.0],\
-                [0.0,0.0,0.0,1.0,0.0,0.0],\
-                [0.0,0.0,0.0,0.0,1.0,0.0],\
-                [0.0,0.0,0.0,0.0,0.0,1.0]])
+    K = np.array([[1000.0,0.0,0.0,0.0,0.0,0.0],\
+                [0.0,1000.0,0.0,0.0,0.0,0.0],\
+                [0.0,0.0,1000.0,0.0,0.0,0.0],\
+                [0.0,0.0,0.0,5.0,0.0,0.0],\
+                [0.0,0.0,0.0,0.0,5.0,0.0],\
+                [0.0,0.0,0.0,0.0,0.0,5.0]])
 
     target = copy(robot.sensedLeftEETransform())
-    target[1][0] += 0.1
+    target[1][0] += 0.0
 
-    robot.setLeftEETransformImpedance(target,K)
+    robot.setLeftEETransformImpedance(target,K,tool_center = [0.01,0,0])
+
     start_time = time.time()
     print('start')
     while time.time() - start_time < 20:
         time.sleep(0.01)
-
     print('stop')
-
     robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
     time.sleep(5)
-
     robot.shutdown()

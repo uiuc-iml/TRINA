@@ -28,17 +28,18 @@ class LimbState:
         self.driveSpeedAdjustment = 1.0
         self.cartesianMode = 0 # 0 means both translation and rotation, 2 only rotation, 1 only position
         self.toolCenter = [0,0,0]
-        
+
         ##handling impedance control
         self.impedanceControl = False
         self.Tg = [] #goal
         self.mg = [] #Transform in moment format
         self.Tcomm = []
         self.K = []
-        self.Kinv = [] 
+        self.Kinv = []
         self.B = []
         self.m_inv = []
         self.Xs = []
+        self.N = None
 
 
 class BaseState():
