@@ -31,12 +31,14 @@ class LimbState:
         
         ##handling impedance control
         self.impedanceControl = False
-        self.Tg = []
-        self.xg = []
+        self.Tg = [] #goal
+        self.mg = [] #Transform in moment format
         self.Tcomm = []
         self.K = []
         self.Kinv = [] 
         self.B = []
+        self.m_inv = []
+        self.Xs = []
 
 
 class BaseState():

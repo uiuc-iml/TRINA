@@ -378,6 +378,7 @@ class Motion:
                                 self.left_limb_state.commandQueue = False
                                 self.left_limb_state.commandedqQueue = []
                                 self.left_limb_state.impedanceControl = False
+                                self.left_limb_state.Xs = []
                             elif res == 1:
                                 self.left_limb.setConfig(target_config)
 
@@ -433,6 +434,7 @@ class Motion:
                                 self.right_limb_state.commandQueue = False
                                 self.right_limb_state.commandedqQueue = []
                                 self.right_limb_state.impedanceControl = False
+                                self.right_limb_state.Xs = []
                             elif res == 1:
                                 self.right_limb.setConfig(target_config)
                         else:
@@ -666,6 +668,7 @@ class Motion:
             self.left_limb_state.commandedQueueDuration = 0.0
             self.left_limb_state.cartesianDrive = False
             self.left_limb_state.impedanceControl = False
+            self.left_limb_state.Xs = []
             self._controlLoopLock.release()
         else:
             logger.warning('Left limb not enabled')
@@ -697,6 +700,7 @@ class Motion:
             self.right_limb_state.commandedQueueDuration = 0.0
             self.right_limb_state.cartesianDrive = False
             self.right_limb_state.impedanceControl = False
+            self.right_limb_state.Xs = []
             self._controlLoopLock.release()
         else:
             logger.warning('Right limb not enabled')
@@ -738,6 +742,7 @@ class Motion:
             self.left_limb_state.commandeddq = []
             self.left_limb_state.cartesianDrive = False
             self.left_limb_state.impedanceControl = False
+            self.left_limb_state.Xs = []
             self.left_limb_state.commandedQueueDuration = duration
             self.left_limb_state.commandQueueTime = time.time()
             self._controlLoopLock.release()
@@ -773,6 +778,7 @@ class Motion:
             self.right_limb_state.commandeddq = []
             self.right_limb_state.cartesianDrive = False
             self.right_limb_state.impedanceControl = False
+            self.right_limb_state.Xs = []
             self.right_limb_state.commandedQueueDuration = duration
             self.right_limb_state.commandQueueTime = time.time()
             self._controlLoopLock.release()
@@ -842,7 +848,8 @@ class Motion:
             self.left_limb_state.commandQueueTime = 0.0
             self.left_limb_state.commandedQueueDuration = 0.0
             self.left_limb_state.cartesianDrive = False
-            self.left_limb_sate.impedanceControl = False
+            self.left_limb_state.impedanceControl = False
+            self.left_limb_state.Xs = []
             self._controlLoopLock.release()
         else:
             logger.warning('Left limb not enabled')
@@ -942,6 +949,7 @@ class Motion:
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
             self.left_limb_state.impedanceControl = False
+            self.left_limb_state.Xs = []
             if not self.left_limb_state.cartesianDrive:
                 self.left_limb_state.commandedq = []
                 self.left_limb_state.commandeddq = []
@@ -1062,7 +1070,8 @@ class Motion:
         """
         if self.right_limb_enabled:
             self._controlLoopLock.acquire()
-            self.impedanceControl = False
+            self.right_limb_state.impedanceControl = False
+            self.right_limb_state.Xs = []
             if not self.right_limb_state.cartesianDrive:
                 self.right_limb_state.commandedq = []
                 self.right_limb_state.commandeddq = []
@@ -1153,6 +1162,7 @@ class Motion:
         self.right_limb_state.toolCenter = tool_center
         self.right_limb_state.cartesianDrive = False
         self.right_limb_state.impedanceControl = True
+        self.right_limb_state.Xs = []
         self._controlLoopLock.release()
         return
 
@@ -1191,6 +1201,16 @@ class Motion:
         self.left_limb_state.toolCenter = tool_center
         self.left_limb_state.cartesianDrive = False
         self.left_limb_state.impedanceControl = True
+        self.left_limb_state.Xs = [[],[],[],[],[],[]]
+        B = np.eye(6)*0.1
+        #Binv = np.linalg.inv(B)
+        self.left_limb_state.B = B
+        m = np.eye(6)*0.01
+        m[3] = 0.002
+        m[4] = 0.002
+        m[5] = 0.002
+        self.left_limb_state.m_inv = np.linalg.inv(m)
+        self.N = 20
         self._controlLoopLock.release()
         return
 
@@ -1740,6 +1760,7 @@ class Motion:
             self.left_limb_state.commandeddq = []
             self.left_limb_state.cartesianDrive = False
             self.left_limb_state.impedanceControl = False
+            self.left_limb_state.Xs = []
         if self.right_limb_enabled:
             self.right_limb_state.commandedq = []
             self.right_limb_state.difference = []
@@ -1751,6 +1772,7 @@ class Motion:
             self.right_limb_state.commandeddq = []
             self.right_limb_state.cartesianDrive = False
             self.right_limb_state.impedanceControl = False
+            self.right_limb_state.Xs = []
         if self.base_enabled:
             self.base_state.commandedVel = [0.0, 0.0]
             self.base_state.commandedTargetPosition = [] #[x, y, theta]
@@ -2104,6 +2126,36 @@ class Motion:
 
         return 1,target_
 
+    def _simulate(self,wrench,m_inv,K,B,x_curr,x_dot_curr,x_g,dt,N)
+        """
+        Simulate a mass spring damper under external load, semi-implicit Euler integration
+
+        Parameters:
+        -----------------
+        mass: 6x6 numpp array,inverse of the mass matrix
+        K: 6x6 numpy array, spring constant matrix
+        B, 6x6 numpy array, damping constant matrix
+        x_curr: numpy array of 6, current position and angle
+        x_dot_curr: numpy array of 6, curent speed
+        x_g:numpy array of 6,current position target (neutral position of the spring)
+        dt:simulation dt
+        N: number of integration time steps
+
+        Return:
+        -----------------
+        Xs: a 6xN np array
+        """
+        x = copy(x_curr)
+        v = copy(x_dot_curr)
+        Xs = np.zeros((6,N))
+        for i in range(N):
+            wrench_total = wrench + np.dot(K,x_g - x) - np.dot(B,v)
+            a = np.dot(m_inv,wrench_total)
+            v = v + a*dt
+            x = x + v*dt
+            Xs[:,i] = x
+        return Xs
+
     def _left_limb_imdepance_drive(self):
         """Calculate the next goal for impedance position control
         Parameters:
@@ -2114,17 +2166,34 @@ class Motion:
         Result flag
         target_config : list of doubles, the target limb config
         """
-
-        #B = np.eye(6)*0.1
         wrench_raw = self.sensedLeftEEWrench(frame = 'global') #need to correct for tool center torque
-        #print('wrench_raw:',wrench_raw)
-
         Tcurr = self.sensedLeftEETransform()
-        mcurr = np.array(Tcurr[1]+so3.moment(Tcurr[0]))
-
+        m_curr = np.array(Tcurr[1]+so3.moment(Tcurr[0]))
+        v_curr = np.array(self.sensedLeftEEVelocity[0] + self.sensedLeftEEVelocity[1])
         #calculate wrench at the tool frame
         wrench = wrench_raw[0:3] + vectorops.sub(wrench_raw[3:6],vectorops.cross(self.left_limb_state.toolCenter,wrench_raw[0:3]))
+        #a 6xN array
+        Xs_new = self._simulate(wrench = wrench,m_inv = self.left_limb_state.m_inv,K = self.left_limb_state.K,B = self.left_limb_state.B,\
+            x_curr = m_curr,x_dot_curr = v_curr,x_g = self.left_limb_state.mg,dt = self.dt,N = self.left_limb_state.N)
+        Xs_new = Xs_new.tolist() #a list of 6 lists
+        x_to_send = []
+        for row in self.Xs:
+            if len(row) < 1:
+                self.Xs[i] = Xs_new[i]
+                x_to_send.append(self.Xs[i].pop(0))
+                continue
+            
+            ratio = (Xs_new[i][-1] - m_curr[i])/(self.Xs[i][0] - m_curr)
+            if ratio <= 1:
+                self.Xs[i] = Xs_new[i]
+            else:
+                for j in range(self.left_limb_state.N):
+                    if (Xs_new[i][j] - m_curr[i])/(self.Xs[i][0] - m_curr) > 1:
+                        break
+                self.Xs[i] = Xs_new[i][j:self.left_limb_state.N]
+            x_to_send.append(self.Xs[i].pop(0))
 
+        '''old way of calculating T
         mcomm = np.array(self.left_limb_state.mg) + np.dot(self.left_limb_state.Kinv,np.array(wrench)) ##The EE command that we want to send
         diff_p = np.max(np.abs(mcomm[0:3] - mcurr[0:3]))
         diff_a = np.max(np.abs(mcomm[3:6] - mcurr[3:6]))
@@ -2147,12 +2216,13 @@ class Motion:
         #print('m_tosend:',m_tosend)
 
         T = (so3.from_moment(m_tosend[3:6].tolist()),m_tosend[0:3].tolist())
+        '''
+        T = (so3.from_moment(x_tosend[3:6].tolist()),x_tosend[0:3].tolist())
         C = self.dt*100
         joint_upper_limits = vectorops.add(self.left_limb_state.sensedq,vectorops.mul(\
             TRINAConfig.limb_velocity_limits,C))
         joint_lower_limits = vectorops.add(self.left_limb_state.sensedq,vectorops.mul(\
             TRINAConfig.limb_velocity_limits,-C))
-
         goal = ik.objective(self.left_EE_link,R=T[0],\
             t = vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
 
