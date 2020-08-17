@@ -109,9 +109,6 @@ class Motion:
 
         elif self.mode == "Physical":
             from limbController import LimbController
-            from baseController import BaseController
-            from torsoController import TorsoController
-            from gripperController import GripperController
             for component in components:
                 if component == 'left_limb':
                     self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=TRINAConfig.left_Robotiq,type = TRINAConfig.left_Robotiq_type,\
@@ -124,18 +121,22 @@ class Motion:
                     self.right_limb_enabled = True
                     logger.debug('right limb enabled')
                 elif component == 'base':
+                    from baseController import BaseController
                     self.base = BaseController()
                     self.base_enabled = True
                     logger.debug('base enabled')
                 elif component == 'torso':
+                    from torsoController import TorsoController
                     self.torso = TorsoController()
                     self.torso_enabled = True
                     logger.debug('torso enabled')
                 elif component == 'left_gripper':
+                    from gripperController import GripperController
                     self.left_gripper = GripperController()
                     self.left_gripper_enabled = True
                     logger.debug('left gripper enabled')
                 elif component == 'right_gripper':
+                    from gripperController import GripperController
                     self.right_gripper = GripperController()
                     self.right_gripper_enabled = True
                     logger.debug('right gripper enabled')
@@ -399,7 +400,7 @@ class Motion:
                                 tmp = time.time() - self.right_limb_state.commandQueueTime
                                 if tmp <= self.right_limb_state.commandedQueueDuration:
                                     #self.simulated_robot.setRightLimbConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,tmp/self.right_limb_state.commandedQueueDuration)))
-                                    self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,tmp/self.right_limb_state.commandedQueueDuration))+ [0.0])
+                                    self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,tmp/self.right_limb_state.commandedQueueDuration)))
                                 else:
                                     #self.simulated_robot.setRightLimbConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))
                                     self.right_limb.setConfig(vectorops.add(self.right_limb_state.commandedqQueueStart,vectorops.mul(self.right_limb_state.difference,1.0)))

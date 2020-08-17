@@ -13,9 +13,7 @@ When doing F/T calibration, make sure that the weight and cog are set to zero fo
 
 class Calibration:
 	def __init__(self,Jarvis = None, components = ['left_limb'], debugging = False, codename = 'Anthrax',server_address = 'http://localhost:8080' ):
-		self.mode = mode
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
-		self.tasks = tasks
 		self.codename = codename
 		self.components = components
 
@@ -25,11 +23,11 @@ class Calibration:
 			#At this point the calibration data has not been loaded into Motion yet yet
 			self.server_address = server_address
 			self.robot =  MotionClient(address = server_address)
-			self.startLocally()
+
 		else:
 			self.status = 'idle' #states are " idle, active"
 			self.state = 'idle' #states are " idle, active
-        	self.robot = Jarvis
+			self.robot = Jarvis
 			pass
 			# stateRecieverThread = threading.Thread(target=self._serveStateReciever)
 			# main_thread = threading.Thread(target = self._infoLoop)
@@ -65,16 +63,26 @@ class Calibration:
 		if not (location == 'fixed'):
 			from take_calibration_pictures import take_pictures
 			from process_pictures import process
-			from calbration_calculation import calculation
+			from calibration_calculation import calculation
+			import TRINAConfig
 			##TODO: load the camera module
 			##TODO: load the configurations for the arms to go to
 			#camera = 
 			#configs = 
+
+			self.robot.startServer(mode = 'Physical',components = self.components,codename = self.codename)
+			self.robot.startup()
 			#the pictures will be saved to disk, for debugging purposes
-			EE_transforms = take_pictures(camera = camera,robot = self.robot,arm = location,configurations = configs)
+			EE_transforms = take_pictures(camera = [],robot = self.robot,arm = location,configurations = TRINAConfig.right_calibration_configs)
+			print(EE_transforms)
+			self.robot.shutdown()
 			pts = process()
 			T_camera,T_marker = calculation(pts,EE_transforms,camera_guess,marker_guess)
+			print(T_camera,T_marker)
+
 			#TODO save these transforms
+
+		
 
 	def FTCalibration(self,arm,mass_guess,cog_guess):
 		"""
@@ -228,8 +236,6 @@ class Calibration:
 
 		##TODO:now change the confgiuration file
 
-				
-
 	def _infoLoop(self):
 		pass
 		# while(True):
@@ -255,4 +261,7 @@ class Calibration:
 		# 		time.sleep(0.001)
 
 if __name__ == "__main__" :
-    example = Example()
+	calibration = Calibration(Jarvis = None, components = ['right_limb'], debugging = False, codename = 'anthrax_lowpoly',server_address = 'http://localhost:8080')
+	camera_guess = ([1,0,0,0,1,0,0,0,1],[0.0,0.0,0.5])
+	marker_guess = ([0,1,0,0,0,1,1,0,0],[0,0.05,-0.05])
+	calibration.cameraCalibration(location = 'right',camera_guess = camera_guess,marker_guess = marker_guess)

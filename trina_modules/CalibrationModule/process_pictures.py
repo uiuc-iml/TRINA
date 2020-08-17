@@ -12,7 +12,7 @@ def process():
 	"""
 	This function process the pictures to find the location of the center of the markers
 	"""
-    center_pts = []
+	center_pts = []
 	for i in range(num_pic): #total of 18 pics
 		data2=open('calibration_pt_'+str(i)+'.txt','r')
 		columnPts=[]
@@ -74,11 +74,11 @@ def process():
 			print 'No Color Blob Detected'
 
 		cv2.imshow('color',frame)
-		cv2.waitKey(100)
+		cv2.waitKey(1000)
 		cv2.destroyAllWindows()
 		print i
-        
-    return center_pts
+
+	return center_pts
 
 if __name__ == "__main__":
 	generation()
