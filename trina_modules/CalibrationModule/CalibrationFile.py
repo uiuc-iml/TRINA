@@ -67,14 +67,14 @@ class Calibration:
 			from process_pictures import process
 			from calbration_calculation import calculation
 			##TODO: load the camera module
-			##TODO: load the configurations
+			##TODO: load the configurations for the arms to go to
 			#camera = 
 			#configs = 
 			#the pictures will be saved to disk, for debugging purposes
-			take_pictures(camera = camera,robot = self.robot,arm = location,configurations = configs)
+			EE_transforms = take_pictures(camera = camera,robot = self.robot,arm = location,configurations = configs)
 			pts = process()
-			transform = calculation(pts,camera_guess,marker_guess)
-
+			T_camera,T_marker = calculation(pts,EE_transforms,camera_guess,marker_guess)
+			#TODO save these transforms
 
 	def FTCalibration(self,arm,mass_guess,cog_guess):
 		"""
@@ -95,6 +95,8 @@ class Calibration:
 		import scipy.linalg as lin
 		from math import sqrt
 		from klampt.math import so3
+		#first we need to make sure the relevant parameters in the configuration are reset
+		#TODO: reset the relevant parameters
 
 		#first collect data
 		self.robot.startServer(mode = 'Physical',components = self.components,codename = self.codename)

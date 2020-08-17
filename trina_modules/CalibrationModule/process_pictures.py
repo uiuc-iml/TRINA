@@ -6,7 +6,6 @@ from klampt.math import so3
 import imutils
 
 # TODO: temp set here
-data_path = 'calibration_data/'
 num_pic = 18
 
 def process():
