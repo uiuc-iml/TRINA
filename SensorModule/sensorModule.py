@@ -243,7 +243,7 @@ class Camera_Robot:
             for camera in cameras:
                 if(camera in self.valid_cameras):
                     output.update(
-                        {camera: self.active_cameras[camera].get_point_cloud()})
+                        {camera: self.active_cameras[camera].get_rgbd_images()})
             return output
         else:
             # try:
@@ -487,6 +487,18 @@ class RealSenseCamera:
         #     print('Something went wrong with our camera system! Please Try Again!')
         #     return None
         return transformed_pc
+    
+    def get_rgbd_images(self):
+        frames = self.pipeline.wait_for_frames()
+        # Fetch color and depth frames and align them
+        aligned_frames = self.align.process(frames)
+        depth_frame = aligned_frames.get_depth_frame()
+        color_frame = aligned_frames.get_color_frame()
+        if not depth_frame or not color_frame:
+            print("Data Not Available at the moment")
+            return None
+        else:
+            return [color_frame,depth_frame]
 
     def safely_close(self):
         print('safely closing Realsense camera', self.serial_num)
@@ -584,6 +596,9 @@ class Camera_Sensors:
 
     def get_point_cloud(self):
         return self.camera.get_point_cloud()
+    
+    def get_rgbd_images(self):
+        return self.camera.get_rgbd_images()
 
     def safely_close(self):
         self.camera.safely_close()
