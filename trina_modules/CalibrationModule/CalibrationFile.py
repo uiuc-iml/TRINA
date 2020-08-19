@@ -72,16 +72,38 @@ class Calibration:
 
 			self.robot.startServer(mode = 'Physical',components = self.components,codename = self.codename)
 			self.robot.startup()
+			
+			#self.robot.setLeftLimbPositionLinear(TRINAConfig.left_untucked_config,10)
+			self.robot.setRightLimbPositionLinear(TRINAConfig.right_untucked_config,10)
+			time.sleep(10)
+
 			#the pictures will be saved to disk, for debugging purposes
 			EE_transforms = take_pictures(camera = [],robot = self.robot,arm = location,configurations = TRINAConfig.right_calibration_configs)
 			print(EE_transforms)
 			self.robot.shutdown()
-			pts = process()
-			T_camera,T_marker = calculation(pts,EE_transforms,camera_guess,marker_guess)
+			pts = process(18)
+			T_camera,T_marker = calculation(pts,EE_transforms,camera_guess,marker_guess,'wrist')
 			print(T_camera,T_marker)
 
-			#TODO save these transforms
+		else:
+			from take_calibration_pictures import take_pictures
+			from process_pictures import process
+			from calibration_calculation import calculation
+			import TRINAConfig
+			self.robot.startServer(mode = 'Physical',components = self.components,codename = self.codename)
+			self.robot.startup()
 
+			#self.robot.setLeftLimbPositionLinear(TRINAConfig.left_tabletop_config,10)
+			self.robot.setRightLimbPositionLinear(TRINAConfig.right_tabletop_config,10)
+			time.sleep(10)
+
+			#the pictures will be saved to disk, for debugging purposes
+			EE_transforms = take_pictures(camera = [],robot = self.robot,arm = location,configurations = TRINAConfig.fixed_calibration_configs)
+			print(EE_transforms)
+			self.robot.shutdown()
+			pts = process(18)
+			T_camera,T_marker = calculation(pts,EE_transforms,camera_guess,marker_guess,'fixed')
+			print(T_camera,T_marker)
 		
 
 	def FTCalibration(self,arm,mass_guess,cog_guess):
@@ -262,6 +284,8 @@ class Calibration:
 
 if __name__ == "__main__" :
 	calibration = Calibration(Jarvis = None, components = ['right_limb'], debugging = False, codename = 'anthrax_lowpoly',server_address = 'http://localhost:8080')
-	camera_guess = ([1,0,0,0,1,0,0,0,1],[0.0,0.0,0.5])
-	marker_guess = ([0,1,0,0,0,1,1,0,0],[0,0.05,-0.05])
-	calibration.cameraCalibration(location = 'right',camera_guess = camera_guess,marker_guess = marker_guess)
+	# camera_guess = ([1,0,0,0,1,0,0,0,1],[0.0,0.0,0.5])
+	# marker_guess = ([0,1,0,0,0,1,1,0,0],[0,0.05,-0.05])
+	camera_guess = ([1,0,0,0,1,0,0,0,1],[0.5,-0.1,1.5])
+	marker_guess = ([0,1,0,0,0,1,1,0,0],[-15.0,0.0,0])
+	calibration.cameraCalibration(location = 'fixed',camera_guess = camera_guess,marker_guess = marker_guess)

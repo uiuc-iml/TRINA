@@ -14,8 +14,6 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from copy import deepcopy
 
-num_pic = 18
-
 def take_pictures(camera,robot,arm,configurations):
     if camera:
         pass
@@ -23,7 +21,11 @@ def take_pictures(camera,robot,arm,configurations):
         import pyrealsense2 as rs
         pipeline = rs.pipeline()
         config = rs.config()
-        config.enable_device("620202003661".encode('utf-8'))
+        if arm == 'right':
+            config.enable_device("620202003661".encode('utf-8'))
+        elif arm == 'fixed':
+            config.enable_device("620201003873".encode('utf-8'))
+
         config.enable_stream(
             rs.stream.depth, 640, 480, rs.format.z16, 30)
         config.enable_stream(
@@ -37,51 +39,56 @@ def take_pictures(camera,robot,arm,configurations):
         time.sleep(3)
         print '---------------------camera initiated -----------------------------'
 
+
+
     EE_transforms = []
     i = 0
     for config in configurations:
-        t = 6.0
+        t = 3.0
         if arm == 'left':
             robot.setLeftLimbPositionLinear(config,t)
         elif arm == 'right':
             robot.setRightLimbPositionLinear(config,t)
-        time.sleep(t)
+        elif arm == 'fixed':
+            robot.setRightLimbPositionLinear(config,t)
+        time.sleep(t+0.5)
         
 
         if arm == 'left':
             EE_transforms.append(robot.sensedLeftEETransform())
-        elif arm == 'right':
+            while np.linalg.norm(np.array(robot.sensedLeftEEVelocity()[0])) > 0.001:
+                time.sleep(0.1)
+        elif arm == 'right' or arm == 'fixed':
             EE_transforms.append(robot.sensedRightEETransform())
+            while np.linalg.norm(np.array(robot.sensedRightEEVelocity()[0])) > 0.001:
+                time.sleep(0.1)
 
-        # Wait for the next set of frames from the camera
-        frames = pipeline.wait_for_frames()
-        # Fetch color and depth frames and align them
-        aligned_frames = align.process(frames)
-        depth_frame = aligned_frames.get_depth_frame()
-        color_frame = aligned_frames.get_color_frame()
-        if not depth_frame or not color_frame:
-            print("Data Not Available at the moment")
-            return None
-        # Tell pointcloud object to map to this color frame
-        pc.map_to(color_frame)
-        # Generate the pointcloud and texture mappings
-        points = pc.calculate(depth_frame)
-        vtx = np.asarray(points.get_vertices())
-        pure_point_cloud = np.zeros((640*480, 3))
-        pure_point_cloud[:, 0] = -vtx['f0']
-        pure_point_cloud[:, 1] = -vtx['f1']
-        pure_point_cloud[:, 2] = -vtx['f2']
-        # color_t = np.asarray(color_frame.get_data()).reshape(640*480, 3)/255
-        # point_cloud = o3d.geometry.PointCloud()
-        # point_cloud.points = o3d.utility.Vector3dVector(pure_point_cloud)
-        # point_cloud.colors = o3d.utility.Vector3dVector(color_t)
+        if camera:
+            pass
+        else:
+            # Wait for the next set of frames from the camera
+            frames = pipeline.wait_for_frames()
+            # Fetch color and depth frames and align them
+            aligned_frames = align.process(frames)
+            depth_frame = aligned_frames.get_depth_frame()
+            color_frame = aligned_frames.get_color_frame()
+            if not depth_frame or not color_frame:
+                print("Data Not Available at the moment")
+                return None
+            # Tell pointcloud object to map to this color frame
+            pc.map_to(color_frame)
+            # Generate the pointcloud and texture mappings
+            points = pc.calculate(depth_frame)
+            vtx = np.asarray(points.get_vertices())
+            pure_point_cloud = np.zeros((640*480, 3))
+            pure_point_cloud[:, 0] = -vtx['f0']
+            pure_point_cloud[:, 1] = -vtx['f1']
+            pure_point_cloud[:, 2] = -vtx['f2']
 
-        cad = cv2.cvtColor(np.asarray(color_frame.get_data()), cv2.COLOR_RGB2BGR)
-        p = pure_point_cloud
+            cad = cv2.cvtColor(np.asarray(color_frame.get_data()), cv2.COLOR_RGB2BGR)
+            p = pure_point_cloud
         ##get CAD and pointclouds 
         cv2.imwrite('calbration_pic_'+str(i)+'.png',cad)
-        # cv2.imshow('color',cad)
-        # cv2.waitKey(500)
         data=open('calibration_pt_'+str(i)+'.txt','w')
         #TODO: make a better way to save the pointcloud?
         #Can I use the sensing module to save these?
