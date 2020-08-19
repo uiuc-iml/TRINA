@@ -17,6 +17,7 @@ import numpy as np
 from klampt import WorldModel,vis
 import os
 
+from .. import trina_logging
 import logging
 from datetime import datetime
 
@@ -26,17 +27,7 @@ logger = logging.getLogger(__name__)
 # Create handlers
 c_handler = logging.StreamHandler()
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
-f_handler = logging.FileHandler(filename)
-c_handler.setLevel(logging.WARNING)
-f_handler.setLevel(logging.NOTSET)
-# Create formatters and add it to handlers
-c_format = logging.Formatter('%(asctime)s %(levelname)s-%(message)s',datefmt='%H:%M:%S')
-f_format = logging.Formatter('%(asctime)s %(funcName)s :%(levelname)s- %(message)s',datefmt='%H:%M:%S')
-c_handler.setFormatter(c_format)
-f_handler.setFormatter(f_format)
-# Add handlers to the logger
-logger.addHandler(c_handler)
-logger.addHandler(f_handler)
+logger = get_logger(__name__,logging.INFO, filename)
 
 class Motion:
 
