@@ -35,12 +35,10 @@ class LimbState:
         self.mg = [] #Transform in moment format
         self.Tcomm = []
         self.K = []
-        self.Kinv = []
         self.B = []
-        self.m_inv = []
-        self.Xs = []
-        self.N = None
-
+        self.Minv = []
+        self.x_mass = []
+        self.x_dot_mass = []
 
 class BaseState():
     def __init__(self):
