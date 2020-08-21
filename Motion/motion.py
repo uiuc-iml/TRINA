@@ -9,7 +9,7 @@ import numpy as np
 import TRINAConfig #network configs and other configs
 from motionStates import * #state structures
 from copy import deepcopy,copy
-from klampt.math import vectorops,so3
+from klampt.math import vectorops,so3,se3
 # from klampt import vis
 from klampt.model import ik, collide
 import numpy as np
@@ -1171,7 +1171,7 @@ class Motion:
         # self._controlLoopLock.release()
         return
 
-    def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan): #,tool_center = [0,0,0]):
+    def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6): #,tool_center = [0,0,0]):
         """Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -1182,39 +1182,55 @@ class Motion:
         K: a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.
         B: a 6x6 numpy 2D array. The damping matrix.
         M: a 6x6 numpy 2D array. The inertia matrix.
-        tool_center: list of 3 floats. Command the tool_center to go to the desired transform (tool frame has the same orientation as EE frame)
+        x_dot_g: list of 6 elements. The optional desired EE velocity
         Return:
         -------------
         None
         """
         if not self.left_limb_enabled:
             print("SetLeftEETransform():left limb is not enabled")
-            logger.warning('SetLeftEETransform():Left limb not enabled.')
+            logger.warning('SetLeftEETransformImpedance():Left limb not enabled.')
             return
 
         if self.mode == "Kinematic":
             print("SetLeftEETransform():Impedance control not available for Kinematic mode.")
-            logger.warning('SetLeftEETransform():Impedance control not available for Kinematic mode.')
+            logger.warning('SetLeftEETransformImpedance():Impedance control not available for Kinematic mode.')
             return
 
-        #TODO
-        #add asserts to check on
+        if np.shape(Tg) != (6,6) or np.shape(K) != (6,6) or np.shape(M) != (6,6):
+            logger.warning('setLeftEETransformImpedance():wrong shape for inputs')
+            print('setLeftEETransformImpedance():wrong shape for inputs')
+            return
+
+        if np.all(K<0) or np.all(M<0):
+            logger.warning('setLeftEETransformImpedance():K,M need to be nonnegative')
+            print('setLeftEETransformImpedance():K,M need to be nonnegative')
+            return
+
+        if type(x_dot_g) is not list:
+            logger.warning('setLeftEETransformImpedance():x_dot_g need to be a list ')
+            print('setLeftEETransformImpedance():x_dot_g need to be a list')
+            return
 
         self._controlLoopLock.acquire()
+
+        #if already in impedance control, then do not reset x_mass and x_dot_mass 
+        if not self.left_limb_state.impedanceControl:
+            self.left_limb_state.T_mass = self.sensedLeftEETransform()
+            (v,w) = self.sensedLeftEEVelocity()
+            self.left_limb_state.x_dot_mass = v+w
         self.left_limb_state.Tg = copy(Tg)
-        self.left_limb_state.mg = Tg[1] + so3.moment(Tg[0])
+        self.left_limb_state.x_dot_g = copy(x_dot_g)
+        self.left_limb_state.mg = copy(Tg[1]) + so3.moment(Tg[0])
         self.left_limb_state.K = copy(K)
-        #self.left_limb_state.toolCenter = tool_center
         self.left_limb_state.cartesianDrive = False
         self.left_limb_state.impedanceControl = True
+        self.left_limb_state.counter = 1
         if np.any(np.isnan(B)):
             self.left_limb_state.B = np.sqrt(4.0*np.dot(M,K))
         else:
-            self.left_limb_state.B = B
+            self.left_limb_state.B = copy(B)
         self.left_limb_state.Minv = np.linalg.inv(M)
-        self.left_limb_state.x_mass = self.sensedLeftEETransform()[1] + so3.moment(self.sensedLeftEETransform()[0])
-        (v,w) = self.sensedLeftEEVelocity()
-        self.left_limb_state.x_dot_mass = v+w
         self._controlLoopLock.release()
         return
 
@@ -2073,7 +2089,7 @@ class Motion:
 
         return 0,0
 
-    def _simulate(self,wrench,m_inv,K,B,x_curr,x_dot_curr,x_g,dt):
+    def _simulate(self,wrench,m_inv,K,B,T_curr,x_dot_curr,T_g,x_dot_g,dt):
         """
         Simulate a mass spring damper under external load, semi-implicit Euler integration
 
@@ -2082,22 +2098,28 @@ class Motion:
         m_inv: 6x6 numpp array,inverse of the mass matrix
         K: 6x6 numpy array, spring constant matrix
         B, 6x6 numpy array, damping constant matrix
-        x_curr: list of 6, current position and angle
+        T_curr: rigid transform, current transform of the mass
         x_dot_curr: lost of 6, curent speed
-        x_g:list of 6,current position target (neutral position of the spring)
+        T_g: rigid transform, target transform
+        x_dot_g: a list of 6
         dt:simulation dt
 
         Return:
         -----------------
         x,v: list of 6
         """
-        x = np.array(x_curr)
+        e = se3.error(T_g,T_curr)
+        e = e[3:6] + e[0:3]
+        x_dot_g = np.array(x_dot_g)
         v = np.array(x_dot_curr)
-        x_goal = np.array(x_g)
-        wrench_total = wrench + np.dot(K,x_goal - x) - np.dot(B,v)
+        e_dot = v - np.array(x_dot_g)
+        wrench_total = wrench + np.dot(K,e) - np.dot(B,v)
         a = np.dot(m_inv,wrench_total)
+
+        #limit maximum acceleration
         a = np.clip(a,[-1,-1,-1,-4,-4,-4],[1,1,1,4,4,4])
         v = v + a*dt
+        #limit maximum velocity
         v = np.clip(v,[-1,-1,-1,-2,-2,-2],[1,1,1,2,2,2])
         x = x + v*dt
             
@@ -2114,9 +2136,9 @@ class Motion:
         target_config : list of doubles, the target limb config
         """
         wrench = self.sensedLeftEEWrench(frame = 'global')      
-        self.left_limb_state.x_mass, self.left_limb_state.x_dot_mass = self._simulate(wrench = wrench,m_inv = self.left_limb_state.Minv,\
-            K = self.left_limb_state.K,B = self.left_limb_state.B,x_curr = self.left_limb_state.x_mass,x_dot_curr = self.left_limb_state.x_dot_mass,\
-            x_g = self.left_limb_state.mg,dt = self.dt) 
+        self.left_limb_state.T_mass, self.left_limb_state.x_dot_mass = self._simulate(wrench = wrench,m_inv = self.left_limb_state.Minv,\
+            K = self.left_limb_state.K,B = self.left_limb_state.B,T_curr = self.left_limb_state.T_mass,x_dot_curr = self.left_limb_state.x_dot_mass,\
+            T_g = self.left_limb_state.mg,dt = self.dt) 
         x_to_send = copy(self.left_limb_state.x_mass)
        
         T = (so3.from_moment(x_to_send[3:6]),x_to_send[0:3])
@@ -2141,6 +2163,7 @@ class Motion:
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb, right_limb = self.right_limb_state.sensedq)
         elif right_limb:
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = right_limb)
+
 if __name__=="__main__":
 
     ###quickly read the current position ###
