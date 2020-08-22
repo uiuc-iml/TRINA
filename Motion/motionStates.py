@@ -31,16 +31,20 @@ class LimbState:
 
         ##handling impedance control
         self.impedanceControl = False
-        self.Tg = [] #goal
+        #goal transform and velocity
+        self.T_g = []
         self.x_dot_g = []
-        self.mg = [] #Transform in moment format
-        self.Tcomm = []
         self.K = []
         self.B = []
         self.Minv = []
+        #mass transform and velocity
         self.T_mass = []
         self.x_dot_mass = []
+        #counter for how many iterations have passed
         self.counter = 1
+        #range for ignoring the wrench readings
+        self.deadband = [0]*6
+
 
 class BaseState():
     def __init__(self):
