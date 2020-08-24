@@ -5,10 +5,7 @@ from klampt.math import vectorops
 from klampt.math import so3
 import imutils
 
-# TODO: temp set here
-num_pic = 18
-
-def process():
+def process(num_pic = 18):
 	"""
 	This function process the pictures to find the location of the center of the markers
 	"""
@@ -73,9 +70,10 @@ def process():
 		else:
 			print 'No Color Blob Detected'
 
-		cv2.imshow('color',frame)
-		cv2.waitKey(1000)
-		cv2.destroyAllWindows()
+		# cv2.imshow('color',frame)
+		# cv2.waitKey(1000)
+		# cv2.destroyAllWindows()
+		cv2.imwrite('processed_pic_'+str(i)+'.png',frame)
 		print i
 
 	return center_pts

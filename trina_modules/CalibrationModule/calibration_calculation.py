@@ -42,7 +42,7 @@ def point_fit_transform(a,b):
     R = np.dot(U,Vt)
     return R,bmean-np.dot(R,amean)
 
-def calculation(pts,EE_transforms,camera_guess,marker_guess):
+def calculation(pts,EE_transforms,camera_guess,marker_guess,type):
     """This is the function of running optimization for calibration
     
     Parameters:
@@ -51,34 +51,59 @@ def calculation(pts,EE_transforms,camera_guess,marker_guess):
     EE_transforms: a list of Klampt rigid transforms, transforms of the EE when taking the pictures, in global frame
     camera_guess: rigid transform, the initial guess of the camera transform w.r.t. EE
     marker_guess: rigid transform, the initial guess of the marker transform in the global frame
+    type: 'wrist' or 'fixed'
     """
     #the marker transforms here are actually just points not transformations
     marker_transforms = pts
     T_marker_assumed = marker_guess
     T_EE = EE_transforms
-    for loop in range(NLOOPS if ESTIMATE_MARKER_TRANSFORM else 1):
-        #Only using point fit, since we only have pts not transforms
-        #This estimates Tcamera while assuming some marker transform
-        if METHOD=='point fit':
-            Tcamera2 = point_fit_transform([Tm_c for Tm_c in marker_transforms],[se3.mul(se3.inv(Tl),T_marker_assumed)[1] for Tl in T_EE])
-            Tcamera2 = [so3.from_matrix(Tcamera2[0]),Tcamera2[1]]
-            Tcamera = Tcamera2
-        #with the Tcamera from the current iteration, calculate marker points in world
-        Tmarkers_world = [se3.apply(se3.mul(Tl,Tcamera),Tm_c) for (Tl,Tm_c) in zip(T_EE,marker_transforms)] 
-        #Tmarkers_link = [se3.mul(se3.inv(Tl),Tm) for Tl,Tm in zip(T_EE,Tmarkers)]
 
-        #Here estimate Tmarker, while keeping camera transform fixed
-        if ESTIMATE_MARKER_TRANSFORM:
-            T_marker_assumed_inv = point_fit_transform([[0,0,0] for Tm_c in marker_transforms],[se3.apply(se3.mul(Tl,Tcamera2),Tm_c) for (Tl,Tm_c) in zip(T_EE,marker_transforms)])
-            T_marker_assumed_inv=[so3.from_matrix(T_marker_assumed_inv[0]),T_marker_assumed_inv[1]]
-            T_marker_assumed = T_marker_assumed_inv
+    if type == 'wrist':
+        for loop in range(NLOOPS if ESTIMATE_MARKER_TRANSFORM else 1):
+            #Only using point fit, since we only have pts not transforms
+            #This estimates Tcamera while assuming some marker transform
+            if METHOD=='point fit':
+                Tcamera2 = point_fit_transform([Tm_c for Tm_c in marker_transforms],[se3.mul(se3.inv(Tl),T_marker_assumed)[1] for Tl in T_EE])
+                Tcamera2 = [so3.from_matrix(Tcamera2[0]),Tcamera2[1]]
+                Tcamera = Tcamera2
+            #with the Tcamera from the current iteration, calculate marker points in world
+            Tmarkers_world = [se3.apply(se3.mul(Tl,Tcamera),Tm_c) for (Tl,Tm_c) in zip(T_EE,marker_transforms)] 
+            #Tmarkers_link = [se3.mul(se3.inv(Tl),Tm) for Tl,Tm in zip(T_EE,Tmarkers)]
 
-        SSE_t = 0
-        for (Tm_c,Tl) in zip(marker_transforms,T_EE):
-            Tm_c_est = se3.mul(se3.mul(se3.inv(Tcamera),se3.inv(Tl)),T_marker_assumed)
-            SSE_t += vectorops.distanceSquared(Tm_c,Tm_c_est[1])
-        print("RMSE translations (meters)",np.sqrt(SSE_t/len(T_EE)))
-    
+            #Here estimate Tmarker, while keeping camera transform fixed
+            if ESTIMATE_MARKER_TRANSFORM:
+                T_marker_assumed_inv = point_fit_transform([[0,0,0] for Tm_c in marker_transforms],[se3.apply(se3.mul(Tl,Tcamera2),Tm_c) for (Tl,Tm_c) in zip(T_EE,marker_transforms)])
+                T_marker_assumed_inv=[so3.from_matrix(T_marker_assumed_inv[0]),T_marker_assumed_inv[1]]
+                T_marker_assumed = T_marker_assumed_inv
+
+            SSE_t = 0
+            for (Tm_c,Tl) in zip(marker_transforms,T_EE):
+                Tm_c_est = se3.mul(se3.mul(se3.inv(Tcamera),se3.inv(Tl)),T_marker_assumed)
+                SSE_t += vectorops.distanceSquared(Tm_c,Tm_c_est[1])
+            print("RMSE translations (meters)",np.sqrt(SSE_t/len(T_EE)))
+    elif type == 'fixed':
+         for loop in range(NLOOPS if ESTIMATE_MARKER_TRANSFORM else 1):
+            #Only using point fit, since we only have pts not transforms
+            #This estimates Tcamera while assuming some marker transform
+            if METHOD=='point fit':
+                Tcamera2 = point_fit_transform([Tm_c for Tm_c in marker_transforms],[se3.mul(Tl,T_marker_assumed)[1] for Tl in T_EE])
+                Tcamera2 = [so3.from_matrix(Tcamera2[0]),Tcamera2[1]]
+                Tcamera = Tcamera2
+            #with the Tcamera from the current iteration, calculate marker points in world
+            Tmarkers_world = [se3.apply(Tcamera,Tm_c) for Tm_c in marker_transforms] 
+            #Tmarkers_link = [se3.mul(se3.inv(Tl),Tm) for Tl,Tm in zip(T_EE,Tmarkers)]
+
+            #Here estimate Tmarker, while keeping camera transform fixed
+            if ESTIMATE_MARKER_TRANSFORM:
+                T_marker_assumed_inv = point_fit_transform([[0,0,0] for Tm_c in marker_transforms],[se3.apply(se3.mul(se3.inv(Tl),Tcamera2),Tm_c) for (Tl,Tm_c) in zip(T_EE,marker_transforms)])
+                T_marker_assumed_inv=[so3.from_matrix(T_marker_assumed_inv[0]),T_marker_assumed_inv[1]]
+                T_marker_assumed = T_marker_assumed_inv
+
+            SSE_t = 0
+            for (Tm_c,Tl) in zip(marker_transforms,T_EE):
+                Tm_EE_est = se3.apply(se3.mul(se3.inv(Tl),Tcamera),Tm_c)
+                SSE_t += vectorops.distanceSquared(T_marker_assumed[1],Tm_EE_est)
+            print("RMSE translations (meters)",np.sqrt(SSE_t/len(T_EE)))
     return Tcamera,T_marker_assumed
     
 
