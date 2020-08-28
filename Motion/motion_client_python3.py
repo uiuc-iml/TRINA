@@ -202,6 +202,18 @@ class MotionClient:
 	def closeRightRobotiqGripper(self):
 		self.s.closeRightRobotiqGripper()	
 
+	def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setLeftEETransformImpedance()
+
+	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setRightEETransformImpedance()
+
+	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setLeftLimbPositionImpedance()
+
+	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setRightLimbPositionImpedance()
+		
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startup()

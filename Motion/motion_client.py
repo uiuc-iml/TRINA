@@ -4,6 +4,7 @@ import threading
 import time
 from klampt import WorldModel
 import os
+import numpy as np
 dirname = os.path.dirname(__file__)
 #getting absolute model name
 model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")
@@ -208,6 +209,18 @@ class MotionClient:
 	def closeRightRobotiqGripper(self):
 		self.s.closeRightRobotiqGripper()	
 
+	def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setLeftEETransformImpedance()
+
+	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setRightEETransformImpedance()
+
+	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setLeftLimbPositionImpedance()
+
+	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setRightLimbPositionImpedance()
+		
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startServer(mode = "Kinematic", components = ['left_limb'])
