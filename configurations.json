@@ -1,0 +1,9 @@
+{
+    "robot": {
+        "ip": "configs/ip.json",
+        "arms": "configs/arms.json"
+    },
+    "kinematics": {
+        "left_arm": "configs/left_arms.json"
+    }
+}
