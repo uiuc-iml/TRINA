@@ -257,6 +257,24 @@ def _closeRightRobotiqGripper():
 	global robot
 	return robot.closeRightRobotiqGripper()
 
+def _setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
+	global robot
+	return robot.setLeftEEInertialTransform(Tg,K,M,B,x_dot_g,deadband)
+
+def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
+	global robot
+	return robot.setRightEEInertialTransform(Tg,K,M,B,x_dot_g,deadband)
+
+def _setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
+	global robot
+	return robot.setLeftLimbPositionTransform(q,K,M,B,x_dot_g,deadband)
+
+def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
+	global robot
+	return robot.setRightLimbPositionTransform(q,K,M,B,x_dot_g,deadband)	
+
+
+
 #ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
@@ -319,6 +337,10 @@ server.register_function(_openLeftRobotiqGripper,'openLeftRobotiqGripper')
 server.register_function(_closeLeftRobotiqGripper,'closeLeftRobotiqGripper')
 server.register_function(_openRightRobotiqGripper,'openRightRobotiqGripper')
 server.register_function(_closeRightRobotiqGripper,'closeRightRobotiqGripper')
+server.register_function(_setLeftEETransformImpedance,'setLeftEETransformImpedance')
+server.register_function(_setRightEETransformImpedance,'setRightEETransformImpedance')
+server.register_function(_setLeftLimbPositionImpedance,'setLeftLimbPositionImpedance')
+server.register_function(_setRightLimbPositionImpedance,'setRightimbPositionImpedance')
 ##
 print('#######################')
 print('#######################')
