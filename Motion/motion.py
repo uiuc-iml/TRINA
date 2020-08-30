@@ -112,12 +112,12 @@ class Motion:
             for component in components:
                 if component == 'left_limb':
                     self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=TRINAConfig.left_Robotiq,type = TRINAConfig.left_Robotiq_type,\
-                        gravity = TRINAConfig.left_limb_gravity_upright,payload = TRINAConfig.left_limb_payload,cog = TRINAConfig.left_limb_cog)
+                        gravity = TRINAConfig.get_left_gravity_vector_upright(self.codename),payload = TRINAConfig.left_limb_payload,cog = TRINAConfig.left_limb_cog)
                     self.left_limb_enabled = True
                     logger.debug('left limb enabled')
                 elif component == 'right_limb':
                     self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=TRINAConfig.right_Robotiq,type = TRINAConfig.right_Robotiq_type,\
-                        gravity = TRINAConfig.right_limb_gravity_upright,payload = TRINAConfig.right_limb_payload,cog = TRINAConfig.right_limb_cog)
+                        gravity = TRINAConfig.get_right_gravity_vector_upright(self.codename),payload = TRINAConfig.right_limb_payload,cog = TRINAConfig.right_limb_cog)
                     self.right_limb_enabled = True
                     logger.debug('right limb enabled')
                 elif component == 'base':
@@ -1618,7 +1618,7 @@ class Motion:
 
         wrench_raw = self.left_limb_state.sensedWrench #this wrench is expressed in the robot base frame
         (R,_) = self.sensedLeftEETransform() #current EE R in global frame
-        R_base_global_left = copy(TRINAConfig.R_local_global_upright_left)
+        R_base_global_left = copy(TRINAConfig.wrench_R_right(self.codename))
         R_global_base_left = so3.inv(R_base_global_left)
         R_EE_base_left = so3.mul(R_global_base_left,R)
 
@@ -1665,7 +1665,7 @@ class Motion:
             return [0,0,0,0,0,0]
         wrench_raw = self.right_limb_state.sensedWrench #this wrench is expressed in the robot base frame
         (R,_) = self.sensedRightEETransform() #current EE R in global frame
-        R_base_global_right = copy(TRINAConfig.R_local_global_upright_right)
+        R_base_global_right = copy(TRINAConfig.wrench_R_right(self.codename))
         R_global_base_right = so3.inv(R_base_global_right)
         R_EE_base_right = so3.mul(R_global_base_right,R)
 
