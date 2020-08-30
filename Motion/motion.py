@@ -2419,6 +2419,7 @@ if __name__=="__main__":
     time.sleep(5)
     robot.openRightRobotiqGripper()
     time.sleep(2)
+    print((180/np.pi)*np.array(robot.sensedRightLimbPosition()))
     # robot.setRightLimbPositionLinear(TRINAConfig.right_tabletop_config,30)
     # time.sleep(32)
     #print(robot.sensedRightLimbPosition())
