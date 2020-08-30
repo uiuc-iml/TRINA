@@ -8,26 +8,31 @@ right_limb_address = '10.1.1.20'
 # 0 -0.707   0.707
 # 0 - 0.707  -0.707
 # 1  0        0
-left_limb_payload = 0.86125
-left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
-# left_limb_payload = 0.0
-# left_limb_cog = [0.0,0.0,0.0]
+##These are for the Righthand gripper
+# left_limb_payload = 0.86125
+# left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
+left_limb_payload = 0.0
+left_limb_cog = [0.0,0.0,0.0]
 
-right_limb_payload = 0.0
-right_limb_cog = [0.0,0.0,0.0]
+#estimated for the pusher, need to run the calibrater
+right_limb_payload = 0.4
+right_limb_cog = [0.0,0.0,0.06]
 left_Robotiq = False
-right_Robotiq = True
-left_Robotiq_type = 'parallel'
-right_Robotiq_type = 'vacuum'
-
+right_Robotiq = False
+left_Robotiq_type = 'vacuum'
+right_Robotiq_type = 'parallel'
 ur5e_control_rate = 0.004 #250 Hz
-left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector
+
+
+# left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector
 # right_limb_gravity_upright = [4.91,-4.91,-6.93672]
-right_limb_gravity_upright = [-4.91,4.91,6.93672]
-R_local_global_upright_left = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
-R_local_global_upright_right = [-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,-sqrt(0.5),-sqrt(0.5)]
+
+# R_local_global_upright_left = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
+# R_local_global_upright_right = [-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,-sqrt(0.5),-sqrt(0.5)]
 # R_local_global_upright_left = [sqrt(0.5),sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),sqrt(0.25),0,-sqrt(0.5),sqrt(0.5)] ## this is used when dealing with gravity vector
-#R_local_global_upright_right = [sqrt(0.5),-sqrt(0.25),sqrt(0.25),sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
+# R_local_global_upright_right = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),sqrt(0.5),sqrt(0.25),sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
+
+
 simulated_robot_control_rate = 0.004 #250Hz
 limb_velocity_limits = [2.0,2.0,2.0,2.0,2.0,2.0]
 limb_EE_velocity_limits = [1.0,1.0,1.0,1.0,1.0,1.0]
@@ -36,7 +41,7 @@ limb_position_upper_limits = [2.0*pi-epsilon,2.0*pi-epsilon,2.0*pi-epsilon,2.0*p
 limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon]
 collision_check_interval = 0.1
 
-#commonly used arm configurations
+#commonly used arm configurations for Anthrax
 left_untucked_config = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
 def mirror_arm_config(config):
     RConfig = []
@@ -91,6 +96,36 @@ fixed_calibration_configs = [[0.7858576774597168, 0.3395234781452636, -0.4835023
     [0.4765739440917969, 0.7613765436359863, -0.9030475616455078, -1.3246677678874512, 2.529384136199951, -0.32714873949159795]]
 
 ###
+#local in global R
+def get_wrench_R_left(name):
+    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):
+        return [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
+    elif (name == "bubonic"):
+        return [0.7071067811865476, 0.49999999999999994, -0.5, -0.7071067811865476, 0.49999999999999994, -0.5, 0.0, 0.7071067811865476, 0.7071067811865476]
+
+    return
+
+def get_wrench_R_right(name):
+    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):
+        return [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
+    elif (name == "bubonic"):
+        return [-0.7071067811865476, 0.49999999999999994, 0.5, -0.7071067811865476, -0.49999999999999994, -0.5, 0.0, -0.7071067811865476, 0.7071067811865476]  
+
+    return
+
+
+def get_left_gravity_vector_upright(name):
+    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):
+        return [-4.91,-4.91,-6.93672]
+    elif (name == "bubonic"):
+        return [-4.91,-4.91,6.93672]
+
+def get_right_gravity_vector_upright(name):
+    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):
+        return [-4.91,4.91,-6.93672]
+    elif (name == "bubonic"):
+        return [-4.91,4.91,6.93672]    
+
 def get_left_tool_link_N(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")):
         return 13
@@ -137,3 +172,16 @@ def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
 # create a new world file contained the model_name
 # update the functions defined where
 # when using the motion api, specify the correct model name
+
+
+####
+# left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector
+# right_limb_gravity_upright = [4.91,-4.91,-6.93672]
+##This is for the wrench convertions
+# R_local_global_upright_left = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
+# R_local_global_upright_right = [-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,-sqrt(0.5),-sqrt(0.5)]
+
+## this is used when dealing with gravity vector
+# R_URbase_global_upright_left = [sqrt(0.5),sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),sqrt(0.25),0,-sqrt(0.5),sqrt(0.5)] 
+# R_URbase_global_upright_right = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),sqrt(0.5),sqrt(0.25),sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
+
