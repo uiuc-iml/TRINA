@@ -4,6 +4,7 @@ import threading
 import time
 from klampt import WorldModel
 import os
+import numpy as np
 dirname = os.path.dirname(__file__)
 #getting absolute model name
 model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")

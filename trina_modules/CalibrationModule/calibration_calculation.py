@@ -8,7 +8,7 @@ import numpy as np
 
 #if true, estimates the marker transform in the optimization loop
 ESTIMATE_MARKER_TRANSFORM = True
-NLOOPS = 1000
+NLOOPS = 10000
 #point-fit is more robust to marker orientation estimation errors
 METHOD = 'point fit'
 #METHOD = 'transform fit'
@@ -56,8 +56,10 @@ def calculation(pts,EE_transforms,camera_guess,marker_guess,type):
     #the marker transforms here are actually just points not transformations
     marker_transforms = pts
     T_marker_assumed = marker_guess
-    T_EE = EE_transforms
+    T_EE = EE_transforms[0:18]
 
+    print(len(marker_transforms))
+    print(len(T_EE))
     if type == 'wrist':
         for loop in range(NLOOPS if ESTIMATE_MARKER_TRANSFORM else 1):
             #Only using point fit, since we only have pts not transforms
@@ -82,7 +84,7 @@ def calculation(pts,EE_transforms,camera_guess,marker_guess,type):
                 SSE_t += vectorops.distanceSquared(Tm_c,Tm_c_est[1])
             print("RMSE translations (meters)",np.sqrt(SSE_t/len(T_EE)))
     elif type == 'fixed':
-         for loop in range(NLOOPS if ESTIMATE_MARKER_TRANSFORM else 1):
+        for loop in range(NLOOPS if ESTIMATE_MARKER_TRANSFORM else 1):
             #Only using point fit, since we only have pts not transforms
             #This estimates Tcamera while assuming some marker transform
             if METHOD=='point fit':
@@ -100,10 +102,12 @@ def calculation(pts,EE_transforms,camera_guess,marker_guess,type):
                 T_marker_assumed = T_marker_assumed_inv
 
             SSE_t = 0
-            for (Tm_c,Tl) in zip(marker_transforms,T_EE):
-                Tm_EE_est = se3.apply(se3.mul(se3.inv(Tl),Tcamera),Tm_c)
-                SSE_t += vectorops.distanceSquared(T_marker_assumed[1],Tm_EE_est)
-            print("RMSE translations (meters)",np.sqrt(SSE_t/len(T_EE)))
+
+        for (Tm_c,Tl) in zip(marker_transforms,T_EE):
+            Tm_EE_est = se3.apply(se3.mul(se3.inv(Tl),Tcamera),Tm_c)
+            SSE_t += vectorops.distanceSquared(T_marker_assumed[1],Tm_EE_est)
+        print("RMSE translations (meters)",np.sqrt(SSE_t/len(T_EE)))
+
     return Tcamera,T_marker_assumed
     
 

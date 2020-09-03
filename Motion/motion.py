@@ -908,6 +908,7 @@ class Motion:
                 logger.info('IK solve successful')
                 print("motion.setLeftEEInertialTransform():IK solve successful")
             else:
+                self.robot_model.setConfig(initial)
                 self._controlLoopLock.release()
                 #"warning"
                 logger.warning('IK solve failure: no IK solution found')
@@ -1035,6 +1036,7 @@ class Motion:
                 logger.info('IK solve successful')
                 print("motion.setRightEEInertialTransform():IK solve successful")
             else:
+                self.robot_model.setConfig(initial)
                 self._controlLoopLock.release()
                 logger.warning('IK solve failure: no IK solution found')
                 print('motion.setRightEEInertialtransform():IK solve failure: no IK solution found')
@@ -2412,17 +2414,11 @@ class Motion:
 if __name__=="__main__":
 
     ###Read the current position ###
-    robot = Motion(mode = 'Physical',components = ['right_limb'],codename = "anthrax")
+    robot = Motion(mode = 'Physical',components = ['right_limb'],codename = "bubonic")
     robot.startup()
     time.sleep(0.05)
-    robot.closeRightRobotiqGripper()
-    time.sleep(5)
-    robot.openRightRobotiqGripper()
-    time.sleep(2)
-    print((180/np.pi)*np.array(robot.sensedRightLimbPosition()))
-    # robot.setRightLimbPositionLinear(TRINAConfig.right_tabletop_config,30)
-    # time.sleep(32)
-    #print(robot.sensedRightLimbPosition())
+    print(robot.sensedRightLimbPosition())
+    time.sleep(0.1)
     robot.shutdown()
     ########################################
 

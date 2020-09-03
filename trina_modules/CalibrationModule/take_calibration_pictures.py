@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from copy import deepcopy
 
-def take_pictures(camera,robot,arm,configurations):
+def take_pictures(camera,robot,arm,configurations, dimx = 1080, dimy = 1920):
     if camera:
         pass
     else:
@@ -37,14 +37,14 @@ def take_pictures(camera,robot,arm,configurations):
         pipeline.start(config)
 
         time.sleep(3)
-        print '---------------------camera initiated -----------------------------'
+        print('---------------------camera initiated -----------------------------')
 
 
 
     EE_transforms = []
     i = 0
     for config in configurations:
-        t = 3.0
+        t = 5.0
         if arm == 'left':
             robot.setLeftLimbPositionLinear(config,t)
         elif arm == 'right':
@@ -64,7 +64,12 @@ def take_pictures(camera,robot,arm,configurations):
                 time.sleep(0.1)
 
         if camera:
-            pass
+            res = camera.get_rgbd_images()
+            color_frame = res['zed_overhead'][0]
+            #cad = cv2.cvtColor(np.asarray(color_frame), cv2.COLOR_RGB2BGR)
+            cad = np.asarray(color_frame)
+            pcds = camera.get_point_clouds()
+            p = np.asarray(pcds['zed_overhead'].points)
         else:
             # Wait for the next set of frames from the camera
             frames = pipeline.wait_for_frames()
@@ -87,17 +92,18 @@ def take_pictures(camera,robot,arm,configurations):
 
             cad = cv2.cvtColor(np.asarray(color_frame.get_data()), cv2.COLOR_RGB2BGR)
             p = pure_point_cloud
+
         ##get CAD and pointclouds 
         cv2.imwrite('calbration_pic_'+str(i)+'.png',cad)
-        data=open('calibration_pt_'+str(i)+'.txt','w')
-        #TODO: make a better way to save the pointcloud?
-        #Can I use the sensing module to save these?
-        for y in range(480):
-            for x in range(640):
-                # data.write(str(p[y][x][0])+' '+str(p[y][x][1])+' '+str(p[y][x][2])+'\n')
-                data.write(str(p[y*640+x,0])+' '+str(p[y*640+x,1])+' '+str(p[y*640+x,2])+'\n')
-        data.close()
-        time.sleep(0.5)
+        # data=open('calibration_pt_'+str(i)+'.txt','w')
+        # #TODO: make a better way to save the pointcloud?
+        # #Can I use the sensing module to save these?
+        # for y in range(dimx):
+        #     for x in range(dimy):
+        #         # data.write(str(p[y][x][0])+' '+str(p[y][x][1])+' '+str(p[y][x][2])+'\n')
+        #         data.write(str(p[y*dimy+x,0])+' '+str(p[y*dimy+x,1])+' '+str(p[y*dimy+x,2])+'\n')
+        # data.close()
+        time.sleep(0.1)
         print('point %d'%i)
         i += 1
     return EE_transforms
