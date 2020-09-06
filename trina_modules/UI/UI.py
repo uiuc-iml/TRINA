@@ -10,6 +10,8 @@ import klampt
 from klampt import io
 from klampt.model import ik,coordinates,config,trajectory,collide
 import json
+from SimpleWebSocketServer import SimpleWebSocketServer,WebSocket
+
 
 class UI:
 
@@ -31,83 +33,9 @@ key presses and headsets orientations.
                     for reference for the scope of this project.
         """
         self.simulation_level = simulation_level
-        # self.interface = RedisInterface(host="localhost")
-        # self.interface.initialize()
-        # self.server = KeyValueStore(self.interface)
-        # self.server["UI_END_COMMAND"] = []
-        # self.server['UI_FEEDBACK'] = {}
+
         self.processes = []
-        # self.init_UI_state = {}
-        # self.UI_state = {}
-        # self.startup = True
-        # self.dt = 0.025
 
-    #     stateRecieverThread = threading.Thread(target=self._serveStateReciever)
-    #     stateRecieverThread.start()
-
-
-
-    # def _serveStateReciever(self):
-    #     while True:
-    #         if self.startup and self.server["UI_STATE"].read()!=0:
-    #             print('started the initial values for the variables')
-    #             # initial ui state for references
-    #             self.init_UI_state = self.server['UI_STATE'].read()
-    #             self.startup = False
-    #         while True:
-    #             try:
-    #                 self.last_time = time.time()
-    #                 self.UI_state = self.modifyRawState(self.server['UI_STATE'].read())
-    #                 time.sleep(self.dt)
-    #             except:
-    #                 pass
-
-    #############################Below section is integrated to Jarvis.py############################
-    # def test(self):
-    #     self._do_rpc({'funcName':'test','args':{}})
-    #     return
-
-    # def getRayClick(self):
-    #     id = '$'+ uuid.uuid1().hex
-    #     # ask the user to click on a destination in the map, returns 2 rays in reem
-    #     self._do_rpc({'funcName':'getRayClick','args':{'id':str(id)}})
-    #     return
-
-    # def addText(self, text, position):
-    #     self._do_rpc({'funcName':'addText','args':{'text':text,'position':position}})
-    #     return
-    
-    # def addConfirmation(self,title,text):
-    #     id = '$'+ uuid.uuid1().hex
-    #     self._do_rpc({'funcName':'addConfirmation','args':{'id':str(id),'title':title,'text':text}})
-    #     return  id
-
-    # def addPrompt(self,title,text):
-    #     id = '$'+ uuid.uuid1().hex
-    #     # TODO
-    #     return  id
-    
-    # def addInputBox(self,title,text,fields):
-    #     id = '$'+ uuid.uuid1().hex
-    #     # TODO
-    #     return id
-
-    # def sendTrajectory(self,trajectory):
-    #     self._do_rpc({'funcName':'sendTrajectory','args':{'trajectory':trajectory}})
-    #     return
-
-
-    # def _do_rpc(self,msg):
-    #     commandQueue = self.server["UI_END_COMMAND"].read()
-    #     commandQueue.append(msg)
-    #     self.server["UI_END_COMMAND"] = commandQueue
-    #     print("commandQueue", commandQueue)
-    #     time.sleep(0.0001) 
-
-
-    # def modifyRawState(self, state):
-    #     # placeholder for modifing the ui state when needed
-    #     return state
 
     def shutdown(self):
         print('shutting down UI')
@@ -118,22 +46,65 @@ key presses and headsets orientations.
         return self.processes
 
 
+class UIStateReciever(WebSocket) : 
+    """the websocket server implementation for recieving UI JSON state from the UI 
+        
+    """
+    def handleMessage(self) : 
+        try:
+            self.commandQueue = self.server["UI_END_COMMAND"].read()
+            if  self.commandQueue:
+                command = self.commandQueue[0]
+                self.commandQueue.pop(0)
+                self.server["UI_END_COMMAND"] = self.commandQueue
+                if command['from'] != self.mode:
+                    print("ignoring command from " + command['from'] + "command recieved was" + command['funcName'])
+                else:
+                    message = {'title':"UI API FUNCTION CALL", 'id':command['args']['id'], 'funcName':command['funcName'],  'args':command['args']}
+                    print("pass")
+                    self.sendMessage(json.dumps(message))
+        except Exception as err:
+                print("Error: {0}".format(err))
+
+        print("message from UI")
+
+        try:
+            obj = json.loads(self.data)
+            title = obj["title"]
+        except Exception as err:
+            print("Error: {0}".format(err))
+            return
+
+        if title == "UI Outputs":
+            self.UI_state = obj
+            self.server["UI_STATE"] = self.UI_state
+
+        elif title == "UI API FUNCTION FEEDBACK":
+            id = obj['id']
+            msg = obj['MSG']
+            self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':msg}
+
+
+        
+
+    def handleConnected(self) : 
+        print(self.address, 'connected')
+        self.mode = "PointClickNav"
+        self.interface = RedisInterface(host="localhost")
+        self.interface.initialize()
+        self.server = KeyValueStore(self.interface)
+
+
+    def handleClose(self) : 
+        print(self.address, 'closed')
+
+
+   
+
 
 if __name__ == "__main__":
-    a = UI()
-    a.test()
-    a.addText('testing','text1')
+    server = SimpleWebSocketServer('', 8000, UIStateReciever)
+    server.serveforever()
 
-    file_dir = "../../data/TRINA_world_seed.xml"
-    world = klampt.WorldModel()
-    res = world.readFile(file_dir)
-    robot = world.robot(0)
-    times = list(range(10))
-    milestones = []
-    for t in times:
-        robot.randomizeConfig()
-        milestones.append(robot.getConfig())
-    traj = trajectory.RobotTrajectory(robot,times,milestones)
-    traj = io.loader.toJson(traj,'Trajectory')
-    a.sendTrajectory(traj)
+
        
