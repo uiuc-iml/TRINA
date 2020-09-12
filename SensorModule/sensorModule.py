@@ -27,8 +27,8 @@ import sys
 sys.path.append('../../Motion/')
 from Motion.TRINAConfig import *
 import sensor_msgs
-# from utils import *
-# from geometry import *
+from utils import *
+from geometry import *
 import time 
 from multiprocessing import Process, Pipe
 if(sys.version_info[0] < 3):
@@ -169,22 +169,22 @@ class Camera_Robot:
             glLightfv(GL_LIGHT1, GL_DIFFUSE, [0.5, 0.5, 0.5, 1])
             glLightfv(GL_LIGHT1, GL_SPECULAR, [0.5, 0.5, 0.5, 1])
             glEnable(GL_LIGHT1)
-            simUpdaterThread = threading.Thread(target=self.update_sim)
-            simUpdaterThread.daemon = True
-            simUpdaterThread.start()
-            pcUpdaterThread = threading.Thread(target=self.update_point_clouds)
-            pcUpdaterThread.daemon = True
-            pcUpdaterThread.start()
+            self.simUpdaterThread = threading.Thread(target=self.update_sim)
+            self.simUpdaterThread.daemon = True
+            self.simUpdaterThread.start()
+            self.pcUpdaterThread = threading.Thread(target=self.update_point_clouds)
+            self.pcUpdaterThread.daemon = True
+            self.pcUpdaterThread.start()
             if(self.ros_active):
                 self.ros_parent_conn, self.ros_child_conn = Pipe()
-                gmapping_proc = Process(target=self.update_range_finder, args=(self.ros_child_conn, ))
-                gmapping_proc.daemon = True
+                self.gmapping_proc = Process(target=self.update_range_finder, args=(self.ros_child_conn, ))
+                self.gmapping_proc.daemon = True
                 # print('starts ros node')
-                gmapping_proc.start()
+                self.gmapping_proc.start()
                 # print('gets here')
-                lidar_proc = Process(target = self.update_lidar_sim, args= (self.ros_parent_conn,self.world,self.jarvis,self.simrobot,self.lidar))
-                lidar_proc.daemon = True
-                lidar_proc.start()
+                self.lidar_proc = Process(target = self.update_lidar_sim, args= (self.ros_parent_conn,self.world,self.jarvis,self.simrobot,self.lidar))
+                self.lidar_proc.daemon = True
+                self.lidar_proc.start()
 
             ### THIS MUST COME AFTER THE OTHER PROCESS!!!!!
             try:
@@ -322,39 +322,45 @@ class Camera_Robot:
         while(True):
             start_time = time.time()
             # print('updating_sim')
-            # try:
-            q = self.jarvis.sensedRobotq()
-            self.Rrotation, self.Rtranslation = self.jarvis.sensedRightEETransform()
-            self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftEETransform()
-            # except Exception as e:
-            #     print('error updating robot state')
-            #     print(e)
-            #     pass
-            self.simrobot.setConfig(q)
-            # with self.simlock:
-            # self.sim.simulate(self.dt)
-            self.left_cam.kinematicSimulate(self.world, self.dt)
-            self.right_cam.kinematicSimulate(self.world, self.dt) 
-            self.left_image = sensing.camera_to_images(
-                self.left_cam, image_format='numpy', color_format='channels')
-            self.right_image = sensing.camera_to_images(
-                self.right_cam, image_format='numpy', color_format='channels')
+            try:
+                # print(self.jarvis.sensedRobotq(),self.jarvis.sensedRightEETransform(),self.jarvis.sensedLeftEETransform())
+                q = self.jarvis.sensedRobotq()
+                self.Rrotation, self.Rtranslation = self.jarvis.sensedRightEETransform()
+                self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftEETransform()
+            except Exception as e:
+                print('error updating robot state')
+                print(e)
+            try:
+                # print('setting config')
+                self.simrobot.setConfig(q)
+                # print('updating simulation world')
+                self.sim.updateWorld()
+                # with self.simlock:
+                # self.sim.simulate(self.dt)
+                # print('simulating left')
+                self.left_cam.kinematicSimulate(self.world, self.dt)
+                # print('simulating right')
+                self.right_cam.kinematicSimulate(self.world, self.dt) 
+                # print('returning images left')
+                time.sleep(0.01)
+                self.left_image = list(sensing.camera_to_images(
+                    self.left_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
+                # print('returning images right')
+                self.right_image = list(sensing.camera_to_images(
+                    self.right_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
+                # print('returned images right!')
 
-            # self.lidar.kinematicSimulate(self.world,self.dt)
-            # if(self.ros_active):
-            #     curr_pose = self.jarvis.sensedBasePosition()
-            #     ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
-            #     self.ros_parent_conn.send([ros_msg, curr_pose,False])
-
-            # self.left_point_cloud = sensing.camera_to_points(
-            #     self.left_cam, points_format='numpy', all_points=False, color_format='channels')
-            # self.right_point_cloud = sensing.camera_to_points(
-            #     self.right_cam, points_format='numpy', all_points=False, color_format='channels')
-            self.sim.updateWorld()
-            elapsed_time = time.time() - start_time
-            # print('Simulation Frequency:',1/elapsed_time)
-            if(elapsed_time < self.dt):
-                time.sleep(self.dt-elapsed_time)
+                elapsed_time = time.time() - start_time
+                # print('calculated time!')
+                # print('Simulation Frequency:',1/elapsed_time)
+                if(elapsed_time < self.dt):
+                    # print('sleeping')
+                    time.sleep(self.dt-elapsed_time)
+                    # print('done sleeping')
+            except Exception as e:
+                print(e)
+                print('Somehow there was an error during updating the simulation. WTF!?')
+        print('somehow exited the loop')
 
     def update_point_clouds(self):
         time.sleep(3)

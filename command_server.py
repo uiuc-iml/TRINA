@@ -36,7 +36,7 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 
 class CommandServer:
 
-	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic'):
+	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = [],codename = 'anthrax_lowpoly'):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")
@@ -212,7 +212,7 @@ class CommandServer:
 			"KlamptCommandPos" : klampt_command_pos,
 			"KlamptSensedPos" : klampt_sensor_pos
 		}
-		self.server['TrinaTime'] = time.time()
+		self.server['TRINA_TIME'] = time.time()
 		# except Exception as e:
 		# 	print(e)
 
@@ -403,6 +403,8 @@ class CommandServer:
 			except Exception as e:
 				print(e)
 			################
+			self.server['TRINA_TIME'] = time.time()
+
 			elapsedTime = time.time() - loopStartTime
 			if elapsedTime < self.dt:
 				time.sleep(self.dt-elapsedTime)
@@ -420,6 +422,7 @@ class CommandServer:
 		self.active_modules = active_modules
 		self.init_time = time.time()
 		self.loop_counter = 0
+		self.command_logger = CommandLogger('EXECUTED_COMMANDS')
 		while(True):
 			self.loop_counter +=1
 			for i in self.always_active:
@@ -449,6 +452,7 @@ class CommandServer:
 						commandList = robot_command
 						for command in commandList:
 							self.run(command)
+							self.command_logger.log_command(command,time.time())
 					else:
 						print('ignoring commands from {} because it is inactive'.format(str(i)),robot_command)
 			elapsedTime = time.time() - loopStartTime	# helper func
@@ -597,12 +601,27 @@ class TrinaQueueReader(object):
 			res = pipe.execute()
 		return res
 
+
+class CommandLogger(object):
+	def __init__(self,key, host = 'localhost', port = 6379,max_length = 10000):
+		self.r = redis.Redis(host = host, port = port)
+		self.key = key
+		self.max_length = max_length
+	def log_command(self,command,time):
+		self.length = self.r.llen(self.key)
+		if(self.length >= self.max_length):
+			print('\n\n\n\n\nQUEUE OVERFLOW!!!! \n\n\n\n\n SOMETHING WRONG WITH THE LOGGER?')
+		else:
+			self.r.rpush(self.key,str([command,time]))
+
+
 if __name__=="__main__":
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
+	# server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
+	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation','StateLogger'])
 	while(True):
 		time.sleep(100)
 		pass

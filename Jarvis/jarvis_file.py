@@ -25,95 +25,96 @@ import redis
 
 class Jarvis:
 
-	def __init__(self, name,sensor_module = [],trina_queue = None, host = "localhost"):
+	def __init__(self, name, sensor_module=[], trina_queue=None, host="localhost"):
 		self.interface = RedisInterface(host=host)
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
 		if(trina_queue == None):
 			self.trina_queue = TrinaQueue(str(name))
 		else:
-			self.trina_queue  = trina_queue
+			self.trina_queue = trina_queue
 		self.name = str(name)
 		self.server['ACTIVITY_STATUS'][self.name] = str('idle')
 		self.sensor_module = sensor_module
 		self.server['ROBOT_COMMAND'][self.name] = []
-		
+
 		# should not instantiate commanserver
 		# self.command_server = CommandServer()
 
 	# def shutdown(self):
 	#     self.command_server.shutdown()
 
-	def setPosition(self,q):
+	def setPosition(self, q):
 		return 0
 
-	def setLeftLimbPosition(self,q):
+	def setLeftLimbPosition(self, q):
 		command = self.send_command('self.robot.setLeftLimbPosition', str(q))
 
 		return 0
 
-	def setRightLimbPosition(self,q):
+	def setRightLimbPosition(self, q):
 		command = self.send_command('self.robot.setRightLimbPosition', str(q))
 
 		return 0
 
-	def setLeftLimbPositionLinear(self,q,duration):
-		command = self.send_command('self.robot.setLeftLimbPositionLinear', str(q), str(duration))
+	def setLeftLimbPositionLinear(self, q, duration):
+		command = self.send_command(
+			'self.robot.setLeftLimbPositionLinear', str(q), str(duration))
 
 		return 0
 
-	def setRightLimbPositionLinear(self,q,duration):
-		command = self.send_command('self.robot.setRightLimbPositionLinear', str(q), str(duration))
+	def setRightLimbPositionLinear(self, q, duration):
+		command = self.send_command(
+			'self.robot.setRightLimbPositionLinear', str(q), str(duration))
 
 		return 0
 
-	def setVelocity(self,qdot):
+	def setVelocity(self, qdot):
 		command = self.send_command('self.robot.setVelocity', str(qdot))
 
-	def setLeftLimbVelocity(self,qdot):
+	def setLeftLimbVelocity(self, qdot):
 		command = self.send_command('self.robot.setLeftLimbVelocity', str(qdot))
 
-	def setRightLimbVelocity(self,qdot):
+	def setRightLimbVelocity(self, qdot):
 		command = self.send_command('self.robot.setRightLimbVelocity', str(qdot))
 
+	def setLeftEEInertialTransform(self, Ttarget, duration):
+		command = self.send_command(
+			'self.robot.setLeftEEInertialTransform', str(Ttarget), str(duration))
 
-	def setLeftEEInertialTransform(self,Ttarget,duration):
-		command = self.send_command('self.robot.setLeftEEInertialTransform', str(Ttarget), str(duration))
-
-	def setLeftEEVelocity(self,v,tool):
+	def setLeftEEVelocity(self, v, tool):
 		if not tool:
-			tool = [0,0,0]
-		command = self.send_command('self.robot.setLeftEEVelocity', str(v), str(tool))
+			tool = [0, 0, 0]
+		command = self.send_command(
+			'self.robot.setLeftEEVelocity', str(v), str(tool))
 
+	def setRightEEInertialTransform(self, Ttarget, duration):
+		command = self.send_command(
+			'self.robot.setRightEEInertialTransform', str(Ttarget), str(duration))
 
-	def setRightEEInertialTransform(self,Ttarget,duration):
-		command = self.send_command('self.robot.setRightEEInertialTransform', str(Ttarget), str(duration))
-
-
-	def setRightEEVelocity(self, v ,tool):
+	def setRightEEVelocity(self, v, tool):
 		if not tool:
-			tool = [0,0,0]
-		command = self.send_command('self.robot.setRightEEVelocity', str(v), str(tool))
-
+			tool = [0, 0, 0]
+		command = self.send_command(
+			'self.robot.setRightEEVelocity', str(v), str(tool))
 
 	def setBaseTargetPosition(self, q, vel):
-		command = self.send_command('self.robot.setBaseTargetPosition', str(q), str(vel))
-
+		command = self.send_command(
+			'self.robot.setBaseTargetPosition', str(q), str(vel))
 
 	def setBaseVelocity(self, q):
 		command = self.send_command('self.robot.setBaseVelocity', str(q))
 
-
 	def setTorsoTargetPosition(self, q):
 		command = self.send_command('self.robot.setTorsoTargetPosition', str(q))
 
-
 	def setLeftGripperPosition(self, position):
-		command = self.send_command('self.robot.setLeftGripperPosition', str(position))
+		command = self.send_command(
+			'self.robot.setLeftGripperPosition', str(position))
 
-
-	def setLeftGripperVelocity(self,velocity):
-		command = self.send_command('self.robot.setLeftGripperVelocity', str(velocity))
+	def setLeftGripperVelocity(self, velocity):
+		command = self.send_command(
+			'self.robot.setLeftGripperVelocity', str(velocity))
 
 	# def shutdown(self):
 	# 	self.shut_down = True
@@ -154,13 +155,13 @@ class Jarvis:
 		return self.server["ROBOT_INFO"]["CartesianDrive"].read()
 		# return self.s.cartesianDriveFail()
 
-	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
+	def sensedLeftEEVelocity(self, local_pt=[0, 0, 0]):
 		return self.server["ROBOT_STATE"]["VelocityEE"]["LeftArm"].read()
 		# return self.s.sensedLeftEEVelcocity(local_pt)
 
-	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
+	def sensedRightEEVelocity(self, local_pt=[0, 0, 0]):
 		return self.server["ROBOT_STATE"]["VelocityEE"]["RightArm"].read()
-		#return self.s.sensedRightEEVelcocity(local_pt)
+		# return self.s.sensedRightEEVelcocity(local_pt)
 
 	def getUIState(self):
 		return self.server["UI_STATE"].read()
@@ -235,16 +236,21 @@ class Jarvis:
 		final_string = final_string.format(*args)
 		self.trina_queue.push(final_string)
 
-	def log_health(self,status = True):
-		self.server["HEALTH_LOG"][self.name] = [status,time.time()]
+	def log_health(self, status=True):
+		self.server["HEALTH_LOG"][self.name] = [status, time.time()]
 
-	def changeActivityStatus(self,to_activate,to_deactivate = []):
-		command = self.send_command('self.switch_module_activity',str(to_activate),str(to_deactivate))
+	def changeActivityStatus(self, to_activate, to_deactivate=[]):
+		command = self.send_command(
+			'self.switch_module_activity', str(to_activate), str(to_deactivate))
 
-	################################## All Mighty divider between motion and UI###############################
+	def getTrinaTime(self):
 
+		return self.server['TRINA_TIME'].read()
+
+##############################################################3 All Mighty divider between motion and UI###############################
 	def sendRayClickUI(self):
-		"""once this function is called, the UI will ask the user to click twice on the map, and sending back
+
+		"""once this function is called, the UI will ask the user to click twice on the map, and sending back 
 		2 ray objects according to the user clicks. first one for destination, second one for calibration
 		return:
 			id: (str) id for ui feedback
@@ -256,9 +262,9 @@ class Jarvis:
 		# ask the user to click on a destination in the map, returns 2 rays in reem
 		self._do_rpc({'funcName': 'getRayClick', 'args': {'id': str(id)}})
 		return id
-
+		
 	def getRayClickUI(self,id):
-		"""get the feedback of Ray Click of id.
+		"""get the feedback of Ray Click of id. 
 		return:
 			'NOT READY': (str) if the msg is not ready
 			or
@@ -274,11 +280,11 @@ class Jarvis:
 		return self.getFeedback(id)
 
 	def sendAndGetRayClickUI(self):
-		"""once this function is called, the UI will ask the user to click twice on the map, and sending back
+		"""once this function is called, the UI will ask the user to click twice on the map, and sending back 
 		2 ray objects according to the user clicks. first one for destination, second one for calibration
-
+		
 		return:
-
+			
 			{
 				'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
 							'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
@@ -296,24 +302,24 @@ class Jarvis:
 		return reply
 
 	def addTextUI(self, name, text, color, size):
-		"""add text to specfified location on UI screen.
+		"""add text to specfified location on UI screen. 
 		args:
 			name: (str) id for the text object
 			text: (str) content you wish to add
 			color: (list) rgb value [0,0,0]
 			size: (int) font size
 		return:
-			name: (str) the name/id the user gave
+			name: (str) the name/id the user gave 
 		blocking?:
 			no
 		"""
 		self._do_rpc({'funcName': 'addText', 'args': {
-					 'name': name, 'color': color, 'size': size,  'text': text}})
+						'name': name, 'color': color, 'size': size,  'text': text}})
 		return name
 
 	def sendConfirmationUI(self,title,text):
-		"""once this function is called, the UI will display a confimation window with specified title and text,
-
+		"""once this function is called, the UI will display a confimation window with specified title and text, 
+		
 		return:
 			id: (str) id for ui feedback
 		blocking?:
@@ -322,15 +328,15 @@ class Jarvis:
 		id = '$' + uuid.uuid1().hex
 		self.server['UI_FEEDBACK'][str(id)] = {'REPLIED': False, 'MSG': ''}
 		self._do_rpc({'funcName': 'addConfirmation', 'args': {
-					 'id': str(id), 'title': title, 'text': text}})
+						'id': str(id), 'title': title, 'text': text}})
 		return id
-
+		
 	def getConfirmationUI(self,id):
-		"""get the feedback of Confirmation Window of id.
+		"""get the feedback of Confirmation Window of id. 
 		return:
 			'NOT READY': (str) if the msg is not ready
 			or
-		   (str) 'YES' or 'NO' if msg is ready
+			(str) 'YES' or 'NO' if msg is ready
 		blocking?:
 			no
 		"""
@@ -338,7 +344,7 @@ class Jarvis:
 
 
 	def sendAndGetConfirmationUI(self,title,text):
-		"""once this function is called, the UI will display a confimation window with specified title and text,
+		"""once this function is called, the UI will display a confimation window with specified title and text, 
 			a string of 'YES' or "NO" is returned
 		args:
 			text: (str) content you wish to add
@@ -351,13 +357,13 @@ class Jarvis:
 		id = '$' + uuid.uuid1().hex
 		self.server['UI_FEEDBACK'][str(id)] = {'REPLIED': False, 'MSG': ''}
 		self._do_rpc({'funcName': 'addConfirmation', 'args': {
-					 'id': str(id), 'title': title, 'text': text}})
+						'id': str(id), 'title': title, 'text': text}})
 		reply = self.checkFeedback(id)
 		return reply
 
 	def sendTrajectoryUI(self,trajectory,animate = False):
-		"""send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once
-
+		"""send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once 
+		
 		args:
 			trajectory: (klampt obj) the traj calculated
 			animate: (bool) if user wants to animate the path
@@ -368,7 +374,7 @@ class Jarvis:
 		"""
 		trajectory = io.loader.toJson(trajectory, 'Trajectory')
 		self._do_rpc({'funcName': 'sendTrajectory', 'args': {
-					 'trajectory': trajectory, 'animate': animate}})
+						'trajectory': trajectory, 'animate': animate}})
 		return
 
 	def addButtonUI(self, name, text):
@@ -378,7 +384,7 @@ class Jarvis:
 			text: (str) button label text
 		return:
 			name: the id user gave
-
+		
 		blocking?:
 			no
 		"""
@@ -393,7 +399,7 @@ class Jarvis:
 			name: (str) id for the button object
 		return:
 			(bool) True or False
-
+		
 		blocking?:
 			no
 		"""
@@ -403,22 +409,6 @@ class Jarvis:
 			self.server['UI_FEEDBACK'][str(id)] = {
 				'REPLIED': True, 'MSG': False}
 		return reply
-		# helper func
-
-
-
-	def checkFeedback(self, id):
-		while not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():
-			continue
-		return self.server['UI_FEEDBACK'][str(id)]['MSG'].read()
-
-	def _do_rpc(self, msg):
-		commandQueue = self.server["UI_END_COMMAND"].read()
-		commandQueue.append(msg)
-		self.server["UI_END_COMMAND"] = commandQueue
-		print("commandQueue", commandQueue)
-		time.sleep(0.0001)
-
 
 	def addPromptUI(self,title,text):
 		id = '$'+ uuid.uuid1().hex
@@ -429,6 +419,34 @@ class Jarvis:
 		id = '$'+ uuid.uuid1().hex
 		# TODO
 		return id
+
+	def getSaveConfigSignalUI(self):
+		if not self.server['UI_FEEDBACK']['move-to-save-signal']['REPLIED'].read():
+			return 'NOT READY'
+		else:
+			name =  self.server['UI_FEEDBACK']['move-to-save-signal']['MSG'].read()
+			self.server['UI_FEEDBACK']['move-to-save-signal']['REPLIED'] = False
+			return True, name
+
+	def getLoadConfigSignalUI(self):
+		if not self.server['UI_FEEDBACK']['move-to-load-signal']['REPLIED'].read():
+			return 'NOT READY'
+		else:
+			name =  self.server['UI_FEEDBACK']['move-to-load-signal']['MSG'].read()
+			self.server['UI_FEEDBACK']['move-to-load-signal']['REPLIED'] = False
+			return True, name
+
+	# helper func
+	def send_command(self,command,*args):
+		final_string = str(command)+ '('
+		for index,arg in enumerate(args):
+			if(index != len(args)-1):
+				final_string += '{},'
+			else:
+				final_string += '{}'
+		final_string = (final_string + ')')
+		final_string = final_string.format(*args)
+		return final_string
 
 	def checkFeedback(self,id):
 		while not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():
@@ -447,6 +465,7 @@ class Jarvis:
 		self.server["UI_END_COMMAND"] = commandQueue
 		print("commandQueue", commandQueue)
 		time.sleep(0.0001)
+		
 # extra trina queue class:
 
 class TrinaQueue(object):
