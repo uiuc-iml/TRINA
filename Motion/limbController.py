@@ -135,7 +135,7 @@ class LimbController:
                 self._qdot_commanded = []
                 self._command_lock.release()
             else:
-                print("Warning, config not set - outside of limits")
+                print("limbController: Warning, config not set - outside of limits")
 
     def setVelocity(self, dq_in):
         if self.isFormatted(dq_in):
@@ -146,7 +146,7 @@ class LimbController:
                 self._qdot_commanded = dq_in
                 self._command_lock.release()
             else:
-                print("Warning, velocity not set - outside of limits")
+                print("limbController: Warning, velocity not set - outside of limits")
 
     def openGripper(self):
         """

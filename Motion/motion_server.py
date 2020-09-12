@@ -13,7 +13,7 @@ global server_started
 server_started = False
 
 
-def _startServer(mode = "Kinematic", components = [] , codename = "seed"):
+def _startServer(mode,components,codename):
 	##global variable
 	global robot
 	global server_started
@@ -25,7 +25,7 @@ def _startServer(mode = "Kinematic", components = [] , codename = "seed"):
 		robot = Motion(mode = mode,components = components, codename = codename)
 		logging.info("%s mode is activated",robot.mode)
 		server_started = True
-	print("server started")
+		print("server started")
 	return 0
 
 def _restartServer(mode= "Kinematic", components = [] , codename = "seed"):
@@ -278,7 +278,7 @@ def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
 #ip_address = '72.36.119.129'
 
 # ip_address = '172.16.241.141'
-ip_address = 'localhost'
+ip_address = 'localhost' #'10.0.242.158'#
 port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()

@@ -120,11 +120,13 @@ class PointClickNav:
 		rospy.init_node("sensing_test_parent")
 		#get the first grid
 		self.grid = None	
-		while self.grid == None:
-			#grid and the gridmap info
-			self.grid = get_occupancy_grid("dynamic_map")
-			print("\n\n\n It seems that we cannot get a grid from gmapping, it there something wrong? - Changing for Yifan\n\n\n\n")
-			time.sleep(0.5)
+
+		#Debugging.,.
+		# while self.grid == None:
+		# 	#grid and the gridmap info
+		# 	self.grid = get_occupancy_grid("dynamic_map")
+		# 	print("\n\n\n It seems that we cannot get a grid from gmapping, it there something wrong? - Changing for Yifan\n\n\n\n")
+		# 	time.sleep(0.5)
 
 		self.res = self.grid.info.resolution
 		self.radius = 0.5588/2/self.res * 2.0 #radius in terms of grids

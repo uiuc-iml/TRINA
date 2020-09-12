@@ -180,10 +180,10 @@ class MotionClient:
 
 
 	def sensedLeftEEWrench(self,frame = 'global'):
-		return self.s.sensedLeftEEWrench(frame,format)
+		return self.s.sensedLeftEEWrench(frame)
 
 	def sensedRightEEWrench(self,frame = 'global'):
-		return self.s.sensedRightEEWrench(frame,format)
+		return self.s.sensedRightEEWrench(frame)
 
 	def zeroLeftFTSensor(self):
 		return self.s.zeroLeftFTSensor()
@@ -204,16 +204,16 @@ class MotionClient:
 		self.s.closeRightRobotiqGripper()	
 
 	def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setLeftEETransformImpedance()
+		self.s.setLeftEETransformImpedance(Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6)
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setRightEETransformImpedance()
+		self.s.setRightEETransformImpedance(Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6)
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setLeftLimbPositionImpedance()
+		self.s.setLeftLimbPositionImpedance(q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6)
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setRightLimbPositionImpedance()
+		self.s.setRightLimbPositionImpedance(q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6)
 		
 if __name__=="__main__":
 	motion = MotionClient()

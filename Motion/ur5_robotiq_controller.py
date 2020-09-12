@@ -367,13 +367,15 @@ class UR5Controller(object):
 
             #send gripper action
             if self._gripper:
+                self._new_gripper_action = True
                 if self._new_gripper_action:
                     gripper_action.input_int_register_2 = self._gripper_action
                     self._new_gripper_action = False
                 else:
                     gripper_action.input_int_register_2 = 0
                 self._conn.send(gripper_action)
-
+                
+                # print('gripper action:',gripper_action)
         self._quit = True
         print("ending control loop")
         #if this loop exits, disconnect

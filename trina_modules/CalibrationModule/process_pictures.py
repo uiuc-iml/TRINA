@@ -95,18 +95,20 @@ def process(num_pic = 18,dimy = 1920):
 		# cameraMatrix=matrix_coefficients,
 		# distCoeff=distortion_coefficients)
 		if np.all(ids is not None):  # If there are markers found by detector
-			for i in range(0, len(ids)):  # Iterate in markers
-				# Estimate pose of each marker and return the values rvec and tvec---different from camera coefficients
-				rvec, tvec, markerPoints = aruco.estimatePoseSingleMarkers(corners[i], 0.052, matrix_coefficients,
-																			distortion_coefficients)
-				(rvec - tvec).any()  # get rid of that nasty numpy value array error
-
-		if ids is not None:
-			#aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
-			#aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)  # Draw Axis
-			marker_p = tvec[0][0]
-			print('p in camera:',marker_p)
-			center_pts.append(marker_p.tolist())
+			# print(ids)
+			for j in range(0, len(ids)):  # Iterate in markers
+				if ids[j][0] == 5:
+					# Estimate pose of each marker and return the values rvec and tvec---different from camera coefficients
+					rvec, tvec, markerPoints = aruco.estimatePoseSingleMarkers(corners[j], 0.052, matrix_coefficients,
+																				distortion_coefficients)
+					(rvec - tvec).any()  # get rid of that nasty numpy value array error
+					
+					#aruco.drawDetectedMarkers(frame, corners)  # Draw A square around the markers
+					#aruco.drawAxis(frame, matrix_coefficients, distortion_coefficients, rvec, tvec, 0.01)  # Draw Axis
+					marker_p = tvec[0][0]
+					print('p in camera:',marker_p)
+					center_pts.append(marker_p.tolist())
+					break
 		else:
 			print('No Color Blob Detected')
 

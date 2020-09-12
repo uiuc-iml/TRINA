@@ -36,7 +36,7 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 
 class CommandServer:
 
-	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = []):
+	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic'):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")
@@ -74,7 +74,7 @@ class CommandServer:
 		self.dt = 0.001
 		self.robot = MotionClient(address = robot_ip)
 		# self.controller = UIController()
-		self.robot.restartServer(mode = self.mode, components = self.components,codename = 'anthrax_lowpoly')
+		self.robot.restartServer(mode = self.mode, components = self.components,codename = codename)
 		self.robot_state = {}
 		self.robot_command = {}
 		self.modules = modules
@@ -89,7 +89,7 @@ class CommandServer:
 		self.torso_active = ('torso' in self.components)
 		self.query_robot = MotionClient(address = robot_ip)
 		# self.controller = UIController()
-		self.query_robot.startServer(mode = self.mode, components = self.components,codename = 'anthrax_lowpoly')
+		self.query_robot.startServer(mode = self.mode, components = self.components,codename = codename)
 		self.query_robot.startup()
 		res = self.robot.startup()
 		if not res:
@@ -363,7 +363,6 @@ class CommandServer:
 					pos_right_gripper = self.robot.sensedRightGripperPosition()
 				if(self.torso_active):
 					pos_torso = self.robot.sensedTorsoPosition()
-					print("torso position")
 
 				self.server["ROBOT_INFO"] = {
 					"Started" : self.query_robot.isStarted(),
@@ -400,6 +399,7 @@ class CommandServer:
 					"KlamptCommandPos" : klampt_command_pos,
 					"KlamptSensedPos" : klampt_sensor_pos
 				}
+
 			except Exception as e:
 				print(e)
 			################
@@ -598,7 +598,11 @@ class TrinaQueueReader(object):
 		return res
 
 if __name__=="__main__":
-	server = CommandServer(mode = 'Kinematic',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
+	import argparse
+
+	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
+
+	server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
 	while(True):
 		time.sleep(100)
 		pass

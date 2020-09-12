@@ -22,7 +22,10 @@ from Jarvis import Jarvis
 from klampt.math import vectorops,so3
 from klampt.model import ik, collide
 from klampt import WorldModel, vis
-from TRINAConfig import *
+
+import sys
+sys.path.append('../../Motion/')
+from Motion.TRINAConfig import *
 import sensor_msgs
 # from utils import *
 # from geometry import *
@@ -37,7 +40,7 @@ if(sys.version_info[0] < 3):
 else:
     import pyzed.sl as sl
 import pyrealsense2 as rs
-
+import os
 
 class Camera_Robot:
 
@@ -59,24 +62,29 @@ class Camera_Robot:
         Returns:
 
     """
+        import os
+# os.chdir('~/TRINA')
+        home = os.path.expanduser("~")
+
+        trina_dir = os.path.join(home,'TRINA')
         if(use_jarvis == True):
             self.jarvis = Jarvis("sensor_module")
             self.robot = robot
         else:
-            self.jarvis = Jarvis("sensor_module")
+            # self.jarvis = Jarvis("sensor_module")
             self.robot = robot
-        self.serial_numbers_dict = {'realsense_right': "620202003661",
-                                    'realsense_left': '620202002883', 
+        self.serial_numbers_dict = {'realsense_left': "620201003873",
+                                    'realsense_right': '620202002883', 
                                     'zed_torso': 24560, 
                                     'zed_back': 24545,
                                     'zed_overhead':23966915,
                                     'realsense_overhead':"620201003873"}
-        self.config_files_dict = {'realsense_right': './Sensors/realsense_right_config.npy',
-                                    'realsense_left': './Sensors/realsense_left_config.npy',
-                                    'zed_torso': './Sensors/zed_torso_config.npy',
-                                    'zed_back': './Sensors/zed_back_config.npy',
-                                    'zed_overhead':'./Sensors/zed_overhead_config.npy',
-                                    'realsense_overhead':'./Sensors/realsense_overhead_config.npy'}
+        self.config_files_dict = {'realsense_right': os.path.join(trina_dir,'Sensors/realsense_right_config.npy'),
+                                    'realsense_left': os.path.join(trina_dir,'Sensors/realsense_left_config.npy'),
+                                    'zed_torso': os.path.join(trina_dir,'Sensors/zed_torso_config.npy'),
+                                    'zed_back': os.path.join(trina_dir,'Sensors/zed_back_config.npy'),
+                                    'zed_overhead':os.path.join(trina_dir,'Sensors/zed_overhead_config.npy'),
+                                    'realsense_overhead':os.path.join(trina_dir,'Sensors/realsense_overhead_config.npy')}
         self.valid_cameras = ['realsense_right',
                               'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead']
         # we first check if the parameters are valid:
@@ -529,9 +537,8 @@ class RealSenseCamera:
         print('safely closing Realsense camera', self.serial_num)
         self.pipeline.stop()
 
-
+# from threading import Thread, Lock, RLock
 class ZedCamera:
-
     def __init__(self, serial_num, config_file):
         # only import pyzed if running on python3
         if(sys.version_info[0] < 3):
@@ -552,6 +559,7 @@ class ZedCamera:
         # Create a InitParameters object and set configuration parameters
         init_params = sl.InitParameters()
         init_params.sdk_verbose = False
+        init_params.camera_resolution = sl.RESOLUTION.HD1080
         init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
         init_params.coordinate_units = sl.UNIT.METER
         init_params.set_from_serial_number(serial_num)
@@ -565,7 +573,7 @@ class ZedCamera:
         if err != sl.ERROR_CODE.SUCCESS:
             print(
                 'There was an error while trying to access the zed camera, please revie and try again.')
-
+       
     def get_point_cloud(self):
         self.zed.grab(self.runtime_parameters)
         self.zed.retrieve_measure(self.point_cloud, sl.MEASURE.XYZRGBA)
@@ -647,6 +655,7 @@ class Camera_Sensors:
     def safely_close(self):
         self.camera.safely_close()
 
+        self.close = True
 
 if __name__ == '__main__':
     print('\n\n\n\n\n running as Main\n\n\n\n\n')
