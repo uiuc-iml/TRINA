@@ -5,8 +5,10 @@ from motion import Motion
 import time
 import logging
 from datetime import datetime
+from trina_logging import get_logger
+
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
-logging.basicConfig(filename=filename,filemode='a',level=logging.DEBUG, format='motion_server: %(asctime)s - %(message)s',datefmt='%H:%M:%S')
+logger = get_logger(__name__,logging.DEBUG,filename)
 
 global robot
 global server_started
@@ -19,11 +21,11 @@ def _startServer(mode = "Kinematic", components = [] , codename = "seed"):
 	global server_started
 
 	if server_started:
-		logging.info("server is already activated")
+		logger.info("server is already activated")
 		print("server already started ")
 	else:
 		robot = Motion(mode = mode,components = components, codename = codename)
-		logging.info("%s mode is activated",robot.mode)
+		logger.info("%s mode is activated",robot.mode)
 		server_started = True
 	print("server started")
 	return 0
@@ -34,9 +36,9 @@ def _restartServer(mode= "Kinematic", components = [] , codename = "seed"):
 	if(server_started):
 		robot.shutdown()
 	time.sleep(2)
-	logging.info("Motion shutdown,restarting")
+	logger.info("Motion shutdown,restarting")
 	robot = Motion(mode = mode,components = components, codename = codename)
-	logging.info("%s mode is activated",robot.mode)
+	logger.info("%s mode is activated",robot.mode)
 	server_started = True
 	print("server started")
 	return 0
@@ -342,7 +344,7 @@ server.register_function(_setRightLimbPositionImpedance,'setRightimbPositionImpe
 ##
 print('#######################')
 print('#######################')
-logging.info("Server Created")
+logger.info("Server Created")
 print('Server Created')
 ##run server
 server.serve_forever()

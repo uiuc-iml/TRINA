@@ -1,0 +1,14 @@
+{
+    "configuration": {
+        "robot": {
+            "ip": "configs/ip.json",
+            "arms": "configs/arms.json",
+            "left_arm_common": "configs/left_arm_common.json",
+            "arm_links": "configs/arm_links.json",
+            "calibrations": "configs/calibrations.json"
+        }
+    },
+    "user": {
+        "location": "configs/user_location.json"
+    }
+}
