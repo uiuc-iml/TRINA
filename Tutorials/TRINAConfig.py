@@ -16,9 +16,9 @@ left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
 right_limb_payload = 0.0
 right_limb_cog = [0.0,0.0,0.0]
 left_Robotiq = False
-right_Robotiq = False
-left_Robotiq_type = 'vacuum'
-right_Robotiq_type = 'parallel'
+right_Robotiq = True
+left_Robotiq_type = 'parallel'
+right_Robotiq_type = 'vacuum'
 
 ur5e_control_rate = 0.004 #250 Hz
 left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector

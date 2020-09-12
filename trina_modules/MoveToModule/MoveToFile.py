@@ -1,9 +1,5 @@
 import time,math
-# from klampt import vis
-# from klampt import WorldModel
-# from klampt.model.trajectory import Trajectory
 import threading
-# from Motion.motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import pickle
@@ -35,7 +31,7 @@ userId=0
 roomId=-1
 is_closed=0
 
-class DirectTeleOperation:
+class MoveTo:
 	def __init__(self,Jarvis = None, debugging = False, mode = 'Kinematic'):
 		self.mode = mode
 		self.status = 'idle' #states are " idle, active"
@@ -44,6 +40,7 @@ class DirectTeleOperation:
 		self.dt = 0.025
 		self.infoLoop_rate = 0.05
 		self.robot = Jarvis
+		self.jarvis = Jarvis
 		self.components =  ['base','left_limb','right_limb','left_gripper']
 		#self.robot.getComponents()
 		self.left_limb_active = ('left_limb' in self.components)
@@ -60,6 +57,7 @@ class DirectTeleOperation:
 		self.init_pos_right = {}
 		self.init_headset_orientation = {}
 		self.cur_pos_right = {}
+		self.user_saved_configs = {}
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
@@ -129,9 +127,9 @@ class DirectTeleOperation:
 				if(self.right_limb_active):
 					self.cur_pos_right = self.robot.sensedRightEETransform()
 				self.UI_state = self.robot.getUIState()
+				self.MoveToLogic()
 				self.UIStateLogic()
 				time.sleep(self.dt)
-
 
 	def setRobotToDefault(self):
 		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
@@ -250,123 +248,6 @@ class DirectTeleOperation:
 					else:
 						self.robot.setLeftGripperPosition([0,0,0,0])
 
-	def velocityControl(self):
-		'''controlling arm movement with position command
-		variable naming:
-			LT_cw_cc => Left Traslational matrix from Controller World to Controller Current
-			RR_rw_rh => Right Rotational matrix from Robot World to Robot Home
-			RR_rw_rh_T => Right Rotational matrix from Robot World to Robot Home Transpose
-			R_cw_rw  => Rotational matrix from Controller World to Robot World
-			RR_hs => Initial headset
-
-			cc------controller current
-			rc------robot current
-
-			cw------controller world
-			rw------robot world
-
-			ch------controller homw
-			rh------robot home
-		'''
-		self.velocityControlArm('left')
-		self.velocityControlArm('right')
-
-
-	def velocityControlArm(self,side):
-		assert (side in ['left','right']), "invalid arm selection"
-		R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
-		joystick = side+"Controller"
-		# print("{} button pushed".format(side),self.UI_state["controllerButtonState"][joystick])
-		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 :
-			# print("{} button pushed".format(side))
-			# print('moving arm')
-			if(side == 'right'):
-				[RR_rw_rh,RT_rw_rh] = self.init_pos_right
-				curr_position = np.array(self.robot.sensedRightEETransform()[1])
-				R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
-				curr_orientation = R.from_dcm(np.array(self.robot.sensedRightEETransform()[0]).reshape((3,3)))
-				print('\n\n\n {} \n\n\n '.format(self.robot.sensedRightEETransform()[1]))
-
-			elif(side == 'left'):
-				print('\n\n\n gets to the left side here \n\n\n ')
-				[RR_rw_rh,RT_rw_rh] = self.init_pos_left
-				curr_position = np.array(self.robot.sensedLeftEETransform()[1])
-				curr_orientation = R.from_dcm(np.array(self.robot.sensedLeftEETransform()[0]).reshape((3,3)))
-
-			RT_rw_rh = np.array(RT_rw_rh)
-			RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
-			RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
-
-			RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch))).tolist()
-			vel = (np.array(RT_final)-np.array(curr_position))/self.dt
-			vel_norm = np.linalg.norm(vel)
-			max_vel = 0.5
-			actual_dt = self.dt
-			if(vel_norm > max_vel):
-				vel = (vel*max_vel/vel_norm).tolist()
-			else:
-				vel = vel.tolist()
-
-
-
-			RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
-
-			# Transforming from left handed to right handed
-			# we first read the quaternion
-			init_quat = self.init_UI_state["controllerPositionState"][joystick]['controllerRotation']
-			# turn it into a left handed rotation vector
-			right_handed_init_quat = np.array([-init_quat[2],init_quat[0],-init_quat[1],-(np.pi/180)*init_quat[3]])
-			#transform it to right handed:
-
-			curr_quat = self.UI_state["controllerPositionState"][joystick]['controllerRotation']
-
-			right_handed_curr_quat = np.array([-curr_quat[2],curr_quat[0],-curr_quat[1],-(np.pi/180)*curr_quat[3]])
-			RR_cw_ch = R.from_rotvec(right_handed_init_quat[0:3]*right_handed_init_quat[3])
-			RR_cw_ch_T = R.from_dcm(RR_cw_ch.as_dcm().transpose())
-			RR_cw_cc = R.from_rotvec(right_handed_curr_quat[0:3]*right_handed_curr_quat[3])
-
-			RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc)
-			start_time = time.process_time()
-
-			# we now calculate the difference between current and desired positions:
-			Delta_RR = (curr_orientation.inv()*RR_final).inv().as_rotvec()
-			rotation_norm = np.linalg.norm(Delta_RR)
-			max_rot = 1
-			if(rotation_norm > max_rot):
-				Delta_RR = (Delta_RR*max_rot/rotation_norm).tolist()
-			else:
-				Delta_RR = Delta_RR.tolist()
-			if(side == 'right'):
-
-				self.robot.setRightEEVelocity(vel+Delta_RR, tool = [0,0,0])
-
-
-			else:
-				print('moving left arm \n\n\n',vel+Delta_RR)
-				self.robot.setLeftEEVelocity(vel+Delta_RR, tool = [0,0,0])
-				if((self.mode == 'Physical') and self.left_gripper_active):
-					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
-					if(closed_value >= 0.2):
-						self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])
-					else:
-						self.robot.setLeftGripperPosition([0,0,0,0])
-
-
-	def logTeleoperation(self,name):
-		q = self.robotPoser.get()
-		left_limb_command = q[10:16]
-		right_limb_command = q[35:41]
-		self.fileName = 'Teleoperation_log/motion' + ''.join(name) + '.csv'
-		self.saveStartTime =  datetime.datetime.utcnow()
-		self.saveEndTime = datetime.datetime.utcnow() + datetime.timedelta(0,3.1)
-		fields = ['timestep', 'Left Shoulder', 'Left UpperArm', 'Left ForeArm', 'Left Wrist1','Left Wrist2','Left Wrist3','Right Shoulder', 'Right UpperArm', 'Right ForeArm', 'Right Wrist1','Right Wrist2','Right Wrist3','Left EE Transform', 'Right EE Transform' ]
-		with open(self.fileName, 'w') as csvfile:
-			# creating a csv writer object
-			csvwriter = csv.writer(csvfile)
-			csvwriter.writerow(fields)
-		self.robot.setLeftLimbPositionLinear(left_limb_command,3)
-		self.robot.setRightLimbPositionLinear(right_limb_command,3)
-		return
 	def treat_headset_orientation(self,headset_orientation):
 		"""
 		input: Rotvec of the headset position
@@ -382,6 +263,19 @@ class DirectTeleOperation:
 		rotation_final = R.from_euler('ZYX',[rpy[0],0,0])
 		print(rotation_final.as_dcm())
 		return rotation_final
+
+	def MoveToLogic(self):
+		save_flag,save_name = self.jarvis.getSaveConfigSignalUI()
+		load_flag,load_name = self.jarvis.getLoadConfigSignalUI()
+		if save_flag:
+			self.user_saved_configs[save_name] = self.temp_robot_telemetry
+		
+		if load_flag:
+			self.jarvis.setLeftLimbPosition(self.user_saved_configs[load_name]['leftArm'])
+			self.jarvis.setRightLimbPosition(self.user_saved_configs[load_name]['rightArm'])
+			
+
+
 
 
 

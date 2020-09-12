@@ -39,9 +39,9 @@ class LimbController:
         self._started = False
 
         #Filter wrench
-    	self._wrench_offset = [0.0]*6
-    	#self._set_wrench_offset_flag = False
-    	self._filter_flag = True
+        self._wrench_offset = [0.0]*6
+        #self._set_wrench_offset_flag = False
+        self._filter_flag = True
         if self._filter_flag:
 
             self._filtered_wrench = []
@@ -115,9 +115,9 @@ class LimbController:
         """
         Currently this does not have any effect
         """
-    	self._command_lock.acquire()
-    	self._wrench_offset = copy(self._filtered_wrench)
-    	self._command_lock.release()
+        self._command_lock.acquire()
+        self._wrench_offset = copy(self._filtered_wrench)
+        self._command_lock.release()
 
     #FOR DEBUGGIN PURPOSES
     def getSpeedFraction(self):

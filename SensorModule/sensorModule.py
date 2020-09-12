@@ -19,8 +19,6 @@ import copy
 from OpenGL.GLUT import *
 from OpenGL.GL import *
 from Jarvis import Jarvis
-import rospy
-from sensor_msgs.msg import LaserScan
 from klampt.math import vectorops,so3
 from klampt.model import ik, collide
 from klampt import WorldModel, vis
@@ -30,6 +28,16 @@ from utils import *
 from geometry import *
 import time 
 from multiprocessing import Process, Pipe
+if(sys.version_info[0] < 3):
+    import rospy
+    import sensor_msgs
+    from sensor_msgs.msg import LaserScan
+
+    pass
+else:
+    import pyzed.sl as sl
+import pyrealsense2 as rs
+
 
 class Camera_Robot:
 
@@ -38,7 +46,7 @@ class Camera_Robot:
     """
 
     # Whenever a new realsense camera is added, please update this dictionary with its serial number
-    def __init__(self, robot, cameras=['realsense_right'], mode='Kinematic', components=[], world=[], ros_active = True):
+    def __init__(self, robot, cameras= None, mode='Kinematic', components=[], world=[], ros_active = True, use_jarvis = True):
         """
         Instantiates a camera robot instance
 
@@ -51,13 +59,26 @@ class Camera_Robot:
         Returns:
 
     """
-        self.jarvis = Jarvis("sensor_module")
+        if(use_jarvis == True):
+            self.jarvis = Jarvis("sensor_module")
+            self.robot = robot
+        else:
+            self.jarvis = Jarvis("sensor_module")
+            self.robot = robot
         self.serial_numbers_dict = {'realsense_right': "620202003661",
-                                    'realsense_left': '620202002883', 'zed_torso': 24560, 'zed_back': 24545}
-        self.config_files_dict = {'realsense_right': './Sensors/realsense_right_config.p', 'realsense_left': './Sensors/realsense_left_config.p',
-                                  'zed_torso': './Sensors/zed_torso_config.p', 'zed_back': './Sensors/zed_back_config.p'}
+                                    'realsense_left': '620202002883', 
+                                    'zed_torso': 24560, 
+                                    'zed_back': 24545,
+                                    'zed_overhead':23966915,
+                                    'realsense_overhead':"620201003873"}
+        self.config_files_dict = {'realsense_right': './Sensors/realsense_right_config.npy',
+                                    'realsense_left': './Sensors/realsense_left_config.npy',
+                                    'zed_torso': './Sensors/zed_torso_config.npy',
+                                    'zed_back': './Sensors/zed_back_config.npy',
+                                    'zed_overhead':'./Sensors/zed_overhead_config.npy',
+                                    'realsense_overhead':'./Sensors/realsense_overhead_config.npy'}
         self.valid_cameras = ['realsense_right',
-                              'realsense_left', 'zed_torso', 'zed_back']
+                              'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead']
         # we first check if the parameters are valid:
         # checking if cameras make sense:
         self.cameras = cameras
@@ -65,28 +86,32 @@ class Camera_Robot:
         # we then try to connect to the motion_client (we always use the same arm - and we never enable the base for now)
         self.mode = mode
         self.components = components
-        self.robot = robot
         self.active_cameras = {}
         self.update_lock = threading.Lock()
         self.ros_active = ros_active
+        if(self.ros_active):
+            import rospy
+            from sensor_msgs.msg import LaserScan
 
-        if(self.mode == 'physical'):
+        if(self.mode == 'Physical'):
             import pyrealsense2 as rs
-            import pyzed.sl as sl
-            for camera in cameras:
-                if(camera in self.valid_cameras):
-                    # if the camera is a realsense_right camera, import and configure the camera
-                    try:
-                        self.active_cameras.update({camera: Camera_Sensors(
-                            camera, self.serial_numbers_dict, self.config_files_dict, self.robot)})
-                        atexit.register(
-                            self.active_cameras[camera].safely_close)
-                    except Exception as e:
-                        print('This camera ', camera,
-                              ' is currently unavailable. Verify that it is connected and try again \n\n')
-                else:
-                    raise ValueError(
-                        'invalid camera selected. Please update camera selection and try again')
+            # only import pyzed if running on python3
+            if(self.cameras):
+                for camera in self.cameras:
+                    if(camera in self.valid_cameras):
+                        # if the camera is a realsense_right camera, import and configure the camera
+                        try:
+                            self.active_cameras.update({camera: Camera_Sensors(
+                                camera, self.serial_numbers_dict, self.config_files_dict, self.robot)})
+                            atexit.register(
+                                self.active_cameras[camera].safely_close)
+                            print('sucessfully initialized the camera! ')
+                        except Exception as e:
+                            print('This camera ', camera,
+                                ' is currently unavailable. Verify that it is connected and try again \n\n')
+                    else:
+                        raise ValueError(
+                            'invalid camera selected. Please update camera selection and try again')
         elif(self.mode == 'Kinematic'):
 
             # glutInit ([])
@@ -179,7 +204,7 @@ class Camera_Robot:
         elif(type(cameras) != list):
             raise TypeError(
                 'Selected cameras must be either a string or a list of strings')
-        if(self.mode == 'physical'):
+        if(self.mode == 'Physical'):
             for camera in cameras:
                 if(camera in self.valid_cameras):
                     output.update(
@@ -239,7 +264,7 @@ class Camera_Robot:
         elif(type(cameras) != list):
             raise TypeError(
                 'Selected cameras must be either a string or a list of strings')
-        if(self.mode == 'physical'):
+        if(self.mode == 'Physical'):
             for camera in cameras:
                 if(camera in self.valid_cameras):
                     output.update(
@@ -290,6 +315,7 @@ class Camera_Robot:
             start_time = time.time()
             # print('updating_sim')
             try:
+                # print(self.jarvis.sensedRobotq(),self.jarvis.sensedRightEETransform(),self.jarvis.sensedLeftEETransform())
                 q = self.jarvis.sensedRobotq()
                 self.Rrotation, self.Rtranslation = self.jarvis.sensedRightEETransform()
                 self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftEETransform()
@@ -414,8 +440,8 @@ class Camera_Robot:
 
 
 class RealSenseCamera:
-
     def __init__(self, serial_num, config_file, robot, end_effector='right'):
+
         try:
             self.serial_num = serial_num
             self.config_file = config_file
@@ -432,7 +458,7 @@ class RealSenseCamera:
             self.pipeline.start(self.config)
             # we sleep for 3 seconds to stabilize the color image - no idea why, but if we query it soon after starting, color image is distorted.
             self.pc = rs.pointcloud()
-            self.realsense_transform = pickle.load(
+            self.realsense_transform = np.load(
                 open(self.config_file, 'rb'))
             self.robot = robot
             self.end_effector = end_effector
@@ -503,7 +529,7 @@ class RealSenseCamera:
             print("Data Not Available at the moment")
             return None
         else:
-            return [color_frame,depth_frame]
+            return [color_frame.get_data(),depth_frame.get_data()]
 
     def safely_close(self):
         print('safely closing Realsense camera', self.serial_num)
@@ -511,12 +537,18 @@ class RealSenseCamera:
 
 
 class ZedCamera:
+
     def __init__(self, serial_num, config_file):
+        # only import pyzed if running on python3
+        if(sys.version_info[0] < 3):
+            pass
+        else:
+            import pyzed.sl as sl
         # Note: This code presumes the zed cameras are fixed w.r.t. the base.
         # Create a Camera object
         self.zed = sl.Camera()
         self.serial_num = serial_num
-        self.transform = pickle.load(open(config_file, 'rb'))
+        self.transform = np.load(open(config_file, 'rb'))
         # we then create the inverse transform
         klampt_transforms = se3.from_homogeneous(self.transform)
         self.inverted_transform = np.array(
@@ -531,6 +563,8 @@ class ZedCamera:
         init_params.set_from_serial_number(serial_num)
         init_params.depth_minimum_distance = 0.20
         init_params.depth_maximum_distance = 40
+        self.image = sl.Mat()
+        self.depth = sl.Mat()
         self.runtime_parameters = sl.RuntimeParameters()
         # Open the camera
         err = self.zed.open(init_params)
@@ -572,7 +606,15 @@ class ZedCamera:
         # we then finally transform the point cloud to the robot's coordinates:
         transformed_pc = point_cloud.transform(self.inverted_transform)
         return transformed_pc
-
+    def get_rgbd_images(self):
+        if (self.zed.grab() == sl.ERROR_CODE.SUCCESS) :
+            # A new image is available if grab() returns SUCCESS
+            self.zed.retrieve_image(self.image, sl.VIEW.LEFT) # Get the left image
+            self.zed.retrieve_measure(self.depth, sl.MEASURE.DEPTH) # Retrieve depth Mat. Depth is aligned on the left image
+        else:
+            print("Data Not Available at the moment")
+            return None
+        return([self.image.get_data(),self.depth.get_data()])
     def safely_close(self):
         print('safely closing zed camera ', self.serial_num)
         self.zed.close()
@@ -588,6 +630,9 @@ class Camera_Sensors:
                 elif(camera_name.endswith('left')):
                     self.camera = RealSenseCamera(
                         serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='left')
+                elif(camera_name.endswith('overhead')):
+                    self.camera = RealSenseCamera(
+                        serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='right')
 
             elif(camera_name.startswith('zed')):
                 self.camera = ZedCamera(

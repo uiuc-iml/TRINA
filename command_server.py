@@ -36,7 +36,7 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 
 class CommandServer:
 
-	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml'):
+	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = [],codename = 'anthrax_lowpoly'):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")
@@ -74,10 +74,10 @@ class CommandServer:
 		self.dt = 0.001
 		self.robot = MotionClient(address = robot_ip)
 		# self.controller = UIController()
-		self.robot.restartServer(mode = self.mode, components = self.components,codename = 'anthrax_lowpoly')
+		self.robot.restartServer(mode = self.mode, components = self.components,codename = codename)
 		self.robot_state = {}
 		self.robot_command = {}
-		self.modules = ["Wipe", "UIModule", "Motion"]
+		self.modules = modules
 		self.startup = True
 		self.robot_active = True
 		self.shut_down_flag = False
@@ -89,7 +89,7 @@ class CommandServer:
 		self.torso_active = ('torso' in self.components)
 		self.query_robot = MotionClient(address = robot_ip)
 		# self.controller = UIController()
-		self.query_robot.startServer(mode = self.mode, components = self.components,codename = 'anthrax_lowpoly')
+		self.query_robot.startServer(mode = self.mode, components = self.components,codename = codename)
 		self.query_robot.startup()
 		res = self.robot.startup()
 		if not res:
@@ -103,7 +103,12 @@ class CommandServer:
 			self.world = WorldModel()
 			self.world.readFile(self.world_file )
 			self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
+			print('\n\n\n\n\n initialization of Kinematic sensor module sucessfull!!\n\n\n')
+
 			time.sleep(3)
+		if(self.mode == 'Physical'):
+			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode)
+			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
 		self.health_dict = {}
 		# create the list of threads
 		self.modules_dict = {}
@@ -113,7 +118,8 @@ class CommandServer:
 		self.active_modules = manager.dict()
 		for i in self.always_active:
 			self.active_modules[i] = True
-		self.start_modules()
+		self.start_modules(self.modules,startup = True)
+
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
 		stateRecieverThread.start()
 		commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
@@ -128,15 +134,20 @@ class CommandServer:
 
 	def init_robot_states(self):
 
-		pos_left = {}
-		pos_right = {}
-		pos_base = {}
+		pos_left = [0,0,0,0,0,0]
+		pos_right = [0,0,0,0,0,0]
+		pos_base = [0,0,0]
 		pos_left_gripper = {}
 		pos_right_gripper = {}
 		pos_torso = {}
-		vel_base = {}
-		vel_right = {}
-		vel_left = {}
+		vel_base = [0,0]
+		vel_right = [0,0,0,0,0,0]
+		vel_left = [0,0,0,0,0,0]
+		posEE_left = {}
+		velEE_left = {}
+		posEE_right = {}
+		velEE_right = {}
+
 		# try:
 		if(self.left_limb_active):
 			posEE_left = self.query_robot.sensedLeftEETransform()
@@ -154,6 +165,7 @@ class CommandServer:
 			pos_base = self.query_robot.sensedBasePosition()
 			vel_base = self.query_robot.sensedBaseVelocity()
 
+		# print( self.query_robot.sensedLeftLimbPosition(),self.query_robot.sensedRightLimbPosition())
 		klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
 		klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 		klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
@@ -211,29 +223,50 @@ class CommandServer:
 		a = module(module_jarvis)
 		return a.return_processes()
 
-	def start_modules(self,module_names = []):
+	def start_modules(self,module_names = [],startup = False):
 		import trina_modules
 		trina_modules = reload(trina_modules)
 		activity_dict = {}
 		command_dict = {}
 		try:
-			if(module_names == []):
-				for name, obj in inspect.getmembers(trina_modules):
-					if inspect.isclass(obj):
-						if(str(obj).find('trina_modules') != -1):
-							tmp = self.start_module(obj,name)
-							self.modules_dict.update({name:tmp})
-							self.health_dict.update({name:[True,time.time()]})
-							activity_dict.update({name:'idle'})
-							command_dict.update({name:[]})
-							if(name not in self.always_active):
-								self.active_modules[name] = False
-							else:
-								self.active_modules[name] = TrueTrinaQueue(str(name))
+			if(startup):
+				if(module_names == []):
+					print('\n\n Starting ALL modules available!')
+					for name, obj in inspect.getmembers(trina_modules):
+						if inspect.isclass(obj):
+							if(str(obj).find('trina_modules') != -1):
+								tmp = self.start_module(obj,name)
+								self.modules_dict.update({name:tmp})
+								self.health_dict.update({name:[True,time.time()]})
+								activity_dict.update({name:'idle'})
+								command_dict.update({name:[]})
+								if(name not in self.always_active):
+									self.active_modules[name] = False
+								else:
+									self.active_modules[name] = TrueTrinaQueue(str(name))
 
-				self.server['HEALTH_LOG'] = self.health_dict
-				self.server['ACTIVITY_STATUS'] = activity_dict
-				self.empty_command = command_dict
+					self.server['HEALTH_LOG'] = self.health_dict
+					self.server['ACTIVITY_STATUS'] = activity_dict
+					self.empty_command = command_dict
+				else:
+					print('\n\n Starting Only Modules:' + str(module_names) + '\n\n\n')
+					for name, obj in inspect.getmembers(trina_modules):
+						if inspect.isclass(obj):
+							if(str(obj).find('trina_modules') != -1):
+								if(name in module_names):
+									tmp = self.start_module(obj,name)
+									self.modules_dict.update({name:tmp})
+									self.health_dict.update({name:[True,time.time()]})
+									activity_dict.update({name:'idle'})
+									command_dict.update({name:[]})
+									if(name not in self.always_active):
+										self.active_modules[name] = False
+									else:
+										self.active_modules[name] = TrueTrinaQueue(str(name))
+
+					self.server['HEALTH_LOG'] = self.health_dict
+					self.server['ACTIVITY_STATUS'] = activity_dict
+					self.empty_command = command_dict
 			else:
 				print('starting only modules '+ str(module_names))
 				for name, obj in inspect.getmembers(trina_modules):
@@ -289,15 +322,19 @@ class CommandServer:
 			time.sleep(0.1)
 
 	def stateReciever(self):
-		pos_left = {}
-		pos_right = {}
-		pos_base = {}
+		pos_left = [0,0,0,0,0,0]
+		pos_right = [0,0,0,0,0,0]
+		pos_base = [0,0,0]
 		pos_left_gripper = {}
 		pos_right_gripper = {}
 		pos_torso = {}
-		vel_base = {}
-		vel_right = {}
-		vel_left = {}
+		vel_base = [0,0]
+		vel_right = [0,0,0,0,0,0]
+		vel_left = [0,0,0,0,0,0]
+		posEE_left = {}
+		velEE_left = {}
+		posEE_right = {}
+		velEE_right = {}
 		loopStartTime = time.time()
 		while not self.shut_down_flag:
 			try:
@@ -317,7 +354,7 @@ class CommandServer:
 					pos_base = self.query_robot.sensedBasePosition()
 					vel_base = self.query_robot.sensedBaseVelocity()
 
-				klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
+				klampt_q = get_klampt_model_q('anthrax',left_limb = pos_left, right_limb = pos_right, base = pos_base)
 				klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 				klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 				if(self.left_gripper_active):
@@ -580,8 +617,7 @@ class CommandLogger(object):
 
 
 if __name__=="__main__":
-	server = CommandServer()
+	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation','StateLogger'])
 	while(True):
 		time.sleep(100)
 		pass
-max_le
