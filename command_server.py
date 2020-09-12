@@ -114,7 +114,6 @@ class CommandServer:
 		for i in self.always_active:
 			self.active_modules[i] = True
 		self.start_modules()
-
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
 		stateRecieverThread.start()
 		commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
@@ -201,7 +200,7 @@ class CommandServer:
 			"KlamptCommandPos" : klampt_command_pos,
 			"KlamptSensedPos" : klampt_sensor_pos
 		}
-		self.server['TrinaTime'] = time.time()
+		self.server['TRINA_TIME'] = time.time()
 		# except Exception as e:
 		# 	print(e)
 
@@ -364,9 +363,12 @@ class CommandServer:
 					"KlamptCommandPos" : klampt_command_pos,
 					"KlamptSensedPos" : klampt_sensor_pos
 				}
+
 			except Exception as e:
 				print(e)
 			################
+			self.server['TRINA_TIME'] = time.time()
+
 			elapsedTime = time.time() - loopStartTime
 			if elapsedTime < self.dt:
 				time.sleep(self.dt-elapsedTime)
@@ -384,6 +386,7 @@ class CommandServer:
 		self.active_modules = active_modules
 		self.init_time = time.time()
 		self.loop_counter = 0
+		self.command_logger = CommandLogger('EXECUTED_COMMANDS')
 		while(True):
 			self.loop_counter +=1
 			for i in self.always_active:
@@ -413,6 +416,7 @@ class CommandServer:
 						commandList = robot_command
 						for command in commandList:
 							self.run(command)
+							self.command_logger.log_command(command,time.time())
 					else:
 						print('ignoring commands from {} because it is inactive'.format(str(i)),robot_command)
 			elapsedTime = time.time() - loopStartTime	# helper func
@@ -561,8 +565,23 @@ class TrinaQueueReader(object):
 			res = pipe.execute()
 		return res
 
+
+class CommandLogger(object):
+	def __init__(self,key, host = 'localhost', port = 6379,max_length = 10000):
+		self.r = redis.Redis(host = host, port = port)
+		self.key = key
+		self.max_length = max_length
+	def log_command(self,command,time):
+		self.length = self.r.llen(self.key)
+		if(self.length >= self.max_length):
+			print('\n\n\n\n\nQUEUE OVERFLOW!!!! \n\n\n\n\n SOMETHING WRONG WITH THE LOGGER?')
+		else:
+			self.r.rpush(self.key,str([command,time]))
+
+
 if __name__=="__main__":
 	server = CommandServer()
 	while(True):
 		time.sleep(100)
 		pass
+max_le

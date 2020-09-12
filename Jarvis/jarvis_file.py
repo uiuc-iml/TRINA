@@ -241,6 +241,9 @@ class Jarvis:
 	def changeActivityStatus(self,to_activate,to_deactivate = []):
 		command = self.send_command('self.switch_module_activity',str(to_activate),str(to_deactivate))
 
+	def getTrinaTime(self):
+		return self.server['TRINA_TIME'].read()
+
 	################################## All Mighty divider between motion and UI###############################
 
 	def sendRayClickUI(self):
