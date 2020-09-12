@@ -11,15 +11,15 @@ right_limb_address = '10.1.1.20'
 ##These are for the Righthand gripper
 # left_limb_payload = 0.86125
 # left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
-left_limb_payload = 0.0
-left_limb_cog = [0.0,0.0,0.0]
+left_limb_payload = 0.1#1.025
+left_limb_cog = [0.0,0.0,0.005]
 
 #estimated for the pusher, need to run the calibrater
 right_limb_payload = 0.4
 right_limb_cog = [0.0,0.0,0.06]
-left_Robotiq = False
+left_Robotiq = True
 right_Robotiq = False
-left_Robotiq_type = 'vacuum'
+left_Robotiq_type = 'parallel'
 right_Robotiq_type = 'parallel'
 ur5e_control_rate = 0.004 #250 Hz
 
@@ -57,8 +57,8 @@ right_untucked_config = mirror_arm_config(left_untucked_config)
 left_tabletop_config = [-1.2396209875689905, -2.6281658611693324, -1.0119028091430664, 5.456587779312887, -2.3149259726153772, 0.15132474899291992]
 right_tabletop_config = mirror_arm_config(left_tabletop_config)
 
-fixed_camera_transform = [[-0.08206975726681441, 0.9965195610540325, -0.014605457159718243, 0.5577964565704402, 0.03378364324086431, -0.8292899242646297,\
-     -0.8259102057606669, -0.07620649503849519, -0.5586276954594364], [1.23845014, 0.00870757, 1.39666077]]
+fixed_camera_transform = [[-0.09222939612040668, 0.9956488967591272, -0.013304618506269416, 0.5949226983688364, 0.04438477556442813, -0.8025565242795285,\
+     -0.7984739954793812, -0.08193452312931168, -0.5964277093351421], [1.26769371, 0.00788646, 1.40611853]]
 ##Calibration configs
 right_calibration_configs = [[0.11264324188232422, -0.9664667409709473, 1.818247143422262, -0.852069692020752, 3.9004664421081543, -0.7985737959491175],\
     [-0.043907944356099904, -0.9470680517009278, 2.072792355214254, -0.8519972127727051, 3.9007532596588135, -0.7984898726092737],\
