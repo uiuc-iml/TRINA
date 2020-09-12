@@ -16,17 +16,14 @@ import numpy as np
 from klampt import WorldModel,vis
 import os
 
-from .. import trina_logging
+import sys
+sys.path.append("..")
+import trina_logging
 import logging
 from datetime import datetime
 
-if not os.path.exists('errorLogs'):
-    os.makedirs('errorLogs')
-logger = logging.getLogger(__name__)
-# Create handlers
-c_handler = logging.StreamHandler()
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
-logger = get_logger(__name__,logging.INFO, filename)
+logger = trina_logging.get_logger(__name__,logging.INFO, filename)
 
 class Motion:
 

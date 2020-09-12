@@ -37,6 +37,7 @@ class Jarvis:
 		self.server['ACTIVITY_STATUS'][self.name] = str('idle')
 		self.sensor_module = sensor_module
 		self.server['ROBOT_COMMAND'][self.name] = []
+		
 
 		# should not instantiate commanserver
 		# self.command_server = CommandServer()
@@ -235,6 +236,7 @@ class Jarvis:
 		final_string = (final_string + ')')
 		final_string = final_string.format(*args)
 		self.trina_queue.push(final_string)
+		print('sending ',final_string)
 
 	def log_health(self, status=True):
 		self.server["HEALTH_LOG"][self.name] = [status, time.time()]
@@ -435,18 +437,6 @@ class Jarvis:
 			name =  self.server['UI_FEEDBACK']['move-to-load-signal']['MSG'].read()
 			self.server['UI_FEEDBACK']['move-to-load-signal']['REPLIED'] = False
 			return True, name
-
-	# helper func
-	def send_command(self,command,*args):
-		final_string = str(command)+ '('
-		for index,arg in enumerate(args):
-			if(index != len(args)-1):
-				final_string += '{},'
-			else:
-				final_string += '{}'
-		final_string = (final_string + ')')
-		final_string = final_string.format(*args)
-		return final_string
 
 	def checkFeedback(self,id):
 		while not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():

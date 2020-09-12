@@ -38,7 +38,7 @@ class StateLogger(object):
         self.command_reader = TrinaQueueReader()
         self.jarvis = jarvis
 
-        self.intermediate_wait = 5
+        self.intermediate_wait = 20
         tmp = datetime.now()
         if(not os.path.exists('./logs')):
             os.mkdir('./logs')

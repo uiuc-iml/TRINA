@@ -447,11 +447,13 @@ class CommandServer:
 
 			for i in self.robot_command.keys():
 				robot_command = self.trina_queue_reader.read(str(i))
+				# print(robot_command)
 				if (robot_command != []):
 					if(self.active_modules[str(i)]):
 						commandList = robot_command
 						for command in commandList:
 							self.run(command)
+							print(command)
 							self.command_logger.log_command(command,time.time())
 					else:
 						print('ignoring commands from {} because it is inactive'.format(str(i)),robot_command)

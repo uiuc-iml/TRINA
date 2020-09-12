@@ -6,7 +6,7 @@ from datetime import datetime
 def get_logger(name, level=None, filename=None):
     if not os.path.exists('errorLogs'):
         os.makedirs('errorLogs')
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(name)
     if filename == None:
         filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
     if level == None:
