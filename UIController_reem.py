@@ -13,7 +13,7 @@ import numpy as np
 from scipy.spatial.transform import Rotation as R
 import os
 import datetime
-import csv 
+import csv
 from threading import Thread
 import sys
 import json
@@ -72,7 +72,7 @@ class UIController:
             return
 
         stateRecieverThread = threading.Thread(target=self._serveStateReciever)
-        stateRecieverThread.start()   
+        stateRecieverThread.start()
 
 
     def _serveStateReciever(self):
@@ -90,10 +90,10 @@ class UIController:
                 self.startup = False
                 if(self.left_limb_active):
                     self.init_pos_left = self.robot.sensedLeftEETransform()
-                if(self.right_limb_active):   
+                if(self.right_limb_active):
                     self.init_pos_right = self.robot.sensedRightEETransform()
                 # either way, we must register the headset initial orientation:
-                # we start by obtaining it: 
+                # we start by obtaining it:
                 self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
             while(True):
                 # try:
@@ -111,7 +111,7 @@ class UIController:
 
                 # except:
                 #     pass
-        
+
     def moveRobotTest(self):
         # self.robot.setBaseVelocity([0,0])
         leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
@@ -161,7 +161,7 @@ class UIController:
     def positionControl(self):
         '''controlling arm movement with position command
         variable naming:
-            LT_cw_cc => Left Traslational matrix from Controller World to Controller Current 
+            LT_cw_cc => Left Traslational matrix from Controller World to Controller Current
             RR_rw_rh => Right Rotational matrix from Robot World to Robot Home
             RR_rw_rh_T => Right Rotational matrix from Robot World to Robot Home Transpose
             R_cw_rw  => Rotational matrix from Controller World to Robot World
@@ -187,7 +187,7 @@ class UIController:
 
         self.server['robotTelemetry'] = self.temp_robot_telemetry
 
-        
+
     def positionControlArm(self,side):
         actual_dt = self.dt
         assert (side in ['left','right']), "invalid arm selection"
@@ -225,7 +225,7 @@ class UIController:
 
             RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
             # RR_rw_rh_T = R.from_dcm(np.transpose(RR_rw_rh.as_dcm()))
-            
+
 
             # Transforming from left handed to right handed
             # we first read the quaternion
@@ -281,7 +281,7 @@ class UIController:
                 self.robot.setLeftEEInertialTransform([RR_final,RT_final],actual_dt)
                 if((self.mode == 'Physical') and self.left_gripper_active):
                     closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
-                    if(closed_value >= 0.2):                        
+                    if(closed_value >= 0.2):
                         self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])
                     else:
                         self.robot.setLeftGripperPosition([0,0,0,0])
@@ -307,21 +307,21 @@ class UIController:
     #             direction = [a/norm for a in V]
     #             V = [float(a*min(norm,1)) for a in direction]
 
-                
+
     #             self.last_time  =  cur_time
     #             if(norm >= 0.2):
     #                 self.robot.setLeftEEVelocity(V,[0,0,0])
-    #     except Exception as e: 
+    #     except Exception as e:
     #         print(e)
     #         pass
     def velocityControl(self):
         '''controlling arm movement with position command
         variable naming:
-            LT_cw_cc => Left Traslational matrix from Controller World to Controller Current 
+            LT_cw_cc => Left Traslational matrix from Controller World to Controller Current
             RR_rw_rh => Right Rotational matrix from Robot World to Robot Home
             RR_rw_rh_T => Right Rotational matrix from Robot World to Robot Home Transpose
             R_cw_rw  => Rotational matrix from Controller World to Robot World
-            RR_hs => Initial headset 
+            RR_hs => Initial headset
 
             cc------controller current
             rc------robot current
@@ -374,8 +374,8 @@ class UIController:
             else:
                 vel = vel.tolist()
 
-            
-            
+
+
 
 
 
@@ -385,14 +385,14 @@ class UIController:
             # linear_velocity_vector = (RT_final - curr_position)*(self.dt)
             # if(np.linalg.norm(linear_velocity_vector)>0.95):
             #     RT_final = (curr_position + (linear_velocity_vector/np.linalg.norm(linear_velocity_vector))*0.95/self.dt).tolist()
-            
+
             # RR_unit_x = R.from_rotvec(np.pi/2 * np.array([1, 0, 0]))
             # RR_unit_y = R.from_rotvec(np.pi/2 * np.array([0, 1, 0]))
             # RR_unit_z = R.from_rotvec(np.pi/2 * np.array([0, 0, 1]))
 
             RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
             # RR_rw_rh_T = R.from_dcm(np.transpose(RR_rw_rh.as_dcm()))
-            
+
 
             # Transforming from left handed to right handed
             # we first read the quaternion
@@ -432,7 +432,7 @@ class UIController:
                 self.robot.setLeftEEVelocity(vel+Delta_RR, tool = [0,0,0])
                 if((self.mode == 'Physical') and self.left_gripper_active):
                     closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
-                    if(closed_value >= 0.2):                        
+                    if(closed_value >= 0.2):
                         self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])
                     else:
                         self.robot.setLeftGripperPosition([0,0,0,0])
@@ -445,10 +445,10 @@ class UIController:
         self.fileName = 'Teleoperation_log/motion' + ''.join(name) + '.csv'
         self.saveStartTime =  datetime.datetime.utcnow()
         self.saveEndTime = datetime.datetime.utcnow() + datetime.timedelta(0,3.1)
-        fields = ['timestep', 'Left Shoulder', 'Left UpperArm', 'Left ForeArm', 'Left Wrist1','Left Wrist2','Left Wrist3','Right Shoulder', 'Right UpperArm', 'Right ForeArm', 'Right Wrist1','Right Wrist2','Right Wrist3','Left EE Transform', 'Right EE Transform' ] 
-        with open(self.fileName, 'w') as csvfile: 
-            # creating a csv writer object 
-            csvwriter = csv.writer(csvfile) 
+        fields = ['timestep', 'Left Shoulder', 'Left UpperArm', 'Left ForeArm', 'Left Wrist1','Left Wrist2','Left Wrist3','Right Shoulder', 'Right UpperArm', 'Right ForeArm', 'Right Wrist1','Right Wrist2','Right Wrist3','Left EE Transform', 'Right EE Transform' ]
+        with open(self.fileName, 'w') as csvfile:
+            # creating a csv writer object
+            csvwriter = csv.writer(csvfile)
             csvwriter.writerow(fields)
         self.robot.setLeftLimbPositionLinear(left_limb_command,3)
         self.robot.setRightLimbPositionLinear(right_limb_command,3)
@@ -463,14 +463,14 @@ class UIController:
         # right_handed_rotvec =  np.array([-headset_orientation[2],-headset_orientation[0],headset_orientation[1],-(np.pi/180)*headset_orientation[3]])
 
         partial_rotation = R.from_rotvec(right_handed_rotvec[:3]*right_handed_rotvec[3])
-        # we then get its equivalent row, pitch and yaw 
+        # we then get its equivalent row, pitch and yaw
         rpy = partial_rotation.as_euler('ZYX')
         # we then ignore its roll and pitch in unity
         rotation_final = R.from_euler('ZYX',[rpy[0],0,0])
         print(rotation_final.as_dcm())
         return rotation_final
 
-       
 
-if __name__ == "__main__" : 
+
+if __name__ == "__main__" :
     my_controller = UIController()

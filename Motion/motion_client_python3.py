@@ -4,6 +4,7 @@ import threading
 import time
 from klampt import WorldModel
 import os
+import numpy as np
 dirname = os.path.dirname(__file__)
 #getting absolute model name
 model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")
@@ -23,6 +24,9 @@ class MotionClient:
 
 	def startServer(self,mode,components,codename):
 		self.s.startServer(mode,components,codename)
+
+	def restartServer(self,mode,components,codename):
+		self.s.restartServer(mode,components,codename)
 
 	def startup(self):
 		res = self.s.startup()
@@ -162,17 +166,55 @@ class MotionClient:
 	def mirror_arm_config(self,config):
 		return self.s.mirror_arm_config(config)
 
-	def getWorld(self):
-		return self.world
+	# def getWorld(self):
+	# 	return self.world
 
 	def cartesianDriveFail(self):
 		return self.s.cartesianDriveFail()
 
-	def sensedLeftEEVelcocity(self,local_pt = [0,0,0]):
+	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
 		return self.s.sensedLeftEEVelcocity(local_pt)
 
-	def sensedRightEEVelcocity(self,local_pt = [0,0,0]):
+	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
 		return self.s.sensedRightEEVelcocity(local_pt)
+
+
+	def sensedLeftEEWrench(self,frame = 'global'):
+		return self.s.sensedLeftEEWrench(frame)
+
+	def sensedRightEEWrench(self,frame = 'global'):
+		return self.s.sensedRightEEWrench(frame)
+
+	def zeroLeftFTSensor(self):
+		return self.s.zeroLeftFTSensor()
+
+	def zeroRightFTSensor(self):
+		return self.s.zeroRightFTSensor()
+
+	def openLeftRobotiqGripper(self):
+		self.s.openLeftRobotiqGripper()
+
+	def closeLeftRobotiqGripper(self):
+		self.s.closeLeftRobotiqGripper()		
+
+	def openRightRobotiqGripper(self):
+		self.s.openRightRobotiqGripper()
+
+	def closeRightRobotiqGripper(self):
+		self.s.closeRightRobotiqGripper()	
+
+	def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setLeftEETransformImpedance(Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6)
+
+	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setRightEETransformImpedance(Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6)
+
+	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setLeftLimbPositionImpedance(q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6)
+
+	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+		self.s.setRightLimbPositionImpedance(q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6)
+		
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startup()

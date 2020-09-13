@@ -2,23 +2,43 @@ from SimpleXMLRPCServer import SimpleXMLRPCServer
 import signal
 import sys
 from motion import Motion
-
+import time
 import logging
 from datetime import datetime
+from trina_logging import get_logger
+
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
-logging.basicConfig(filename=filename,filemode='a',level=logging.DEBUG, format='motion_server: %(asctime)s - %(message)s',datefmt='%H:%M:%S')
+logger = get_logger(__name__,logging.DEBUG,filename)
 
 global robot
 global server_started
 server_started = False
 
 
-def _startServer(mode = "Kinematic", components = [] , codename = "seed"):
+def _startServer(mode,components,codename):
 	##global variable
 	global robot
 	global server_started
+
+	if server_started:
+		logger.info("server is already activated")
+		print("server already started ")
+	else:
+		robot = Motion(mode = mode,components = components, codename = codename)
+		logger.info("%s mode is activated",robot.mode)
+		server_started = True
+		print("server started")
+	return 0
+
+def _restartServer(mode= "Kinematic", components = [] , codename = "seed"):
+	global robot
+	global server_started
+	if(server_started):
+		robot.shutdown()
+	time.sleep(2)
+	logger.info("Motion shutdown,restarting")
 	robot = Motion(mode = mode,components = components, codename = codename)
-	logging.info("%s mode is activated",robot.mode)
+	logger.info("%s mode is activated",robot.mode)
 	server_started = True
 	print("server started")
 	return 0
@@ -199,24 +219,75 @@ def _cartesianDriveFail():
 
 def _sensedLeftEEVelocity(local_pt):
 	global robot
-	return robot.sensedLeftEEVelcocity(local_pt)
+	return robot.sensedLeftEEVelocity(local_pt)
 
 def _sensedRightEEVelocity(local_pt):
 	global robot
-	return robot.sensedRightEEVelcocity(local_pt)
+	return robot.sensedRightEEVelocity(local_pt)
+
+def _sensedLeftEEWrench(frame):
+	global robot
+	return robot.sensedLeftEEWrench(frame)
+
+def _sensedRightEEWrench(frame):
+	global robot
+	return robot.sensedRightEEWrench(frame)
+
+def _zeroLeftFTSensor():
+	global robot
+	return robot.zeroLeftFTSensor()
+
+def _zeroRightFTSensor():
+	global robot
+	return robot.zeroRightFTSensor()
+
+def _openLeftRobotiqGripper():
+	global robot
+	return robot.openLeftRobotiqGripper()
+
+def _closeLeftRobotiqGripper():
+	global robot
+	return robot.closeLeftRobotiqGripper()
+
+def _openRightRobotiqGripper():
+	global robot
+	return robot.openRightRobotiqGripper()
+
+def _closeRightRobotiqGripper():
+	global robot
+	return robot.closeRightRobotiqGripper()
+
+def _setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
+	global robot
+	return robot.setLeftEEInertialTransform(Tg,K,M,B,x_dot_g,deadband)
+
+def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
+	global robot
+	return robot.setRightEEInertialTransform(Tg,K,M,B,x_dot_g,deadband)
+
+def _setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
+	global robot
+	return robot.setLeftLimbPositionTransform(q,K,M,B,x_dot_g,deadband)
+
+def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
+	global robot
+	return robot.setRightLimbPositionTransform(q,K,M,B,x_dot_g,deadband)	
+
+
 
 #ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'
 #ip_address = '72.36.119.129'
 
 # ip_address = '172.16.241.141'
-ip_address = 'localhost'
+ip_address = 'localhost' #'10.0.242.158'#
 port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()
 signal.signal(signal.SIGINT, sigint_handler)
 
 server.register_function(_startServer,'startServer')
+server.register_function(_restartServer,'restartServer')
 ##add functions...
 server.register_function(_startup,'startup')
 server.register_function(_setLeftLimbPosition,'setLeftLimbPosition')
@@ -258,11 +329,22 @@ server.register_function(_startup,'startup')
 server.register_function(_isShutDown,'isShutDown')
 server.register_function(_sensedLeftEEVelocity,'sensedLeftEEVelcocity')
 server.register_function(_sensedRightEEVelocity,'sensedRightEEVelcocity')
-
+server.register_function(_sensedLeftEEWrench,'sensedLeftEEWrench')
+server.register_function(_sensedRightEEWrench,'sensedRightEEWrench')
+server.register_function(_zeroLeftFTSensor,'zeroLeftFTSensor')
+server.register_function(_zeroRightFTSensor,'zeroRightFTSensor')
+server.register_function(_openLeftRobotiqGripper,'openLeftRobotiqGripper')
+server.register_function(_closeLeftRobotiqGripper,'closeLeftRobotiqGripper')
+server.register_function(_openRightRobotiqGripper,'openRightRobotiqGripper')
+server.register_function(_closeRightRobotiqGripper,'closeRightRobotiqGripper')
+server.register_function(_setLeftEETransformImpedance,'setLeftEETransformImpedance')
+server.register_function(_setRightEETransformImpedance,'setRightEETransformImpedance')
+server.register_function(_setLeftLimbPositionImpedance,'setLeftLimbPositionImpedance')
+server.register_function(_setRightLimbPositionImpedance,'setRightimbPositionImpedance')
 ##
 print('#######################')
 print('#######################')
-logging.info("Server Created")
+logger.info("Server Created")
 print('Server Created')
 ##run server
 server.serve_forever()
