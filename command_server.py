@@ -27,6 +27,7 @@ else:
 	from importlib import reload
 from Jarvis import Jarvis
 import redis
+import traceback
 
 robot_ip = 'http://localhost:8080'
 
@@ -286,6 +287,7 @@ class CommandServer:
 									self.active_modules[name] = False
 		except Exception as e:
 			print('Failed to initialize module',name,'due to ',e)
+			traceback.print_exc()
 	def switch_module_activity(self,to_activate,to_deactivate = []):
 		print('switching module activity:')
 		if(to_deactivate == []):
@@ -591,7 +593,7 @@ class TrinaQueue(object):
 		self.key = key
 	def push(self,item):
 		self.r.rpush(self.key,item)
-	
+
 class TrinaQueueReader(object):
 	def __init__(self, host = 'localhost', port = 6379):
 		self.r = redis.Redis(host = host, port = port)
@@ -623,7 +625,7 @@ if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
 	# server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
-	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation','StateLogger'])
+	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation', 'PointClickNav'])
 	while(True):
 		time.sleep(100)
 		pass
