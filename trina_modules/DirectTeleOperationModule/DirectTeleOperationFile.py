@@ -63,7 +63,7 @@ class DirectTeleOperation:
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
-		stateRecieverThread = threading.Thread(target=self._serveStateReciever)
+		stateRecieverThread = threading.Thread(target=self._serveStateReceiver)
 		main_thread = threading.Thread(target = self._infoLoop)
 		stateRecieverThread.start()
 		main_thread.start()
@@ -77,7 +77,7 @@ class DirectTeleOperation:
 		print("SIGINT caught...shutting down the api!")
 
 	def return_threads(self):
-		return [self._serveStateReciever, self._infoLoop]
+		return [self._serveStateReceiver, self._infoLoop]
 
 	def return_processes(self):
 		return []
@@ -104,7 +104,7 @@ class DirectTeleOperation:
 			else:
 				time.sleep(0.001)
 
-	def _serveStateReciever(self):
+	def _serveStateReceiver(self):
 		# self.setRobotToDefault()
 		time.sleep(3)
 		# while(True):
@@ -119,10 +119,10 @@ class DirectTeleOperation:
 			self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
 		while(True):
 			if self.state == 'idle':
-				# print("_serveStateReciever: idling")
+				# print("_serveStateReceiver: idling")
 				pass
 			elif self.state == 'active':
-				print('_serveStateReciever:active')
+				print('_serveStateReceiver:active')
 				self.last_time = time.time()
 				if(self.left_limb_active):
 					self.cur_pos_left = self.robot.sensedLeftEETransform()
