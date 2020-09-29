@@ -11,6 +11,9 @@ from datetime import datetime
 import os
 import numpy as np
 import atexit
+from multiprocessing import Process, Lock
+from PIL import Image
+import sys
 
 
 class TrinaQueueReader(object):
@@ -26,8 +29,11 @@ class TrinaQueueReader(object):
         return res
 
 
+
+
 class StateLogger(object):
     def __init__(self, jarvis, frequency=60, image_frequency=10):
+
         print('\n\n\n starting logger \n\n\n')
 
         self.states_lock = Lock()
@@ -38,7 +44,7 @@ class StateLogger(object):
         self.command_reader = TrinaQueueReader()
         self.jarvis = jarvis
 
-        self.intermediate_wait = 20
+        self.intermediate_wait = 10
         tmp = datetime.now()
         if(not os.path.exists('./logs')):
             os.mkdir('./logs')
@@ -100,20 +106,22 @@ class StateLogger(object):
                     for dataset_name in tmp.keys():
                         size = tmp[dataset_name][0].shape
                         self.f.create_dataset(dataset_name + '_color', (1, size[0], size[1], size[2]), chunks=True, maxshape=(
-                            None, size[0], size[1], size[2]), compression='gzip', dtype='uint8')
+                            None, size[0], size[1], size[2]), compression='gzip', dtype=h5py.h5t.STD_U8BE)
                         self.f[dataset_name + '_color'].attrs.create('times',self.image_times[dataset_name + '_color'])
 
                     #then for depth
                     for dataset_name in tmp.keys():
                         size = tmp[dataset_name][1].shape
                         self.f.create_dataset(dataset_name + '_depth', (1, size[0], size[1]), chunks=True, maxshape=(
-                            None, size[0], size[1]), compression='gzip')
+                            None, size[0], size[1]), compression='gzip',dtype = np.float32)
                         self.f[dataset_name + '_depth'].attrs.create('times',self.image_times[dataset_name + '_depth'])
 
                     self.datasets = {}
 
                     for name in self.f.keys():
                         self.datasets.update({name: self.f[name]})
+                    
+                    self.f.close()
 
     def update_states(self):
         while(True):
@@ -248,22 +256,12 @@ class StateLogger(object):
                 for key in self.images.keys():
                     self.images.update({key: []})
                     self.image_times.update({key:[]})
-            for key in copy_images.keys():
-                dset = self.datasets[key]
-                dset_size = list(dset.shape)
-                new_data_array = np.array(copy_images[key])
-                new_dset_size = copy(dset_size)
-                new_dset_size[0] += new_data_array.shape[0]
-                new_dset_size = tuple(new_dset_size)
-                dset.resize(new_dset_size)
-                dset[dset_size[0]:dset_size[0] +
-                     new_data_array.shape[0], :, :] = new_data_array
-                old_times = dset.attrs.get('times')
-                new_times = np.append(old_times,np.array(copy_image_times[key]))
-                # print(new_dset_size)
-                dset.attrs.create('times',new_times)
-            self.f.flush()
+            dumping_process = Process(target = self.dump_dataset_to_memory, args = (self.datasets,copy_images,copy_image_times,self.images_filename))
+            dumping_process.start()
+            dumping_process.join()
             elapsed = time.time()-start_time
+            print('\n\n\n done adding figures to disk in {} seconds'.format(elapsed))
+
             if(elapsed < self.intermediate_wait):
                 time.sleep(self.intermediate_wait-elapsed)
             if(self.close_all):
@@ -281,3 +279,54 @@ class StateLogger(object):
     
     def return_processes(self):
         return []
+    def stringify_image_array(self,array):
+        if(sys.version_info[0] < 3):
+            buf = StringIO()
+            if(array.dtype == np.uint8):
+                Image.fromarray(array).save(buf,"PNG")
+            
+            elif(array.dtype == np.float32):
+                array =(1000*array).astype(np.int32)
+                img = Image.fromarray(array,'I')
+                img.save(buf,"TIFF")
+            else:
+                img = Image.fromarray(array,'I')
+                img.save(buf,'TIFF')
+            
+            return np.void(buf.getvalue())
+        else:
+            pass
+        
+    def dump_dataset_to_memory(self,datasets,copy_images,copy_image_times,dataset_filename):
+        f = h5py.File(dataset_filename, 'a')
+#         print('\n\n\n\n\n\n adding new pictures to log \n\n\n\n\n\n\n')
+        start_time = time.time()
+        for key in copy_images.keys():
+            dset = f[key]
+            dset_size = list(dset.shape)
+            # print(dset_size)
+            new_data_array = np.array(copy_images[key])
+            new_dset_size = copy(dset_size)
+            new_dset_size[0] += new_data_array.shape[0]
+            new_dset_size = tuple(new_dset_size)
+
+#             print('\n\n\n\n array creation takes {} seconds'.format(time.time()-start_time))
+    
+            dset.resize(new_dset_size)
+#             print('\n\n\n\n dataset resizing takes {} seconds'.format(time.time()-start_time))
+
+            dset[dset_size[0]:dset_size[0] +
+                 new_data_array.shape[0], :, :] = new_data_array
+#             print('\n\n\n\n dataset assignment takes {} seconds'.format(time.time()-start_time))
+            # print(dset.shape)
+            old_times = dset.attrs.get('times')
+            new_times = np.append(old_times,np.array(copy_image_times[key]))
+#             print('\n\n\n\n metadata inclusion takes {} seconds'.format(time.time()-start_time))
+
+            # print(new_dset_size
+            dset.attrs.create('times',new_times)
+#         print('\n\n\n\n preparation of the dataset takes {} seconds'.format(time.time()-start_time))
+        # print(f)
+        f.flush()
+        f.close()
+        return 0

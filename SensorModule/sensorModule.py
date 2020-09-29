@@ -97,9 +97,7 @@ class Camera_Robot:
         self.active_cameras = {}
         self.update_lock = threading.Lock()
         self.ros_active = ros_active
-        if(self.ros_active):
-            import rospy
-            from sensor_msgs.msg import LaserScan
+
 
         if(self.mode == 'Physical'):
             import pyrealsense2 as rs
@@ -187,11 +185,14 @@ class Camera_Robot:
                 self.lidar_proc.start()
 
             ### THIS MUST COME AFTER THE OTHER PROCESS!!!!!
-            try:
-                rospy.init_node("sensing_test_parent")
-            except Exception as e:
-                print(e)
-                pass
+            if(self.ros_active):
+                import rospy
+                from sensor_msgs.msg import LaserScan
+                try:
+                    rospy.init_node("sensing_test_parent")
+                except Exception as e:
+                    print(e)
+                    pass
             
 
     def get_point_clouds(self, cameras=[]):
@@ -343,6 +344,7 @@ class Camera_Robot:
                 self.right_cam.kinematicSimulate(self.world, self.dt) 
                 # print('returning images left')
                 time.sleep(0.01)
+                print('updating images')
                 self.left_image = list(sensing.camera_to_images(
                     self.left_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
                 # print('returning images right')

@@ -128,7 +128,8 @@ class CommandServer:
 		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
 		moduleMonitorThread.start()
 		atexit.register(self.shutdown_all)
-
+		while(True):
+			time.sleep(200)
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
 
@@ -218,10 +219,11 @@ class CommandServer:
 
 
 	def start_module(self,module,name):
-		module_trina_queue = TrinaQueue(str(name))
-		module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue)
-		a = module(module_jarvis)
-		return a.return_processes()
+		if(name != 'sensor_module'):
+			module_trina_queue = TrinaQueue(str(name))
+			module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue)
+			a = module(module_jarvis)
+			return a.return_processes()
 
 	def start_modules(self,module_names = [],startup = False):
 		import trina_modules
@@ -453,7 +455,7 @@ class CommandServer:
 						commandList = robot_command
 						for command in commandList:
 							self.run(command)
-							print(command)
+							# print(command)
 							self.command_logger.log_command(command,time.time())
 					else:
 						print('ignoring commands from {} because it is inactive'.format(str(i)),robot_command)
@@ -623,7 +625,7 @@ if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
 	# server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
-	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation','StateLogger'])
+	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
 	while(True):
 		time.sleep(100)
 		pass
