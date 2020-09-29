@@ -211,5 +211,7 @@ else
 
 fi
 
+pip2 install pyarrow opencv-python==4.1.2.30
+pip install pyarrow opencv-python
 
 cd ~/TRINA

@@ -344,7 +344,7 @@ class Camera_Robot:
                 self.right_cam.kinematicSimulate(self.world, self.dt) 
                 # print('returning images left')
                 time.sleep(0.01)
-                print('updating images')
+                # print('updating images')
                 self.left_image = list(sensing.camera_to_images(
                     self.left_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
                 # print('returning images right')
