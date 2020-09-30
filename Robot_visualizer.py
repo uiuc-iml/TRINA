@@ -23,13 +23,16 @@ import sys
 import json
 import pdb
 from klampt.math import so3
+from reem.connection import RedisInterface
+from reem.datatypes import KeyValueStore
 
 # robot_ip = 'http://192.168.0.143:8080'
 # robot_ip = 'http://172.16.241.141:8080'
 robot_ip = 'http://localhost:8080'
 ws_port = 1234
 
-model_name = "Motion/data/TRINA_world_anthrax.xml"
+model_name = "Motion/data/TRINA_world_anthrax_PointClick.xml"
+
 
 roomname = "The Lobby"
 zonename = "BasicExamples"
@@ -39,6 +42,10 @@ is_closed=0
 dt = 1.0/30.0
 
 robot = MotionClient(address = robot_ip)
+
+interface = RedisInterface(host="localhost")
+interface.initialize()
+server = KeyValueStore(interface)
 # robot.startServer(mode = 'Kinematic', components = [])
 
 def visualUpdateLoop():
@@ -48,7 +55,7 @@ def visualUpdateLoop():
         # pdb.set_trace()
 
         vis.lock()
-        sensed_position = robot.getKlamptSensedPosition()
+        sensed_position = server["ROBOT_STATE"]["Position"]["Robotq"].read()
         # print(len(sensed_position))
         vis_robot.setConfig(sensed_position)
         ## end effector is 42
