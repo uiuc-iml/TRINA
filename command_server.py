@@ -27,6 +27,7 @@ else:
 	from importlib import reload
 from Jarvis import Jarvis
 import redis
+import traceback
 
 robot_ip = 'http://localhost:8080'
 
@@ -128,7 +129,8 @@ class CommandServer:
 		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
 		moduleMonitorThread.start()
 		atexit.register(self.shutdown_all)
-
+		while(True):
+			time.sleep(200)
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
 
@@ -218,10 +220,11 @@ class CommandServer:
 
 
 	def start_module(self,module,name):
-		module_trina_queue = TrinaQueue(str(name))
-		module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue)
-		a = module(module_jarvis)
-		return a.return_processes()
+		if(name != 'sensor_module'):
+			module_trina_queue = TrinaQueue(str(name))
+			module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue)
+			a = module(module_jarvis)
+			return a.return_processes()
 
 	def start_modules(self,module_names = [],startup = False):
 		import trina_modules
@@ -286,6 +289,7 @@ class CommandServer:
 									self.active_modules[name] = False
 		except Exception as e:
 			print('Failed to initialize module',name,'due to ',e)
+			traceback.print_exc()
 	def switch_module_activity(self,to_activate,to_deactivate = []):
 		print('switching module activity:')
 		if(to_deactivate == []):
@@ -453,7 +457,7 @@ class CommandServer:
 						commandList = robot_command
 						for command in commandList:
 							self.run(command)
-							print(command)
+							# print(command)
 							self.command_logger.log_command(command,time.time())
 					else:
 						print('ignoring commands from {} because it is inactive'.format(str(i)),robot_command)
@@ -591,7 +595,7 @@ class TrinaQueue(object):
 		self.key = key
 	def push(self,item):
 		self.r.rpush(self.key,item)
-	
+
 class TrinaQueueReader(object):
 	def __init__(self, host = 'localhost', port = 6379):
 		self.r = redis.Redis(host = host, port = port)

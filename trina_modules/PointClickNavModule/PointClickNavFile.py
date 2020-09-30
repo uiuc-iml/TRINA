@@ -60,11 +60,11 @@ class PointClickNav:
 		self.can_send_gridmap = False
 		self.exit_flag = False
 		self.mode = mode
-		self.visualization = False		
+		self.visualization = False
 		time.sleep(10)
 		if self.debugging:
 
-			self.simulated_robot = Motion(mode = 'Kinematic', codename="anthrax") #the world file has been modified to add a 
+			self.simulated_robot = Motion(mode = 'Kinematic', codename="anthrax") #the world file has been modified to add a
 			#laser sensor
 			self.simulated_robot.startup()
 			self.world = self.simulated_robot.getWorld()
@@ -93,7 +93,7 @@ class PointClickNav:
 			self.jarvis = Jarvis
 			base_q = self.jarvis.sensedBasePosition()
 			self.curr_pose = base_q
-			
+
 			if self.visualization:
 				#start visualizer
 				self.vis_world = WorldModel()
@@ -119,7 +119,7 @@ class PointClickNav:
 		#start the parent ros node
 		rospy.init_node("sensing_test_parent")
 		#get the first grid
-		self.grid = None	
+		self.grid = None
 
 		#Debugging.,.
 		# while self.grid == None:
@@ -127,26 +127,27 @@ class PointClickNav:
 		# 	self.grid = get_occupancy_grid("dynamic_map")
 		# 	print("\n\n\n It seems that we cannot get a grid from gmapping, it there something wrong? - Changing for Yifan\n\n\n\n")
 		# 	time.sleep(0.5)
+		self.grid = get_occupancy_grid("dynamic_map")
 
 		self.res = self.grid.info.resolution
 		self.radius = 0.5588/2/self.res * 2.0 #radius in terms of grids
 		self.gridmap = build_2d_map(self.grid).T
 		self.preprocessed_gridmap = preprocess(self.gridmap, self.radius)
 
-		#current start and end 
+		#current start and end
 		#transforms world coordinates into the grid (indeces)
 		self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
 		#wait for user to give goal
 		self.end = []
 		self._sharedLock = RLock()
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
-	
+
 		#global path computation processes
 		#this only start the process but need to be activated to start computing global path
 		self.global_path_parent_conn, self.global_path_child_conn = Pipe()
 		self.global_path_proc = Process(target=self._computeGlobalPath, args=(self.global_path_child_conn,self.end,self.radius,False))
 		self.global_path_proc.start()
-		
+
 		main_thread = threading.Thread(target = self._mainLoop)
 		state_thread = threading.Thread(target = self._infoLoop)
 		state_thread.start()
@@ -156,14 +157,14 @@ class PointClickNav:
 	def sigint_handler(self, signum, frame):
 		""" Catch Ctrl+C tp shutdown the api,
 			there are bugs with using sigint_handler.. not used rn.
-	
+
 		"""
 		assert(signum == signal.SIGINT)
 		#logger.warning('SIGINT caught...shutting down the api!')
 		print("SIGINT caught...shutting down the api!")
 		vis.kill()
 		self.global_path_parent_conn.send([[],[],[],True,True])
-		#self.ros_parent_conn.send([[],[],True]) 
+		#self.ros_parent_conn.send([[],[],True])
 
 	def return_threads(self):
 		return [self._infoLoop,self._mainLoop]
@@ -173,7 +174,7 @@ class PointClickNav:
 
 	def _infoLoop(self):
 		if self.debugging:
-			send_ray_once = False	
+			send_ray_once = False
 		while not self.exit_flag:
 			self.jarvis.log_health()
 			loop_start_time = time.time()
@@ -187,15 +188,15 @@ class PointClickNav:
 					print('infoLoop: new ray set for main thread')
 				if self.state == 'waiting':
 					self.newConfirmation = True
-					print('infoLoop: plan confirmed')	
+					print('infoLoop: plan confirmed')
 				#update current position
 				self.curr_pose = self.simulated_robot.sensedBasePosition()
-				
+
 				#send current laser signal...
 				self.lidar.kinematicSimulate(self.world,0.001)
 				ros_msg = ros.to_SensorMsg(self.lidar, frame="/base_scan")
 				self.ros_parent_conn.send([ros_msg, self.curr_pose,False])
-				#print('lidar scan sent') 
+				#print('lidar scan sent')
 				self._sharedLock.release()
 			else:
 				# left_q = self.jarvis.sensedLeftLimbPosition()
@@ -205,10 +206,10 @@ class PointClickNav:
 				if(self.visualization):
 					self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
 				status = self.jarvis.getActivityStatus()
-				
+
 				#TODO get terminate flag question
 				#terminate_flag = self.jarvis.get
-				
+
 				#self._sharedLock.acquire()
 
 				if(status == 'active'):
@@ -218,7 +219,7 @@ class PointClickNav:
 				elif(status == 'idle'):
 					if self.status == 'active':
 						self.deactivate()
-				
+
 				#if terminate_flag:
 					#self.terminate_command = True
 
@@ -240,7 +241,7 @@ class PointClickNav:
 		self.curr_point = None
 		planning_request_sent = True
 		pose_history = []
-		
+
 		while not self.exit_flag:
 			# print('fromPointClick:',self.state)
 			loop_start_time = time.time()
@@ -257,7 +258,7 @@ class PointClickNav:
 				self.global_path_parent_conn.send((self.gridmap, self.start,self.end,False,False))
 				self._sharedLock.release()
 
-			if self.state == 'idle':							
+			if self.state == 'idle':
 				# print("_mainLoop: idling")
 				pass
 			elif self.state == 'active':
@@ -269,7 +270,7 @@ class PointClickNav:
 				planning_request_sent = False
 				print("_mainLoop: newRay received")
 				self._sharedLock.release()
-				
+
 
 			elif self.state == 'planning':
 				if not planning_request_sent:
@@ -292,7 +293,7 @@ class PointClickNav:
 						self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
 						self.global_path_parent_conn.send((self.gridmap, self.start,self.end,True,False))
 						planning_request_sent = True
-						
+
 					else:
 						print("no map found by gmapping during planning...")
 						self.jarvis.sendConfirmationUI('Error','A gmapping error has occurred....Returning to idle')
@@ -300,7 +301,7 @@ class PointClickNav:
 
 				#if the planning request is already sent to process, then just check if planning has finished
 				else:
-					#check if path planning has finished 
+					#check if path planning has finished
 					if self.global_path_parent_conn.poll():
 						new_global_path = self.global_path_parent_conn.recv()
 						if new_global_path == None:
@@ -310,7 +311,7 @@ class PointClickNav:
 							continue
 
 						#stop planning and waiting for user confirmation
-						self.global_path_parent_conn.send((None,self.start,self.end,False,False))			
+						self.global_path_parent_conn.send((None,self.start,self.end,False,False))
 						self.global_path = new_global_path
 
 						#This means that the process is ready to accept a new planning request
@@ -370,7 +371,7 @@ class PointClickNav:
 						print('at end')
 					else:
 						#self.jarvis.sendConfirmationUI('info','Path has finished')
-						self.jarvis.setBaseVelocity([0,0]) 
+						self.jarvis.setBaseVelocity([0,0])
 						self.jarvis.changeActivityStatus(['UI'],['PointClickNav'])
 						print('execution has completed')
 					self.state = 'idle'
@@ -379,7 +380,7 @@ class PointClickNav:
 					self.start = None
 					self.end_theta = None
 					#stop calculating global path
-					self.global_path_parent_conn.send((None,self.start,self.end,False,False))	
+					self.global_path_parent_conn.send((None,self.start,self.end,False,False))
 					self._sharedLock.release()
 					self.jarvis.changeActivityStatus(['UI'],['PointClickNav'])
 
@@ -426,7 +427,7 @@ class PointClickNav:
 						self._sharedLock.release()
 						continue
 
-				#Get the primitve milestones		
+				#Get the primitve milestones
 				xs, ys, thetas = closest.get_xytheta(20)
 				#proceed to finish one primitive
 				acc = 0.3
@@ -486,7 +487,7 @@ class PointClickNav:
 					if self. visualization:
 						vis.add("klocaltraj", ktraj)
 						vis.setColor("klocaltraj", 0, 0, 255)
-					if self.debugging:						
+					if self.debugging:
 						self.simulated_robot.setBaseVelocity(vel)
 					else:
 						self.jarvis.setBaseVelocity(vel)
@@ -532,7 +533,7 @@ class PointClickNav:
 
 				if self.global_path_parent_conn.poll():
 					new_global_path = self.global_path_parent_conn.recv()
-					if new_global_path:	
+					if new_global_path:
 						self.global_path = new_global_path
 						self.jarvis.sendTrajectoryUI(klampt.model.trajectory.Trajectory(milestones = [transform_back([x, y], self.grid) + [0.05] for x, y in zip(self.global_path.get_xs(), self.global_path.get_ys())]))
 					else:
@@ -602,11 +603,13 @@ class PointClickNav:
 	def activate(self):
 		self._sharedLock.acquire()
 		self.state = 'active'
+		self.status = 'active'
 		self._sharedLock.release()
 
 	def deactivate(self):
 		self._sharedLock.acquire()
 		self.state = 'idle'
+		self.status = 'idle'
 		self.jarvis.setBaseVelocity([0,0])
 		self.confirm_request_sent = False
 		self.global_path = None
