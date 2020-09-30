@@ -6,7 +6,7 @@ import time
 import logging
 from datetime import datetime
 from trina_logging import get_logger
-
+import numpy as np
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
 logger = get_logger(__name__,logging.DEBUG,filename)
 
@@ -247,6 +247,7 @@ def _openLeftRobotiqGripper():
 
 def _closeLeftRobotiqGripper():
 	global robot
+	print('left gripper called')
 	return robot.closeLeftRobotiqGripper()
 
 def _openRightRobotiqGripper():
@@ -259,19 +260,31 @@ def _closeRightRobotiqGripper():
 
 def _setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
 	global robot
-	return robot.setLeftEEInertialTransform(Tg,K,M,B,x_dot_g,deadband)
+	K = np.array(K)
+	B = np.array(B)
+	M = np.array(M)
+	return robot.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
 	global robot
-	return robot.setRightEEInertialTransform(Tg,K,M,B,x_dot_g,deadband)
+	K = np.array(K)
+	B = np.array(B)
+	M = np.array(M)
+	return robot.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 def _setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
 	global robot
-	return robot.setLeftLimbPositionTransform(q,K,M,B,x_dot_g,deadband)
+	K = np.array(K)
+	B = np.array(B)
+	M = np.array(M)
+	return robot.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
 	global robot
-	return robot.setRightLimbPositionTransform(q,K,M,B,x_dot_g,deadband)	
+	K = np.array(K)
+	B = np.array(B)
+	M = np.array(M)
+	return robot.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)	
 
 
 
@@ -280,7 +293,8 @@ def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
 #ip_address = '72.36.119.129'
 
 # ip_address = '172.16.241.141'
-ip_address = 'localhost' #'10.0.242.158'#
+# ip_address = #'10.0.242.158'#'localhost' #'10.0.242.158'#
+ip_address = 'localhost'
 port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()

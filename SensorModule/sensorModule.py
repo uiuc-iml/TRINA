@@ -22,19 +22,21 @@ from Jarvis import Jarvis
 from klampt.math import vectorops,so3
 from klampt.model import ik, collide
 from klampt import WorldModel, vis
-
 import sys
 sys.path.append('../../Motion/')
 from Motion.TRINAConfig import *
-import sensor_msgs
-from utils import *
-from geometry import *
+
 import time 
 from multiprocessing import Process, Pipe
 if(sys.version_info[0] < 3):
     import rospy
     import sensor_msgs
     from sensor_msgs.msg import LaserScan
+    import sensor_msgs
+    from .utils import *
+    from .geometry import *
+
+
 
     pass
 else:
@@ -73,8 +75,8 @@ class Camera_Robot:
         else:
             # self.jarvis = Jarvis("sensor_module")
             self.robot = robot
-        self.serial_numbers_dict = {'realsense_left': "620201003873",
-                                    'realsense_right': '620202002883', 
+        self.serial_numbers_dict = {'realsense_left': "639206000824",
+                                    'realsense_right': '639204004320', 
                                     'zed_torso': 24560, 
                                     'zed_back': 24545,
                                     'zed_overhead':23966915,
@@ -466,10 +468,19 @@ class RealSenseCamera:
             self.pipeline.start(self.config)
             # we sleep for 3 seconds to stabilize the color image - no idea why, but if we query it soon after starting, color image is distorted.
             self.pc = rs.pointcloud()
-            self.realsense_transform = np.load(
-                open(self.config_file, 'rb'))
+
+            ##Yifan edit
+            #self.realsense_transform = np.load(
+            #    open(self.config_file, 'rb'))
+            self.realsense_transform = np.eye(4) 
             self.robot = robot
             self.end_effector = end_effector
+            # fs = self.pipeline.wait_for_frames()
+            # df = fs.get_depth_frame()
+            # prof = df.get_profile()
+            # video_prof = prof.as_video_stream_profile()
+            # intr = video_prof.get_intrinsics()
+            # print(intr)
         except Exception as e:
             print(e, 'Invalid Camera Serial Number')
             self.pipeline.stop()
@@ -507,10 +518,15 @@ class RealSenseCamera:
         point_cloud.points = o3d.utility.Vector3dVector(pure_point_cloud)
         point_cloud.colors = o3d.utility.Vector3dVector(color_t)
         # we then obtain the transform for the arm where this is attached:
-        if(self.end_effector == 'right'):
-            rotation, translation = self.robot.sensedRightEETransform()
-        elif(self.end_effector == 'left'):
-            rotation, translation = self.robot.sensedLeftEETransform()
+        # if(self.end_effector == 'right'):
+        #     ## Yifan edit here, 
+        #     rotation, translation = self.robot.sensedRightEETransform()
+        # elif(self.end_effector == 'left'):
+        #     rotation, translation = self.robot.sensedLeftEETransform()
+
+
+        rotation = [1,0,0,0,1,0,0,0,1]
+        translation = [0]*3
         EE_transform = np.array(se3.homogeneous((rotation, translation)))
         # we then multiply this transform with the transform between the end effector and the camera
         final_transform = np.matmul(EE_transform, self.realsense_transform)
@@ -565,7 +581,8 @@ class ZedCamera:
         # Create a InitParameters object and set configuration parameters
         init_params = sl.InitParameters()
         init_params.sdk_verbose = False
-        init_params.camera_resolution = sl.RESOLUTION.HD1080
+        # init_params.camera_resolution = sl.RESOLUTION.HD1080
+        init_params.camera_resolution = sl.RESOLUTION.HD2K
         init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
         init_params.coordinate_units = sl.UNIT.METER
         init_params.set_from_serial_number(serial_num)
@@ -666,13 +683,14 @@ class Camera_Sensors:
 if __name__ == '__main__':
     print('\n\n\n\n\n running as Main\n\n\n\n\n')
     from matplotlib import pyplot as plt
-    a = Camera_Robot()
+    a = Camera_Robot(robot = [],world = [], cameras =['realsense_left'],ros_active = False, use_jarvis = False, mode = 'Physical')
     time.sleep(1)
-    b = []
-    for i in range(50):
-        b = a.get_point_clouds()
-        print(b.keys())
-        print(b[b.keys()[0]])
-        time.sleep(0.08)
-        if(int(time.time()) % 2 == 0):
-            plt.close('all')
+    a.safely_close_all()
+    # b = []
+    # for i in range(50):
+    #     b = a.get_point_clouds()
+    #     print(b.keys())
+    #     print(b[b.keys()[0]])
+    #     time.sleep(0.08)
+    #     if(int(time.time()) % 2 == 0):
+    #         plt.close('all')
