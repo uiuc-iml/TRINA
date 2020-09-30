@@ -241,7 +241,7 @@ class StateLogger(object):
 
         if(commands):
             with self.operational_lock:
-                if(self.logger_states['Commands']):
+                if(self.logger_status['Commands']):
                     print('\n\n adding commands!')
                     commands_df = pd.DataFrame(
                         {'log': commands, 'trina_time': command_times})
