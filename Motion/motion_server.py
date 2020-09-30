@@ -293,8 +293,8 @@ def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
 #ip_address = '72.36.119.129'
 
 # ip_address = '172.16.241.141'
-# ip_address = #'10.0.242.158'#'localhost' #'10.0.242.158'#
-ip_address = 'localhost'
+ip_address = '10.0.242.158'#'localhost' #'10.0.242.158'#
+# ip_address = 'localhost'
 port = 8080
 server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
 server.register_introspection_functions()

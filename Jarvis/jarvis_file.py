@@ -45,8 +45,20 @@ class Jarvis:
 	# def shutdown(self):
 	#     self.command_server.shutdown()
 
+
+
 	def setPosition(self, q):
 		return 0
+	
+	def mirror_arm_config(self,config):
+		RConfig = []
+		RConfig.append(-config[0])
+		RConfig.append(-config[1]-math.pi)
+		RConfig.append(-config[2])
+		RConfig.append(-config[3]+math.pi)
+		RConfig.append(-config[4])
+		RConfig.append(-config[5])
+		return RConfig
 
 	def setLeftLimbPosition(self, q):
 		command = self.send_command('self.robot.setLeftLimbPosition', str(q))

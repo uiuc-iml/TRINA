@@ -29,7 +29,7 @@ from klampt.math import so3
 robot_ip = 'http://localhost:8080'
 ws_port = 1234
 
-model_name = "Motion/data/TRINA_world_seed.xml"
+model_name = "Motion/data/TRINA_world_anthrax.xml"
 
 roomname = "The Lobby"
 zonename = "BasicExamples"

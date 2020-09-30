@@ -61,7 +61,7 @@ class CommandServer:
 		self.start_ros_stuff()
 		self.world_file = world_file
 		# we then proceed with startup as normal
-		self.always_active = set(['UI','devel','debug'])
+		self.always_active = set(['UI','devel','debug','DirectTeleoperation'])
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
@@ -246,7 +246,7 @@ class CommandServer:
 								if(name not in self.always_active):
 									self.active_modules[name] = False
 								else:
-									self.active_modules[name] = TrueTrinaQueue(str(name))
+									self.active_modules[name] = True
 
 					self.server['HEALTH_LOG'] = self.health_dict
 					self.server['ACTIVITY_STATUS'] = activity_dict
@@ -265,7 +265,7 @@ class CommandServer:
 									if(name not in self.always_active):
 										self.active_modules[name] = False
 									else:
-										self.active_modules[name] = TrueTrinaQueue(str(name))
+										self.active_modules[name] = True
 
 					self.server['HEALTH_LOG'] = self.health_dict
 					self.server['ACTIVITY_STATUS'] = activity_dict
@@ -627,7 +627,7 @@ if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
 	# server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
-	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation','StateLogger'])
+	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
 	while(True):
 		time.sleep(100)
 		pass

@@ -96,8 +96,11 @@ class DirectTeleOperation:
 
 			elif(status == 'idle'):
 				if self.status == 'active':
-					self.state = 'idle'
-					self.status = 'idle'
+					# self.state = 'idle'
+					# self.status = 'idle'
+					# DEBUGGING ONLY - SET TO IDLE AFTER TESTING!!!
+					self.state = 'active'
+					self.status = 'active'
 			elapsed_time = time.time() - loop_start_time
 			if elapsed_time < self.infoLoop_rate:
 				time.sleep(self.infoLoop_rate)
@@ -207,7 +210,7 @@ class DirectTeleOperation:
 			RT_rw_rh = np.array(RT_rw_rh)
 			RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
 			RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
-			RT_final = np.add(RT_rw_rh, np.matmul(np.matmul(self.init_headset_orientation.as_matrix(),R_cw_rw), np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()
+			RT_final = np.add(RT_rw_rh, np.matmul(np.matmul(self.init_headset_orientation.as_dcm(),R_cw_rw), np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()
 
 			RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
 
@@ -231,9 +234,9 @@ class DirectTeleOperation:
 			RR_cw_cc = R.from_rotvec(right_handed_curr_vec)
 			RR_ch_cc = self.init_headset_orientation*(RR_cw_ch_T*RR_cw_cc)*self.init_headset_orientation.inv()
 
-			RR_final = (RR_rw_rh*RR_ch_cc).as_matrix().flatten().tolist()
+			RR_final = (RR_rw_rh*RR_ch_cc).as_dcm().flatten().tolist()
 
-			start_time = time.process_time()
+			start_time = time.time()
 			if(side == 'right'):
 				print('\n\n\n\n\n\n moving right arm \n\n\n\n\n\n\n')
 
@@ -326,7 +329,7 @@ class DirectTeleOperation:
 			RR_cw_cc = R.from_rotvec(right_handed_curr_quat[0:3]*right_handed_curr_quat[3])
 
 			RR_final = (RR_rw_rh*RR_cw_ch_T*RR_cw_cc)
-			start_time = time.process_time()
+			start_time = time.time()
 
 			# we now calculate the difference between current and desired positions:
 			Delta_RR = (curr_orientation.inv()*RR_final).inv().as_rotvec()
@@ -380,8 +383,11 @@ class DirectTeleOperation:
 		rpy = partial_rotation.as_euler('ZYX')
 		# we then ignore its roll and pitch in unity
 		rotation_final = R.from_euler('ZYX',[rpy[0],0,0])
+
+		print('Treated initial matrix - here is the transform')
 		print(rotation_final.as_dcm())
-		return rotation_final
+
+		return rotation_final.inv()
 
 
 
