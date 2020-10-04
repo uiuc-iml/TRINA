@@ -8,7 +8,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="Bubonic_zherong/base_link_Adjusted_Calibrated.STL"/>
+        <mesh filename="Bubonic_zherong/base_link_Adjusted.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
@@ -17,7 +17,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="Bubonic_zherong/base_link_Adjusted_Calibrated.STL"/>
+        <mesh filename="Bubonic_zherong/base_link_Adjusted.STL"/>
       </geometry>
     </collision>
   </link>
@@ -44,7 +44,7 @@
     </collision>
   </link>
   <joint name="base_left_base" type="fixed">
-    <origin xyz="-0.105005 -0.717077 0.563484" rpy="0.631490 0.478004 -2.040709"/>
+    <origin xyz="0.019917 0.180606 1.286799" rpy="0.615191 0.523936 2.525974"/>
     <parent link="base_link"/>
     <child link="left_base_link"/>
     <axis xyz="0 0 0"/>
@@ -274,7 +274,7 @@
     </collision>
   </link>
   <joint name="base_right_base" type="fixed">
-    <origin xyz="0.243036 -0.661803 0.551280" rpy="-0.590603 0.476972 -0.874202"/>
+    <origin xyz="0.020083 -0.180588 1.286797" rpy="-0.615791 0.523201 -2.526274"/>
     <parent link="base_link"/>
     <child link="right_base_link"/>
     <axis xyz="0 0 0"/>
