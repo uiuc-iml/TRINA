@@ -341,6 +341,7 @@ class CommandServer:
 		velEE_right = {}
 		loopStartTime = time.time()
 		while not self.shut_down_flag:
+			# print('updating states')
 			try:
 				if(self.left_limb_active):
 					posEE_left = self.query_robot.sensedLeftEETransform()
@@ -403,7 +404,7 @@ class CommandServer:
 					"KlamptCommandPos" : klampt_command_pos,
 					"KlamptSensedPos" : klampt_sensor_pos
 				}
-
+				# print('states updated with success!')
 			except Exception as e:
 				print(e)
 			################

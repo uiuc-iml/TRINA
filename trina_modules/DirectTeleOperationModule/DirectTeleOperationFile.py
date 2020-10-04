@@ -21,6 +21,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 import signal
+from klampt.math import so3, so2
 
 robot_ip = 'http://localhost:8080'
 
@@ -125,7 +126,7 @@ class DirectTeleOperation:
 				# print("_serveStateReceiver: idling")
 				pass
 			elif self.state == 'active':
-				print('_serveStateReceiver:active')
+				# print('_serveStateReceiver:active')
 				self.last_time = time.time()
 				if(self.left_limb_active):
 					self.cur_pos_left = self.robot.sensedLeftEETransform()
@@ -153,6 +154,8 @@ class DirectTeleOperation:
 				print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
 				self.init_UI_state = self.UI_state
 				self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
+				self.init_pos_right = self.robot.sensedRightEETransform()
+				self.init_pos_left = self.robot.sensedLeftEETransform()
 
 			if(self.base_active):
 				self.baseControl()
@@ -162,12 +165,15 @@ class DirectTeleOperation:
 	def baseControl(self):
 		'''controlling base movement'''
 		base_velocity = [0.5*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.5*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
-
-		try:
-			self.robot.setBaseVelocity(base_velocity)
-		except:
-			print("setBaseVelocity not successful")
-			pass
+		curr_velocity = np.array(self.robot.sensedBaseVelocity())
+		base_velocity_vec = np.array(base_velocity)
+		# if the commanded velocity differs from the actual velocity:
+		if((curr_velocity-base_velocity_vec).sum()!= 0):
+			try:
+				self.robot.setBaseVelocity(base_velocity)
+			except:
+				print("setBaseVelocity not successful")
+				pass
 
 	def positionControl(self):
 		'''controlling arm movement with position command
@@ -211,7 +217,10 @@ class DirectTeleOperation:
 			RT_cw_cc = np.array(self.UI_state["controllerPositionState"][joystick]["controllerPosition"])
 			RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"][joystick]["controllerPosition"])
 			RT_final = np.add(RT_rw_rh, np.matmul(np.matmul(self.init_headset_orientation.as_dcm(),R_cw_rw), np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()
-
+			# RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()
+			print('\n\n Translation Transforms \n')
+			print(RT_final,RT_rw_rh)
+			print('\n\n')
 			RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
 
 			init_quat = np.array(self.init_UI_state["controllerPositionState"][joystick]['controllerRotation'])
@@ -235,7 +244,7 @@ class DirectTeleOperation:
 			RR_ch_cc = self.init_headset_orientation*(RR_cw_ch_T*RR_cw_cc)*self.init_headset_orientation.inv()
 
 			RR_final = (RR_rw_rh*RR_ch_cc).as_dcm().flatten().tolist()
-
+			# RR_final = np.eye(3).flatten().tolist()
 			start_time = time.time()
 			if(side == 'right'):
 				print('\n\n\n\n\n\n moving right arm \n\n\n\n\n\n\n')
@@ -387,7 +396,18 @@ class DirectTeleOperation:
 		print('Treated initial matrix - here is the transform')
 		print(rotation_final.as_dcm())
 
-		return rotation_final.inv()
+		#so3 version:
+		# partial_rotation = so3.from_rotation_vector((right_handed_rotvec[:3]*right_handed_rotvec[3]).tolist())
+		# # we then get its equivalent roll, pitch and yaw
+		# rpy = so3.rpy(partial_rotation)
+		# # # we then ignore its roll and pitch in unity
+		# rotation_final = so3.from_rpy([rpy[0],0,0])
+
+		# # print('Treated initial matrix - here is the transform')
+		# # print(rotation_final.as_dcm())
+
+		# return so3.matrix(rotation_final)
+		return rotation_final
 
 
 
