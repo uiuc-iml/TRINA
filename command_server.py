@@ -27,6 +27,7 @@ else:
 	from importlib import reload
 from Jarvis import Jarvis
 import redis
+import traceback
 
 robot_ip = 'http://localhost:8080'
 
@@ -60,7 +61,7 @@ class CommandServer:
 		self.start_ros_stuff()
 		self.world_file = world_file
 		# we then proceed with startup as normal
-		self.always_active = set(['UI','devel','debug'])
+		self.always_active = set(['UI','devel','debug','DirectTeleoperation'])
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
@@ -128,7 +129,8 @@ class CommandServer:
 		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
 		moduleMonitorThread.start()
 		atexit.register(self.shutdown_all)
-
+		while(True):
+			time.sleep(200)
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
 
@@ -218,10 +220,11 @@ class CommandServer:
 
 
 	def start_module(self,module,name):
-		module_trina_queue = TrinaQueue(str(name))
-		module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue)
-		a = module(module_jarvis)
-		return a.return_processes()
+		if(name != 'sensor_module'):
+			module_trina_queue = TrinaQueue(str(name))
+			module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue)
+			a = module(module_jarvis)
+			return a.return_processes()
 
 	def start_modules(self,module_names = [],startup = False):
 		import trina_modules
@@ -243,7 +246,7 @@ class CommandServer:
 								if(name not in self.always_active):
 									self.active_modules[name] = False
 								else:
-									self.active_modules[name] = TrueTrinaQueue(str(name))
+									self.active_modules[name] = True
 
 					self.server['HEALTH_LOG'] = self.health_dict
 					self.server['ACTIVITY_STATUS'] = activity_dict
@@ -262,7 +265,7 @@ class CommandServer:
 									if(name not in self.always_active):
 										self.active_modules[name] = False
 									else:
-										self.active_modules[name] = TrueTrinaQueue(str(name))
+										self.active_modules[name] = True
 
 					self.server['HEALTH_LOG'] = self.health_dict
 					self.server['ACTIVITY_STATUS'] = activity_dict
@@ -286,6 +289,7 @@ class CommandServer:
 									self.active_modules[name] = False
 		except Exception as e:
 			print('Failed to initialize module',name,'due to ',e)
+			traceback.print_exc()
 	def switch_module_activity(self,to_activate,to_deactivate = []):
 		print('switching module activity:')
 		if(to_deactivate == []):
@@ -337,6 +341,7 @@ class CommandServer:
 		velEE_right = {}
 		loopStartTime = time.time()
 		while not self.shut_down_flag:
+			# print('updating states')
 			try:
 				if(self.left_limb_active):
 					posEE_left = self.query_robot.sensedLeftEETransform()
@@ -399,7 +404,7 @@ class CommandServer:
 					"KlamptCommandPos" : klampt_command_pos,
 					"KlamptSensedPos" : klampt_sensor_pos
 				}
-
+				# print('states updated with success!')
 			except Exception as e:
 				print(e)
 			################
@@ -453,7 +458,7 @@ class CommandServer:
 						commandList = robot_command
 						for command in commandList:
 							self.run(command)
-							print(command)
+							# print(command)
 							self.command_logger.log_command(command,time.time())
 					else:
 						print('ignoring commands from {} because it is inactive'.format(str(i)),robot_command)
@@ -591,7 +596,7 @@ class TrinaQueue(object):
 		self.key = key
 	def push(self,item):
 		self.r.rpush(self.key,item)
-	
+
 class TrinaQueueReader(object):
 	def __init__(self, host = 'localhost', port = 6379):
 		self.r = redis.Redis(host = host, port = port)
@@ -623,7 +628,7 @@ if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
 	# server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
-	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation','StateLogger'])
+	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
 	while(True):
 		time.sleep(100)
 		pass

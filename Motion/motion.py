@@ -620,6 +620,7 @@ class Motion:
             else:
                 pass
         logger.info('controlThread exited.')
+        self._purge_commands()
         print("motion.controlThread: exited")
 
     #TODO: finish setting the entire robot
@@ -1142,27 +1143,27 @@ class Motion:
         if not self.right_limb_enabled:
             print("SetRightEETransform():right limb is not enabled")
             logger.warning('SetRightEETransformImpedance():Right limb not enabled.')
-            return
+            return 0
 
         if self.mode == "Kinematic":
             print("SetRightEETransform():Impedance control not available for Kinematic mode.")
             logger.warning('SetRightEETransformImpedance():Impedance control not available for Kinematic mode.')
-            return
+            return 0 
 
         if np.shape(K) != (6,6) or np.shape(M) != (6,6):
             logger.warning('setRightEETransformImpedance():wrong shape for inputs')
             print('setRightEETransformImpedance():wrong shape for inputs')
-            return
+            return 0
 
         if np.all(K<0) or np.all(M<0):
             logger.warning('setRightEETransformImpedance():K,M need to be nonnegative')
             print('setRightEETransformImpedance():K,M need to be nonnegative')
-            return
+            return 0 
 
         if type(x_dot_g) is not list:
             logger.warning('setRightEETransformImpedance():x_dot_g need to be a list ')
             print('setRightEETransformImpedance():x_dot_g need to be a list')
-            return
+            return 0
 
         self._controlLoopLock.acquire()
 
@@ -1185,7 +1186,7 @@ class Motion:
             self.right_limb_state.B = copy(B)
         self.rights_limb_state.Minv = np.linalg.inv(M)
         self._controlLoopLock.release()
-        return
+        return 0
 
     def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6): #,tool_center = [0,0,0]):
         """Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -1208,27 +1209,27 @@ class Motion:
         if not self.left_limb_enabled:
             print("SetLeftEETransform():left limb is not enabled")
             logger.warning('SetLeftEETransformImpedance():Left limb not enabled.')
-            return
+            return 0
 
         if self.mode == "Kinematic":
             print("SetLeftEETransform():Impedance control not available for Kinematic mode.")
             logger.warning('SetLeftEETransformImpedance():Impedance control not available for Kinematic mode.')
-            return
+            return 0
 
         if np.shape(K) != (6,6) or np.shape(M) != (6,6):
             logger.warning('setLeftEETransformImpedance():wrong shape for inputs')
             print('setLeftEETransformImpedance():wrong shape for inputs')
-            return
+            return 0
 
         if np.all(K<0) or np.all(M<0):
             logger.warning('setLeftEETransformImpedance():K,M need to be nonnegative')
             print('setLeftEETransformImpedance():K,M need to be nonnegative')
-            return
+            return 0
 
         if type(x_dot_g) is not list:
             logger.warning('setLeftEETransformImpedance():x_dot_g need to be a list ')
             print('setLeftEETransformImpedance():x_dot_g need to be a list')
-            return
+            return 0
 
         self._controlLoopLock.acquire()
 
@@ -1253,7 +1254,7 @@ class Motion:
             self.left_limb_state.B = copy(B)
         self.left_limb_state.Minv = np.linalg.inv(M)
         self._controlLoopLock.release()
-        return
+        return 0
 
     def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
         """Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -2412,71 +2413,79 @@ if __name__=="__main__":
 
 
     #################################
-    # robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
+    # robot = Motion(mode = 'Physical',components = ['left_limb'],codename = "bubonic")
     # robot.startup()
     # time.sleep(0.05)
-    # # leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
-    # # leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
-    # # rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
-    # # rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
+    # # # leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
+    # # # leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
+    # # # rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
+    # # # rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
 
-    # #move to untucked position
-    # # robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    # #robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
-    # #robot.setLeftLimbPosition(leftUntuckedConfig)
-    # #robot.setRightLimbPosition(rightUntuckedConfig)
-    # # time.sleep(6)
+    # # #move to untucked position
+    # # # robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+    # # #robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
+    # # #robot.setLeftLimbPosition(leftUntuckedConfig)
+    # # #robot.setRightLimbPosition(rightUntuckedConfig)
+    # # # time.sleep(6)
 
-    # initialT = robot.sensedLeftEETransform()
+    # # initialT = robot.sensedLeftEETransform()
+
+    # # # K = np.array([[200.0,0.0,0.0,0.0,0.0,0.0],\
+    # # #             [0.0,200.0,0.0,0.0,0.0,0.0],\
+    # # #             [0.0,0.0,100000.0,0.0,0.0,0.0],\
+    # # #             [0.0,0.0,0.0,5000.0,0.0,0.0],\
+    # # #             [0.0,0.0,0.0,0.0,5000.0,0.0],\
+    # # #             [0.0,0.0,0.0,0.0,0.0,5000.0]])
 
     # # K = np.array([[200.0,0.0,0.0,0.0,0.0,0.0],\
     # #             [0.0,200.0,0.0,0.0,0.0,0.0],\
-    # #             [0.0,0.0,100000.0,0.0,0.0,0.0],\
-    # #             [0.0,0.0,0.0,5000.0,0.0,0.0],\
-    # #             [0.0,0.0,0.0,0.0,5000.0,0.0],\
-    # #             [0.0,0.0,0.0,0.0,0.0,5000.0]])
+    # #             [0.0,0.0,200.0,0.0,0.0,0.0],\
+    # #             [0.0,0.0,0.0,20000.0,0.0,0.0],\
+    # #             [0.0,0.0,0.0,0.0,20000.0,0.0],\
+    # #             [0.0,0.0,0.0,0.0,0.0,20000.0]])
 
-    # K = np.array([[200.0,0.0,0.0,0.0,0.0,0.0],\
-    #             [0.0,200.0,0.0,0.0,0.0,0.0],\
-    #             [0.0,0.0,200.0,0.0,0.0,0.0],\
-    #             [0.0,0.0,0.0,20000.0,0.0,0.0],\
-    #             [0.0,0.0,0.0,0.0,20000.0,0.0],\
-    #             [0.0,0.0,0.0,0.0,0.0,20000.0]])
+    # K = np.array([[0.0,0.0,0.0,0.0,0.0,0.0],\
+    #         [0.0,0.0,0.0,0.0,0.0,0.0],\
+    #         [0.0,0.0,0.0,0.0,0.0,0.0],\
+    #         [0.0,0.0,0.0,20000.0,0.0,0.0],\
+    #         [0.0,0.0,0.0,0.0,20000.0,0.0],\
+    #         [0.0,0.0,0.0,0.0,0.0,20000.0]])
 
 
-    # # K = np.zeros((6,6))            
+
+    # # # K = np.zeros((6,6))            
 
     # m = np.eye(6)*2.0
-    # m[3,3] = 0.1
-    # m[4,4] = 0.1
-    # m[5,5] = 0.1
+    # # m[3,3] = 0.1
+    # # m[4,4] = 0.1
+    # # m[5,5] = 0.1
 
-    # B = 2.0*np.sqrt(4.0*np.dot(m,K))
-    # # B = np.eye(6)*100.0
-    # # B[3,3] = 3.0
-    # # B[4,4] = 3.0
-    # # B[5,5] = 3.0
+    # # B = 2.0*np.sqrt(4.0*np.dot(m,K))
+    # B = np.eye(6)*200.0
+    # # # B[3,3] = 3.0
+    # # # B[4,4] = 3.0
+    # # # B[5,5] = 3.0
 
 
-    # # initialT = copy(robot.sensedLeftEETransform())
+    # initialT = copy(robot.sensedLeftEETransform())
 
-    # robot.setLeftEETransformImpedance(initialT,K,m,B)#,deadband = [1.0,1.0,1.0,0.5,0.5,0.5])
+    # robot.setLeftEETransformImpedance(initialT,K,m,B,deadband = [1.0,1.0,1.0,0.5,0.5,0.5])
 
-    # # start_time = time.time()
-    # # print('start')
+    # start_time = time.time()
+    # print('start')
     # # with open('trial0.txt','w') as f:
-    # #     while time.time() - start_time < 12:
-    # #         target = deepcopy(initialT)
-    # #         target[1][0] = initialT[1][0] + (time.time() - start_time)*0.02
-    # #         robot.setLeftEETransformImpedance(target,K,m,B)
-    # #         wrench = robot.sensedLeftEEWrench()
-    # #         for ele in wrench:
-    # #             f.write(str(ele)+' ')
-    # #         f.write('\n')
-    # #         time.sleep(0.01)
-    # # print('stop')
+    # while time.time() - start_time < 30:
+    #     # target = deepcopy(initialT)
+    #     # target[1][0] = initialT[1][0] + (time.time() - start_time)*0.02
+    #     # robot.setLeftEETransformImpedance(target,K,m,B)
+    #     # wrench = robot.sensedLeftEEWrench()
+    #     # for ele in wrench:
+    #     #     f.write(str(ele)+' ')
+    #     # f.write('\n')
+    #     time.sleep(0.01)
+    # print('stop')
     # #robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    # time.sleep(20)
+    # time.sleep(1)
 
     # robot.shutdown()
 
@@ -2485,14 +2494,28 @@ if __name__=="__main__":
     robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
     robot.startup()
     time.sleep(0.05)
-
-    q_left = robot.sensedLeftLimbPosition()
-    q_right = robot.sensedRightLimbPosition()
-
-    robot.setLeftEEVelocity([0.01,0,0,0,0,0])
-    time.sleep(10)
+    print(robot.sensedLeftLimbPosition())
+    print(robot.sensedRightLimbPosition())
+    # T = ([-0.027410746388212247, 0.025446320194133856, -0.9993003231116357, -0.9992489147350002, -0.028089745848035596, 0.02669405512690459, -0.02739082662802692, 0.9992814673387936, 0.026197168737538048], [0.6309367284162711, -0.18670518633455385, 1.0091911375778813])
+    # robot.setRightEEInertialTransform(T,5)
+    # time.sleep(6)
+    # a = robot.sensedRightEETransform()
+    # print(T)
+    # print(vectorops.norm(vectorops.sub(T[1],a[1])))
+    # time.sleep(1)
+    #print(robot.sensedRightEETransform())
     # start_time = time.time()
-    # while (time.time() - start_time) < 20:
+    # while (time.time() - start_time) < 40:
+    #     print(robot.sensedLeftEEWrench())
+    #     time.sleep(0.05)
+    
+    #q_left = robot.sensedLeftLimbPosition()
+    # q_right = robot.sensedRightLimbPosition()
+    #print(q_left)
+    # robot.setLeftEEVelocity([0.01,0,0,0,0,0])
+    # time.sleep(10)
+    # start_time = time.time()
+    # while (time.time() - start_time) < 200:
     #     t = time.time() - start_time
     #     q_left_target = copy(q_left)
     #     q_right_target = copy(q_right)
