@@ -2491,11 +2491,18 @@ if __name__=="__main__":
 
 
     #################################
-    robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
+    robot = Motion(mode = 'Kinematic',components = ['left_limb','right_limb','base'],codename = "anthrax")
     robot.startup()
     time.sleep(0.05)
-    print(robot.sensedLeftLimbPosition())
-    print(robot.sensedRightLimbPosition())
+    leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+    rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
+    robot.setLeftLimbPosition(leftUntuckedConfig)
+    robot.setRightLimbPosition(rightUntuckedConfig)
+    time.sleep(4)
+
+
+    print(robot.sensedLeftEETransform()[1])
+    print(robot.sensedRightEETransform()[1])
     # T = ([-0.027410746388212247, 0.025446320194133856, -0.9993003231116357, -0.9992489147350002, -0.028089745848035596, 0.02669405512690459, -0.02739082662802692, 0.9992814673387936, 0.026197168737538048], [0.6309367284162711, -0.18670518633455385, 1.0091911375778813])
     # robot.setRightEEInertialTransform(T,5)
     # time.sleep(6)
