@@ -21,10 +21,8 @@ def on_message(ws, message):
     global server
     global UI_STATE
     global counter
-    # print("Received ::::::: '%s'" % message)
-    mjson = json.loads(unidecode(message))
-
-
+    # Python2 compatibility
+    mjson = json_loads_byteified(unidecode(message))
 
     if mjson["a"] == 0:
         a = {"a": 1, "c": 0, "p": {"zn": zonename, "un": "", "pw": ""}}
@@ -71,8 +69,7 @@ def on_message(ws, message):
             # print('This is MJSON \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
             # print(mjson["p"]["p"])
             #saving the UI_STATE to reem
-            
-            server["UI_STATE"] = mjson['p']['p']
+            server["UI_STATE"] = mjson["p"]["p"]
             try:
                 robot_telemetry = server['robotTelemetry'].read()
 
@@ -127,6 +124,46 @@ def on_open(ws):
         print("Thread terminating...")
 
     Thread(target=run).start()
+
+
+"""Python2 compatibility: json.loads will store keys and string values as
+unicode strings instead of str (byte) strings. This causes an issue in 
+REEM which checks that all keys are of type `str`. These functions allow for
+loading json objects with byte strings.
+
+Taken from here:
+https://stackoverflow.com/a/33571117
+"""
+def json_load_byteified(file_handle):
+    return _byteify(
+        json.load(file_handle, object_hook=_byteify),
+        ignore_dicts=True
+    )
+
+
+def json_loads_byteified(json_text):
+    return _byteify(
+        json.loads(json_text, object_hook=_byteify),
+        ignore_dicts=True
+    )
+
+
+def _byteify(data, ignore_dicts = False):
+    # if this is a unicode string, return its string representation
+    if isinstance(data, unicode):
+        return data.encode('utf-8')
+    # if this is a list of values, return list of byteified values
+    if isinstance(data, list):
+        return [ _byteify(item, ignore_dicts=True) for item in data ]
+    # if this is a dictionary, return dictionary of byteified keys and values
+    # but only if we haven't already byteified it
+    if isinstance(data, dict) and not ignore_dicts:
+        return {
+            _byteify(key, ignore_dicts=True): _byteify(value, ignore_dicts=True)
+            for key, value in data.iteritems()
+        }
+    # if it's anything else, return it in its original form
+    return data
 
 
 if __name__ == "__main__":

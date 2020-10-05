@@ -135,7 +135,6 @@ class CommandServer:
 		# self.empty_command.update({'UI':[]})
 
 	def init_robot_states(self):
-
 		pos_left = [0,0,0,0,0,0]
 		pos_right = [0,0,0,0,0,0]
 		pos_base = [0,0,0]
@@ -156,12 +155,18 @@ class CommandServer:
 			pos_left = self.query_robot.sensedLeftLimbPosition()
 			vel_left = self.query_robot.sensedLeftLimbVelocity()
 			velEE_left = self.query_robot.sensedLeftEEVelocity()
+			global_EEWrench_left = self.query_robot.sensedLeftEEWrench('global')
+			local_EEWrench_left = self.query_robot.sensedLeftEEWrench('local')
+
 
 		if(self.right_limb_active):
 			posEE_right = self.query_robot.sensedRightEETransform()
 			pos_right = self.query_robot.sensedRightLimbPosition()
 			vel_right = self.query_robot.sensedRightLimbVelocity()
 			velEE_right = self.query_robot.sensedRightEEVelocity()
+			global_EEWrench_right = self.query_robot.sensedRightEEWrench('global')
+			local_EEWrench_right = self.query_robot.sensedRightEEWrench('local')
+
 
 		if(self.base_active):
 			pos_base = self.query_robot.sensedBasePosition()
@@ -201,6 +206,16 @@ class CommandServer:
 			"PositionEE": {
 				"LeftArm" : posEE_left,
 				"RightArm" : posEE_right
+			},
+			"EEWrench":{
+				"LeftArm" :{
+					"global":global_EEWrench_left,
+					"local": local_EEWrench_left
+				},
+				"RightArm" :{
+					"global":global_EEWrench_right,
+					"local": local_EEWrench_right
+				}
 			},
 			"Velocity" : {
 				"LeftArm" : vel_left,
