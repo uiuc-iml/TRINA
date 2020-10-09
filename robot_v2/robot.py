@@ -22,7 +22,9 @@ def on_message(ws, message):
     global UI_STATE
     global counter
     # Python2 compatibility
-    mjson = json_loads_byteified(unidecode(message))
+    if type(message) != str:
+        message = unidecode(message)
+    mjson = json_loads_byteified(message)
 
     if mjson["a"] == 0:
         a = {"a": 1, "c": 0, "p": {"zn": zonename, "un": "", "pw": ""}}
@@ -150,9 +152,7 @@ def json_loads_byteified(json_text):
 
 def _byteify(data, ignore_dicts = False):
     # if this is a unicode string, return its string representation
-    if sys.version_info[0] == 3:
-        unicode = str
-    if isinstance(data, unicode):
+    if sys.version_info[0] < 3 and isinstance(data, unicode):
         return data.encode('utf-8')
     # if this is a list of values, return list of byteified values
     if isinstance(data, list):
@@ -162,7 +162,7 @@ def _byteify(data, ignore_dicts = False):
     if isinstance(data, dict) and not ignore_dicts:
         return {
             _byteify(key, ignore_dicts=True): _byteify(value, ignore_dicts=True)
-            for key, value in data.iteritems()
+            for key, value in data.items()
         }
     # if it's anything else, return it in its original form
     return data
