@@ -127,7 +127,7 @@ def on_open(ws):
 
 
 """Python2 compatibility: json.loads will store keys and string values as
-unicode strings instead of str (byte) strings. This causes an issue in 
+unicode strings instead of str (byte) strings. This causes an issue in
 REEM which checks that all keys are of type `str`. These functions allow for
 loading json objects with byte strings.
 
@@ -150,6 +150,8 @@ def json_loads_byteified(json_text):
 
 def _byteify(data, ignore_dicts = False):
     # if this is a unicode string, return its string representation
+    if sys.version_info[0] == 3:
+        unicode = str
     if isinstance(data, unicode):
         return data.encode('utf-8')
     # if this is a list of values, return list of byteified values
