@@ -142,11 +142,35 @@ class DirectTeleOperation:
 	def setRobotToDefault(self):
 		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
 		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
-		print('right_Untucked',rightUntuckedConfig)
+		rightUntuckedRotation = np.array([
+									0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
+									-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
+									-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
+								])
+		rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
+		# Looks like the y axis is the left-right axis.
+		# Mirroring along y axis.
+		mirror_reflect_R = np.array([
+							 1, -1,  1,
+							-1,  1, -1,
+							 1, -1,  1,
+						])
+		mirror_reflect_T = np.array([1, -1, 1])
+		# Element wise multiplication.
+		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
+		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
+
+		# TODO: This is broken for two reasons:
+		#   1. Linear move won't always work.
+		#   2. We need the "elbow out" ik solution but that isn't guaranteed yet.
 		if('left_limb' in self.components):
-			self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
+			#self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
+			self.robot.setLeftEEInertialTransform([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()],2)
 		if('right_limb' in self.components):
-			self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
+			#self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
+			self.robot.setRightEEInertialTransform([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()],2)
+			pass
+
 
 	def UIStateLogic(self):
 		if(type(self.UI_state)!= int):
@@ -189,18 +213,36 @@ class DirectTeleOperation:
 			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
 		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
 
+		left_pos = self.robot.sensedLeftEETransform()
+		right_pos = self.robot.sensedRightEETransform()
+		print('left arm pos:')
+		print(left_pos)
+		print('right arm pos:')
+		print(right_pos)
+		print('\n\n\n\n\n\n\n')
+		self.setRobotToDefault()
+
+
 	def positionControlArm(self,side):
 		actual_dt = self.dt
 		assert (side in ['left','right']), "invalid arm selection"
 		joystick = side+"Controller"
 		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 :
-			RR_final, RT_final, _ = self.getEETransform(self, side)
+			RR_final, RT_final, _ = self.getEETransform(side)
 			start_time = time.time()
 			if(side == 'right'):
-				print('\n\n\n\n\n\n moving right arm \n\n\n\n\n\n\n')
+				print('\n\n\n\n\n\n moving right arm')
+				print('From:')
+				print(RR_final)
+				print(RT_final)
+				print('\n\n\n\n\n\n\n')
 				self.robot.setRightEEInertialTransform([RR_final,RT_final],actual_dt)
 			else:
-				print('\n\n\n\n\n\n moving left arm \n\n\n\n\n\n\n')
+				print('\n\n\n\n\n\n moving left arm')
+				print('From:')
+				print(RR_final)
+				print(RT_final)
+				print('\n\n\n\n\n\n\n')
 				self.robot.setLeftEEInertialTransform([RR_final,RT_final],actual_dt)
 				if((self.mode == 'Physical') and self.left_gripper_active):
 					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
@@ -284,6 +326,7 @@ class DirectTeleOperation:
 			requested arm, (R,t) tuple representing the current transform of
 			the requested arm
 		"""
+		joystick = side+"Controller"
 		R_cw_rw = np.array([[0,0,1],[-1,0,0],[0,1,0]])
 		if(side == 'right'):
 			[RR_rw_rh,RT_rw_rh] = self.init_pos_right
@@ -296,9 +339,12 @@ class DirectTeleOperation:
 			[joystick]["controllerPosition"])
 		RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"]
 			[joystick]["controllerPosition"])
+#		RT_final = ( RT_rw_rh
+#			+ (self.init_headset_orientation.as_dcm() @ R_cw_rw
+#			@ (RT_cw_cc - RT_cw_ch).T) ).tolist()
 		RT_final = ( RT_rw_rh
-			+ (self.init_headset_orientation.as_dcm() @ R_cw_rw
-			@ (RT_cw_cc - RT_cw_ch).T) ).tolist()
+			+ (np.matmul(np.matmul(self.init_headset_orientation.as_dcm(), R_cw_rw), 
+			(RT_cw_cc - RT_cw_ch).T)) ).tolist()
 		print('\n\n Translation Transforms \n')
 		print(RT_final,RT_rw_rh)
 		print('\n\n')
