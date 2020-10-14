@@ -297,8 +297,9 @@ class DirectTeleOperation:
 		RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"]
 			[joystick]["controllerPosition"])
 		RT_final = ( RT_rw_rh
-			+ (self.init_headset_orientation.as_dcm() @ R_cw_rw
-			@ (RT_cw_cc - RT_cw_ch).T) ).tolist()
+			+ (np.matmul(
+			np.matmul(self.init_headset_orientation.as_dcm(),R_cw_rw)
+			,(RT_cw_cc - RT_cw_ch).T)) ).tolist()
 		print('\n\n Translation Transforms \n')
 		print(RT_final,RT_rw_rh)
 		print('\n\n')
