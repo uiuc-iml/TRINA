@@ -38,6 +38,7 @@ model_name = "Motion/data/TRINA_world_seed.xml"
 class CommandServer:
 
 	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = [],codename = 'anthrax_lowpoly'):
+	#def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic'):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")
@@ -174,6 +175,7 @@ class CommandServer:
 
 		# print( self.query_robot.sensedLeftLimbPosition(),self.query_robot.sensedRightLimbPosition())
 		klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
+		#klampt_q = get_klampt_model_q('bubonic',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
 		klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 		klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 		# print("base velocity")
@@ -375,6 +377,7 @@ class CommandServer:
 					vel_base = self.query_robot.sensedBaseVelocity()
 
 				klampt_q = get_klampt_model_q('anthrax',left_limb = pos_left, right_limb = pos_right, base = pos_base)
+				#klampt_q = get_klampt_model_q('bubonic',left_limb = pos_left, right_limb = pos_right, base = pos_base)
 				klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 				klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 				if(self.left_gripper_active):

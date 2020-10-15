@@ -890,7 +890,8 @@ class Motion:
             #self.robot_model.setConfig(initial)
 
             goal = ik.objective(self.left_EE_link,R=Ttarget[0],t = Ttarget[1])
-            if ik.solve(goal,activeDofs = self.left_active_Dofs):
+            #if ik.solve(goal,activeDofs = self.left_active_Dofs):
+            if ik.solve_global(goal,activeDofs = self.left_active_Dofs):
             # if ik.solve_nearby(goal,maxDeviation=3,activeDofs = self.left_active_Dofs):
             #if result:
                 target_config = self.robot_model.getConfig()
@@ -1020,7 +1021,8 @@ class Motion:
             initial = self.robot_model.getConfig()
 
             goal = ik.objective(self.right_EE_link,R=Ttarget[0],t = Ttarget[1])
-            if ik.solve(goal,activeDofs = self.right_active_Dofs):
+            #if ik.solve(goal,activeDofs = self.right_active_Dofs):
+            if ik.solve_global(goal,activeDofs = self.right_active_Dofs):
                 target_config = self.robot_model.getConfig()
                 logger.info('IK solve successful')
                 print("motion.setRightEEInertialTransform():IK solve successful")

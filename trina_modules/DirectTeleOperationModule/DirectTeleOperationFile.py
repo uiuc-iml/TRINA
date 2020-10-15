@@ -147,7 +147,8 @@ class DirectTeleOperation:
 									-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
 									-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
 								])
-		rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
+		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
+		rightUntuckedTranslation = np.array([0.7410086795413383, -0.296298410887376, 0.8540173127153597])
 		# Looks like the y axis is the left-right axis.
 		# Mirroring along y axis.
 		mirror_reflect_R = np.array([
@@ -169,7 +170,6 @@ class DirectTeleOperation:
 		if('right_limb' in self.components):
 			#self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
 			self.robot.setRightEEInertialTransform([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()],2)
-			pass
 
 
 	def UIStateLogic(self):
@@ -343,8 +343,9 @@ class DirectTeleOperation:
 #			+ (self.init_headset_orientation.as_dcm() @ R_cw_rw
 #			@ (RT_cw_cc - RT_cw_ch).T) ).tolist()
 		RT_final = ( RT_rw_rh
-			+ (np.matmul(np.matmul(self.init_headset_orientation.as_dcm(), R_cw_rw), 
-			(RT_cw_cc - RT_cw_ch).T)) ).tolist()
+			+ (np.matmul(
+			np.matmul(self.init_headset_orientation.as_dcm(),R_cw_rw)
+			,(RT_cw_cc - RT_cw_ch).T)) ).tolist()
 		print('\n\n Translation Transforms \n')
 		print(RT_final,RT_rw_rh)
 		print('\n\n')
