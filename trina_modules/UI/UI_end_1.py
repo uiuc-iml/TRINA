@@ -436,5 +436,9 @@ class TrinaQueue(object):
 if __name__ == "__main__":
     print ("""================================================================================
     UI_end_1.py: powered by klampt vis
+    
+    Options:
+        --trigger: Don't start the UI.
+        --teleop: Send a command to start teleop mode. Use with --trigger for testing.
     """)
     UI_end_1("name", sys.argv)
