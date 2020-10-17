@@ -174,8 +174,7 @@ class CommandServer:
 			vel_base = self.query_robot.sensedBaseVelocity()
 
 		# print( self.query_robot.sensedLeftLimbPosition(),self.query_robot.sensedRightLimbPosition())
-		klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
-		#klampt_q = get_klampt_model_q('bubonic',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
+		klampt_q = get_klampt_model_q(codename,left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
 		klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 		klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 		# print("base velocity")
@@ -376,8 +375,7 @@ class CommandServer:
 					pos_base = self.query_robot.sensedBasePosition()
 					vel_base = self.query_robot.sensedBaseVelocity()
 
-				klampt_q = get_klampt_model_q('anthrax',left_limb = pos_left, right_limb = pos_right, base = pos_base)
-				#klampt_q = get_klampt_model_q('bubonic',left_limb = pos_left, right_limb = pos_right, base = pos_base)
+				klampt_q = get_klampt_model_q(codename,left_limb = pos_left, right_limb = pos_right, base = pos_base)
 				klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 				klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 				if(self.left_gripper_active):
