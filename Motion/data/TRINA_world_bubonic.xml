@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <world>
-    <robot name="trina" file="robots/Bubonic.urdf" rotateZ="0" translation="0 0 0">
+    <robot name="trina" file="robots/Bubonic_uncalibrated.urdf" rotateZ="0" translation="0 0 0">
     </robot>
     <terrain file="terrains/cube.off" scale="100.0 100.0 0.01" translation="-5.0 -5.0 -0.01">
         <display color="0.8 0.8 0.8"/>

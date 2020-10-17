@@ -111,16 +111,17 @@ class Calibration:
 			# self.robot.startup()
 			# time.sleep(0.1)
 
-			# self.robot.setLeftLimbPositionLinear([-3.5516813437091272, -0.28219016016040044, 1.2513144651996058, 3.372593565578125, -0.8351472059832972, -4.003861252461569],10)
-			# self.robot.setRightLimbPositionLinear([3.381075382232666, -2.5918785534300746, -1.4510908126831055, -0.16661770761523442, 0.9471573829650879, -0.8559449354754847],10)
-			# time.sleep(10.5)
-			# EE_transforms = take_pictures(camera = sensor_module,robot = self.robot,arm = location,configurations = TRINAConfig.fixed_calibration_configs,dimx = 1080,dimy = 1920)
-			# self.robot.setLeftLimbPositionLinear([-3.5775955359088343, -0.3373478215983887, 1.3170684019671839, 3.3618618684956054, -0.5811975638019007, -4.019508186970846],10)
-			# self.robot.setRightLimbPositionLinear([3.4404587745666504, -2.5840045414366664, -1.378373146057129, -0.2765520376018067, 0.608403205871582, -0.7975314299212855],10)
-			# time.sleep(10.5)
-			# EE_transforms = take_pictures(camera = sensor_module,robot = self.robot,arm = location,configurations = TRINAConfig.fixed_calibration_configs,dimx = 1080,dimy = 1920)
-			# self.robot.shutdown()
+			self.robot.setLeftLimbPositionLinear([-3.5516813437091272, -0.28219016016040044, 1.2513144651996058, 3.372593565578125, -0.8351472059832972, -4.003861252461569],10)
+			self.robot.setRightLimbPositionLinear([3.4812798500061035, -2.6235443554320277, -1.6114587783813477, -0.05091269434008794, 0.9051432609558105, -0.3359759489642542],10)
+			time.sleep(10.5)
+			EE_transforms = take_pictures(camera = sensor_module,robot = self.robot,arm = location,configurations = TRINAConfig.fixed_calibration_configs,dimx = 1080,dimy = 1920)
+			self.robot.setLeftLimbPositionLinear([-3.5775955359088343, -0.3373478215983887, 1.3170684019671839, 3.3618618684956054, -0.5811975638019007, -4.019508186970846],10)
+			self.robot.setRightLimbPositionLinear([3.5036206245422363, -2.5830193958678187, -1.6527585983276367, -0.03898556650195317, 0.45035600662231445, -0.3307307402240198],10)
+			time.sleep(10.5)
+			EE_transforms = take_pictures(camera = sensor_module,robot = self.robot,arm = location,configurations = TRINAConfig.fixed_calibration_configs,dimx = 1080,dimy = 1920)
+			self.robot.shutdown()
 
+			time.sleep(2.0)
 			initial_urdf_path = '../../Motion/data/robots/Bubonic_uncalibrated.urdf'
 			final_urdf_path = '../../Motion/data/robots/Bubonic.urdf'
 			# final_urdf_path ='../../../Downloads/tmp.urdf'
