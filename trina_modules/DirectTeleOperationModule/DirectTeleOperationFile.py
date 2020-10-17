@@ -37,7 +37,7 @@ roomId=-1
 is_closed=0
 
 class DirectTeleOperation:
-	def __init__(self,Jarvis = None, debugging = False, mode = 'Kinematic'):
+	def __init__(self,Jarvis = None, debugging = False, mode = 'Physical'):
 		self.mode = mode
 		self.status = 'idle' #states are " idle, active"
 		self.state = 'idle' #states are " idle, active"
@@ -148,7 +148,7 @@ class DirectTeleOperation:
 									-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
 								])
 		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
-		rightUntuckedTranslation = np.array([0.7410086795413383, -0.296298410887376, 0.8540173127153597])
+		rightUntuckedTranslation = np.array([0.5410086795413383, -0.296298410887376, 0.8540173127153597])
 		# Looks like the y axis is the left-right axis.
 		# Mirroring along y axis.
 		mirror_reflect_R = np.array([
@@ -166,10 +166,10 @@ class DirectTeleOperation:
 		#   2. We need the "elbow out" ik solution but that isn't guaranteed yet.
 		if('left_limb' in self.components):
 			#self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
-			self.robot.setLeftEEInertialTransform([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()],2)
+			self.robot.setLeftEEInertialTransform([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()],10)
 		if('right_limb' in self.components):
 			#self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
-			self.robot.setRightEEInertialTransform([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()],2)
+			self.robot.setRightEEInertialTransform([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()],10)
 
 
 	def UIStateLogic(self):
@@ -220,11 +220,11 @@ class DirectTeleOperation:
 		print('right arm pos:')
 		print(right_pos)
 		print('\n\n\n\n\n\n\n')
-		self.setRobotToDefault()
+		#self.setRobotToDefault()
 
 
 	def positionControlArm(self,side):
-		actual_dt = self.dt
+		actual_dt = 3*self.dt
 		assert (side in ['left','right']), "invalid arm selection"
 		joystick = side+"Controller"
 		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 :
@@ -244,12 +244,12 @@ class DirectTeleOperation:
 				print(RT_final)
 				print('\n\n\n\n\n\n\n')
 				self.robot.setLeftEEInertialTransform([RR_final,RT_final],actual_dt)
-				if((self.mode == 'Physical') and self.left_gripper_active):
+				if((self.mode == 'Physical')):
 					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
 					if(closed_value >= 0.2):
-						self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])
+						self.robot.closeLeftRobotiqGripper()
 					else:
-						self.robot.setLeftGripperPosition([0,0,0,0])
+						self.robot.openLeftRobotiqGripper()
 
 	def velocityControl(self):
 		'''controlling arm movement with velocity command
@@ -288,11 +288,11 @@ class DirectTeleOperation:
 				print('moving left arm \n\n\n',vel+Delta_RR)
 				self.robot.setLeftEEVelocity(vel+Delta_RR, tool = [0,0,0])
 				if((self.mode == 'Physical') and self.left_gripper_active):
-					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
-					if(closed_value >= 0.2):
-						self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])
+					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]
+					if(closed_value > 0):
+						self.robot.closeLeftRobotiqGripper()
 					else:
-						self.robot.setLeftGripperPosition([0,0,0,0])
+						self.robot.openLeftRobotiqGripper()
 
 	def getEETransform(self, side):
 		"""Get the transform of the end effector attached to the `side` arm
