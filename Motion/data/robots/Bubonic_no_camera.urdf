@@ -203,7 +203,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="Anthrax_lowpoly/left_wrist3_link_Adjusted.STL"/>
+        <mesh filename="Anthrax_lowpoly/left_wrist3_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
@@ -212,7 +212,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="Anthrax_lowpoly/left_wrist3_link_Adjusted.STL"/>
+        <mesh filename="Anthrax_lowpoly/left_wrist3_link.STL"/>
       </geometry>
     </collision>
   </link>
@@ -433,7 +433,7 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="Anthrax_lowpoly/right_wrist3_link_Adjusted.STL"/>
+        <mesh filename="Anthrax_lowpoly/right_wrist3_link.STL"/>
       </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
@@ -442,7 +442,7 @@
     <collision>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="Anthrax_lowpoly/right_wrist3_link_Adjusted.STL"/>
+        <mesh filename="Anthrax_lowpoly/right_wrist3_link.STL"/>
       </geometry>
     </collision>
   </link>
