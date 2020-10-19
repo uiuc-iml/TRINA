@@ -201,26 +201,26 @@ class MotionClient:
 		self.s.openLeftRobotiqGripper()
 
 	def closeLeftRobotiqGripper(self):
-		self.s.closeLeftRobotiqGripper()		
+		self.s.closeLeftRobotiqGripper()
 
 	def openRightRobotiqGripper(self):
 		self.s.openRightRobotiqGripper()
 
 	def closeRightRobotiqGripper(self):
-		self.s.closeRightRobotiqGripper()	
+		self.s.closeRightRobotiqGripper()
 
 	def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setLeftEETransformImpedance()
+		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setRightEETransformImpedance()
+		self.s.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setLeftLimbPositionImpedance()
+		self.s.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setRightLimbPositionImpedance()
-		
+		self.s.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
+
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startServer(mode = "Kinematic", components = ['left_limb'])
