@@ -21,7 +21,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 import signal
-from klampt.math import so3, so2
+from klampt.math import so3, so2, se3
 
 robot_ip = 'http://localhost:8080'
 
@@ -185,8 +185,7 @@ class DirectTeleOperation:
 
 			if(self.base_active):
 				self.baseControl()
-			# TODO: Switch this to self.velocityControl
-			self.positionControl()
+			self.velocityControl()
 
 
 	def baseControl(self):
@@ -254,39 +253,29 @@ class DirectTeleOperation:
 	def velocityControl(self):
 		'''controlling arm movement with velocity command
 		'''
-		self.velocityControlArm('left')
-		self.velocityControlArm('right')
+		if(self.left_limb_active):
+			self.velocityControlArm('left')
+			self.temp_robot_telemetry['leftArm'] = self.robot.sensedLeftLimbPosition()
+		if(self.right_limb_active):
+			self.velocityControlArm('right')
+			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
+		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
 
 	def velocityControlArm(self,side):
 		assert (side in ['left','right']), "invalid arm selection"
 		joystick = side+"Controller"
 		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5:
-			RR_final, RT_final, curr_transform = self.getEETransform(self, side)
-			#TODO STARTUP: Make this part work
-			vel = (np.array(RT_final)-np.array(curr_position))/self.dt
-			vel_norm = np.linalg.norm(vel)
-			max_vel = 0.5
-			actual_dt = self.dt
-			if(vel_norm > max_vel):
-				vel = (vel*max_vel/vel_norm).tolist()
-			else:
-				vel = vel.tolist()
-
-			start_time = time.time()
-
-			# we now calculate the difference between current and desired positions:
-			Delta_RR = (curr_orientation.inv()*RR_final).inv().as_rotvec()
-			rotation_norm = np.linalg.norm(Delta_RR)
-			max_rot = 1
-			if(rotation_norm > max_rot):
-				Delta_RR = (Delta_RR*max_rot/rotation_norm).tolist()
-			else:
-				Delta_RR = Delta_RR.tolist()
+			RR_final, RT_final, curr_transform = self.getEETransform(side)
+			error = se3.error((RR_final, RT_final), curr_transform)
+			# Set EE Velocity wants (v, w), error gives (w, v)
+			error_t = error[3:]
+			error_t.extend(error[:3])
+			print(error_t)
 			if(side == 'right'):
-				self.robot.setRightEEVelocity(vel+Delta_RR, tool = [0,0,0])
+				self.robot.setRightEEVelocity(error_t, tool = [0,0,0])
 			else:
-				print('moving left arm \n\n\n',vel+Delta_RR)
-				self.robot.setLeftEEVelocity(vel+Delta_RR, tool = [0,0,0])
+				print('moving left arm \n\n\n',error_t)
+				self.robot.setLeftEEVelocity(error_t, tool = [0,0,0])
 				if((self.mode == 'Physical') and self.left_gripper_active):
 					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]
 					if(closed_value > 0):
