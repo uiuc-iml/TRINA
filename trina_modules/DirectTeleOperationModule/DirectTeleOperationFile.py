@@ -185,7 +185,7 @@ class DirectTeleOperation:
 
 			if(self.base_active):
 				self.baseControl()
-			self.velocityControl()
+			self.control('position')
 
 
 	def baseControl(self):
@@ -200,6 +200,44 @@ class DirectTeleOperation:
 			except:
 				print("setBaseVelocity not successful")
 				pass
+
+	def control(self, mode):
+		if(self.left_limb_active):
+			self.controlArm('left', mode)
+			self.temp_robot_telemetry['leftArm'] = self.robot.sensedLeftLimbPosition()
+		if(self.right_limb_active):
+			self.controlArm('right', mode)
+			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
+		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
+
+	def controlArm(self, side, mode):
+		assert (side in ['left','right']), "invalid arm selection"
+		actual_dt = 3 * self.dt
+		joystick = side+"Controller"
+		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5:
+			RR_final, RT_final, curr_transform = self.getEETransform(side)
+			error = se3.error((RR_final, RT_final), curr_transform)
+			# Set EE Velocity wants (v, w), error gives (w, v)
+			error_t = error[3:]
+			error_t.extend(error[:3])
+			if(side == 'right'):
+				if mode == 'position':
+					self.robot.setRightEEInertialTransform(
+						[RR_final,RT_final],actual_dt)
+				elif mode == 'velocity':
+					self.robot.setRightEEVelocity(error_t, tool = [0,0,0])
+			else:
+				if mode == 'position':
+					self.robot.setLeftEEInertialTransform(
+						[RR_final,RT_final],actual_dt)
+				elif mode == 'velocity':
+					self.robot.setLeftEEVelocity(error_t, tool = [0,0,0])
+				if((self.mode == 'Physical') and self.left_gripper_active):
+					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]
+					if(closed_value > 0):
+						self.robot.closeLeftRobotiqGripper()
+					else:
+						self.robot.openLeftRobotiqGripper()
 
 	def positionControl(self):
 		'''controlling arm movement with position command
