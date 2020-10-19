@@ -56,6 +56,14 @@ class DirectTeleOperation:
 		self.right_gripper_active = ('right_gripper' in self.components)
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
+
+		self.K = np.diag((1,1,1,1,1,1))
+		self.M = np.diag((0.1,0.1,0.1,0.001,0.001,0.001))
+		self.B = 3 * np.sqrt(4 * self.K * self.M)
+		self.K = self.K.tolist()
+		self.M = self.M.tolist()
+		self.B = self.B.tolist()
+
 		time.sleep(5)
 		self.UI_state = {}
 		self.init_pos_left = {}
@@ -143,12 +151,13 @@ class DirectTeleOperation:
 		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
 		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
 		rightUntuckedRotation = np.array([
-									0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
-									-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
-									-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
-								])
+			0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
+			-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
+			-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
+		])
 		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
-		rightUntuckedTranslation = np.array([0.5410086795413383, -0.296298410887376, 0.8540173127153597])
+		rightUntuckedTranslation = np.array([0.5410086795413383,
+			-0.296298410887376, 0.8540173127153597])
 		# Looks like the y axis is the left-right axis.
 		# Mirroring along y axis.
 		mirror_reflect_R = np.array([
@@ -185,7 +194,7 @@ class DirectTeleOperation:
 
 			if(self.base_active):
 				self.baseControl()
-			self.control('position')
+			self.control('impedance')
 
 
 	def baseControl(self):
@@ -212,10 +221,12 @@ class DirectTeleOperation:
 
 	def controlArm(self, side, mode):
 		assert (side in ['left','right']), "invalid arm selection"
+		assert (mode in ['position', 'velocity', 'impedance']), "Invalid mode"
 		actual_dt = 3 * self.dt
 		joystick = side+"Controller"
 		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5:
 			RR_final, RT_final, curr_transform = self.getEETransform(side)
+			trans = (RR_final, RT_final)
 			error = se3.error((RR_final, RT_final), curr_transform)
 			# Set EE Velocity wants (v, w), error gives (w, v)
 			error_t = error[3:]
@@ -223,97 +234,21 @@ class DirectTeleOperation:
 			if(side == 'right'):
 				if mode == 'position':
 					self.robot.setRightEEInertialTransform(
-						[RR_final,RT_final],actual_dt)
+						trans, actual_dt)
 				elif mode == 'velocity':
 					self.robot.setRightEEVelocity(error_t, tool = [0,0,0])
+				elif mode == 'impedance':
+					self.robot.setRightEETransformImpedance(trans, self.K,
+						self.M, self.B)
 			else:
 				if mode == 'position':
 					self.robot.setLeftEEInertialTransform(
-						[RR_final,RT_final],actual_dt)
+						trans, actual_dt)
 				elif mode == 'velocity':
 					self.robot.setLeftEEVelocity(error_t, tool = [0,0,0])
-				if((self.mode == 'Physical') and self.left_gripper_active):
-					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]
-					if(closed_value > 0):
-						self.robot.closeLeftRobotiqGripper()
-					else:
-						self.robot.openLeftRobotiqGripper()
-
-	def positionControl(self):
-		'''controlling arm movement with position command
-		'''
-		if(self.left_limb_active):
-			self.positionControlArm('left')
-			self.temp_robot_telemetry['leftArm'] = self.robot.sensedLeftLimbPosition()
-		if(self.right_limb_active):
-			self.positionControlArm('right')
-			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
-		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
-
-		left_pos = self.robot.sensedLeftEETransform()
-		right_pos = self.robot.sensedRightEETransform()
-		print('left arm pos:')
-		print(left_pos)
-		print('right arm pos:')
-		print(right_pos)
-		print('\n\n\n\n\n\n\n')
-		#self.setRobotToDefault()
-
-
-	def positionControlArm(self,side):
-		actual_dt = 3*self.dt
-		assert (side in ['left','right']), "invalid arm selection"
-		joystick = side+"Controller"
-		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 :
-			RR_final, RT_final, _ = self.getEETransform(side)
-			start_time = time.time()
-			if(side == 'right'):
-				print('\n\n\n\n\n\n moving right arm')
-				print('From:')
-				print(RR_final)
-				print(RT_final)
-				print('\n\n\n\n\n\n\n')
-				self.robot.setRightEEInertialTransform([RR_final,RT_final],actual_dt)
-			else:
-				print('\n\n\n\n\n\n moving left arm')
-				print('From:')
-				print(RR_final)
-				print(RT_final)
-				print('\n\n\n\n\n\n\n')
-				self.robot.setLeftEEInertialTransform([RR_final,RT_final],actual_dt)
-				if((self.mode == 'Physical')):
-					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
-					if(closed_value >= 0.2):
-						self.robot.closeLeftRobotiqGripper()
-					else:
-						self.robot.openLeftRobotiqGripper()
-
-	def velocityControl(self):
-		'''controlling arm movement with velocity command
-		'''
-		if(self.left_limb_active):
-			self.velocityControlArm('left')
-			self.temp_robot_telemetry['leftArm'] = self.robot.sensedLeftLimbPosition()
-		if(self.right_limb_active):
-			self.velocityControlArm('right')
-			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
-		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
-
-	def velocityControlArm(self,side):
-		assert (side in ['left','right']), "invalid arm selection"
-		joystick = side+"Controller"
-		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5:
-			RR_final, RT_final, curr_transform = self.getEETransform(side)
-			error = se3.error((RR_final, RT_final), curr_transform)
-			# Set EE Velocity wants (v, w), error gives (w, v)
-			error_t = error[3:]
-			error_t.extend(error[:3])
-			print(error_t)
-			if(side == 'right'):
-				self.robot.setRightEEVelocity(error_t, tool = [0,0,0])
-			else:
-				print('moving left arm \n\n\n',error_t)
-				self.robot.setLeftEEVelocity(error_t, tool = [0,0,0])
+				elif mode == 'impedance':
+					self.robot.setLeftEETransformImpedance(trans, self.K,
+						self.M, self.B)
 				if((self.mode == 'Physical') and self.left_gripper_active):
 					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]
 					if(closed_value > 0):
