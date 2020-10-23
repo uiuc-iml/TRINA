@@ -160,8 +160,8 @@ class DirectTeleOperation:
 			[-1, 0, 0],
 			[0, 0, 1],
 		])
-		rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
-			roty90).flatten()
+		# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
+		# 	roty90).flatten()
 		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
 		rightUntuckedTranslation = np.array([0.5410086795413383,
 			-0.296298410887376, 0.8540173127153597])
