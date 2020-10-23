@@ -155,6 +155,13 @@ class DirectTeleOperation:
 			-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
 			-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
 		])
+		roty90 = np.array([
+			[0, 1, 0],
+			[-1, 0, 0],
+			[0, 0, 1],
+		])
+		rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
+			roty90).flatten()
 		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
 		rightUntuckedTranslation = np.array([0.5410086795413383,
 			-0.296298410887376, 0.8540173127153597])
@@ -194,7 +201,7 @@ class DirectTeleOperation:
 
 			if(self.base_active):
 				self.baseControl()
-			self.control('impedance')
+			self.control('position')
 
 
 	def baseControl(self):
@@ -301,9 +308,6 @@ class DirectTeleOperation:
 			[joystick]["controllerPosition"])
 		RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"]
 			[joystick]["controllerPosition"])
-#		RT_final = ( RT_rw_rh
-#			+ (self.init_headset_orientation.as_dcm() @ R_cw_rw
-#			@ (RT_cw_cc - RT_cw_ch).T) ).tolist()
 		RT_final = ( RT_rw_rh
 			+ (np.matmul(
 			np.matmul(self.init_headset_orientation.as_dcm(),R_cw_rw)
