@@ -21,7 +21,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 import signal
-from klampt.math import so3, so2, se3
+from klampt.math import so3, so2, se3, vectorops
 
 robot_ip = 'http://localhost:8080'
 
@@ -63,6 +63,11 @@ class DirectTeleOperation:
 		self.K = self.K.tolist()
 		self.M = self.M.tolist()
 		self.B = self.B.tolist()
+
+		# 0 - Go home
+		# 1 - Set controller home
+		# 2 - Move hands
+		self.teleoperationState = 0
 
 		time.sleep(5)
 		self.UI_state = {}
@@ -150,20 +155,33 @@ class DirectTeleOperation:
 	def setRobotToDefault(self):
 		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
 		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
+		# rightUntuckedRotation = np.array([
+		# 	0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
+		# 	-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
+		# 	-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
+		# ])
 		rightUntuckedRotation = np.array([
-			0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
-			-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
-			-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
+			0, 0, -1,
+			0, -1, 0,
+			-1, 0, 0
 		])
-		roty90 = np.array([
+		rotzm90 = np.array([
 			[0, 1, 0],
 			[-1, 0, 0],
 			[0, 0, 1],
 		])
+		oort = 1/np.sqrt(2)
+		rotxm45 = np.array([
+			[1,0, 0],
+			[0,oort,oort],
+			[0,-oort,oort]
+		])
 		# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
-		# 	roty90).flatten()
+			# rotxm45).flatten()
+		# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
+		# 	rotzm90).flatten()
 		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
-		rightUntuckedTranslation = np.array([0.5410086795413383,
+		rightUntuckedTranslation = np.array([0.34,
 			-0.296298410887376, 0.8540173127153597])
 		# Looks like the y axis is the left-right axis.
 		# Mirroring along y axis.
@@ -192,16 +210,18 @@ class DirectTeleOperation:
 		if(type(self.UI_state)!= int):
 			if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
 				self.setRobotToDefault()
-			if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True):
+				self.teleoperationState = 1
+			if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True and self.teleoperationState == 1):
 				print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
 				self.init_UI_state = self.UI_state
 				self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 				self.init_pos_right = self.robot.sensedRightEETransform()
 				self.init_pos_left = self.robot.sensedLeftEETransform()
+				self.teleoperationState = 2
 
 			if(self.base_active):
 				self.baseControl()
-			self.control('position')
+			self.control('velocity')
 
 
 	def baseControl(self):
@@ -227,14 +247,15 @@ class DirectTeleOperation:
 		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
 
 	def controlArm(self, side, mode):
+		joystick = side+"Controller"
 		assert (side in ['left','right']), "invalid arm selection"
 		assert (mode in ['position', 'velocity', 'impedance']), "Invalid mode"
 		actual_dt = 3 * self.dt
-		joystick = side+"Controller"
-		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5:
+		gain = 2.0
+		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 and self.teleoperationState == 2:
 			RR_final, RT_final, curr_transform = self.getEETransform(side)
 			trans = (RR_final, RT_final)
-			error = se3.error((RR_final, RT_final), curr_transform)
+			error = vectorops.mul(se3.error((RR_final, RT_final), curr_transform), gain)
 			# Set EE Velocity wants (v, w), error gives (w, v)
 			error_t = error[3:]
 			error_t.extend(error[:3])
@@ -262,6 +283,11 @@ class DirectTeleOperation:
 						self.robot.closeLeftRobotiqGripper()
 					else:
 						self.robot.openLeftRobotiqGripper()
+		elif self.teleoperationState == 2:
+			if side == 'right':
+				self.robot.setRightEEVelocity([0,0,0,0,0,0], tool = [0,0,0])
+			elif side == 'left':
+				self.robot.setLeftEEVelocity([0,0,0,0,0,0], tool = [0,0,0])
 
 	def getEETransform(self, side):
 		"""Get the transform of the end effector attached to the `side` arm

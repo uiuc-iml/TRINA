@@ -2048,7 +2048,9 @@ class Motion:
         #elif self.left_limb_state.cartesianMode == 2:
         #                goal = ik.objective(self.left_EE_link,R=target_transform[0])
         initialConfig = self.robot_model.getConfig()
-        res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.000001)
+        # PATRICK - Change this back
+        # res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.000001)
+        res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.001, numRestarts=10)
 
         # print("\n\n\n number of iterations: ",ik.)
         failFlag = False
