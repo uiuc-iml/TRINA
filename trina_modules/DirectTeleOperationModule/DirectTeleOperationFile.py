@@ -21,7 +21,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 import signal
-from klampt.math import so3, so2
+from klampt.math import so3, so2, se3, vectorops
 
 robot_ip = 'http://localhost:8080'
 
@@ -56,6 +56,19 @@ class DirectTeleOperation:
 		self.right_gripper_active = ('right_gripper' in self.components)
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
+
+		self.K = np.diag((1,1,1,1,1,1))
+		self.M = np.diag((0.1,0.1,0.1,0.001,0.001,0.001))
+		self.B = 3 * np.sqrt(4 * self.K * self.M)
+		self.K = self.K.tolist()
+		self.M = self.M.tolist()
+		self.B = self.B.tolist()
+
+		# 0 - Go home
+		# 1 - Set controller home
+		# 2 - Move hands
+		self.teleoperationState = 0
+
 		time.sleep(5)
 		self.UI_state = {}
 		self.init_pos_left = {}
@@ -142,13 +155,34 @@ class DirectTeleOperation:
 	def setRobotToDefault(self):
 		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
 		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
+		# rightUntuckedRotation = np.array([
+		# 	0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
+		# 	-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
+		# 	-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
+		# ])
 		rightUntuckedRotation = np.array([
-									0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
-									-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
-									-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
-								])
+			0, 0, -1,
+			0, -1, 0,
+			-1, 0, 0
+		])
+		rotzm90 = np.array([
+			[0, 1, 0],
+			[-1, 0, 0],
+			[0, 0, 1],
+		])
+		oort = 1/np.sqrt(2)
+		rotxm45 = np.array([
+			[1,0, 0],
+			[0,oort,oort],
+			[0,-oort,oort]
+		])
+		# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
+			# rotxm45).flatten()
+		# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
+		# 	rotzm90).flatten()
 		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
-		rightUntuckedTranslation = np.array([0.5410086795413383, -0.296298410887376, 0.8540173127153597])
+		rightUntuckedTranslation = np.array([0.34,
+			-0.296298410887376, 0.8540173127153597])
 		# Looks like the y axis is the left-right axis.
 		# Mirroring along y axis.
 		mirror_reflect_R = np.array([
@@ -176,17 +210,18 @@ class DirectTeleOperation:
 		if(type(self.UI_state)!= int):
 			if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
 				self.setRobotToDefault()
-			if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True):
+				self.teleoperationState = 1
+			if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True and self.teleoperationState == 1):
 				print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
 				self.init_UI_state = self.UI_state
 				self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 				self.init_pos_right = self.robot.sensedRightEETransform()
 				self.init_pos_left = self.robot.sensedLeftEETransform()
+				self.teleoperationState = 2
 
 			if(self.base_active):
 				self.baseControl()
-			# TODO: Switch this to self.velocityControl
-			self.positionControl()
+			self.control('velocity')
 
 
 	def baseControl(self):
@@ -202,97 +237,57 @@ class DirectTeleOperation:
 				print("setBaseVelocity not successful")
 				pass
 
-	def positionControl(self):
-		'''controlling arm movement with position command
-		'''
+	def control(self, mode):
 		if(self.left_limb_active):
-			self.positionControlArm('left')
+			self.controlArm('left', mode)
 			self.temp_robot_telemetry['leftArm'] = self.robot.sensedLeftLimbPosition()
 		if(self.right_limb_active):
-			self.positionControlArm('right')
+			self.controlArm('right', mode)
 			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
 		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
 
-		left_pos = self.robot.sensedLeftEETransform()
-		right_pos = self.robot.sensedRightEETransform()
-		print('left arm pos:')
-		print(left_pos)
-		print('right arm pos:')
-		print(right_pos)
-		print('\n\n\n\n\n\n\n')
-		#self.setRobotToDefault()
-
-
-	def positionControlArm(self,side):
-		actual_dt = 3*self.dt
-		assert (side in ['left','right']), "invalid arm selection"
+	def controlArm(self, side, mode):
 		joystick = side+"Controller"
-		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 :
-			RR_final, RT_final, _ = self.getEETransform(side)
-			start_time = time.time()
-			if(side == 'right'):
-				print('\n\n\n\n\n\n moving right arm')
-				print('From:')
-				print(RR_final)
-				print(RT_final)
-				print('\n\n\n\n\n\n\n')
-				self.robot.setRightEEInertialTransform([RR_final,RT_final],actual_dt)
-			else:
-				print('\n\n\n\n\n\n moving left arm')
-				print('From:')
-				print(RR_final)
-				print(RT_final)
-				print('\n\n\n\n\n\n\n')
-				self.robot.setLeftEEInertialTransform([RR_final,RT_final],actual_dt)
-				if((self.mode == 'Physical')):
-					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
-					if(closed_value >= 0.2):
-						self.robot.closeLeftRobotiqGripper()
-					else:
-						self.robot.openLeftRobotiqGripper()
-
-	def velocityControl(self):
-		'''controlling arm movement with velocity command
-		'''
-		self.velocityControlArm('left')
-		self.velocityControlArm('right')
-
-	def velocityControlArm(self,side):
 		assert (side in ['left','right']), "invalid arm selection"
-		joystick = side+"Controller"
-		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5:
-			RR_final, RT_final, curr_transform = self.getEETransform(self, side)
-			#TODO STARTUP: Make this part work
-			vel = (np.array(RT_final)-np.array(curr_position))/self.dt
-			vel_norm = np.linalg.norm(vel)
-			max_vel = 0.5
-			actual_dt = self.dt
-			if(vel_norm > max_vel):
-				vel = (vel*max_vel/vel_norm).tolist()
-			else:
-				vel = vel.tolist()
-
-			start_time = time.time()
-
-			# we now calculate the difference between current and desired positions:
-			Delta_RR = (curr_orientation.inv()*RR_final).inv().as_rotvec()
-			rotation_norm = np.linalg.norm(Delta_RR)
-			max_rot = 1
-			if(rotation_norm > max_rot):
-				Delta_RR = (Delta_RR*max_rot/rotation_norm).tolist()
-			else:
-				Delta_RR = Delta_RR.tolist()
+		assert (mode in ['position', 'velocity', 'impedance']), "Invalid mode"
+		actual_dt = 3 * self.dt
+		gain = 2.0
+		if self.UI_state["controllerButtonState"][joystick]["squeeze"][1] > 0.5 and self.teleoperationState == 2:
+			RR_final, RT_final, curr_transform = self.getEETransform(side)
+			trans = (RR_final, RT_final)
+			error = vectorops.mul(se3.error((RR_final, RT_final), curr_transform), gain)
+			# Set EE Velocity wants (v, w), error gives (w, v)
+			error_t = error[3:]
+			error_t.extend(error[:3])
 			if(side == 'right'):
-				self.robot.setRightEEVelocity(vel+Delta_RR, tool = [0,0,0])
+				if mode == 'position':
+					self.robot.setRightEEInertialTransform(
+						trans, actual_dt)
+				elif mode == 'velocity':
+					self.robot.setRightEEVelocity(error_t, tool = [0,0,0])
+				elif mode == 'impedance':
+					self.robot.setRightEETransformImpedance(trans, self.K,
+						self.M, self.B)
 			else:
-				print('moving left arm \n\n\n',vel+Delta_RR)
-				self.robot.setLeftEEVelocity(vel+Delta_RR, tool = [0,0,0])
+				if mode == 'position':
+					self.robot.setLeftEEInertialTransform(
+						trans, actual_dt)
+				elif mode == 'velocity':
+					self.robot.setLeftEEVelocity(error_t, tool = [0,0,0])
+				elif mode == 'impedance':
+					self.robot.setLeftEETransformImpedance(trans, self.K,
+						self.M, self.B)
 				if((self.mode == 'Physical') and self.left_gripper_active):
 					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]
 					if(closed_value > 0):
 						self.robot.closeLeftRobotiqGripper()
 					else:
 						self.robot.openLeftRobotiqGripper()
+		elif self.teleoperationState == 2:
+			if side == 'right':
+				self.robot.setRightEEVelocity([0,0,0,0,0,0], tool = [0,0,0])
+			elif side == 'left':
+				self.robot.setLeftEEVelocity([0,0,0,0,0,0], tool = [0,0,0])
 
 	def getEETransform(self, side):
 		"""Get the transform of the end effector attached to the `side` arm
@@ -339,9 +334,6 @@ class DirectTeleOperation:
 			[joystick]["controllerPosition"])
 		RT_cw_ch = np.array(self.init_UI_state["controllerPositionState"]
 			[joystick]["controllerPosition"])
-#		RT_final = ( RT_rw_rh
-#			+ (self.init_headset_orientation.as_dcm() @ R_cw_rw
-#			@ (RT_cw_cc - RT_cw_ch).T) ).tolist()
 		RT_final = ( RT_rw_rh
 			+ (np.matmul(
 			np.matmul(self.init_headset_orientation.as_dcm(),R_cw_rw)

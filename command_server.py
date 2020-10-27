@@ -643,7 +643,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['right_limb','left_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
+	server = CommandServer(mode = 'Kinematic',components =  ['right_limb','left_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
 	# server = CommandServer(mode = 'Physical',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
 	while(True):
 		time.sleep(100)
