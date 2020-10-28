@@ -2072,7 +2072,7 @@ class Motion:
                 # return 0,0 # 0 means the IK has failed completely
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
                 jacobian = np.array(self.left_EE_link.getJacobian([0,0,0]))
-                del_theta = np.linalg.lstsq(jacobian, target_transform)
+                del_theta = 0.01 * np.linalg.lstsq(jacobian, target_transform)
                 target_config = initialConfig[:]
                 for i, ind in enumerate(self.left_active_Dofs):
                     target_config[ind] += del_theta[i]
