@@ -1150,7 +1150,7 @@ class Motion:
         if self.mode == "Kinematic":
             print("SetRightEETransform():Impedance control not available for Kinematic mode.")
             logger.warning('SetRightEETransformImpedance():Impedance control not available for Kinematic mode.')
-            return 0 
+            return 0
 
         if np.shape(K) != (6,6) or np.shape(M) != (6,6):
             logger.warning('setRightEETransformImpedance():wrong shape for inputs')
@@ -1160,7 +1160,7 @@ class Motion:
         if np.all(K<0) or np.all(M<0):
             logger.warning('setRightEETransformImpedance():K,M need to be nonnegative')
             print('setRightEETransformImpedance():K,M need to be nonnegative')
-            return 0 
+            return 0
 
         if type(x_dot_g) is not list:
             logger.warning('setRightEETransformImpedance():x_dot_g need to be a list ')
@@ -1169,7 +1169,7 @@ class Motion:
 
         self._controlLoopLock.acquire()
 
-        #if already in impedance control, then do not reset x_mass and x_dot_mass 
+        #if already in impedance control, then do not reset x_mass and x_dot_mass
         if not self.right_limb_state.impedanceControl:
             T = self.sensedRightEETransform()
             self.right_limb_state.x_mass = T[1] + so3.moment(T[0])
@@ -1235,7 +1235,7 @@ class Motion:
 
         self._controlLoopLock.acquire()
 
-        #if already in impedance control, then do not reset x_mass and x_dot_mass 
+        #if already in impedance control, then do not reset x_mass and x_dot_mass
         if not self.left_limb_state.impedanceControl:
             #self.left_limb_state.T_mass = self.sensedLeftEETransform()
             T = self.sensedLeftEETransform()
@@ -1284,7 +1284,7 @@ class Motion:
         self.robot_model.setConfig(initialConfig)
         self.setLeftEETransformImpedance(EETransform,q,K,M,B,x_dot_g,deadband)
         return 0
-    
+
     def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
         """Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
@@ -1550,7 +1550,7 @@ class Motion:
         else:
             logger.warning('Right limb not enabled.')
             print('Right limb not enabled.')
-        return 0 
+        return 0
     def setLeftGripperPosition(self, position):
         """Set the position of the gripper. Moves as fast as possible.
 
@@ -2066,10 +2066,16 @@ class Motion:
         if failFlag:
             self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment - 0.1
             if self.left_limb_state.driveSpeedAdjustment < 0.001:
-                self.left_limb_state.cartesianDrive = False
-                logger.error('CartesianDrive IK has failed completely,exited..')
+                # self.left_limb_state.cartesianDrive = False
+                # logger.error('CartesianDrive IK has failed completely,exited..')
+                # print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
+                # return 0,0 # 0 means the IK has failed completely
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
-                return 0,0 # 0 means the IK has failed completely
+                jacobian = np.array(self.left_EE_link.getJacobian([0,0,0]))
+                del_theta = np.linalg.lstsq(jacobian, target_transform)
+                target_config = initialConfig[:]
+                for i, ind in enumerate(self.left_active_Dofs):
+                    target_config[ind] += del_theta[i]
             else:
                 #print("motion.controlLoop():CartesianDrive IK has failed, next trying: ",\
                 #   self.left_limb_state.driveSpeedAdjustment)
@@ -2185,9 +2191,9 @@ class Motion:
 
             self.right_limb_state.x_mass, self.right_limb_state.x_dot_mass = self._simulate(wrench = wrench,m_inv = self.right_limb_state.Minv,\
                 K = self.right_limb_state.K,B = self.right_limb_state.B,x_curr = self.right_limb_state.x_mass,x_dot_curr = self.right_limb_state.x_dot_mass,\
-                x_g = self.right_limb_state.x_g,x_dot_g = self.right_limb_state.x_dot_g,dt = self.dt) 
+                x_g = self.right_limb_state.x_g,x_dot_g = self.right_limb_state.x_dot_g,dt = self.dt)
             self.right_limb_state.counter += 1
-           
+
             T = (so3.from_moment(self.right_limb_state.x_mass[3:6]),self.right_limb_state.x_mass[0:3])
 
         goal = ik.objective(self.right_EE_link,R=T[0],\
@@ -2284,7 +2290,7 @@ class Motion:
 
     #         self.left_limb_state.T_mass, self.left_limb_state.x_dot_mass = self._simulate(wrench = wrench,m_inv = self.left_limb_state.Minv,\
     #             K = self.left_limb_state.K,B = self.left_limb_state.B,T_curr = self.left_limb_state.T_mass,x_dot_curr = self.left_limb_state.x_dot_mass,\
-    #             T_g = self.left_limb_state.T_g,x_dot_g = self.left_limb_state.x_dot_g,dt = self.dt) 
+    #             T_g = self.left_limb_state.T_g,x_dot_g = self.left_limb_state.x_dot_g,dt = self.dt)
     #         self.left_limb_state.counter += 1
     #         #orthogonalize the rotation matrix
     #         if self.left_limb_state.counter % 100 == 0:
@@ -2321,9 +2327,9 @@ class Motion:
         m_inv: 6x6 numpp array,inverse of the mass matrix
         K: 6x6 numpy array, spring constant matrix
         B, 6x6 numpy array, damping constant matrix
-        x_curr: 
+        x_curr:
         x_dot_curr: lost of 6, curent speed
-        x_g: 
+        x_g:
         x_dot_g: a list of 6
         dt:simulation dt
 
@@ -2374,9 +2380,9 @@ class Motion:
 
             self.left_limb_state.x_mass, self.left_limb_state.x_dot_mass = self._simulate(wrench = wrench,m_inv = self.left_limb_state.Minv,\
                 K = self.left_limb_state.K,B = self.left_limb_state.B,x_curr = self.left_limb_state.x_mass,x_dot_curr = self.left_limb_state.x_dot_mass,\
-                x_g = self.left_limb_state.x_g,x_dot_g = self.left_limb_state.x_dot_g,dt = self.dt) 
+                x_g = self.left_limb_state.x_g,x_dot_g = self.left_limb_state.x_dot_g,dt = self.dt)
             self.left_limb_state.counter += 1
-           
+
             T = (so3.from_moment(self.left_limb_state.x_mass[3:6]),self.left_limb_state.x_mass[0:3])
 
         goal = ik.objective(self.left_EE_link,R=T[0],\
@@ -2457,7 +2463,7 @@ if __name__=="__main__":
 
 
 
-    # # # K = np.zeros((6,6))            
+    # # # K = np.zeros((6,6))
 
     # m = np.eye(6)*2.0
     # # m[3,3] = 0.1
@@ -2519,7 +2525,7 @@ if __name__=="__main__":
     # while (time.time() - start_time) < 40:
     #     print(robot.sensedLeftEEWrench())
     #     time.sleep(0.05)
-    
+
     #q_left = robot.sensedLeftLimbPosition()
     # q_right = robot.sensedRightLimbPosition()
     #print(q_left)
