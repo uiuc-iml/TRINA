@@ -59,12 +59,16 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
 
-		self.K = np.diag((1,1,1,1,1,1))
+		self.K = np.diag((1,1,1,1,1,1)) * 2
 		self.M = np.diag((0.1,0.1,0.1,0.001,0.001,0.001))
-		self.B = 3 * np.sqrt(4 * self.K * self.M)
+		self.B = np.sqrt(4 * self.K * self.M)
 		self.K = self.K.tolist()
 		self.M = self.M.tolist()
 		self.B = self.B.tolist()
+
+		#TODO VERY VERY TEMPORARY @REMOVE - Jing-Chen
+		self.tool = np.array([0,0,0])
+		self.tool_target = np.array([0.27,0,0])
 
 		# 0 - Go home
 		# 1 - Set controller home
@@ -157,8 +161,6 @@ class DirectTeleOperation:
 
 
 	def setRobotToDefault(self):
-		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
 		# rightUntuckedRotation = np.array([
 		# 	0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
 		# 	-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
@@ -202,12 +204,16 @@ class DirectTeleOperation:
 		# TODO: This is broken for two reasons:
 		#   1. Linear move won't always work.
 		#   2. We need the "elbow out" ik solution but that isn't guaranteed yet.
+
+		#TODO REMOVE JANKINESS - Jing-Chen
+		self.tool = np.array([0,0,0])
+
 		if('left_limb' in self.components):
 			#self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
-			self.robot.setLeftEEInertialTransform([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()],10)
+			self.robot.setLeftEEInertialTransform([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()],2)
 		if('right_limb' in self.components):
 			#self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
-			self.robot.setRightEEInertialTransform([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()],10)
+			self.robot.setRightEEInertialTransform([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()],2)
 
 
 	def UIStateLogic(self):
@@ -268,7 +274,7 @@ class DirectTeleOperation:
 					self.robot.setRightEEInertialTransform(
 						trans, actual_dt)
 				elif mode == 'velocity':
-					self.robot.setRightEEVelocity(error_t, tool = [0,0,0])
+					self.robot.setRightEEVelocity(error_t, tool = self.tool.tolist())
 				elif mode == 'impedance':
 					self.robot.setRightEETransformImpedance(trans, self.K,
 						self.M, self.B)
@@ -277,7 +283,7 @@ class DirectTeleOperation:
 					self.robot.setLeftEEInertialTransform(
 						trans, actual_dt)
 				elif mode == 'velocity':
-					self.robot.setLeftEEVelocity(error_t, tool = [0,0,0])
+					self.robot.setLeftEEVelocity(error_t, tool = self.tool.tolist())
 				elif mode == 'impedance':
 					self.robot.setLeftEETransformImpedance(trans, self.K,
 						self.M, self.B)
@@ -287,11 +293,12 @@ class DirectTeleOperation:
 						self.robot.closeLeftRobotiqGripper()
 					else:
 						self.robot.openLeftRobotiqGripper()
+			err = self.tool_target - self.tool
 		elif self.teleoperationState == 2:
 			if side == 'right':
-				self.robot.setRightEEVelocity([0,0,0,0,0,0], tool = [0,0,0])
+				self.robot.setRightEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
 			elif side == 'left':
-				self.robot.setLeftEEVelocity([0,0,0,0,0,0], tool = [0,0,0])
+				self.robot.setLeftEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
 
 	def getEETransform(self, side):
 		"""Get the transform of the end effector attached to the `side` arm
@@ -320,7 +327,7 @@ class DirectTeleOperation:
 
 		Returns
 		----------------
-		tuple: (np.ndarray, np.ndarray, tuple)
+		tuple: (list, list, tuple)
 			Desired rotation transform and translation transform for the
 			requested arm, (R,t) tuple representing the current transform of
 			the requested arm

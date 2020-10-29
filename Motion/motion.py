@@ -324,7 +324,7 @@ class Motion:
                     #Send Commands
                     if self.left_limb_enabled:
                         #debug
-                        print((self.left_limb_state.commandQueue, self.left_limb_state.impedanceControl))
+                        # print((self.left_limb_state.commandQueue, self.left_limb_state.impedanceControl))
 
                         if self.left_limb_state.commandQueue:
                             if self.left_limb_state.commandType == 0:
@@ -2073,16 +2073,23 @@ class Motion:
                 # return 0,0 # 0 means the IK has failed completely
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
                 jacobian = np.array(self.left_EE_link.getJacobian([0,0,0]))
-                del_theta = 0.01 * np.linalg.lstsq(jacobian, target_transform)
+                del_theta = np.linalg.lstsq(jacobian, np.array(se3.error(target_transform, current_transform)))[0]
+                del_theta = 0.1 * del_theta / np.linalg.norm(del_theta)
+                logger.error(str(jacobian))
+                logger.error(str(np.array(se3.error(target_transform, current_transform))))
+                logger.error(str(del_theta))
                 target_config = initialConfig[:]
                 for i, ind in enumerate(self.left_active_Dofs):
-                    target_config[ind] += del_theta[i]
+                    target_config[ind] += del_theta[ind]
+                return 2, target_config
             else:
+                logger.warning('CartesianDrive IK has failed partially')
                 #print("motion.controlLoop():CartesianDrive IK has failed, next trying: ",\
                 #   self.left_limb_state.driveSpeedAdjustment)
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
             #print('success!')
+            logger.info('CartesianDrive IK has succeeded')
             target_config = self.robot_model.getConfig()[self.left_active_Dofs[0]:self.left_active_Dofs[5]+1]
             self.left_limb_state.driveTransform = target_transform
             if self.left_limb_state.driveSpeedAdjustment < 1:
