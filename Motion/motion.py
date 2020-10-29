@@ -22,7 +22,7 @@ import trina_logging
 import logging
 from datetime import datetime
 
-filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
+filename = "errorLogs/logFile_" + datetime.now().strftime('%d_%m_%Y') + ".log"
 logger = trina_logging.get_logger(__name__,logging.INFO, filename)
 
 class Motion:
@@ -324,7 +324,7 @@ class Motion:
                     #Send Commands
                     if self.left_limb_enabled:
                         #debug
-                        #print(self.left_limb_state.impedanceControl)
+                        print((self.left_limb_state.commandQueue, self.left_limb_state.impedanceControl))
 
                         if self.left_limb_state.commandQueue:
                             if self.left_limb_state.commandType == 0:
@@ -1179,6 +1179,7 @@ class Motion:
         self.right_limb_state.x_dot_g = copy(x_dot_g)
         self.right_limb_state.K = copy(K)
         self.right_limb_state.cartesianDrive = False
+        self.right_limb_state.commandQueue = False
         self.right_limb_state.impedanceControl = True
         self.right_limb_state.counter = 1
         self.right_limb_state.deadband = copy(deadband)
@@ -1234,7 +1235,6 @@ class Motion:
             return 0
 
         self._controlLoopLock.acquire()
-
         #if already in impedance control, then do not reset x_mass and x_dot_mass
         if not self.left_limb_state.impedanceControl:
             #self.left_limb_state.T_mass = self.sensedLeftEETransform()
@@ -1247,6 +1247,7 @@ class Motion:
         self.left_limb_state.x_dot_g = copy(x_dot_g)
         self.left_limb_state.K = copy(K)
         self.left_limb_state.cartesianDrive = False
+        self.left_limb_state.commandQueue = False
         self.left_limb_state.impedanceControl = True
         self.left_limb_state.counter = 1
         self.left_limb_state.deadband = copy(deadband)
@@ -2067,7 +2068,7 @@ class Motion:
             self.left_limb_state.driveSpeedAdjustment = self.left_limb_state.driveSpeedAdjustment - 0.1
             if self.left_limb_state.driveSpeedAdjustment < 0.001:
                 # self.left_limb_state.cartesianDrive = False
-                # logger.error('CartesianDrive IK has failed completely,exited..')
+                logger.error('CartesianDrive IK has failed completely,exited..')
                 # print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
                 # return 0,0 # 0 means the IK has failed completely
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
@@ -2363,8 +2364,8 @@ class Motion:
         Result flag
         target_config : list of doubles, the target limb config
         """
-        wrench = self.sensedLeftEEWrench(frame = 'global')
-        # wrench = [0,0,0,0,0,0]
+        # wrench = self.sensedLeftEEWrench(frame = 'global')
+        wrench = [0,0,0,0,0,0]
         stop = False
         if vectorops.norm_L2(wrench[0:3]) > 50:
             stop = True

@@ -222,13 +222,55 @@ class MotionClient:
 		self.s.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 if __name__=="__main__":
-	motion = MotionClient()
-	motion.startServer(mode = "Kinematic", components = ['left_limb'])
+	robot_ip = 'http://localhost:8080'
+	motion = MotionClient(address = robot_ip)
+	motion.startServer(mode = "Physical", components =  ['base','left_limb','right_limb','left_gripper'], codename = 'bubonic')
 	motion.startup()
-	while (1==1):
-		time.sleep(0.02)
-		try:
-			motion.getKlamptSensedPosition()
-		except:
-			print("except")
+	time.sleep(0.02)
+	try:
+		print("Starting Home Position")
+		rightUntuckedRotation = np.array([
+			0, 0, -1,
+			0, -1, 0,
+			-1, 0, 0
+		])
+		rightUntuckedTranslation = np.array([0.34,
+			-0.296298410887376, 0.8540173127153597])
+		# Looks like the y axis is the left-right axis.
+		# Mirroring along y axis.
+		mirror_reflect_R = np.array([
+							1, -1,  1,
+							-1,  1, -1,
+							1, -1,  1,
+						])
+		mirror_reflect_T = np.array([1, -1, 1])
+		# Element wise multiplication.
+		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
+		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
+		motion.setLeftEEInertialTransform([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()],2)
+		time.sleep(5)
+
+		print("Starting Impedance Control")
+		rightUntuckedTranslation = np.array([0.54,
+			-0.296298410887376, 0.8540173127153597])
+		mirror_reflect_R = np.array([
+							1, -1,  1,
+						-1,  1, -1,
+							1, -1,  1,
+					])
+		mirror_reflect_T = np.array([1, -1, 1])
+		# Element wise multiplication.
+		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
+		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
+		K = np.diag((1,1,1,1,1,1)) * 2
+		M = np.diag((0.1,0.1,0.1,0.001,0.001,0.001))
+		B = np.sqrt(4 * K * M)
+		K = K.tolist()
+		M = M.tolist()
+		B = B.tolist()
+		
+		motion.setLeftEETransformImpedance((leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()), K, M, B)
+		time.sleep(20)
+	except Exception as err:
+				print("Error: {0}".format(err))
 	motion.shutdown()
