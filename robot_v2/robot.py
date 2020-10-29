@@ -167,8 +167,12 @@ def _byteify(data, ignore_dicts = False):
     # if it's anything else, return it in its original form
     return data
 
-
-if __name__ == "__main__":
+def listen():
+    global userId, roomId, drone, roomname, zonename
+    global is_closed
+    global server
+    global UI_STATE
+    global counter
     counter = 0
     interface = RedisInterface(host="localhost")
     interface.initialize()
@@ -187,4 +191,6 @@ if __name__ == "__main__":
     ws.on_open = on_open
     ws.run_forever()
 
+if __name__ == "__main__":
+    listen()
 ###

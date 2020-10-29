@@ -23,6 +23,8 @@ import traceback
 import signal
 from klampt.math import so3, so2, se3, vectorops
 
+from robot_v2 import robot as controller_listen
+
 robot_ip = 'http://localhost:8080'
 
 
@@ -81,8 +83,10 @@ class DirectTeleOperation:
 
 		stateRecieverThread = threading.Thread(target=self._serveStateReceiver)
 		main_thread = threading.Thread(target = self._infoLoop)
+		controller_thread = threading.Thread(target = controller_listen.listen)
 		stateRecieverThread.start()
 		main_thread.start()
+		controller_thread.start()
 
 	def sigint_handler(self, signum, frame):
 		""" Catch Ctrl+C tp shutdown the api,
