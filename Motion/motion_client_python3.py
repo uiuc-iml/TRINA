@@ -228,12 +228,11 @@ class MotionClient:
 		self.s.setRightLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
 		
 if __name__=="__main__":
-	motion = MotionClient()
+	motion = MotionClient('http://localhost:8080')
+	motion.startServer(mode = "Physical",components=['left_limb','right_limb'],codename = "bubonic")
 	motion.startup()
-	while (1==1):
-		time.sleep(0.02)
-		try:
-			motion.getKlamptSensedPosition()
-		except:
-			print("except")
+	time.sleep(0.5)
+	
+	print(motion.sensedLeftLimbPosition())
+	time.sleep(0.5)
 	motion.shutdown()

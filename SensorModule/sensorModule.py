@@ -18,6 +18,7 @@ import threading
 import copy
 from OpenGL.GLUT import *
 from OpenGL.GL import *
+sys.path.append('../')
 from Jarvis import Jarvis
 from klampt.math import vectorops,so3
 from klampt.model import ik, collide
@@ -685,7 +686,9 @@ class Camera_Sensors:
 if __name__ == '__main__':
     print('\n\n\n\n\n running as Main\n\n\n\n\n')
     from matplotlib import pyplot as plt
-    a = Camera_Robot(robot = [],world = [], cameras =['realsense_left'],ros_active = False, use_jarvis = False, mode = 'Physical')
+    a = Camera_Robot(robot = [],world = [], cameras =['zed_overhead'],ros_active = False, use_jarvis = False, mode = 'Physical')
+    time.sleep(1)
+    print(a.get_rgbd_images()['zed_overhead'])
     time.sleep(1)
     a.safely_close_all()
     # b = []

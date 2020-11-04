@@ -646,7 +646,7 @@ class Motion:
         q: a list of 6 doubles. The desired joint positions.
         """
         logger.debug('number of joint positions sent : %d', len(q))
-        assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"('controlThread exited.')
+        assert len(q) == 6 #, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"('controlThread exited.')
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
             self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb_state.sensedq),self._get_klampt_q(left_limb = q))
