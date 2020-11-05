@@ -18,12 +18,12 @@ import sensor_msgs
 from datetime import datetime
 from motion import Motion
 #python files
-from global_planner import *
-from local_planner import *
-from motion_primitives import *
+from .global_planner import *
+from .local_planner import *
+from .motion_primitives import *
 from motion_profile import *
-from utils import *
-from geometry import *
+from .utils import *
+from .geometry import *
 from matplotlib import pyplot as plt
 
 from sensor_msgs.msg import LaserScan

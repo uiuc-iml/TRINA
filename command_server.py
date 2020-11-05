@@ -496,7 +496,7 @@ class CommandServer:
 		except Exception as e:
 			print('there was an error executing your command!',e)
 		finally:
-			print("command recieved was " + command)
+			print("command recieved was " + str(command))
 
 			pass
 
@@ -643,7 +643,7 @@ if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
 	# server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
-	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
+	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav'])
 	while(True):
 		time.sleep(100)
 		pass

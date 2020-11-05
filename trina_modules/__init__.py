@@ -19,8 +19,8 @@ reload(DirectTeleOperationModule)
 reload(LoggerModule)
 # UI = reload(trina_modules.UI.UI)
 
-from test_modules import *
-from PointClickNavModule import PointClickNav
-from DirectTeleOperationModule import DirectTeleOperation
-from LoggerModule import StateLogger
+from .test_modules import *
+from .PointClickNavModule import PointClickNav
+from .DirectTeleOperationModule import DirectTeleOperation
+from .LoggerModule import StateLogger
 # from trina_modules.UI.UI import *

@@ -15,6 +15,6 @@ sys.path.append(path)
 from . import DirectTeleOperationFile
 reload(DirectTeleOperationFile)
 
-from DirectTeleOperationFile import DirectTeleOperation
+from .DirectTeleOperationFile import DirectTeleOperation
 
 sys.path.remove(path)

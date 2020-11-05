@@ -1,8 +1,8 @@
 import numpy as np
-from local_planner import *
-from utils import *
+from .local_planner import *
+from .utils import *
 import math
-from geometry import *
+from .geometry import *
 
 import matplotlib.pyplot as plt
 

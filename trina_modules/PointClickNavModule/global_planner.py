@@ -2,7 +2,7 @@ import numpy as np
 import math
 from heapq import heappush, heappop
 
-from utils import *
+from .utils import *
 
 class GlobalPath:
 

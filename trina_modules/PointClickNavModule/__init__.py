@@ -15,6 +15,6 @@ sys.path.append(path)
 from . import PointClickNavFile
 reload(PointClickNavFile)
 
-from PointClickNavFile import PointClickNav
+from .PointClickNavFile import PointClickNav
 
 sys.path.remove(path)

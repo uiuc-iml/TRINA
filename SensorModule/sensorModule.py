@@ -26,6 +26,7 @@ from klampt import WorldModel, vis
 import sys
 sys.path.append('../../Motion/')
 from Motion.TRINAConfig import *
+import tf
 
 import time 
 from multiprocessing import Process, Pipe
@@ -41,6 +42,9 @@ if(sys.version_info[0] < 3):
 
     pass
 else:
+    import rospy
+    import sensor_msgs
+    from sensor_msgs.msg import LaserScan
     import pyzed.sl as sl
 import pyrealsense2 as rs
 import os
