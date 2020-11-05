@@ -91,7 +91,7 @@ cd librealsense
 ./scripts/patch-realsense-ubuntu-lts.sh
 mkdir build
 cd build
-cmake ../ -DBUILD_PYTHON_BINDINGS:bool=true
+cmake ../ -DBUILD_PYTHON_BINDINGS:bool=true -DENFORCE_METADATA:bool=true
 make -j4
 sudo make install
 export PYTHONPATH=$PYTHONPATH:/usr/local/lib
@@ -106,12 +106,12 @@ echo 'export PATH=/usr/local/cuda/bin${PATH:+:${PATH}}' >> ~/.bashrc
 
 cd
 echo "installing ZED for sensor module"
-wget https://download.stereolabs.com/zedsdk/3.2/cu110/ubuntu20
+wget https://download.stereolabs.com/zedsdk/3.3/cu111/ubuntu20
 chmod +x ubuntu20
 ./ubuntu20
-wget https://download.stereolabs.com/zedsdk/3.2/ubuntu20/cu110/py38
-mv py38 pyzed-3.2-cp38-cp38-linux_x86_64.whl
-python3 -m pip install pyzed-3.2-cp38-cp38-linux_x86_64.whl
+wget https://download.stereolabs.com/zedsdk/3.3/ubuntu20/cu111/py38
+mv py38 pyzed-3.3-cp38-cp38-linux_x86_64.whl
+python3 -m pip install pyzed-3.3-cp38-cp38-linux_x86_64.whl
 
 cd
 cd TRINA/robot_v2/websocket_client-0.56.0
