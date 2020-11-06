@@ -369,6 +369,8 @@ class UI_end_1:
         self.screenElement = set([])
         if "--teleop" in args:
             self.jarvis.changeActivityStatus(["DirectTeleOperation"])
+        if "--testing" in args:
+            self.jarvis.changeActivityStatus(["testing"])
         if not "--trigger" in args:
             file_dir = "../../Motion/data/TRINA_world_anthrax_PointClick.xml"
             world = klampt.WorldModel()
