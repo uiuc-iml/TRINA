@@ -273,7 +273,7 @@ class DirectTeleOperation:
 			elif self.controller_mode == ControllerMode.CLUTCHING:
 				for limb in (self.left_limb, self.right_limb):
 					if self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][1] > 0.5:
-						if limb.teleoperationState == 1:
+						if limb.teleoperationState == 3 or limb.teleoperationState == 1:
 							self.init_UI_state["controllerPositionState"][limb.joystick]["controllerPosition"] = (
 								self.UI_state["controllerPositionState"][limb.joystick]["controllerPosition"])
 							self.init_UI_state["controllerPositionState"][limb.joystick]['controllerRotation'] = (
@@ -288,8 +288,9 @@ class DirectTeleOperation:
 
 							limb.teleoperationState = 2
 
-					else:
-						limb.teleoperationState = 1
+					elif limb.teleoperationState == 2:
+						limb.teleoperationState = 3
+						limb.setEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
 
 			if(self.base_active):
 				self.baseControl()
@@ -366,7 +367,7 @@ class DirectTeleOperation:
 			elif mode == 'impedance':
 				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B)
 
-            #TODO remove jankness - Jing-Chen
+            #TODO remove jankness - Jing-Chen is this even doing anything??
 			err = self.tool_target - self.tool
 			self.tool = np.add(self.tool, 0.1 * err, out=self.tool, casting="unsafe")
 		else:
