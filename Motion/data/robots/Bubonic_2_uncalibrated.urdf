@@ -1,4 +1,4 @@
-<robot name="Lowpoly_anthrax_URDF">
+<robot name="Bubonic_URDF">
   <link name="base_link">
     <inertial>
       <origin xyz="-0.12713011286975 -5.7341398127575E-05 0.379646859128274" rpy="0 0 0"/>
