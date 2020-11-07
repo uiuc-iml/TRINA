@@ -37,7 +37,7 @@ zonename = "BasicExamples"
 userId=0
 roomId=-1
 is_closed=0
-
+DEGREE_2_RADIAN = 2.0*math.pi/180.0
 class DirectTeleOperation:
 	def __init__(self,Jarvis = None, debugging = False, mode = 'Physical'):
 		self.mode = mode
@@ -242,8 +242,8 @@ class DirectTeleOperation:
 	
 	def headControl(self):
 		'''controlling head positions'''
-		# goal_orientation = [self.UI_state['headSetPositionState']['deviceRotation'][0],self.UI_state['headSetPositionState']['deviceRotation'][1]]
-		goal_orientation = self.UI_state['headSetPositionState']['deviceRotation']
+		goal_orientation = [(self.UI_state['headSetPositionState']['deviceRotation'][0]-self.init_headset_orientation[0])*DEGREE_2_RADIAN,
+		(self.UI_state['headSetPositionState']['deviceRotation'][1]-init_headset_orientation[1])*DEGREE_2_RADIAN]
 		# temp func name
 		self.robot.setHeadPosition(goal_orientation)
 
