@@ -134,10 +134,7 @@ class Motion:
         else:
             logger.error('Wrong Mode specified')
             raise RuntimeError('Wrong Mode specified')
-        self.left_limb_state = LimbState()
-        self.right_limb_state = LimbState()
 
-        self.base_state = BaseState()
         self.left_limb_state = LimbState()
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
@@ -323,9 +320,6 @@ class Motion:
                        self.left_gripper.mark_read()
                     #Send Commands
                     if self.left_limb_enabled:
-                        #debug
-                        # print((self.left_limb_state.commandQueue, self.left_limb_state.impedanceControl))
-
                         if self.left_limb_state.commandQueue:
                             if self.left_limb_state.commandType == 0:
                                 tmp = time.time() - self.left_limb_state.commandQueueTime
@@ -344,15 +338,9 @@ class Motion:
                                 res, target_config = self._left_limb_cartesian_drive(self.left_limb_state.driveTransform)
                                 if res == 0:
                                     #res = 0 means IK has failed completely, 1 means keep trying smaller steps, 2 means success
-                                    #set to position mode...
                                     self.cartesian_drive_failure = True
-                                    self.left_limb_state.commandSent = False
-                                    self.left_limb_state.commandedq = deepcopy(self.sensedLeftLimbPosition())
-                                    self.left_limb_state.commandeddq = []
-                                    self.left_limb_state.commandType = 0
-                                    self.left_limb_state.commandQueue = False
-                                    self.left_limb_state.commandedqQueue = []
-                                    self.left_limb_state.cartesianDrive = False
+                                    #set to position mode...
+                                    self.left_limb_state.set_mode_position(self.sensedLeftLimbPosition())
                                     break
                                 elif res == 1:
                                     flag = 1
@@ -363,13 +351,7 @@ class Motion:
                             res,target_config = self._left_limb_imdepance_drive()
                             if res == 0:
                                 self.cartesian_drive_failure = True
-                                self.left_limb_state.commandSent = False
-                                self.left_limb_state.commandedq = deepcopy(self.sensedLeftLimbPosition())
-                                self.left_limb_state.commandeddq = []
-                                self.left_limb_state.commandType = 0
-                                self.left_limb_state.commandQueue = False
-                                self.left_limb_state.commandedqQueue = []
-                                self.left_limb_state.impedanceControl = False
+                                self.left_limb_state.set_mode_position(self.sensedLeftLimbPosition())
                             elif res == 1:
                                 self.left_limb.setConfig(target_config)
                             elif res == 2:
@@ -401,13 +383,7 @@ class Motion:
                                 if res == 0:
                                     #set to position mode...
                                     self.cartesian_drive_failure = True
-                                    self.right_limb_state.commandSent = False
-                                    self.right_limb_state.commandedq = deepcopy(self.sensedRightLimbPosition())
-                                    self.right_limb_state.commandeddq = []
-                                    self.right_limb_state.commandType = 0
-                                    self.right_limb_state.commandQueue = False
-                                    self.right_limb_state.commandedqQueue = []
-                                    self.right_limb_state.cartesianDrive = False
+                                    self.right_limb_state.set_mode_position(self.sensedRightLimbPosition())
                                     break
                                 elif res == 1:
                                     flag = 1
@@ -418,13 +394,7 @@ class Motion:
                             res,target_config = self._right_limb_imdepance_drive()
                             if res == 0:
                                 self.cartesian_drive_failure = True
-                                self.right_limb_state.commandSent = False
-                                self.right_limb_state.commandedq = deepcopy(self.sensedRightLimbPosition())
-                                self.right_limb_state.commandeddq = []
-                                self.right_limb_state.commandType = 0
-                                self.right_limb_state.commandQueue = False
-                                self.right_limb_state.commandedqQueue = []
-                                self.right_limb_state.impedanceControl = False
+                                self.right_limb_state.set_mode_position(self.sensedRightLimbPosition())
                             elif res == 1:
                                 self.right_limb.setConfig(target_config)
                             elif res == 2:
@@ -508,16 +478,7 @@ class Motion:
                             if res == 0:
                                 #set to position mode...
                                 self.cartesian_drive_failure = True
-                                self.left_limb_state.commandSent = False
-                                self.left_limb_state.commandedq = deepcopy(self.sensedLeftLimbPosition())
-                                self.left_limb_state.commandeddq = []
-                                self.left_limb_state.commandType = 0
-                                self.left_limb_state.commandQueue = False
-                                self.left_limb_state.difference = []
-                                self.left_limb_state.commandedqQueueStart = []
-                                self.left_limb_state.commandQueueTime = 0.0
-                                self.left_limb_state.commandedQueueDuration = 0.0
-                                self.left_limb_state.cartesianDrive = False
+                                self.left_limb_state.set_mode_position(self.sensedLeftLimbPosition())
                                 break
                             elif res == 1:
                                 flag = 1
@@ -553,16 +514,7 @@ class Motion:
                             if res == 0:
                                 #set to position mode...
                                 self.cartesian_drive_failure = True
-                                self.right_limb_state.commandSent = False
-                                self.right_limb_state.commandedq = deepcopy(self.sensedRightLimbPosition())
-                                self.right_limb_state.commandeddq = []
-                                self.right_limb_state.commandType = 0
-                                self.right_limb_state.commandQueue = False
-                                self.right_limb_state.difference = []
-                                self.right_limb_state.commandedqQueueStart = []
-                                self.right_limb_state.commandQueueTime = 0.0
-                                self.right_limb_state.commandedQueueDuration = 0.0
-                                self.right_limb_state.cartesianDrive = False
+                                self.right_limb_state.set_mode_position(self.sensedRightLimbPosition())
                                 break
                             elif res == 1:
                                 flag = 1
@@ -649,19 +601,9 @@ class Motion:
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"('controlThread exited.')
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
+            # TODO ????? (Jing-Chen)
             self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb_state.sensedq),self._get_klampt_q(left_limb = q))
-            self.left_limb_state.commandSent = False
-            self.left_limb_state.commandedq = deepcopy(q)
-            self.left_limb_state.commandeddq = []
-            self.left_limb_state.commandType = 0
-            self.left_limb_state.commandQueue = False
-            self.left_limb_state.difference = []
-            self.left_limb_state.commandedqQueueStart = []
-            self.left_limb_state.commandQueueTime = 0.0
-            self.left_limb_state.commandedQueueDuration = 0.0
-            self.left_limb_state.cartesianDrive = False
-            self.left_limb_state.impedanceControl = False
-            self.left_limb_state.Xs = []
+            self.left_limb_state.set_mode_position(q)
             self._controlLoopLock.release()
         else:
             logger.warning('Left limb not enabled')
@@ -681,19 +623,9 @@ class Motion:
         assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
         if self.right_limb_enabled:
             self._controlLoopLock.acquire()
+            # TODO ????? (Jing-Chen)
             self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb_state.sensedq),self._get_klampt_q(right_limb = q))
-            self.right_limb_state.commandSent = False
-            self.right_limb_state.commandedq = deepcopy(q)
-            self.right_limb_state.commandeddq = []
-            self.right_limb_state.commandType = 0
-            self.right_limb_state.commandQueue = False
-            self.right_limb_state.difference = []
-            self.right_limb_state.commandedqQueueStart = []
-            self.right_limb_state.commandQueueTime = 0.0
-            self.right_limb_state.commandedQueueDuration = 0.0
-            self.right_limb_state.cartesianDrive = False
-            self.right_limb_state.impedanceControl = False
-            self.right_limb_state.Xs = []
+            self.right_limb_state.set_mode_position(q)
             self._controlLoopLock.release()
         else:
             logger.warning('Right limb not enabled')
@@ -717,6 +649,7 @@ class Motion:
         #TODO:Also collision checks
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
+            # NOTE: Why are we running collision checks and tossing the results? WHY? (Jing-Chen)
             self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb_state.sensedq),self._get_klampt_q(left_limb = q))
             #planningTime = 0.0 + TRINAConfig.ur5e_control_rate
             #positionQueue = []
@@ -726,18 +659,9 @@ class Motion:
             #    positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
             #    planningTime = planningTime + self.dt #TRINAConfig.ur5e_control_rate
             #positionQueue.append(q)
-            self.left_limb_state.commandSent = False
-            self.left_limb_state.commandType = 0
-            self.left_limb_state.difference = vectorops.sub(q,self.left_limb_state.sensedq)
-            self.left_limb_state.commandedqQueueStart = deepcopy(self.left_limb_state.sensedq)
-            self.left_limb_state.commandQueue = True
-            self.left_limb_state.commandedq = []
-            self.left_limb_state.commandeddq = []
-            self.left_limb_state.cartesianDrive = False
-            self.left_limb_state.impedanceControl = False
-            self.left_limb_state.Xs = []
-            self.left_limb_state.commandedQueueDuration = duration
-            self.left_limb_state.commandQueueTime = time.time()
+            difference = vectorops.sub(q,self.left_limb_state.sensedq)
+            start = self.left_limb_state.sensedq
+            self.left_limb_state.set_mode_commandqueue(difference, start, duration)
             self._controlLoopLock.release()
         else:
             logger.warning('Left limb not enabled')
@@ -761,19 +685,11 @@ class Motion:
         #Also collision checks
         if self.right_limb_enabled:
             self._controlLoopLock.acquire()
+            # NOTE: Why are we running collision checks and tossing the results? WHY? (Jing-Chen)
             self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb_state.sensedq),self._get_klampt_q(right_limb = q))
-            self.right_limb_state.commandSent = False
-            self.right_limb_state.commandType = 0
-            self.right_limb_state.difference = vectorops.sub(q,self.right_limb_state.sensedq)
-            self.right_limb_state.commandedqQueueStart = deepcopy(self.right_limb_state.sensedq)
-            self.right_limb_state.commandQueue = True
-            self.right_limb_state.commandedq = []
-            self.right_limb_state.commandeddq = []
-            self.right_limb_state.cartesianDrive = False
-            self.right_limb_state.impedanceControl = False
-            self.right_limb_state.Xs = []
-            self.right_limb_state.commandedQueueDuration = duration
-            self.right_limb_state.commandQueueTime = time.time()
+            difference = vectorops.sub(q,self.right_limb_state.sensedq)
+            start = self.right_limb_state.sensedq
+            self.right_limb_state.set_mode_commandqueue(difference, start, duration)
             self._controlLoopLock.release()
         else:
             logger.warning('Right limb not enabled')
@@ -831,18 +747,7 @@ class Motion:
             logger.debug('number of joint velocities sent : %d', len(qdot))
             assert len(qdot) == 6, "motion.setLeftLimbVelocity()): Wrong number of joint velocities sent"
             self._controlLoopLock.acquire()
-            self.left_limb_state.commandSent = False
-            self.left_limb_state.commandeddq = deepcopy(qdot)
-            self.left_limb_state.commandedq = []
-            self.left_limb_state.commandType = 1
-            self.left_limb_state.commandQueue = False
-            self.left_limb_state.difference = []
-            self.left_limb_state.commandedqQueueStart = []
-            self.left_limb_state.commandQueueTime = 0.0
-            self.left_limb_state.commandedQueueDuration = 0.0
-            self.left_limb_state.cartesianDrive = False
-            self.left_limb_state.impedanceControl = False
-            self.left_limb_state.Xs = []
+            self.left_limb_state.set_mode_velocity(qdot)
             self._controlLoopLock.release()
         else:
             logger.warning('Left limb not enabled')
@@ -861,17 +766,7 @@ class Motion:
             logger.debug('number of joint velocities sent : %d', len(qdot))
             assert len(qdot) == 6, "motion.setRightLimbVelocity()): Wrong number of joint velocities sent"
             self._controlLoopLock.acquire()
-            self.right_limb_state.commandSent = False
-            self.right_limb_state.commandeddq = deepcopy(qdot)
-            self.right_limb_state.commandedq = []
-            self.right_limb_state.commandType = 1
-            self.right_limb_state.commandQueue = False
-            self.right_limb_state.difference = []
-            self.right_limb_state.commandedqQueueStart = []
-            self.right_limb_state.commandQueueTime = 0.0
-            self.right_limb_state.commandedQueueDuration = 0.0
-            self.right_limb_state.cartesianDrive = False
-            self.right_limb_state.impedanceControl = False
+            self.right_limb_state.set_mode_velocity(qdot)
             self._controlLoopLock.release()
         else:
             logger.warning('Right limb not enabled')
@@ -943,16 +838,10 @@ class Motion:
         """
         if self.left_limb_enabled:
             self._controlLoopLock.acquire()
-            self.left_limb_state.impedanceControl = False
-            self.left_limb_state.Xs = []
+            #self.left_limb_state.impedanceControl = False
+            #self.left_limb_state.Xs = []
             if not self.left_limb_state.cartesianDrive:
-                self.left_limb_state.commandedq = []
-                self.left_limb_state.commandeddq = []
-                self.left_limb_state.commandQueue = False
-                self.left_limb_state.difference = []
-                self.left_limb_state.commandedqQueueStart = []
-                self.left_limb_state.commandQueueTime = 0.0
-                self.left_limb_state.commandedQueueDuration = 0.0
+                self.left_limb_state.set_mode_position(self.sensedLeftLimbPosition())
                 self.cartesian_drive_failure = False
                 ##cartesian velocity drive
 
@@ -1067,16 +956,10 @@ class Motion:
         """
         if self.right_limb_enabled:
             self._controlLoopLock.acquire()
-            self.right_limb_state.impedanceControl = False
-            self.right_limb_state.Xs = []
+            #self.right_limb_state.impedanceControl = False
+            #self.right_limb_state.Xs = []
             if not self.right_limb_state.cartesianDrive:
-                self.right_limb_state.commandedq = []
-                self.right_limb_state.commandeddq = []
-                self.right_limb_state.commandQueue = False
-                self.right_limb_state.difference = []
-                self.right_limb_state.commandedqQueueStart = []
-                self.right_limb_state.commandQueueTime = 0.0
-                self.right_limb_state.commandedQueueDuration = 0.0
+                self.right_limb_state.set_mode_position(self.sensedRightLimbPosition())
                 self.cartesian_drive_failure = False
                 ##cartesian velocity drive
                 if len(v) == 3:
@@ -1175,12 +1058,14 @@ class Motion:
             self.right_limb_state.x_mass = T[1] + so3.moment(T[0])
             (v,w) = self.sensedRightEEVelocity()
             self.right_limb_state.x_dot_mass = v+w
+
+        self.right_limb_state.set_mode_reset()
+
+        self.right_limb_state.impedanceControl = True
         self.right_limb_state.x_g = Tg[1] + so3.moment(Tg[0])
         self.right_limb_state.x_dot_g = copy(x_dot_g)
         self.right_limb_state.K = copy(K)
-        self.right_limb_state.cartesianDrive = False
-        self.right_limb_state.commandQueue = False
-        self.right_limb_state.impedanceControl = True
+
         self.right_limb_state.counter = 1
         self.right_limb_state.deadband = copy(deadband)
         if np.any(np.isnan(B)):
@@ -1242,18 +1127,17 @@ class Motion:
             self.left_limb_state.x_mass = T[1] + so3.moment(T[0])
             (v,w) = self.sensedLeftEEVelocity()
             self.left_limb_state.x_dot_mass = v+w
+        self.left_limb_state.set_mode_reset()
+
+        self.left_limb_state.impedanceControl = True
 
         print(so3.moment(Tg[0]))
         moment_error = so3.error(Tg[0], so3.from_moment(self.left_limb_state.x_mass[3:6]))
         # self.left_limb_state.x_g = Tg[1] + so3.moment(Tg[0])
+        # Should not add axis-angle vectors :(
         self.left_limb_state.x_g = Tg[1] + vectorops.add(self.left_limb_state.x_mass[3:6],moment_error)
-
-
         self.left_limb_state.x_dot_g = copy(x_dot_g)
         self.left_limb_state.K = copy(K)
-        self.left_limb_state.cartesianDrive = False
-        self.left_limb_state.commandQueue = False
-        self.left_limb_state.impedanceControl = True
         self.left_limb_state.counter = 1
         self.left_limb_state.deadband = copy(deadband)
         if np.any(np.isnan(B)):
@@ -2080,9 +1964,9 @@ class Motion:
                 jacobian = np.array(self.left_EE_link.getJacobian([0,0,0]))
                 del_theta = np.linalg.lstsq(jacobian, np.array(se3.error(target_transform, current_transform)))[0]
                 del_theta = 0.1 * del_theta / np.linalg.norm(del_theta)
-                logger.error(str(jacobian))
-                logger.error(str(np.array(se3.error(target_transform, current_transform))))
-                logger.error(str(del_theta))
+                #logger.error(str(jacobian))
+                #logger.error(str(np.array(se3.error(target_transform, current_transform))))
+                #logger.error(str(del_theta))
                 target_config = initialConfig[:]
                 for i, ind in enumerate(self.left_active_Dofs):
                     target_config[ind] += del_theta[ind]

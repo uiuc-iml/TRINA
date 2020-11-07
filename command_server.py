@@ -635,7 +635,8 @@ class CommandLogger(object):
 	def log_command(self,command,time):
 		self.length = self.r.llen(self.key)
 		if(self.length >= self.max_length):
-			print('\n\n\n\n\nQUEUE OVERFLOW!!!! \n\n\n\n\n SOMETHING WRONG WITH THE LOGGER?')
+			print('QUEUE OVERFLOW!!!! SOMETHING WRONG WITH THE LOGGER?')
+			#print('\n\n\n\n\nQUEUE OVERFLOW!!!! \n\n\n\n\n SOMETHING WRONG WITH THE LOGGER?')
 		else:
 			self.r.rpush(self.key,str([command,time]))
 
