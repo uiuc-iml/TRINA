@@ -123,11 +123,8 @@ class HeadController:
         self.goalOrientation["x"] = mod180(orientation[0]/DEGREE_2_RADIAN) #convert to angles
         self.goalOrientation["y"] = mod180(orientation[1]/DEGREE_2_RADIAN)
 
-        # panAngle = limitTo((self.panLimits["center"] + self.goalOrientation["y"]*self.servoStretching), self.panLimits["min"], self.panLimits["max"])
-        # tiltAngle = limitTo((self.tiltLimits["center"] + self.goalOrientation["x"]*self.servoStretching), self.tiltLimits["min"], self.tiltLimits["max"])
-
-        panAngle = self.goalOrientation["y"]
-        tiltAngle = self.goalOrientation["x"]
+        panAngle = limitTo(self.goalOrientation["y"], self.panLimits["min"], self.panLimits["max"])
+        tiltAngle = limitTo(self.goalOrientation["x"], self.tiltLimits["min"], self.tiltLimits["max"])
 
         # conversion degree/0.08789
         self.dynamixel.write4ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(tiltAngle/0.08789))
@@ -166,4 +163,9 @@ if __name__ == "__main__":
     a.setPosition([pos1,pos2+0.5])
     time.sleep(0.5)
     print(a.sensedPosition())
+    [pos1,pos2] = a.sensedPosition()
+    a.setPosition([pos1+0.5,pos2])
+    time.sleep(0.5)
+    print(a.sensedPosition())
+
     a.shutdown()
