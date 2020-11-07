@@ -96,7 +96,8 @@ class Motion:
             print("initiated Kinematic controller")
 
         elif self.mode == "Physical":
-            from limbController import LimbController
+            if 'left_limb' in components or 'right_limb' in components:
+                from limbController import LimbController
             for component in components:
                 if component == 'left_limb':
                     self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=TRINAConfig.left_Robotiq,type = TRINAConfig.left_Robotiq_type,\
@@ -132,7 +133,7 @@ class Motion:
                     from headController import HeadController
                     self.head = HeadController()
                     self.head_enabled = True
-                     logger.debug('head enabled')
+                    logger.debug('head enabled')
                 else:
                     logger.error('Motion: wrong component name specified')
                     raise RuntimeError('Motion: wrong component name specified')
@@ -233,7 +234,7 @@ class Motion:
                         self.left_limb_state.sensedWrench =self.left_limb.getWrench()
 
                 if self.head_enabled:
-                    res = self.left_limb.start()
+                    res = self.head.start()
                     time.sleep(0.5)
                     if res == False:
                         logger.error('head start failure.')
@@ -1503,7 +1504,7 @@ class Motion:
             print('Torso not enabled.')
 
     def setHeadPosition(self,q):
-         """Set the head target position.
+        """Set the head target position.
         Parameter:
         --------------
         q: a list of 2 doubles. The tilt and pan positions.
@@ -1750,6 +1751,8 @@ class Motion:
             #TODO: integrate gripper code
             if self.left_gripper_enabled:
                 self.left_gripper.shutDown()
+            if self.head_enabled:
+                self.head.shutdown()
 
         elif self.mode == "Kinematic":
             self.simulated_robot.shutdown()
