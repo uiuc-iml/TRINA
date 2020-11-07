@@ -49,7 +49,7 @@ class DirectTeleOperation:
 		# TODO: units? I (Patrick) think it's m/s
 		self.max_arm_speed = 0.5
 		self.robot = Jarvis
-		self.components =  ['base','left_limb','right_limb','left_gripper']
+		self.components =  ['base','left_limb','right_limb']
 		#self.robot.getComponents()
 		self.left_limb_active = ('left_limb' in self.components)
 		self.right_limb_active = ('right_limb' in self.components)
@@ -59,9 +59,9 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
 
-		self.K = np.diag((1,1,1,1,1,1)) * 2
-		self.M = np.diag((0.1,0.1,0.1,0.001,0.001,0.001))
-		self.B = np.sqrt(4 * self.K * self.M)
+		self.K = K = np.diag([200, 200, 200, 1e4, 1e4, 1e4])
+		self.M = np.diag((2,2,2,1e3,1e3,1e3))
+		self.B = np.sqrt(32 * self.K * self.M)
 		self.K = self.K.tolist()
 		self.M = self.M.tolist()
 		self.B = self.B.tolist()
@@ -218,7 +218,9 @@ class DirectTeleOperation:
 
 	def UIStateLogic(self):
 		if(type(self.UI_state)!= int):
+			print("Doing UIStateLogic")
 			if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
+				print("Robot Home")
 				self.setRobotToDefault()
 				self.teleoperationState = 1
 			if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True and self.teleoperationState == 1):

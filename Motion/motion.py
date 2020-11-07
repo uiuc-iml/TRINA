@@ -1242,8 +1242,13 @@ class Motion:
             self.left_limb_state.x_mass = T[1] + so3.moment(T[0])
             (v,w) = self.sensedLeftEEVelocity()
             self.left_limb_state.x_dot_mass = v+w
-        #self.left_limb_state.T_g = copy(Tg)
-        self.left_limb_state.x_g = Tg[1] + so3.moment(Tg[0])
+
+        print(so3.moment(Tg[0]))
+        moment_error = so3.error(Tg[0], so3.from_moment(self.left_limb_state.x_mass[3:6]))
+        # self.left_limb_state.x_g = Tg[1] + so3.moment(Tg[0])
+        self.left_limb_state.x_g = Tg[1] + vectorops.add(self.left_limb_state.x_mass[3:6],moment_error)
+
+
         self.left_limb_state.x_dot_g = copy(x_dot_g)
         self.left_limb_state.K = copy(K)
         self.left_limb_state.cartesianDrive = False
@@ -2371,8 +2376,8 @@ class Motion:
         Result flag
         target_config : list of doubles, the target limb config
         """
-        # wrench = self.sensedLeftEEWrench(frame = 'global')
-        wrench = [0,0,0,0,0,0]
+        wrench = self.sensedLeftEEWrench(frame = 'global')
+        # print(wrench)
         stop = False
         if vectorops.norm_L2(wrench[0:3]) > 50:
             stop = True
@@ -2392,9 +2397,12 @@ class Motion:
             self.left_limb_state.counter += 1
 
             T = (so3.from_moment(self.left_limb_state.x_mass[3:6]),self.left_limb_state.x_mass[0:3])
+        # print('angles:',self.left_limb_state.x_mass[3:6])
+        # print('command:',self.left_limb_state.x_g[3:6])
+
 
         goal = ik.objective(self.left_EE_link,R=T[0],\
-            t = vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
+            t = vectorops.sub(T[1],so3.apply(T[0],[0,0,0])))
 
         initialConfig = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.0001)
@@ -2411,7 +2419,7 @@ class Motion:
         else:
             return 1,target_config
 
-
+        
     def _get_klampt_q(self,left_limb = [],right_limb = []):
         if left_limb:
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb, right_limb = self.right_limb_state.sensedq)
