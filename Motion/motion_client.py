@@ -220,7 +220,12 @@ class MotionClient:
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		self.s.setRightLimbPositionImpedance()
-		
+
+	def sensedHeadPosition():
+		self.s.sensedHeadPosition()
+
+	def setHeadPosition(q):
+		self.s.setHeadPosition(q)		
 if __name__=="__main__":
 	motion = MotionClient()
 	motion.startServer(mode = "Kinematic", components = ['left_limb'])

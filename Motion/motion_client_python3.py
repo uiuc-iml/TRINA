@@ -226,6 +226,12 @@ class MotionClient:
 		B = B.tolist()
 		M = M.tolist()
 		self.s.setRightLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+
+	def sensedHeadPosition():
+		self.s.sensedHeadPosition()
+
+	def setHeadPosition(q):
+		self.s.setHeadPosition(q)
 		
 if __name__=="__main__":
 	motion = MotionClient('http://localhost:8080')

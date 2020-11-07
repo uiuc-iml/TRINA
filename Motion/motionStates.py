@@ -77,3 +77,10 @@ class TorsoState:
         self.commandSent = True
         self.leftLeg = 0
         self.rightLeg = 0
+
+
+class HeadState:
+    def __init__(self):
+        self.sensedPosition = [0.0,0.0]
+        self.commandedPosition = [0.0,0.0]
+        self.newCommand = False

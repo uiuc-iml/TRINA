@@ -128,6 +128,11 @@ class Motion:
                     self.right_gripper = GripperController()
                     self.right_gripper_enabled = True
                     logger.debug('right gripper enabled')
+                elif component == "head":
+                    from headController import HeadController
+                    self.head = HeadController()
+                    self.head_enabled = True
+                     logger.debug('head enabled')
                 else:
                     logger.error('Motion: wrong component name specified')
                     raise RuntimeError('Motion: wrong component name specified')
@@ -143,6 +148,8 @@ class Motion:
         self.base_state = BaseState()
         self.torso_state = TorsoState()
         self.left_gripper_state = GripperState()
+        self.head_state = HeadState()
+
 
         self.startTime = time.time()
         #time since startup
@@ -215,7 +222,6 @@ class Motion:
                     res = self.left_limb.start()
                     time.sleep(1)
                     if res == False:
-                        #better to replace this with logger
                         logger.error('left limb start failure.')
                         print("motion.startup(): ERROR, left limb start failure.")
                         return False
@@ -226,6 +232,17 @@ class Motion:
                         self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
                         self.left_limb_state.sensedWrench =self.left_limb.getWrench()
 
+                if self.head_enabled:
+                    res = self.left_limb.start()
+                    time.sleep(0.5)
+                    if res == False:
+                        logger.error('head start failure.')
+                        print("motion.startup(): ERROR, head start failure.")
+                        return False
+                    else:
+                        logger.info('lhead started.')
+                        print("motion.startup(): head started.")
+                        self.head_state.sensedPosition = self.head.sensedPosition()
 
                 if self.right_limb_enabled:
                     res = self.right_limb.start()
@@ -280,7 +297,7 @@ class Motion:
             self._controlLoopLock.acquire()
             if self.mode == "Physical":
                 if self.stop_motion_flag:
-                    if not self.stop_motion_sent: #send only once to avoid drifting...
+                    if not self.stop_motion_sent: #send only once to avoid drifting... currently this not used
                         if self.torso_enabled:
                             self.torso.stopMotion()
                         if self.base_enabled:
@@ -293,6 +310,8 @@ class Motion:
                             self.left_gripper.stopMotion()
                         if self.right_gripper_enabled:
                             self.right_gripper.stopMotion()
+                        if self.head_enabled:
+                            pass
                         self.stop_motion_sent = True #unused
                 else:
                     #Update current state. Only read state if a new one has been posted
@@ -319,8 +338,13 @@ class Motion:
                         self.right_limb.markRead()
 
                     if self.left_gripper_enabled and self.left_gripper.newState():
-                       self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
-                       self.left_gripper.mark_read()
+                        self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
+                        self.left_gripper.mark_read()
+
+                    if self.head_enabled and self.head.newState():
+                        self.head_state.sensedPosition = self.head.sensedPosition()
+                        self.head.markRead()
+
                     #Send Commands
                     if self.left_limb_enabled:
                         #debug
@@ -461,6 +485,14 @@ class Motion:
                             self.right_gripper.setPose(self.right_gripper_state.command_finger_set)
                         elif self.right_gripper_state.commandType == 1:
                             self.right_gripper.setVelocity(self.right_gripper_state.command_finger_set)
+
+                    if self.head_enabled:
+                        if self.head_state.newCommand:
+                            self.head.setPosition(self.head_state.commandedPosition)
+                            self.head_state.newCommand = False
+
+                    #TODO: update this for head
+
                     #update internal robot model, does not use the base's position and orientation
                     #basically assumes that the world frame is the frame centered at the base local frame, on the floor.
                     robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb_state.sensedq, right_limb = self.right_limb_state.sensedq)
@@ -1470,6 +1502,23 @@ class Motion:
             logger.warning('Torso not enabled.')
             print('Torso not enabled.')
 
+    def setHeadPosition(self,q):
+         """Set the head target position.
+        Parameter:
+        --------------
+        q: a list of 2 doubles. The tilt and pan positions.
+        """
+        if self.head_enabled:
+            logger.debug('dimensions : %d', len(q))
+            assert len(q) == 2, "motion.SetHeadTPosition(): wrong dimensions"
+            self._controlLoopLock.acquire()
+            self.head_state.commandedPosition = copy(q)
+            self.head_state.newCommand = True
+            self._controlLoopLock.release()
+        else:
+            logger.warning('Head not enabled.')
+            print('Head not enabled.')
+            
     def sensedBaseVelocity(self):
         """Returns the current base velocity
 
@@ -1511,6 +1560,20 @@ class Motion:
         else:
             logger.warning('Torso not enabled.')
             print('Torso not enabled.')
+
+    def sensedHeadPosition(self):
+        """Returns the current head position
+
+        Return:
+        -------------
+        A list of 2 doubles. The positions.
+        """
+        if self.head_enabled:
+            return copy(self.head_state.sensedPosition)
+        else:
+            logger.warning('Head not enabled.')
+            print('Head not enabled.')
+            return 0
 
     def openLeftRobotiqGripper(self):
         """ Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.
