@@ -96,7 +96,7 @@ class DirectTeleOperation:
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
 
 		self.K = K = np.diag([200, 200, 200, 1e4, 1e4, 1e4])
-		self.M = np.diag((2,2,2,1e3,1e3,1e3))
+		self.M = np.diag((2,2,2,1,1,1))
 		self.B = np.sqrt(32 * self.K * self.M)
 		self.K = self.K.tolist()
 		self.M = self.M.tolist()
@@ -297,7 +297,7 @@ class DirectTeleOperation:
 			if(self.base_active):
 				self.baseControl()
 
-			self.control('velocity')
+			self.control('impedance')
 
 
 	def baseControl(self):

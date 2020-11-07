@@ -1131,11 +1131,13 @@ class Motion:
 
         self.left_limb_state.impedanceControl = True
 
-        print(so3.moment(Tg[0]))
-        moment_error = so3.error(Tg[0], so3.from_moment(self.left_limb_state.x_mass[3:6]))
-        # self.left_limb_state.x_g = Tg[1] + so3.moment(Tg[0])
-        # Should not add axis-angle vectors :(
-        self.left_limb_state.x_g = Tg[1] + vectorops.add(self.left_limb_state.x_mass[3:6],moment_error)
+        # print(so3.moment(Tg[0]))
+        R_mass = so3.from_moment(self.left_limb_state.x_mass[3:6])
+        moment_error = so3.error(Tg[0],R_mass)
+        R_g = so3.mul(R_mass,so3.from_moment(moment_error))
+        moment_g = so3.moment(R_g)
+        # self.left_limb_state.x_g = Tg[1] + vectorops.add(self.left_limb_state.x_mass[3:6],moment_error) 
+        self.left_limb_state.x_g = Tg[1] + moment_g
         self.left_limb_state.x_dot_g = copy(x_dot_g)
         self.left_limb_state.K = copy(K)
         self.left_limb_state.counter = 1
