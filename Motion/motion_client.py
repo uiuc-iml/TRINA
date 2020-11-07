@@ -221,19 +221,20 @@ class MotionClient:
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		self.s.setRightLimbPositionImpedance()
 
-	def sensedHeadPosition():
-		self.s.sensedHeadPosition()
+	def sensedHeadPosition(self):
+		return self.s.sensedHeadPosition()
 
-	def setHeadPosition(q):
-		self.s.setHeadPosition(q)		
+	def setHeadPosition(self,q):
+		self.s.setHeadPosition(q)	
+
 if __name__=="__main__":
 	motion = MotionClient()
-	motion.startServer(mode = "Kinematic", components = ['left_limb'])
+	motion.startServer(mode = "Physical", components = ['head'])
 	motion.startup()
-	while (1==1):
-		time.sleep(0.02)
-		try:
-			motion.getKlamptSensedPosition()
-		except:
-			print("except")
+	time.sleep(0.05)
+	try:
+		print(motion.sensedHeadPosition)
+		time.sleep(0.05)
+	except:
+		print("except")
 	motion.shutdown()

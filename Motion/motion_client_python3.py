@@ -227,18 +227,20 @@ class MotionClient:
 		M = M.tolist()
 		self.s.setRightLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
 
-	def sensedHeadPosition():
-		self.s.sensedHeadPosition()
+	def sensedHeadPosition(self):
+		return self.s.sensedHeadPosition()
 
-	def setHeadPosition(q):
+	def setHeadPosition(self,q):
 		self.s.setHeadPosition(q)
 		
 if __name__=="__main__":
 	motion = MotionClient('http://localhost:8080')
-	motion.startServer(mode = "Physical",components=['left_limb','right_limb'],codename = "bubonic")
+	motion.startServer(mode = "Physical", components = ['head'], codename = 'anthrax')
 	motion.startup()
-	time.sleep(0.5)
-	
-	print(motion.sensedLeftLimbPosition())
-	time.sleep(0.5)
+	time.sleep(0.05)
+	try:
+		print(motion.sensedHeadPosition())
+		time.sleep(0.05)
+	except Exception as err:
+		print("Error: {0}".format(err))
 	motion.shutdown()
