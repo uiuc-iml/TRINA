@@ -62,7 +62,7 @@ class HeadController:
         if self.portHandler.setBaudRate(BAUDRATE):
             print("Headcontroller: Succeeded to change the baudrate")
         else:
-            print("Headcontroller:Failed to change the baudrate")
+            print("Headcontroller: Failed to change the baudrate")
         # init position
         # self.ser.write(f'g,{68},{68}'.encode())
         self.dynamixel.write4ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(44/0.08789))

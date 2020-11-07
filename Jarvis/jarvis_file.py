@@ -430,6 +430,10 @@ class Jarvis:
 		command = self.send_command('self.robot.setRightLimbPositionImpedance',
 				str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband))		
 
+	def setHeadPosition(self,q):
+		command = self.send_command('self.robot.setHeadPosition',
+				str(q))		
+
 	def getWorld(self):
 		""" Return the simulated robot
 
