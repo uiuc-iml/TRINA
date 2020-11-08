@@ -148,6 +148,10 @@ class CommandServer:
 		velEE_left = {}
 		posEE_right = {}
 		velEE_right = {}
+		global_EEWrench_left = {}
+		local_EEWrench_left = {}
+		global_EEWrench_right = {}
+		local_EEWrench_right = {}
 
 		# try:
 		if(self.left_limb_active):
@@ -642,8 +646,8 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	# server = CommandServer(mode = 'Physical',components =  ['right_limb'], modules = ['C1','C2','DirectTeleOperation'])
-	server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav'])
+	server = CommandServer(mode = 'Physical',components =  ['head'], modules = ['C1','C2','DirectTeleOperation'])
+	# server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav'])
 	while(True):
 		time.sleep(100)
 		pass

@@ -1,11 +1,16 @@
+egg_path='/usr/local/lib/python3.6/dist-packages/'
+import sys
+sys.path.append(egg_path)
 import serial
 import os
 import math
-from dynamixel_sdk import *                    # Uses Dynamixel SDK library
 import time
 from threading import Thread, Lock, RLock
 import threading
 from copy import copy
+from dynamixel_sdk import *                    # Uses Dynamixel SDK library
+import dynamixel_sdk
+print(dynamixel_sdk.__file__)
 DEGREE_2_RADIAN = 2.0*math.pi/180.0
 
 # Control table address
@@ -20,7 +25,7 @@ PROTOCOL_VERSION            = 1.0               # See which protocol version is 
 DXL_ID_tilt                 = 1                 # Dynamixel ID : 1, FOR PITCH 
 DXL_ID_pan                  = 2                 # Dynamixel ID : 2, FOR YAW
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
-DEVICENAME                  = 'COM3'            # Check which port is being used on your controller
+DEVICENAME                  = '/dev/ttyUSB0'            # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
 TORQUE_ENABLE               = 1                 # Value for enabling the torque
@@ -160,7 +165,7 @@ if __name__ == "__main__":
     time.sleep(1)
     print(a.sensedPosition())
     [pos1,pos2] = a.sensedPosition()
-    a.setPosition([pos1,pos2])
+    a.setPosition([pos1+0.5,pos2])
     time.sleep(0.5)
 
     a.shutdown()
