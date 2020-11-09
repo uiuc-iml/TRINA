@@ -74,10 +74,9 @@ class DirectTeleOperation:
 		self.init_UI_state = {}
 		self.dt = 0.025
 		self.infoLoop_rate = 0.05
-		# TODO: units? I (Patrick) think it's m/s
 		self.max_arm_speed = 0.5
 		self.robot = Jarvis
-		self.components =  ['base','left_limb','right_limb']
+		self.components =  ['base','left_limb','right_limb', 'left_gripper']
 		#self.robot.getComponents()
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
@@ -95,9 +94,22 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
 
-		self.K = K = np.diag([200, 200, 200, 1e4, 1e4, 1e4])
-		self.M = np.diag((2,2,2,1,1,1))
-		self.B = np.sqrt(32 * self.K * self.M)
+		self.K = np.array([[200.0,0.0,0.0,0.0,0.0,0.0],\
+                [0.0,200.0,0.0,0.0,0.0,0.0],\
+                [0.0,0.0,200.0,0.0,0.0,0.0],\
+                [0.0,0.0,0.0,5.0,0.0,0.0],\
+                [0.0,0.0,0.0,0.0,5.0,0.0],\
+                [0.0,0.0,0.0,0.0,0.0,5.0]])
+
+		self.M = np.eye(6)*5.0
+		self.M[3,3] = 1.0
+		self.M[4,4] = 1.0
+		self.M[5,5] = 1.0
+
+		self.B = 2.0*np.sqrt(4.0*np.dot(self.M,self.K))
+		self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
+		# self.M = np.diag((2,2,2,1,1,1))
+		# self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
 		self.K = self.K.tolist()
 		self.M = self.M.tolist()
 		self.B = self.B.tolist()
@@ -110,8 +122,7 @@ class DirectTeleOperation:
 		# 1 - Set controller home
 		# 2 - Move hands
 		# Folded into arm objects.
-		# self.teleoperationState = 0
-
+		# self.teleoperationState = 0self
 		# Absolute - Home position, everything relative to that
 		# Clutching - Relative to when you last hit clutch
 		self.controller_mode = controller_mode
@@ -158,7 +169,7 @@ class DirectTeleOperation:
 			elif(status == 'idle'):
 				if self.status == 'active':
 					# self.state = 'idle'
-					# self.status = 'idle'
+					# self.status = 'idle'self
 					# DEBUGGING ONLY - SET TO IDLE AFTER TESTING!!!
 					self.state = 'active'
 					self.status = 'active'
@@ -225,8 +236,8 @@ class DirectTeleOperation:
 		# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
 		# 	rotzm90).flatten()
 		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
-		rightUntuckedTranslation = np.array([0.54,
-			-0.296298410887376, 0.8540173127153597])
+		rightUntuckedTranslation = np.array([0.34,
+			-0.296298410887376, 1.0540173127153597])
 		# Looks like the y axis is the left-right axis.
 		# Mirroring along y axis.
 		mirror_reflect_R = np.array([
@@ -242,21 +253,17 @@ class DirectTeleOperation:
 		# TODO: This is broken for two reasons:
 		#   1. Linear move won't always work.
 		#   2. We need the "elbow out" ik solution but that isn't guaranteed yet.
-
 		#TODO REMOVE JANKINESS - Jing-Chen
 		self.tool = np.array([0,0,0])
 
 		if self.left_limb.active:
-			#self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
-			self.left_limb.setEEInertialTransform([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()],2)
+			self.left_limb.setEETransformImpedance([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()], self.K, self.M, self.B)
 		if self.right_limb.active:
-			#self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
-			self.right_limb.setEEInertialTransform([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()],2)
+			self.right_limb.setEETransformImpedance([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()], self.K, self.M, self.B)
 
 
 	def UIStateLogic(self):
 		if(type(self.UI_state)!= int):
-			print("Doing UIStateLogic")
 			if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
 				print("Robot Home")
 				self.setRobotToDefault()
@@ -281,25 +288,23 @@ class DirectTeleOperation:
 							self.init_UI_state["controllerPositionState"][limb.joystick]['controllerRotation'] = (
 								self.UI_state["controllerPositionState"][limb.joystick]['controllerRotation'])
 
-							#self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-							self.init_headset_orientation = R.from_dcm([[1, 0, 0],[0, 1, 0], [0, 0, 1]])
-
+							self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
+							
 							limb.init_pos = limb.sensedEETransform()
 
 							print("BEGIN CLUTCHING, ZERO!")
 
 							limb.teleoperationState = 2
 
-					elif limb.teleoperationState == 2:
+					elif limb.teleoperationState == 2 or limb.teleoperationState == 3:
 						limb.teleoperationState = 3
-						limb.setEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
+						#limb.setEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
+						limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B])
 
 			if(self.base_active):
 				self.baseControl()
 
 			self.control('impedance')
-
-
 	def baseControl(self):
 		'''controlling base movement'''
 		base_velocity = [0.5*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.5*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
@@ -321,9 +326,7 @@ class DirectTeleOperation:
 			self.controlArm(self.left_limb, mode)
 			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
 
-		if (self.mode == 'Physical') and self.left_limb.gripper_active and self.left_limb.teleoperationState == 2:
-			pass
-
+		if (self.mode == 'Physical') and self.left_limb.gripper_active: # and self.left_limb.teleoperationState == 2:
 			closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]
 			if(closed_value > 0):
 				self.robot.closeLeftRobotiqGripper()
@@ -373,7 +376,7 @@ class DirectTeleOperation:
 			err = self.tool_target - self.tool
 			self.tool = np.add(self.tool, 0.1 * err, out=self.tool, casting="unsafe")
 		else:
-			limb.setEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
+			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B])
 
 	def getTargetEETransform(self, limb):
 		"""Get the transform of the end effector attached to the `side` arm

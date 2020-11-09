@@ -1105,7 +1105,7 @@ class Motion:
             self.right_limb_state.B = np.sqrt(4.0*np.dot(M,K))
         else:
             self.right_limb_state.B = copy(B)
-        self.rights_limb_state.Minv = np.linalg.inv(M)
+        self.right_limb_state.Minv = np.linalg.inv(M)
         self._controlLoopLock.release()
         return 0
 
@@ -1157,6 +1157,7 @@ class Motion:
         formulation = 2
         #if already in impedance control, then do not reset x_mass and x_dot_mass 
         if not self.left_limb_state.impedanceControl:
+            self.left_limb_state.set_mode_reset()
             if formulation == 2:
                 self.left_limb_state.T_mass = self.sensedLeftEETransform()
             elif formulation == 1:
@@ -1164,10 +1165,17 @@ class Motion:
                 self.left_limb_state.x_mass = T[1] + so3.moment(T[0])
             (v,w) = self.sensedLeftEEVelocity()
             self.left_limb_state.x_dot_mass = v+w
+
+
         if formulation == 2:
             self.left_limb_state.T_g = copy(Tg)
         elif formulation == 1:
             self.left_limb_state.x_g = Tg[1] + so3.moment(Tg[0])
+
+
+        
+        self.left_limb_state.impedanceControl = True
+        
         self.left_limb_state.x_dot_g = copy(x_dot_g)
         self.left_limb_state.K = copy(K)
         self.left_limb_state.counter = 1
@@ -2151,7 +2159,7 @@ class Motion:
                     if math.fabs(wrench[i]) < self.right_limb_state.deadband[i]:
                         wrench[i] = 0
 
-            self.right_limb_state.x_mass, self.right_limb_state.x_dot_mass = self._simulate(wrench = wrench,m_inv = self.right_limb_state.Minv,\
+            self.right_limb_state.x_mass, self.right_limb_state.x_dot_mass = self._simulate_1(wrench = wrench,m_inv = self.right_limb_state.Minv,\
                 K = self.right_limb_state.K,B = self.right_limb_state.B,x_curr = self.right_limb_state.x_mass,x_dot_curr = self.right_limb_state.x_dot_mass,\
                 x_g = self.right_limb_state.x_g,x_dot_g = self.right_limb_state.x_dot_g,dt = self.dt)
             self.right_limb_state.counter += 1
@@ -2176,7 +2184,7 @@ class Motion:
         else:
             return 1,target_config
 
-    def _simulate(self,wrench,m_inv,K,B,T_curr,x_dot_curr,T_g,x_dot_g,dt):
+    def _simulate_2(self,wrench,m_inv,K,B,T_curr,x_dot_curr,T_g,x_dot_g,dt):
         """
         Simulate a mass spring damper under external load, semi-implicit Euler integration
 
@@ -2234,6 +2242,8 @@ class Motion:
         Result flag
         target_config : list of doubles, the target limb config
         """
+        print('impdeance running')
+
         wrench = self.sensedLeftEEWrench(frame = 'global')
         #if force too big, backup a bit and stop
         stop = False
@@ -2250,7 +2260,7 @@ class Motion:
                     if math.fabs(wrench[i]) < self.left_limb_state.deadband[i]:
                         wrench[i] = 0
 
-            self.left_limb_state.T_mass, self.left_limb_state.x_dot_mass = self._simulate(wrench = wrench,m_inv = self.left_limb_state.Minv,\
+            self.left_limb_state.T_mass, self.left_limb_state.x_dot_mass = self._simulate_2(wrench = wrench,m_inv = self.left_limb_state.Minv,\
                 K = self.left_limb_state.K,B = self.left_limb_state.B,T_curr = self.left_limb_state.T_mass,x_dot_curr = self.left_limb_state.x_dot_mass,\
                 T_g = self.left_limb_state.T_g,x_dot_g = self.left_limb_state.x_dot_g,dt = self.dt) 
             self.left_limb_state.counter += 1
@@ -2280,40 +2290,40 @@ class Motion:
         else:
             return 1,target_config
 
-    # def _simulate(self,wrench,m_inv,K,B,x_curr,x_dot_curr,x_g,x_dot_g,dt):
-    #     """
-    #     Simulate a mass spring damper under external load, semi-implicit Euler integration
+    def _simulate_1(self,wrench,m_inv,K,B,x_curr,x_dot_curr,x_g,x_dot_g,dt):
+        """
+        Simulate a mass spring damper under external load, semi-implicit Euler integration
 
-    #     Parameters:
-    #     -----------------
-    #     m_inv: 6x6 numpp array,inverse of the mass matrix
-    #     K: 6x6 numpy array, spring constant matrix
-    #     B, 6x6 numpy array, damping constant matrix
-    #     x_curr: 
-    #     x_dot_curr: lost of 6, curent speed
-    #     x_g: 
-    #     x_dot_g: a list of 6
-    #     dt:simulation dt
+        Parameters:
+        -----------------
+        m_inv: 6x6 numpp array,inverse of the mass matrix
+        K: 6x6 numpy array, spring constant matrix
+        B, 6x6 numpy array, damping constant matrix
+        x_curr: 
+        x_dot_curr: lost of 6, curent speed
+        x_g: 
+        x_dot_g: a list of 6
+        dt:simulation dt
 
-    #     Return:
-    #     -----------------
-    #     x,v: list of 6
-    #     """
-    #     x = np.array(x_curr)
-    #     e = np.array(x_g) - x
-    #     x_dot_g = np.array(x_dot_g)
-    #     v = np.array(x_dot_curr)
-    #     e_dot = x_dot_g - v
-    #     wrench_total = wrench + np.dot(K,e) + np.dot(B,e_dot)
-    #     a = np.dot(m_inv,wrench_total)
-    #     #limit maximum acceleration
-    #     a = np.clip(a,[-1,-1,-1,-4,-4,-4],[1,1,1,4,4,4])
-    #     v = v + a*dt
-    #     #limit maximum velocity
-    #     v = np.clip(v,[-1,-1,-1,-2,-2,-2],[1,1,1,2,2,2])
-    #     x = x + v*dt
+        Return:
+        -----------------
+        x,v: list of 6
+        """
+        x = np.array(x_curr)
+        e = np.array(x_g) - x
+        x_dot_g = np.array(x_dot_g)
+        v = np.array(x_dot_curr)
+        e_dot = x_dot_g - v
+        wrench_total = wrench + np.dot(K,e) + np.dot(B,e_dot)
+        a = np.dot(m_inv,wrench_total)
+        #limit maximum acceleration
+        a = np.clip(a,[-1,-1,-1,-4,-4,-4],[1,1,1,4,4,4])
+        v = v + a*dt
+        #limit maximum velocity
+        v = np.clip(v,[-1,-1,-1,-2,-2,-2],[1,1,1,2,2,2])
+        x = x + v*dt
 
-    #     return x.tolist(),v.tolist()
+        return x.tolist(),v.tolist()
 
     # def _left_limb_imdepance_drive(self):
     #     """Calculate the next goal for impedance control
@@ -2434,12 +2444,12 @@ if __name__=="__main__":
 
     initialT = copy(robot.sensedLeftEETransform())
 
-    robot.setLeftEETransformImpedance(initialT,K,m,B)#,deadband = [1.0,1.0,1.0,0.5,0.5,0.5])
+    # robot.setLeftEETransformImpedance(initialT,K,m,B)#,deadband = [1.0,1.0,1.0,0.5,0.5,0.5])
 
     start_time = time.time()
     print('start')
     # with open('trial0.txt','w') as f:
-    while time.time() - start_time < 120:
+    while time.time() - start_time < 1:
         # print(robot.sensedLeftEEWrench())
         # target = deepcopy(initialT)
         # target[1][0] = initialT[1][0] + (time.time() - start_time)*0.02
@@ -2452,6 +2462,9 @@ if __name__=="__main__":
     print('stop')
     #robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
     time.sleep(1)
+
+    robot.closeLeftRobotiqGripper()
+    time.sleep(5)
 
     robot.shutdown()
 

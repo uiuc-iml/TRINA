@@ -69,7 +69,7 @@ def on_message(ws, message):
             # b = json.dumps(a).encode('utf-8')
             # ws.send(b)
             # print('This is MJSON \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
-            # print(mjson["p"]["p"])
+            # print(mjson["p"]["p"]["controllerButtonState"]["leftController"])
             #saving the UI_STATE to reem
             server["UI_STATE"] = mjson["p"]["p"]
             try:
@@ -94,8 +94,7 @@ def on_message(ws, message):
 
 
 
-
-            # print(mjson['p']['p']["controllerPositionState"]["leftController"])
+            # print(mjson['p']['p']["controllerButtonState"]["leftController"])
             # print("===================")
             # print("leftController press ",
             #       mjson["p"]["p"]["controllerButtonState"]["leftController"]["press"])
