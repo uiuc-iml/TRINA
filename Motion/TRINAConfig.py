@@ -11,15 +11,15 @@ right_limb_address = '10.1.1.20'
 ##These are for the Righthand gripper
 # left_limb_payload = 0.86125
 # left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
-left_limb_payload =0# 0.71#0.1#1.025(parallel)
-left_limb_cog = [0.0,0.0,0.0]#0.06]
+left_limb_payload =1.025# 0.71#0.1#1.025(parallel)
+left_limb_cog = [0.0,0.0,0.06]#0.06]
 
 #estimated for the pusher, need to run the calibrater
-right_limb_payload = 0.4
-right_limb_cog = [0.0,0.0,0.06]
+right_limb_payload = 0.0
+right_limb_cog = [0.0,0.0,0.0]
 left_Robotiq = True
 right_Robotiq = False
-left_Robotiq_type = 'vacuum'
+left_Robotiq_type = 'parallel'
 right_Robotiq_type = 'parallel'
 ur5e_control_rate = 0.004 #250 Hz
 
