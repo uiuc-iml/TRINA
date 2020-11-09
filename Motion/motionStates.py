@@ -1,3 +1,6 @@
+import copy
+import time
+
 class LimbState:
     def __init__(self):
         self.sensedq = [0.0,0.0,0.0,0.0,0.0,0.0]
@@ -18,6 +21,8 @@ class LimbState:
         #for kinematic to use...
         self.lastSensedq = []
 
+        #TODO: This is completely unused... forward declaring it in prep for python 3 transition (Jing-Chen)
+        self.Xs = []
 
         ##cartesian velocity drive
         self.cartesianDrive = False
@@ -44,6 +49,44 @@ class LimbState:
         self.counter = 1
         #range for ignoring the wrench readings
         self.deadband = [0]*6
+
+    def set_mode_reset(self):
+        #self.commandSent = True
+        self.commandedq = []
+        self.commandeddq = []
+        self.commandType = 0
+        self.commandQueue = False
+        self.commandedqQueue = []
+        self.cartesianDrive = False
+        self.impedanceControl = False
+        self.commandQueueTime = 0.0
+        self.commandedQueueDuration = 0.0
+        self.difference = []
+        self.commandedqQueueStart = []
+        self.Xs = []
+
+    def set_mode_position(self, position):
+        self.set_mode_reset()
+
+        self.commandSent = False
+        self.commandedq = copy.deepcopy(position)
+
+    def set_mode_commandqueue(self, difference, start, duration):
+        self.set_mode_reset()
+
+        self.commandSent = False
+        self.difference = difference
+        self.commandedqQueueStart = copy.deepcopy(start)
+        self.commandQueue = True
+        self.commandedQueueDuration = duration
+        self.commandQueueTime = time.time()
+
+    def set_mode_velocity(self, qdot):
+        self.set_mode_reset()
+
+        self.commandSent = False
+        self.commandeddq = copy.deepcopy(qdot)
+        self.commandType = 1
 
 
 class BaseState():
