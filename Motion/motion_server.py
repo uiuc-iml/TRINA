@@ -1,4 +1,7 @@
-from SimpleXMLRPCServer import SimpleXMLRPCServer
+try:
+	from SimpleXMLRPCServer import SimpleXMLRPCServer
+except:
+	from xmlrpc.server import SimpleXMLRPCServer
 import signal
 import sys
 from motion import Motion
@@ -286,7 +289,13 @@ def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
 	M = np.array(M)
 	return robot.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)	
 
+def _sensedHeadPosition():
+	global robot
+	return robot.sensedHeadPosition()
 
+def _setHeadPosition(q):
+	global robot
+	return robot.setHeadPosition(q)
 
 #ip_address = '172.16.250.88'
 # ip_address = '172.16.187.91'
@@ -355,6 +364,8 @@ server.register_function(_setLeftEETransformImpedance,'setLeftEETransformImpedan
 server.register_function(_setRightEETransformImpedance,'setRightEETransformImpedance')
 server.register_function(_setLeftLimbPositionImpedance,'setLeftLimbPositionImpedance')
 server.register_function(_setRightLimbPositionImpedance,'setRightimbPositionImpedance')
+server.register_function(_setHeadPosition,'setHeadPosition')
+server.register_function(_sensedHeadPosition,'sensedHeadPosition')
 ##
 print('#######################')
 print('#######################')

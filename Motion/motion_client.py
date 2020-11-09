@@ -219,58 +219,22 @@ class MotionClient:
 		self.s.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
+		self.s.setRightLimbPositionImpedance()
+
+	def sensedHeadPosition(self):
+		return self.s.sensedHeadPosition()
+
+	def setHeadPosition(self,q):
+		self.s.setHeadPosition(q)	
 
 if __name__=="__main__":
-	robot_ip = 'http://localhost:8080'
-	motion = MotionClient(address = robot_ip)
-	motion.startServer(mode = "Physical", components =  ['base','left_limb','right_limb','left_gripper'], codename = 'bubonic')
+	motion = MotionClient()
+	motion.startServer(mode = "Physical", components = ['head'])
 	motion.startup()
-	time.sleep(0.02)
+	time.sleep(0.05)
 	try:
-		print("Starting Home Position")
-		rightUntuckedRotation = np.array([
-			0, 0, -1,
-			0, -1, 0,
-			-1, 0, 0
-		])
-		rightUntuckedTranslation = np.array([0.34,
-			-0.296298410887376, 0.8540173127153597])
-		# Looks like the y axis is the left-right axis.
-		# Mirroring along y axis.
-		mirror_reflect_R = np.array([
-							1, -1,  1,
-							-1,  1, -1,
-							1, -1,  1,
-						])
-		mirror_reflect_T = np.array([1, -1, 1])
-		# Element wise multiplication.
-		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
-		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
-		motion.setLeftEEInertialTransform([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()],2)
-		time.sleep(5)
-
-		print("Starting Impedance Control")
-		rightUntuckedTranslation = np.array([0.54,
-			-0.296298410887376, 0.8540173127153597])
-		mirror_reflect_R = np.array([
-							1, -1,  1,
-						-1,  1, -1,
-							1, -1,  1,
-					])
-		mirror_reflect_T = np.array([1, -1, 1])
-		# Element wise multiplication.
-		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
-		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
-		K = np.diag((1,1,1,1,1,1)) * 2
-		M = np.diag((0.1,0.1,0.1,0.001,0.001,0.001))
-		B = np.sqrt(4 * K * M)
-		K = K.tolist()
-		M = M.tolist()
-		B = B.tolist()
-		
-		motion.setLeftEETransformImpedance((leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()), K, M, B)
-		time.sleep(20)
-	except Exception as err:
-				print("Error: {0}".format(err))
+		print(motion.sensedHeadPosition)
+		time.sleep(0.05)
+	except:
+		print("except")
 	motion.shutdown()

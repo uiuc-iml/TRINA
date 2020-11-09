@@ -226,14 +226,21 @@ class MotionClient:
 		B = B.tolist()
 		M = M.tolist()
 		self.s.setRightLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+
+	def sensedHeadPosition(self):
+		return self.s.sensedHeadPosition()
+
+	def setHeadPosition(self,q):
+		self.s.setHeadPosition(q)
 		
 if __name__=="__main__":
-	motion = MotionClient()
+	motion = MotionClient('http://localhost:8080')
+	motion.startServer(mode = "Physical", components = ['head'], codename = 'anthrax')
 	motion.startup()
-	while (1==1):
-		time.sleep(0.02)
-		try:
-			motion.getKlamptSensedPosition()
-		except:
-			print("except")
+	time.sleep(0.05)
+	try:
+		print(motion.sensedHeadPosition())
+		time.sleep(0.05)
+	except Exception as err:
+		print("Error: {0}".format(err))
 	motion.shutdown()
