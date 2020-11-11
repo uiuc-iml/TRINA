@@ -1,6 +1,10 @@
 #!/bin/bash
 
 echo "Fresh install on ubuntu 20"
+if [ "$EUID" -eq 0 ]
+  then echo "You should not run this script as root, or cd command will fail"
+  exit
+fi
 sudo apt install git
 sudo apt install python3-pip
 cd
@@ -92,7 +96,7 @@ cd librealsense
 mkdir build
 cd build
 cmake ../ -DBUILD_PYTHON_BINDINGS:bool=true -DENFORCE_METADATA:bool=true
-make -j4
+make -j($nproc)
 sudo make install
 export PYTHONPATH=$PYTHONPATH:/usr/local/lib
 echo "export PYTHONPATH=$PYTHONPATH:/usr/local/lib" >> ~/.bashrc
