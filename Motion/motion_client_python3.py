@@ -235,11 +235,11 @@ class MotionClient:
 		
 if __name__=="__main__":
 	motion = MotionClient('http://localhost:8080')
-	motion.startServer(mode = "Physical", components = ['head'], codename = 'anthrax')
+	motion.startServer(mode = "Physical", components = ['left_limb'], codename = 'anthrax')
 	motion.startup()
 	time.sleep(0.05)
 	try:
-		print(motion.sensedHeadPosition())
+		print(motion.sensedLeftEETransform())
 		time.sleep(0.05)
 	except Exception as err:
 		print("Error: {0}".format(err))

@@ -121,5 +121,7 @@ cd
 cd TRINA/robot_v2/websocket_client-0.56.0
 sudo python3 setup.py install
 
+pip3 install pyserial
+
 cd ~/TRINA
 

@@ -179,6 +179,7 @@ class MyQtMainWindow(QMainWindow):
         bar = self.menuBar()
         mode = bar.addMenu("Mode Switch")
         mode.addAction("PointClickNav")
+        mode.addAction("PointClickGrasp")
         mode.addAction("DirectTeleOperation")
         mode.triggered[QAction].connect(self._processModeTrigger)
 
@@ -399,6 +400,7 @@ class testingWorldBuilder():
         self.addCube((so3.from_axis_angle(([0, 0, 1], 0.5)), [x, y - 0.7, self.table_height]), self.cube_width,
                      [1.0, 0, 0, 1], 1)
         # add one mesh
+        random.seed(30)
         self.addRandomMesh([0 + x, -1.0 + y, self.table_height], 1)
         self.addRandomMesh([0 + x, -1.2 + y, self.table_height], 2)
         self.addRandomMesh([0.2 + x, -1.0 + y, self.table_height], 3)
@@ -518,7 +520,6 @@ class testingWorldBuilder():
         for file in os.listdir(mesh_model_path):
             if file.endswith(".ply"):
                 meshpaths.append(os.path.join(mesh_model_path, file))
-        random.seed(30)
         meshpath = random.choice(meshpaths)
         mesh = trimesh.load(meshpath)
         mesh_center = mesh.centroid.tolist()
