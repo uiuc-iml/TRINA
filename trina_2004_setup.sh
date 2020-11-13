@@ -30,8 +30,7 @@ cd
 
 echo "installing klampt from source"
 echo "installing basic libraries first"
-sudo apt-get install build-essential libglpk-dev libxi-dev qt5-default
-sudo apt-get install libassimp-dev
+sudo apt-get install build-essential libglpk-dev libxi-dev libxmu-dev libassimp-dev qt5-default
 echo "cloning klampt repository"
 git clone https://github.com/krishauser/Klampt
 cd Klampt/Cpp/Dependencies; make unpack-deps; make deps
@@ -83,9 +82,7 @@ sudo python3 setup.py install
 
 source ~/.bashrc
 echo "installing necessary python libraries"
-pip3 install --user unidecode scipy numpy pandas rejson redis PyOpenGL open3d jupyter jupyter-contrib-nbextensions h5py
-# installing klampt from pip for now
-pip3 install klampt
+sudo pip3 install --user unidecode scipy numpy pandas rejson redis PyOpenGL open3d jupyter jupyter-contrib-nbextensions h5py
 
 echo "install pyrealsense2 from source as no 3.8 binding existing yet"
 cd
@@ -121,7 +118,7 @@ cd
 cd TRINA/robot_v2/websocket_client-0.56.0
 sudo python3 setup.py install
 
-pip3 install pyserial
+sudo pip3 install pyserial open3d
 
 cd ~/TRINA
 
