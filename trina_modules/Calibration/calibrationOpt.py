@@ -3,7 +3,8 @@ from klampt.math import vectorops,so3,se3
 import numpy as np
 from klampt import WorldModel,vis
 from utils import *
-def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l,T_c_r,world_path,URDF_save_path,links):
+import math
+def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_path,links):
     """
     Optimize for the transforms of thea arms and the wrist-mounted cameras
 
@@ -14,46 +15,61 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l,T_c_r,world_path,URDF_save_path
     world = WorldModel()
     res = world.readFile(world_path)
     if not res:
-        logger.error('unable to load model')
         raise RuntimeError("unable to load model")
 
     robot_model = world.robot(0)
-    #TODO: check the link number
-    link_base_l = robot_model.link(15)
-    link_base_r = robot_model.link(35)
+    link_base_l = robot_model.link(6)
+    link_base_r = robot_model.link(14)
     T_l_0 = link_base_l.getTransform()
     T_r_0 = link_base_r.getTransform()
 
+    x_l_0 = T_l_0[1] + so3.moment(T_l_0[0]) + T_c_l_0[1] + so3.moment(T_c_l_0[0])
+    x_r_0 = T_r_0[1] + so3.moment(T_r_0[0]) + T_c_r_0[1] + so3.moment(T_c_r_0[0])
 
     def funcl(x):
         """
         x: [0:6] pos + moment of shoulder [6:12] pos + moment of camera
         """
         expr=0.0
-        for T_c,q in zip(Tl,ql)):
-            T_EE = getLeftEETransform(robot_model,q)
+        x = x.tolist()
+        T_base = (so3.from_moment(x[3:6]),x[0:3])
+        T_c_EE = (so3.from_moment(x[9:12]),x[6:9])
+        for T_m_c,q in zip(Tl,ql):
+            T_EE = getLeftLinkTransform(robot_model,q,links[0])
             T_EE_base = se3.mul(se3.inv(T_l_0),T_EE) #EE in arm base
-            error = vectorops.normSquared(se3.error(T_marker_1,se3.mul(T_EE,T_c)))
+            T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
+            error = vectorops.normSquared(se3.error(T_marker_1,T_m_predicted))
+            expr += error
+        expr = math.sqrt(expr/(len(Tl)))
+        #print("Local solve: func(left arm)=%f"%expr)
+        return expr
 
-            EERef=se3.apply(l2c,p)
-            EEDiff=vectorops.sub(EERef,EE)
-            expr+=vectorops.dot(EEDiff,EEDiff)
-        for EE,p in zip(EEsRight,psRight):
-            if isinstance(EE,tuple):
-                EE=se3.apply(EE,rPos)
-            EERef=se3.apply(r2c,p)
-            EEDiff=vectorops.sub(EERef,EE)
-            expr+=vectorops.dot(EEDiff,EEDiff)
-        expr=math.sqrt(expr/(len(psLeft)+len(psRight)))
-        if callback:
-            print("Local solve: func(arm)=%f"%expr)
+    def funcr(x):
+        """
+        x: [0:6] pos + moment of shoulder [6:12] pos + moment of camera
+        """
+        expr=0.0
+        x = x.tolist()
+        T_base = (so3.from_moment(x[3:6]),x[0:3])
+        T_c_EE = (so3.from_moment(x[9:12]),x[6:9])
+        for T_m_c,q in zip(Tr,qr):
+            T_EE = getRightLinkTransform(robot_model,q,links[1])
+            T_EE_base = se3.mul(se3.inv(T_r_0),T_EE) #EE in arm base
+            T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
+            error = vectorops.normSquared(se3.error(T_marker_1,T_m_predicted))
+            expr += error
+        expr = math.sqrt(expr/(len(Tr)))
         return expr
 
 
     import scipy.optimize as sopt
-    x=sopt.minimize(func,x,method='L-BFGS-B').x
-    print("Local solve: func(arm)=%f"%func(x))
-    l2c,r2c,lPos,rPos=extract_se3(x,'TTtt')
-    return l2c,r2c,lPos,rPos,func(x)
+    res = sopt.minimize(funcl,np.array(x_l_0),method='L-BFGS-B')
+    x_l = res.x
+    print("Local solve: func(left arm)=%f"%funcl(x_l))
+    res = sopt.minimize(funcr,np.array(x_r_0),method='L-BFGS-B')
+    x_r = res.x
+    print("Local solve: func(right arm)=%f"%funcr(x_r))
 
-    return Tl,Tr
+    #left shoulder, left camera, right shoulder, right camera
+    return (so3.from_moment(x_l[3:6]),x_l[0:3]),(so3.from_moment(x_l[9:12]),x_l[6:9]),\
+        (so3.from_moment(x_r[3:6]),x_r[0:3]),(so3.from_moment(x_r[9:12]),x_r[6:9])

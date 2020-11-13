@@ -7,7 +7,7 @@ from calibrationLogger import CalibrationLogger
 import cv2
 import cv2.aruco as aruco
 from klampt.math import vectorops as vo
-
+import trimesh
 def detectAruco(pic,marker_sz,IDs,dictionary)
     if cn == 'realsense_left':
         pass
@@ -145,6 +145,14 @@ def takePictures(traj_path,save_path,cameras,motion_address,codename):
     logger.collect(ref_traj,save_path)    
     return 0
 
+def klampt_to_np(T):
+    (R,t) = T
+    T = np.array([[R[0],R[3],R[6],t[0]],\
+                  [R[1],R[4],R[7],t[1]],\
+                  [R[2],R[5],R[8],t[2]],\
+                  [0,0,0,1]])
+    return T
+    
 
 def mainCalibration(traj_path,save_path,URDF_path,URDF_save_path,calibration_type,cameras,links,motion_address,codename):
     """
@@ -160,7 +168,35 @@ def mainCalibration(traj_path,save_path,URDF_path,URDF_save_path,calibration_typ
         #The cameras should be ['left_realsense','right_realsense'] here.
         takePictures(traj_path,save_path,cameras,motion_address,codename)
         Tl,ql,Tr,qr = extractData1(save_path,cameras)
-        URDFCalibration(Tl,ql,Tr,qr,T_marker_1,world_path,URDF_save_path,links)
+        T_c_l_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        T_c_r_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_path,links)
+
+        #now modify the URDF 
+        robot = loader.load(URDF_path)
+        robot.link(6).setParentTransform(T_base_l[0],T_base_l[1])
+        robot.link(14).setParentTransform(T_base_r[0],T_base_r[1])
+        load.save(robot,'.urdf',URDF_save_path)
+        #modify the mesh
+        camera_l = trimesh.load_mesh('path')
+        camera_r = trimesh.load_mesh('path')
+        T_c_l = klampt_to_np(T_c_l)
+        T_c_r = klampt_to_np(T_c_l)
+
+        T_c_link5 = np.array([[0,0,-1,0],\
+                              [0,1,0,0],\
+                              [-1,0,0,0],\
+                              [0,0,0,1]]) 
+        from numpy.linalg import inv
+        camera_l.apply_transform(inv(T_c_link5)*T_c_l*T_c_link5)
+        camera_r.apply_transform(inv(T_c_link5)*T_c_r*T_c_link5)
+        l_link5 = trimesh.load
+        r_link5 = trimesh.load
+        l_link5_new = trimesh.util.concatenate([l_link5,camera_l])
+        r_link5_new = trimesh.util.concatenate([r_link5,camera_r])
+        l_link5_new.save_mesh()
+        r_link5_new.save_mesh()
+        
 
     elif calibration_type == 'moving':
         pass
