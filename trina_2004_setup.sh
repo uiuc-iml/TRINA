@@ -38,8 +38,8 @@ cd ../../
 cmake .
 make Klampt
 make apps
-make python3
-sudo make python3-install
+make python
+sudo make python-install
 sudo apt-get install ffmpeg
 cd
 
