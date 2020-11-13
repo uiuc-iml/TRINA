@@ -93,7 +93,7 @@ cd librealsense
 mkdir build
 cd build
 cmake ../ -DBUILD_PYTHON_BINDINGS:bool=true -DENFORCE_METADATA:bool=true
-make -j($nproc)
+make -j${nproc}
 sudo make install
 export PYTHONPATH=$PYTHONPATH:/usr/local/lib
 echo "export PYTHONPATH=$PYTHONPATH:/usr/local/lib" >> ~/.bashrc
