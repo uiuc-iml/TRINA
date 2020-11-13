@@ -160,7 +160,7 @@ def mainCalibration(traj_path,save_path,URDF_path,URDF_save_path,calibration_typ
         #The cameras should be ['left_realsense','right_realsense'] here.
         takePictures(traj_path,save_path,cameras,motion_address,codename)
         Tl,ql,Tr,qr = extractData1(save_path,cameras)
-        URDFCalibration(Tl,ql,Tr,qr,URDF_path,URDF_save_path,links)
+        URDFCalibration(Tl,ql,Tr,qr,T_marker_1,world_path,URDF_save_path,links)
 
     elif calibration_type == 'moving':
         pass

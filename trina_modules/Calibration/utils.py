@@ -5,3 +5,7 @@ def extractLimbPositions(q):
     """
 
     return q[15:21],q[35:41]
+
+
+def getLeftEETransform(robot,q):
+    
