@@ -22,7 +22,6 @@ class CalibrationLogger:
         self.robot.startServer(mode = 'Physical',components = ['left_limb','right_limb'],codename = codename)
         self.robot.startup()
         self.shutdown_flag = False
-        self.pics = []
         self.camera_dt = 0.2
         self.system_start_time = time.time()
         self._lock = RLock()
@@ -41,7 +40,7 @@ class CalibrationLogger:
         #start logging the pictures and robot state
         loggingThread = threading.Thread(target = self._cameraLoggingLoop)
         loggingThread.start()
-        time.sleep(2)
+        time.sleep(1)
 
         end_time = ref_traj.endTime()
         current_time = 0.0
@@ -49,7 +48,8 @@ class CalibrationLogger:
             left_q,right_q = extractLimbPositions(ref_traj.eval(current_time))
             self.robot.setLeftLimbPosition(left_q)
             self.robot.setRightLimbPosition(right_q)
-
+            time.sleep(self.dt)
+            current_time += self.dt
         self.shutdown()
         return
    
@@ -72,7 +72,7 @@ class CalibrationLogger:
             self._lock.acquire()
             self.res = self.camera.get_rgbd_images()
             self._lock.release()
-
+            t = time.time() - self.system_start_time
             for cn in self.cameras:
                 color_frame = self.res[cn][0]
                 if cn[0:4] == 'real': #realsense camera color channels need to be adjusted
@@ -80,36 +80,38 @@ class CalibrationLogger:
                 else:
                     color = np.asarray(color_frame)
                 if counter >= 0:
-                    cv2.imwrite(self.save_path + cn + '-' + str(counter).zfill(5)+img_format,color,)
-                    elapsed_time = time.time() - loop_start_time
-                    if elapsed_time < self.camera_dt:
-                        time.sleep(self.camera_dt - elapsed_time)
-                    else:
-                        time.sleep(0.00001)
-                    t = time.time() - self.system_start_time
-                    fc.write(str(t) + '\n')
-                    fc.write('\n')
+                    cv2.imwrite(self.save_path + cn + '-' + str(counter).zfill(5)+img_format,color)
 
-                    #now log the robot state
-                    fr.write(str(t)+' ')
-                    q = self.robot.sensedLeftLimbPosition()
-                    for ele in q:
-                        fr.write(str(ele)+' ')
-                    q = self.robot.sensedRightLimbPosition()
-                    for ele in q:
-                        fr.write(str(ele)+' ')
-                    wrench = self.robot.sensedLeftEEWrench()
-                    for ele in wrench:
-                        fr.write(str(ele)+' ')
-                    wrench = self.robot.sensedRightEEWrench()
-                    for ele in wrench:
-                        fr.write(str(ele)+' ')
-                    fr.write('\n')
-                    print('elapsed_time:',elapsed_time)
-                counter += 1
+            if counter >= 0:
+                fc.write(str(t) + '\n')
+
+                #now log the robot state
+                fr.write(str(t)+' ')
+                q = self.robot.sensedLeftLimbPosition()
+                for ele in q:
+                    fr.write(str(ele)+' ')
+                q = self.robot.sensedRightLimbPosition()
+                for ele in q:
+                    fr.write(str(ele)+' ')
+                # wrench = self.robot.sensedLeftEEWrench()
+                # for ele in wrench:
+                #     fr.write(str(ele)+' ')
+                # wrench = self.robot.sensedRightEEWrench()
+                # for ele in wrench:
+                #     fr.write(str(ele)+' ')
+                fr.write('\n')
+
+            elapsed_time = time.time() - loop_start_time
+            if elapsed_time < self.camera_dt:
+                time.sleep(self.camera_dt - elapsed_time)
+            else:
+                time.sleep(0.00001)
+            print('elapsed_time:',elapsed_time)
+            counter += 1
                     
         fc.close()
-        fr.close()
+        fr.close() 
+        print('logging ended')
                     
     def shutdown(self):
         self._lock.acquire()
@@ -118,13 +120,14 @@ class CalibrationLogger:
         self._lock.release()
 
 if __name__=="__main__":
-    os.mkdir(path)
-    server = CalibrationLogger(cameras,motion_address,codename)
-    server.collect(self,ref_traj,save_path)
-    def sigint_handler(signum, frame):
-        """ Catch Ctrl+C tp shutdown 
-        """
-        assert(signum == signal.SIGINT)
-        server.shutdown()
+    pass
+    # os.mkdir(path)
+    # server = CalibrationLogger(cameras,motion_address,codename)
+    # server.collect(self,ref_traj,save_path)
+    # def sigint_handler(signum, frame):
+    #     """ Catch Ctrl+C tp shutdown 
+    #     """
+    #     assert(signum == signal.SIGINT)
+    #     server.shutdown()
 
-    signal.signal(signal.SIGINT, sigint_handler) # catch SIGINT (ctrl-c)   
+    # signal.signal(signal.SIGINT, sigint_handler) # catch SIGINT (ctrl-c)   

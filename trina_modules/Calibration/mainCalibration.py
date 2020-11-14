@@ -167,41 +167,41 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
     if calibration_type == 'URDF':
         #The cameras should be ['left_realsense','right_realsense'] here.
         takePictures(traj_path,save_path,cameras,motion_address,codename)
-        Tl,ql,Tr,qr = extractData1(save_path,cameras)
-        T_c_l_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
-        T_c_r_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
-        T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_path,links)
+        # Tl,ql,Tr,qr = extractData1(save_path,cameras)
+        # T_c_l_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        # T_c_r_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        # T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_path,links)
 
-        #now modify the URDF 
-        robot = loader.load(URDF_path)
-        robot.link(6).setParentTransform(T_base_l[0],T_base_l[1])
-        robot.link(14).setParentTransform(T_base_r[0],T_base_r[1])
-        load.save(robot,'auto',URDF_save_path) #klampt loader only saves a robot to .rob. In addition, it does not save the meshes, and will keep
-        #the same mesh reference path. 
-        # mesh1 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/left_wrist2_link.STL')
-        # mesh2 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/SR305.STL')
-        #modify the mesh
-        camera_l = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/SR305.STL')
-        camera_r = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/SR305.STL')
-        T_c_l = klampt_to_np(T_c_l)
-        T_c_r = klampt_to_np(T_c_l)
+        # #now modify the URDF 
+        # robot = loader.load(URDF_path)
+        # robot.link(6).setParentTransform(T_base_l[0],T_base_l[1])
+        # robot.link(14).setParentTransform(T_base_r[0],T_base_r[1])
+        # load.save(robot,'auto',URDF_save_path) #klampt loader only saves a robot to .rob. In addition, it does not save the meshes, and will keep
+        # #the same mesh reference path. 
+        # # mesh1 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/left_wrist2_link.STL')
+        # # mesh2 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/SR305.STL')
+        # #modify the mesh
+        # camera_l = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
+        # camera_r = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
+        # T_c_l = klampt_to_np(T_c_l)
+        # T_c_r = klampt_to_np(T_c_l)
 
-        T_c_link5 = np.array([[0,0,-1,0],\
-                              [0,1,0,0],\
-                              [-1,0,0,0],\
-                              [0,0,0,1]]) 
-        from numpy.linalg import inv
-        camera_l.apply_transform(inv(T_c_link5)*T_c_l*T_c_link5)
-        camera_r.apply_transform(inv(T_c_link5)*T_c_r*T_c_link5)
-        l_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/left_wrist2_link.STL')
-        r_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/right_wrist2_link.STL')
-        l_link5_new = trimesh.util.concatenate([l_link5,camera_l])
-        r_link5_new = trimesh.util.concatenate([r_link5,camera_r])
-        ## The camera is merged with the wrist 2 geometry
-        l_link5_new.save_mesh('~/TRINA/Motion/data/robots/Bubonic_calibrated/left_wrist2_link.STL')
-        r_link5_new.save_mesh('~/TRINA/Motion/data/robots/Bubonic_calibrated/right_wrist2_link.STL')
+        # T_c_link5 = np.array([[0,0,-1,0],\
+        #                       [0,1,0,0],\
+        #                       [-1,0,0,0],\
+        #                       [0,0,0,1]]) 
+        # from numpy.linalg import inv
+        # camera_l.apply_transform(inv(T_c_link5)*T_c_l*T_c_link5)
+        # camera_r.apply_transform(inv(T_c_link5)*T_c_r*T_c_link5)
+        # l_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/left_wrist2_link.STL')
+        # r_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/right_wrist2_link.STL')
+        # l_link5_new = trimesh.util.concatenate([l_link5,camera_l])
+        # r_link5_new = trimesh.util.concatenate([r_link5,camera_r])
+        # ## The camera is merged with the wrist 2 geometry
+        # l_link5_new.save_mesh('~/TRINA/Motion/data/robots/Bubonic_calibrated/left_wrist2_link.STL')
+        # r_link5_new.save_mesh('~/TRINA/Motion/data/robots/Bubonic_calibrated/right_wrist2_link.STL')
 
-        ##need to change the mesh name in the generated new .rob file to the correct 
+        # ##need to change the mesh name in the generated new .rob file to the correct 
     elif calibration_type == 'moving': 
         pass
     
@@ -211,7 +211,7 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
 
 if __name__=="__main__":
     traj_path = ' '
-    save_path = './data/'
+    save_path = './data/1/'
     world_path = '../../Motion/data/TRINA_world_bubonic_calibration.xml'
     rob_save_folder = '../../Motion/data/robots/'
 
