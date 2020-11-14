@@ -1109,7 +1109,7 @@ class Motion:
         self._controlLoopLock.release()
         return 0
 
-    def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6): #,tool_center = [0,0,0]):
+    def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0]):
         """Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -1122,6 +1122,7 @@ class Motion:
         M: a 6x6 numpy 2D array. The inertia matrix.
         x_dot_g: list of 6 elements. The optional desired EE velocity
         deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like "deadband")
+        tool_center: Tool center (offset from the end effector in local frame of last link)
 
         Return:
         -------------
@@ -1156,16 +1157,16 @@ class Motion:
 
         formulation = 2
         #if already in impedance control, then do not reset x_mass and x_dot_mass 
-        if not self.left_limb_state.impedanceControl:
+        if not self.left_limb_state.impedanceControl or vectorops.norm(vectorops.sub(self.left_limb_state.toolCenter,tool_center)):
             self.left_limb_state.set_mode_reset()
             if formulation == 2:
                 self.left_limb_state.T_mass = self.sensedLeftEETransform()
             elif formulation == 1:
                 T = self.sensedLeftEETransform()
                 self.left_limb_state.x_mass = T[1] + so3.moment(T[0])
-            (v,w) = self.sensedLeftEEVelocity()
+            (v,w) = self.sensedLeftEEVelocity(tool_center)
             self.left_limb_state.x_dot_mass = v+w
-
+            self.left_limb_state.toolCenter = copy(tool_center)
 
         if formulation == 2:
             self.left_limb_state.T_g = copy(Tg)
@@ -1555,7 +1556,7 @@ class Motion:
         return self.robot_model.getConfig()
 
 
-    def sensedLeftEEWrench(self,frame = 'global'):
+    def sensedLeftEEWrench(self,frame = 'global',tool_center = [0,0,0]):
         """
         Parameters:
         ------------------
@@ -1572,14 +1573,17 @@ class Motion:
             return [0,0,0,0,0,0]
 
         wrench_raw = self.left_limb_state.sensedWrench #this wrench is expressed in the robot base frame
-        (R,_) = self.sensedLeftEETransform() #current EE R in global frame
+        (R,t) = self.sensedLeftEETransform() #current EE R in global frame
         R_base_global_left = copy(TRINAConfig.get_wrench_R_left(self.codename))
         R_global_base_left = so3.inv(R_base_global_left)
         R_EE_base_left = so3.mul(R_global_base_left,R)
 
-
+        (_,t_tool) = self.sensedLeftEETransform(tool_center)
         if frame == 'global':
-            return list(so3.apply(R_base_global_left,wrench_raw[0:3]) + so3.apply(R_base_global_left,wrench_raw[3:6]))
+            wrench = list(so3.apply(R_base_global_left,wrench_raw[0:3]) + so3.apply(R_base_global_left,wrench_raw[3:6]))
+            r = vectorops.sub(t_tool,t)
+            torque = vectorops.cross(r,wrench[0:3])
+            return wrench[0:3] + vectorops.sub(wrench[3:6],torque)
         elif frame == 'local':
             return list(so3.apply(so3.inv(R_EE_base_left),wrench_raw[0:3]) + so3.apply(so3.inv(R_EE_base_left),wrench_raw[3:6]))
 
@@ -2145,6 +2149,7 @@ class Motion:
         """
 
         wrench = self.sensedRightEEWrench(frame = 'global')
+
         # wrench = [0,0,0,0,0,0]
         stop = False
         if vectorops.norm_L2(wrench[0:3]) > 50:
@@ -2211,16 +2216,6 @@ class Motion:
         e_dot = x_dot_g - v
         wrench_total = wrench + np.dot(K,e) + np.dot(B,e_dot)
         a = np.dot(m_inv,wrench_total)
-        # print('wrench:',wrench)
-        # print('Tg:',T_g)
-        # print('T_curr',T_curr)
-        # print('error:',e)
-        # print('wrench total:',wrench_total)
-        # print('a',a)
-        # print('v',v)
-        # print('x',e[0:3])
-        # print('edot:',e_dot)
-        # print('a:',a)
         #limit maximum acceleration
         a = np.clip(a,[-1,-1,-1,-4,-4,-4],[1,1,1,4,4,4])
         v = v + a*dt
@@ -2244,7 +2239,7 @@ class Motion:
         """
         print('impdeance running')
 
-        wrench = self.sensedLeftEEWrench(frame = 'global')
+        wrench_raw = self.sensedLeftEEWrench(frame = 'global',tool_center = self.left_limb_state.toolCenter)
         #if force too big, backup a bit and stop
         stop = False
         if vectorops.norm_L2(wrench[0:3]) > 60:
@@ -2269,12 +2264,9 @@ class Motion:
             #     self.left_limb_state.T_mass = (so3.from_moment(so3.moment(self.left_limb_state.T_mass[0])),self.left_limb_state.T_mass[1])
             T = self.left_limb_state.T_mass
 
-        # print(so3.moment(T[0]))
-
-        #print(T)
         goal = ik.objective(self.left_EE_link,R=T[0],\
             t = vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
-        print(self.left_limb_state.toolCenter)
+
         initialConfig = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.0001)
         if not res:
