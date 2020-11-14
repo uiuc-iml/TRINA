@@ -17,6 +17,7 @@ from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 from klampt.vis import glinit
+glinit.init()
 sys.path.append(os.path.abspath('../../'))
 from Jarvis import Jarvis
 if glinit.available("PyQt"):
