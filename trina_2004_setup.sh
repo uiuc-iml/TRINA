@@ -2,14 +2,19 @@
 
 echo "Setting up TRINA on Ubuntu 20.04"
 
+if [ "$0" = "$BASH_SOURCE" ]; then
+    echo "Error: Script must be sourced"
+    exit 1
+fi
+
 if [ "$EUID" -eq 0 ]
-  then echo "You should not run this script with sudo, or cd command will fail."
+  then echo "Error: Script should not run in sudo"
   exit
 fi
 
 sudo apt install git
 sudo apt install python3-pip
-sudo pip3 install pyserial open3d
+sudo pip3 install pyserial open3d trimesh
 
 echo "Instaling ROS Noetic"
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
