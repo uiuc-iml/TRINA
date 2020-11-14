@@ -8,7 +8,7 @@ import cv2
 import cv2.aruco as aruco
 from klampt.math import vectorops as vo
 import trimesh
-def detectAruco(pic,marker_sz,IDs,dictionary)
+def detectAruco(pic,marker_sz,IDs,dictionary):
     if cn == 'realsense_left':
         pass
         #TODO: add realsense camera intrinsics
@@ -210,11 +210,11 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
 
 
 if __name__=="__main__":
-    traj_path = ' '
+    traj_path = 'URDF_calibration.path'
     save_path = './data/1/'
     world_path = '../../Motion/data/TRINA_world_bubonic_calibration.xml'
     rob_save_folder = '../../Motion/data/robots/'
 
     mainCalibration(traj_path = traj_path,save_path = save_path, world_path = world_path,URDF_save_folder = rob_save_folder,\
-        calibration_type = 'URDF',cameras=['left_realsense','right_realsense'],links = [11,19],motion_address = 'http://localhost:8080',\
-        codename = 'bubonic',mesh_path)
+        calibration_type = 'URDF',cameras=['realsense_left','realsense_right'],links = [11,19],motion_address = 'http://localhost:8080',\
+        codename = 'bubonic')

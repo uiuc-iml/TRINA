@@ -9,9 +9,7 @@ from threading import Thread, Lock, RLock
 import threading
 import time
 import numpy as np
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
-sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 from motion_client_python3 import MotionClient
 
 from utils import *
@@ -25,9 +23,10 @@ class CalibrationLogger:
         self.camera_dt = 0.2
         self.system_start_time = time.time()
         self._lock = RLock()
-        self.init_move_time = 20.0
+        self.init_move_time = 10.0
         self.dt = 0.01
         self.cameras = cameras
+        self.motion_address = motion_address
 
     def collect(self,ref_traj,save_path):
         #move the arm to trajectory initial configuration
@@ -63,6 +62,7 @@ class CalibrationLogger:
 
         Arbitrarily set the max depth of zed to be 5
         """
+        info_robot =  MotionClient(address = self.motion_address)
         counter = -1
         fc = open(self.save_path + 'camera_stamps.txt','w')
         fr = open(self.save_path + 'robot_state.txt','w')
@@ -87,16 +87,16 @@ class CalibrationLogger:
 
                 #now log the robot state
                 fr.write(str(t)+' ')
-                q = self.robot.sensedLeftLimbPosition()
+                q = info_robot.sensedLeftLimbPosition()
                 for ele in q:
                     fr.write(str(ele)+' ')
-                q = self.robot.sensedRightLimbPosition()
+                q = info_robot.sensedRightLimbPosition()
                 for ele in q:
                     fr.write(str(ele)+' ')
-                # wrench = self.robot.sensedLeftEEWrench()
+                # wrench = info_robot.sensedLeftEEWrench()
                 # for ele in wrench:
                 #     fr.write(str(ele)+' ')
-                # wrench = self.robot.sensedRightEEWrench()
+                # wrench = info_robot.sensedRightEEWrench()
                 # for ele in wrench:
                 #     fr.write(str(ele)+' ')
                 fr.write('\n')
