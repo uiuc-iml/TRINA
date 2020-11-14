@@ -307,7 +307,7 @@ class DirectTeleOperation:
 			self.control('impedance')
 	def baseControl(self):
 		'''controlling base movement'''
-		base_velocity = [0.5*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.5*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
+		base_velocity = [0.1*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.1*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
 		curr_velocity = np.array(self.robot.sensedBaseVelocity())
 		base_velocity_vec = np.array(base_velocity)
 		# if the commanded velocity differs from the actual velocity:

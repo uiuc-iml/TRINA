@@ -1,6 +1,5 @@
 import time,math,datetime
 import threading
-# from motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import numpy as np
@@ -19,11 +18,10 @@ from TRINAConfig import *
 from SensorModule import Camera_Robot
 from klampt import WorldModel,Geometry3D
 import rosgraph
+from Motion import MotionClient
 if(sys.version_info[0] < 3):
 	from future import *
-	from Motion import MotionClient
 else:
-	from Motion  import MotionClient
 	from importlib import reload
 from Jarvis import Jarvis
 import redis
@@ -357,8 +355,8 @@ class CommandServer:
 		velEE_left = {}
 		posEE_right = {}
 		velEE_right = {}
-		loopStartTime = time.time()
 		while not self.shut_down_flag:
+			loopStartTime = time.time()
 			# print('updating states')
 			try:
 				if(self.left_limb_active):
@@ -430,9 +428,9 @@ class CommandServer:
 
 			elapsedTime = time.time() - loopStartTime
 			if elapsedTime < self.dt:
-				time.sleep(self.dt-elapsedTime)
+				time.sleep(self.dt - elapsedTime)
 			else:
-				pass
+				time.sleep(1e-6)
 		print('\n\n\n\nstopped updating state!!! \n\n\n\n')
 
 	def commandReciever(self,robot,active_modules):
@@ -470,7 +468,7 @@ class CommandServer:
 
 			for i in self.robot_command.keys():
 				robot_command = self.trina_queue_reader.read(str(i))
-				# print(robot_command)
+				# print("Command in command_server", robot_command)
 				if (robot_command != []):
 					if(self.active_modules[str(i)]):
 						commandList = robot_command
@@ -489,9 +487,9 @@ class CommandServer:
 
 			# print('\n\n Frequency of execution loop:', 1/elapsedTime,'\n\n')
 			if elapsedTime < self.dt:
-				time.sleep(self.dt-elapsedTime)
+				time.sleep(self.dt - elapsedTime)
 			else:
-				pass
+				time.sleep(1e-6)
 
 	def run(self,command):
 		try:
@@ -499,7 +497,7 @@ class CommandServer:
 		except Exception as e:
 			print('there was an error executing your command!',e)
 		finally:
-			print("command recieved was " + command)
+			print("command recieved was " + str(command))
 
 			pass
 
@@ -531,9 +529,9 @@ class CommandServer:
 
 			elapsedTime = time.time() - loopStartTime
 			if elapsedTime < self.monitoring_dt:
-				time.sleep(self.monitoring_dt-elapsedTime)
+				time.sleep(self.monitoring_dt - elapsedTime)
 			else:
-				pass
+				time.sleep(1e-6)
 
 
 	def sigint_handler(self, signum, frame):
@@ -542,6 +540,7 @@ class CommandServer:
 		"""
 		assert(signum == signal.SIGINT)
 		print("SIGINT caught...shutting down the api!")
+		self.shutdown()
 
 	def shutdown(self):
 		#send shutdown to all modules
@@ -646,7 +645,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['right_limb','left_limb'], modules = ['C1','C2','DirectTeleOperation'])
+	server = CommandServer(mode = 'Physical',components =  ['base', 'right_limb','left_limb'], modules = ['C1','C2','DirectTeleOperation'])
 	# server = CommandServer(mode = 'Physical',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
 	while(True):
 		time.sleep(100)
