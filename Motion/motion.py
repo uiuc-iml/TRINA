@@ -373,7 +373,7 @@ class Motion:
                                     flag = 0
                                     self.left_limb.setConfig(target_config)
                         elif self.left_limb_state.impedanceControl:
-                            res,target_config = self._left_limb_imdepance_drive()
+                            res,target_config = self._left_limb_impedance_drive()
                             if res == 0:
                                 self.cartesian_drive_failure = True
                                 self.left_limb_state.set_mode_position(self.sensedLeftLimbPosition())
@@ -416,7 +416,7 @@ class Motion:
                                     flag = 0
                                     self.right_limb.setConfig(target_config)
                         elif self.right_limb_state.impedanceControl:
-                            res,target_config = self._right_limb_imdepance_drive()
+                            res,target_config = self._right_limb_impedance_drive()
                             if res == 0:
                                 self.cartesian_drive_failure = True
                                 self.right_limb_state.set_mode_position(self.sensedRightLimbPosition())
@@ -1160,7 +1160,7 @@ class Motion:
         if not self.left_limb_state.impedanceControl or vectorops.norm(vectorops.sub(self.left_limb_state.toolCenter,tool_center)):
             self.left_limb_state.set_mode_reset()
             if formulation == 2:
-                self.left_limb_state.T_mass = self.sensedLeftEETransform()
+                self.left_limb_state.T_mass = self.sensedLeftEETransform(tool_center = tool_center)
             elif formulation == 1:
                 T = self.sensedLeftEETransform()
                 self.left_limb_state.x_mass = T[1] + so3.moment(T[0])
@@ -2137,7 +2137,7 @@ class Motion:
 
         return 2,target_config #2 means success..
 
-    def _right_limb_imdepance_drive(self):
+    def _right_limb_impedance_drive(self):
         """Calculate the next goal for impedance position control
         Parameters:
         --------------
@@ -2227,7 +2227,7 @@ class Motion:
         T = se3.mul((so3.from_moment(dx[3:6]),dx[0:3]),T_curr)
         return T,v.tolist()
 
-    def _left_limb_imdepance_drive(self):
+    def _left_limb_impedance_drive(self):
         """Calculate the next goal for impedance control
         Parameters:
         --------------
@@ -2237,9 +2237,7 @@ class Motion:
         Result flag
         target_config : list of doubles, the target limb config
         """
-        print('impdeance running')
-
-        wrench_raw = self.sensedLeftEEWrench(frame = 'global',tool_center = self.left_limb_state.toolCenter)
+        wrench = self.sensedLeftEEWrench(frame = 'global',tool_center = self.left_limb_state.toolCenter)
         #if force too big, backup a bit and stop
         stop = False
         if vectorops.norm_L2(wrench[0:3]) > 60:
@@ -2266,7 +2264,9 @@ class Motion:
 
         goal = ik.objective(self.left_EE_link,R=T[0],\
             t = vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
-
+        print(vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
+        print(self.sensedLeftEETransform()[1])
+        print(self.left_limb_state.toolCenter)
         initialConfig = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.0001)
         if not res:
@@ -2317,7 +2317,7 @@ class Motion:
 
         return x.tolist(),v.tolist()
 
-    # def _left_limb_imdepance_drive(self):
+    # def _left_limb_impedance_drive(self):
     #     """Calculate the next goal for impedance control
     #     Parameters:
     #     --------------
@@ -2376,92 +2376,63 @@ class Motion:
 if __name__=="__main__":
 
     ###Read the current position ###
-    robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
-    robot.startup()
-    time.sleep(0.05)
+    # robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
+    # robot.startup()
+    # time.sleep(0.05)
     
-    print(robot.getKlamptSensedPosition())
-    with open('tmp.txt', 'a') as f:
-        f.write(f"\n{str(robot.getKlamptSensedPosition())}")
-    time.sleep(0.1)
-    robot.shutdown()
+    # print(robot.getKlamptSensedPosition())
+    # with open('tmp.txt', 'a') as f:
+    #     f.write(f"\n{str(robot.getKlamptSensedPosition())}")
+    # time.sleep(0.1)
+    # robot.shutdown()
     ########################################
 
 
     #################################
-    # robot = Motion(mode = 'Physical',components = ['left_limb'],codename = "bubonic")
-    # robot.startup()
-    # time.sleep(0.05)
+    robot = Motion(mode = 'Physical',components = ['left_limb'],codename = "bubonic")
+    robot.startup()
+    time.sleep(0.05)
+    K = np.array([[200.0,0.0,0.0,0.0,0.0,0.0],\
+                [0.0,200.0,0.0,0.0,0.0,0.0],\
+                [0.0,0.0,200.0,0.0,0.0,0.0],\
+                [0.0,0.0,0.0,5.0,0.0,0.0],\
+                [0.0,0.0,0.0,0.0,5.0,0.0],\
+                [0.0,0.0,0.0,0.0,0.0,5.0]])
 
-    # # # leftTuckedConfig = [0.7934980392456055, -2.541288038293356, -2.7833543555, 4.664876623744629, -0.049166981373, 0.09736919403076172]
-    # # # leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
-    # # # rightTuckedConfig = robot.mirror_arm_config(leftTuckedConfig)
-    # # # rightUntuckedConfig = robot.mirror_arm_config(leftUntuckedConfig)
+    m = np.eye(6)*5.0
+    m[3,3] = 1.0
+    m[4,4] = 1.0
+    m[5,5] = 1.0
 
-    # # #move to untucked position
-    # # # robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    # # #robot.setRightLimbPositionLinear(rightUntuckedConfig,5)
-    # # #robot.setLeftLimbPosition(leftUntuckedConfig)
-    # # #robot.setRightLimbPosition(rightUntuckedConfig)
-    # # # time.sleep(6)
-
-    # # initialT = robot.sensedLeftEETransform()
-
-
-    # K = np.array([[200.0,0.0,0.0,0.0,0.0,0.0],\
-    #             [0.0,200.0,0.0,0.0,0.0,0.0],\
-    #             [0.0,0.0,200.0,0.0,0.0,0.0],\
-    #             [0.0,0.0,0.0,5.0,0.0,0.0],\
-    #             [0.0,0.0,0.0,0.0,5.0,0.0],\
-    #             [0.0,0.0,0.0,0.0,0.0,5.0]])
-
-    # ##This is teaching mode
-    # # K = np.array([[0.0,0.0,0.0,0.0,0.0,0.0],\
-    # #         [0.0,0.0,0.0,0.0,0.0,0.0],\
-    # #         [0.0,0.0,0.0,0.0,0.0,0.0],\
-    # #         [0.0,0.0,0.0,20000.0,0.0,0.0],\
-    # #         [0.0,0.0,0.0,0.0,20000.0,0.0],\
-    # #         [0.0,0.0,0.0,0.0,0.0,20000.0]])
-
-    # m = np.eye(6)*5.0
-    # m[3,3] = 1.0
-    # m[4,4] = 1.0
-    # m[5,5] = 1.0
-
-    # B = 2.0*np.sqrt(4.0*np.dot(m,K))
-    # B[3:6,3:6] = B[3:6,3:6]*3.0
-
-    # # B = np.eye(6)*200.0
-    # # # B[3,3] = 3.0
-    # # # B[4,4] = 3.0
-    # # # B[5,5] = 3.0
+    B = 2.0*np.sqrt(4.0*np.dot(m,K))
+    B[3:6,3:6] = B[3:6,3:6]*3.0
 
 
-    # initialT = copy(robot.sensedLeftEETransform())
+    initialT = copy(robot.sensedLeftEETransform(tool_center=[0.27,0,0]))
 
-    # # robot.setLeftEETransformImpedance(initialT,K,m,B)#,deadband = [1.0,1.0,1.0,0.5,0.5,0.5])
+    robot.setLeftEETransformImpedance(initialT,K,m,B, tool_center=[0.27,0,0])#,deadband = [1.0,1.0,1.0,0.5,0.5,0.5])
 
-    # start_time = time.time()
-    # print('start')
-    # # with open('trial0.txt','w') as f:
-    # while time.time() - start_time < 1:
-    #     # print(robot.sensedLeftEEWrench())
-    #     # target = deepcopy(initialT)
-    #     # target[1][0] = initialT[1][0] + (time.time() - start_time)*0.02
-    #     # robot.setLeftEETransformImpedance(target,K,m,B)
-    #     # wrench = robot.sensedLeftEEWrench()
-    #     # for ele in wrench:
-    #     #     f.write(str(ele)+' ')
-    #     # f.write('\n')
-    #     time.sleep(0.5)
-    # print('stop')
-    # #robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
-    # time.sleep(1)
+    start_time = time.time()
+    print('start')
+    # with open('trial0.txt','w') as f:
+    while True:
+        # print(robot.sensedLeftEEWrench())
+        # target = deepcopy(initialT)
+        # target[1][0] = initialT[1][0] + (time.time() - start_time)*0.02
+        # robot.setLeftEETransformImpedance(target,K,m,B)
+        # wrench = robot.sensedLeftEEWrench()
+        # for ele in wrench:
+        #     f.write(str(ele)+' ')
+        # f.write('\n')
+        time.sleep(0.1)
+    print('stop')
+    #robot.setLeftLimbPositionLinear(leftUntuckedConfig,5)
+    time.sleep(1)
 
-    # robot.closeLeftRobotiqGripper()
-    # time.sleep(5)
+    robot.closeLeftRobotiqGripper()
+    time.sleep(5)
 
-    # robot.shutdown()
+    robot.shutdown()
 
 
     # #################################
