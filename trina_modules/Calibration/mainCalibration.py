@@ -3,20 +3,32 @@
 import os
 # from klampt.model import trajectory as klamptTraj
 from klampt.io import loader
-from calibrationLogger import CalibrationLogger
+import sys
+sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
 import cv2.aruco as aruco
+sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 from klampt.math import vectorops as vo
 import trimesh
-def detectAruco(pic,marker_sz,IDs,dictionary):
+import numpy as np
+def detectAruco(pic,marker_sz,IDs,dictionary,cn):
+    gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
     if cn == 'realsense_left':
-        pass
-        #TODO: add realsense camera intrinsics
+        fx = 474.299
+        fy = 474.299
+        cx = 314.49
+        cy = 245.299
+        mtx = np.array([[fx,0,cx], [0,fy,cy], [0,0,1]])
+        dist = np.array([0.123036,0.135872,0.00483028,0.00670342,-0.0495168])
     elif cn == 'realsense_right':
-        pass
+        fx = 474.556
+        fy = 474.556
+        cx = 316.993
+        cy = 245.439
+        mtx = np.array([[fx,0,cx], [0,fy,cy], [0,0,1]])
+        dist = np.array([0.156518,0.0823271,0.00524371,0.00575865,0.0232142])
     elif cn == 'zed_overhead':
-        gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
-        if frame.shape==(1920,1080):
+        if pic.shape==(1920,1080):
             fx=1055.28
             fy=1054.69
             cx=982.61
@@ -36,25 +48,26 @@ def detectAruco(pic,marker_sz,IDs,dictionary):
             k3=-0.00548354
             p1=0.000242741
             p2=-0.000475926
-        mtx = np.array([[fx,0,cx], [0,fy,cy], [0,0,1]])
-        dist = np.array([k1,k2,p1,p2,k3])
+            mtx = np.array([[fx,0,cx], [0,fy,cy], [0,0,1]])
+            dist = np.array([k1,k2,p1,p2,k3])
 
     parameters = aruco.DetectorParameters_create()
-    #TODO: adjust these
     aruco_dict = aruco.Dictionary_get(dictionary)
-    # aruco_dict_table = aruco.Dictionary_get(aruco.DICT_7X7_50)
-
     corners, detected_ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters, \
                                                             cameraMatrix=mtx, distCoeff=dist)        
     #add the detected marker position 
     ps = []
-    for target_id in IDs:
-        if target_id in detected_ids:
-            #get the position
-            rvec,tvec,_=aruco.estimatePoseSingleMarkers(c,marker_sz,mtx,dist)
-            ps.append(tvec[0,0,:].tolist())
-        else:
-            ps.append([])
+    if detected_ids is not None:
+        detected_ids = detected_ids.flatten().tolist()
+        for target_id in IDs:
+            if target_id in detected_ids:
+                #get the position
+                rvec,tvec,_=aruco.estimatePoseSingleMarkers(corners[detected_ids.index(target_id)],marker_sz,mtx,dist)
+                ps.append(tvec[0,0,:].tolist())
+            else:
+                ps.append([])
+    else:
+        return [[],[],[]]
     return ps
 
 def detectMarker1(pic,cn):
@@ -75,22 +88,21 @@ def detectMarker1(pic,cn):
     ------------------
     A rigid transform, in camera coordinate
     """
-    IDs = [1,2,3]
-    marker_sz = 0.05
-    dictionary = aruco.DICT_ARUCO_ORIGINAL
-    ps = detectAruco(pic,marker_sz,IDs,dictionary)
-
+    IDs = [0,1,2]
+    marker_sz = 0.06
+    dictionary = aruco.DICT_4X4_50
+    ps = detectAruco(pic,marker_sz,IDs,dictionary,cn)
     if [] in ps:
         print('marker 1 not detected')
         return 
-    origin = ps[1]
-    x = vo.sub(ps[2],ps[1])
-    x = vo.div(x,vo.norm(x))
-    y = vo.sub(ps[0],ps[1])
-    y = vo.div(y,vo.norm(y))
-    z = vo.cros(x,y)
 
-    T_marker = (x+y+z,origin)
+    origin = ps[1]
+    x = vo.sub(ps[0],ps[1])
+    x = vo.div(x,vo.norm(x))
+    y = vo.sub(ps[2],ps[1])
+    y = vo.div(y,vo.norm(y))
+    z = vo.cross(x,y)
+    T_marker = (x+y+list(z),origin)
     return T_marker
 
 def extractData1(save_path,cameras):
@@ -108,19 +120,22 @@ def extractData1(save_path,cameras):
     markers_r = []
     qs_r = []
     for cn in cameras:
-        for il,l in enumerate(open(save_path+'/robot_states.txt','r').readlines()):
-            frame = cv2.imread(save_path + cn +"-%05d.jpg"%il)
-        T_marker = detectMarker1(frame,cn)
-        if T_marker is not None:
-            line = [float(v) for v in l.split(' ') if l!='\n']
-            if cn[10] == 'l':
-                qs_l.append(line[0:6])
-                markers_l.append(T_marker)
-            elif cn[10] == 'r':
-                qs_r.append(line[6:12])
-                markers_r.append(T_marker)
-            else:
-                print('wrong camera name given')
+        with open(save_path+'robot_state.txt','r') as f:
+            lines = [line.rstrip() for line in f]
+        for il,l in enumerate(lines):
+            print(save_path + cn +"-%05d.png"%il)
+            frame = cv2.imread(save_path + cn +"-%05d.png"%il)
+            T_marker = detectMarker1(frame,cn)
+            if T_marker is not None:
+                line = [float(v) for v in l.split(' ')]
+                if cn[10] == 'l':
+                    qs_l.append(line[1:7])
+                    markers_l.append(T_marker)
+                elif cn[10] == 'r':
+                    qs_r.append(line[7:13])
+                    markers_r.append(T_marker)
+                else:
+                    print('wrong camera name given')
 
     return markers_l,qs_l,markers_r,qs_r
 
@@ -166,11 +181,15 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
     """
     if calibration_type == 'URDF':
         #The cameras should be ['left_realsense','right_realsense'] here.
-        takePictures(traj_path,save_path,cameras,motion_address,codename)
-        # Tl,ql,Tr,qr = extractData1(save_path,cameras)
-        # T_c_l_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
-        # T_c_r_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
-        # T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_path,links)
+        # from calibrationLogger import CalibrationLogger
+        # takePictures(traj_path,save_path,cameras,motion_address,codename)
+        Tl,ql,Tr,qr = extractData1(save_path,cameras)
+        print('detected left limb camera markers:',len(Tl))
+        print('detected left limb camera markers:',len(Tr))
+        print(ql)
+        T_c_l_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        T_c_r_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_path,links)
 
         # #now modify the URDF 
         # robot = loader.load(URDF_path)
@@ -210,7 +229,7 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
 
 
 if __name__=="__main__":
-    traj_path = 'URDF_calibration.path'
+    traj_path = ' '
     save_path = './data/1/'
     world_path = '../../Motion/data/TRINA_world_bubonic_calibration.xml'
     rob_save_folder = '../../Motion/data/robots/'
