@@ -228,9 +228,9 @@ def _sensedRightEEVelocity(local_pt):
 	global robot
 	return robot.sensedRightEEVelocity(local_pt)
 
-def _sensedLeftEEWrench(frame):
+def _sensedLeftEEWrench(frame,tool_center = [0,0,0]):
 	global robot
-	return robot.sensedLeftEEWrench(frame)
+	return robot.sensedLeftEEWrench(frame,tool_center)
 
 def _sensedRightEEWrench(frame):
 	global robot
@@ -275,7 +275,7 @@ def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
 	M = np.array(M)
 	return robot.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
-def _setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
+def _setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,tool_center):
 	global robot
 	K = np.array(K)
 	B = np.array(B)
