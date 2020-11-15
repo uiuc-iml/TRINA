@@ -17,10 +17,11 @@ from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 from klampt.vis import glinit
+glinit.init()
 sys.path.append(os.path.abspath('../../'))
 from Jarvis import Jarvis
-if glinit._PyQtAvailable:
-    if glinit._PyQt5Available:
+if glinit.available("PyQt"):
+    if glinit.available("PyQt5"):
         from PyQt5.QtWidgets import *
     else:
         from PyQt4.QtGui import *
@@ -383,7 +384,7 @@ class UI_end_1:
 
     def _serveVis(self):
         """Runs a custom Qt frame around a visualization window"""
-        if not glinit._PyQtAvailable:
+        if not glinit.available("PyQt5"):
             print ("PyQt5 is not available on your system, try sudo apt-get install python-qt5")
             return
         world = self.world
