@@ -127,7 +127,6 @@ class DirectTeleOperation:
 		# Clutching - Relative to when you last hit clutch
 		self.controller_mode = controller_mode
 
-		time.sleep(5)
 		self.UI_state = {}
 		self.init_headset_orientation = {}
 		self.startup = True
@@ -139,6 +138,7 @@ class DirectTeleOperation:
 		stateRecieverThread.start()
 		main_thread.start()
 		controller_thread.start()
+		# time.sleep(5)
 
 	def sigint_handler(self, signum, frame):
 		""" Catch Ctrl+C tp shutdown the api,
@@ -299,7 +299,7 @@ class DirectTeleOperation:
 					elif limb.teleoperationState == 2 or limb.teleoperationState == 3:
 						limb.teleoperationState = 3
 						#limb.setEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
-						limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B])
+						limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[40*x for x in a] for a in self.B])
 
 			if(self.base_active):
 				self.baseControl()
