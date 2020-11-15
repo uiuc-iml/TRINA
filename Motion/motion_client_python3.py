@@ -204,9 +204,9 @@ class MotionClient:
 		self.s.closeRightRobotiqGripper()	
 
 	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6):
-		K = K.tolist()
-		B = B.tolist()
-		M = M.tolist()
+		# K = K.tolist()
+		# B = B.tolist()
+		# M = M.tolist()
 		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
