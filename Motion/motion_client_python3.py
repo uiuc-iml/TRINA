@@ -179,8 +179,8 @@ class MotionClient:
 		return self.s.sensedRightEEVelcocity(local_pt)
 
 
-	def sensedLeftEEWrench(self,frame = 'global'):
-		return self.s.sensedLeftEEWrench(frame)
+	def sensedLeftEEWrench(self,frame = 'global',tool_center = [0,0,0]):
+		return self.s.sensedLeftEEWrench(frame,tool_center)
 
 	def sensedRightEEWrench(self,frame = 'global'):
 		return self.s.sensedRightEEWrench(frame)
@@ -203,11 +203,11 @@ class MotionClient:
 	def closeRightRobotiqGripper(self):
 		self.s.closeRightRobotiqGripper()	
 
-	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6):
+	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0.0]*3):
 		# K = K.tolist()
 		# B = B.tolist()
 		# M = M.tolist()
-		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
+		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		K = K.tolist()
