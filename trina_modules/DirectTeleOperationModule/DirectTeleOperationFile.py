@@ -114,9 +114,7 @@ class DirectTeleOperation:
 		self.M = self.M.tolist()
 		self.B = self.B.tolist()
 
-		#TODO VERY VERY TEMPORARY @REMOVE - Jing-Chen
-		self.tool = np.array([0.0,0.0,0.0], dtype=np.float64)
-		self.tool_target = np.array([0.27,0.0,0.0])
+		self.tool = np.array([0.20,0.0,0.0], dtype=np.float64)
 
 		# 0 - Go home
 		# 1 - Set controller home
@@ -134,7 +132,7 @@ class DirectTeleOperation:
 
 		stateRecieverThread = threading.Thread(target=self._serveStateReceiver)
 		main_thread = threading.Thread(target = self._infoLoop)
-		controller_thread = threading.Thread(target = controller_listen.listen)
+		controller_thread = Process(target = controller_listen.listen, daemon=True)
 		stateRecieverThread.start()
 		main_thread.start()
 		controller_thread.start()
@@ -250,16 +248,15 @@ class DirectTeleOperation:
 		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
 		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
 
-		# TODO: This is broken for two reasons:
-		#   1. Linear move won't always work.
-		#   2. We need the "elbow out" ik solution but that isn't guaranteed yet.
-		#TODO REMOVE JANKINESS - Jing-Chen
-		self.tool = np.array([0,0,0])
-
 		if self.left_limb.active:
-			self.left_limb.setEETransformImpedance([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()], self.K, self.M, self.B)
+			self.left_limb.setEETransformImpedance(
+				[leftUntuckedRotation.tolist(),
+				leftUntuckedTranslation.tolist()], 
+				self.K, self.M, self.B, 
+				tool_center=self.tool.tolist())
 		if self.right_limb.active:
-			self.right_limb.setEETransformImpedance([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()], self.K, self.M, self.B)
+			pass
+			#self.right_limb.setEETransformImpedance([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()], self.K, self.M, self.B)
 
 
 	def UIStateLogic(self):
@@ -290,7 +287,7 @@ class DirectTeleOperation:
 
 							self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 							
-							limb.init_pos = limb.sensedEETransform()
+							limb.init_pos = limb.sensedEETransform(self.tool.tolist())
 
 							print("BEGIN CLUTCHING, ZERO!")
 
@@ -299,7 +296,10 @@ class DirectTeleOperation:
 					elif limb.teleoperationState == 2 or limb.teleoperationState == 3:
 						limb.teleoperationState = 3
 						#limb.setEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
-						limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[40*x for x in a] for a in self.B])
+						limb.setEETransformImpedance(
+							limb.sensedEETransform(tool_center=self.tool.tolist()), 
+							self.K, self.M, [[10*x for x in a] for a in self.B], 
+							tool_center=self.tool.tolist())
 
 			if(self.base_active):
 				self.baseControl()
@@ -370,11 +370,7 @@ class DirectTeleOperation:
 			elif mode == 'velocity':
 				limb.setEEVelocity(error_t, tool = self.tool.tolist())
 			elif mode == 'impedance':
-				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B)
-
-            #TODO remove jankness - Jing-Chen is this even doing anything??
-			err = self.tool_target - self.tool
-			self.tool = np.add(self.tool, 0.1 * err, out=self.tool, casting="unsafe")
+				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B, tool_center=self.tool.tolist())
 		else:
 			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B])
 

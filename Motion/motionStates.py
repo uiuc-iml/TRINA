@@ -1,5 +1,6 @@
 import copy
 import time
+import numpy as np
 
 class LimbState:
     def __init__(self):
@@ -49,6 +50,7 @@ class LimbState:
         self.counter = 1
         #range for ignoring the wrench readings
         self.deadband = [0]*6
+        self.prev_wrench = np.array([0]*6)
 
     def set_mode_reset(self):
         #self.commandSent = True

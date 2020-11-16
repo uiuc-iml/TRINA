@@ -508,8 +508,6 @@ class CommandServer:
 		finally:
 			print("command recieved was " + str(command))
 
-			pass
-
 
 	#0 -> dead
 	#1 -> healthy
@@ -654,6 +652,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
+	# server = CommandServer(mode = 'Physical',components =  ['base', 'right_limb','left_limb'], modules = ['DirectTeleOperation', 'StateLogger'])
 	server = CommandServer(mode = 'Physical',components =  ['base', 'right_limb','left_limb'], modules = ['DirectTeleOperation'])
 	# server = CommandServer(mode = 'Physical',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
 
