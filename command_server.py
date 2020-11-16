@@ -384,7 +384,7 @@ class CommandServer:
 
 			time.sleep(3)
 		if(self.mode == 'Physical'):
-			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode)
+			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
 			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
 		self.health_dict = {}
 		# create the list of threads
@@ -405,8 +405,7 @@ class CommandServer:
 		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
 		moduleMonitorThread.start()
 		atexit.register(self.shutdown_all)
-		while(True):
-			time.sleep(200)
+		
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
 
@@ -919,7 +918,10 @@ if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
 	server = CommandServer(mode = 'Physical',components =  ['left_limb', 'right_limb'], modules = ['C1','C2','DirectTeleOperation', 'PointClickGrasp'], codename = 'bubonic')
-	# server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
+	#server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
+	
+	print(server.robot.closeLeftRobotiqGripper())
+	print(server.robot.sensedLeftEETransform())
 	while(True):
 		time.sleep(100)
 		pass

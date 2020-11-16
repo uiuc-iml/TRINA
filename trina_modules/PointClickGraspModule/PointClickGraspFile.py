@@ -35,7 +35,9 @@ import numpy as np
 import math
 import cv2
 import segmentation as seg
-from skimage.color import rgb2gray
+import open3d as o3d
+from skimage.color import rgb2gray, label2rgb
+from skimage import color
 
 class PointClickGrasp:
     def __init__(self, Jarvis=None, debugging=False, mode='Kinematic'):
@@ -161,10 +163,10 @@ class PointClickGrasp:
                 self._sharedLock.release()
             if self.state == "active":
                 self.rgbdimage = self.jarvis.get_rgbd_images()
-                print("Printing rgbd image")
-                print(self.rgbdimage)
-                depth_right = self.rgbdimage['realsense_right'][1]
-                #cv2.imshow("image", depth_right)
+                #print("Printing rgbd image")
+                #print(np.array(self.rgbdimage['realsense_right'][0]))
+                #depth_right = self.rgbdimage['realsense_right'][0]
+                #cv2.imshow("image", np.array(depth_right))
                 #cv2.waitKey(0)
 
             elapsed_time = time.time() - loop_start_time
@@ -209,16 +211,33 @@ class PointClickGrasp:
                 self.rgbdimage = self.jarvis.get_rgbd_images()
                 depth_left = self.rgbdimage['realsense_left'][1]
                 color_left = self.rgbdimage['realsense_left'][0]
+                color_left = np.array(color_left)[:,:,:]
                 
-                #cv2.imshow("image", depth_left)
+                #cv2.imshow("image", np.array(depth_left))
                 #cv2.waitKey(0)
-                im = seg.segmentation.blur_frame(color_left)
-                imgray = rgb2gray(im)
+                #im = seg.segmentation.blur_frame(np.array(color_left))
+                imgray = rgb2gray(color_left)
                 imscaled = (imgray*256).astype("uint16")
-                segmented = seg.mixture_model(imscaled, debug=True)
-                print(segmented[0].tolist())
-                cv2.imshow("image", segmented[0])
+                segmented, _ = seg.mixture_model(imscaled, debug=True)
+                #labels = seg.watershed(imgray, segmented)
+                #print(labels)
+                mask_overlay = label2rgb(segmented,np.array(color_left),colors=[(255,0,0),(0,0,255), (0, 255,0), (255,255,0),(0,255,255), (255, 0,255)],alpha=0.01, bg_label=0, bg_color=None)
+                cv2.imshow("image", np.array(mask_overlay))
                 cv2.waitKey(0)
+                
+                color = o3d.geometry.Image(np.array(color_left))
+                depth = o3d.geometry.Image(np.array(depth_left)[:,:])
+                
+                rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(color, depth); 
+                pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
+                    rgbd_image, o3d.camera.PinholeCameraIntrinsic(o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault)
+                )
+                # Flip it, otherwise the pointcloud will be upside down
+                pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+                
+                o3d.io.write_point_cloud("test_grasping.pcd", pcd)
+                
+                
                 
                 self._sharedLock.acquire()
                 self.state = 'planning'
