@@ -72,21 +72,6 @@ class PointClickGrasp:
         self.ray1 = ([], [])  # source and direction
         self.ray2 = ([], [])
 
-        # get the first grid
-        self.grid = None
-
-        self.grid = get_occupancy_grid("dynamic_map")
-
-        self.res = self.grid.info.resolution
-        self.radius = 0.5588 / 2 / self.res * 2.0  # radius in terms of grids
-        self.gridmap = build_2d_map(self.grid).T
-        self.preprocessed_gridmap = preprocess(self.gridmap, self.radius)
-
-        # current start and end
-        # transforms world coordinates into the grid (indeces)
-        self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
-        # wait for user to give goal
-        self.end = []
         self._sharedLock = RLock()
         signal.signal(signal.SIGINT, self.sigint_handler)  # catch SIGINT (ctrl-c)
 
@@ -176,6 +161,8 @@ class PointClickGrasp:
                 self._sharedLock.release()
             if self.state == "active":
                 self.rgbdimage = self.jarvis.get_rgbd_images()
+                print("Printing rgbd image")
+                print(self.rgbdimage)
                 depth_right = self.rgbdimage['realsense_right'][1]
                 #cv2.imshow("image", depth_right)
                 #cv2.waitKey(0)
@@ -344,8 +331,8 @@ class PointClickGrasp:
                         print('at end')
                     else:
                         # self.jarvis.sendConfirmationUI('info','Path has finished')
-                        self.jarvis.setBaseVelocity([0, 0])
-                        self.jarvis.changeActivityStatus(['UI'], ['PointClickNav'])
+                        #self.jarvis.setBaseVelocity([0, 0])
+                        #self.jarvis.changeActivityStatus(['UI'], ['PointClickNav'])
                         print('execution has completed')
                     self.state = 'idle'
                     self.global_path = None
@@ -384,7 +371,7 @@ class PointClickGrasp:
                 if closest is None:
                     if self.debugging:
                         print("No prim!!!")
-                        self.simualted_robot.setBaseVelocity([0.0, 0.4])
+                        #self.simualted_robot.setBaseVelocity([0.0, 0.4])
                         new_pose = self.curr_pose
                         new_pose = transform_coordinates(new_pose, self.grid)
 
@@ -393,7 +380,7 @@ class PointClickGrasp:
                         continue
                     else:
                         print("No prim!!!")
-                        self.jarvis.setBaseVelocity([0.0, 0.4])
+                        #self.jarvis.setBaseVelocity([0.0, 0.4])
                         time.sleep(0.1)
                         self._sharedLock.acquire()
                         new_pose = self.curr_pose
@@ -425,14 +412,14 @@ class PointClickGrasp:
                 for i in range(N):
                     # check current status
                     if self.state == 'idle':
-                        self.jarvis.setBaseVelocity([0, 0])
+                        #self.jarvis.setBaseVelocity([0, 0])
                         break
 
                     start = time.time()
                     if self.terminate_command:
                         self._sharedLock.acquire()
                         self.state = 'idle'
-                        self.jarvis.setBaseVelocity([0, 0])
+                        #self.jarvis.setBaseVelocity([0, 0])
                         self.global_path = None
                         self.end = None
                         self.start = None
@@ -465,10 +452,6 @@ class PointClickGrasp:
                     if self.visualization:
                         vis.add("klocaltraj", ktraj)
                         vis.setColor("klocaltraj", 0, 0, 255)
-                    if self.debugging:
-                        self.simulated_robot.setBaseVelocity(vel)
-                    else:
-                        self.jarvis.setBaseVelocity(vel)
 
                     new_pose = deepcopy(self.curr_pose)
                     new_pose = transform_coordinates(new_pose, self.grid)
@@ -489,7 +472,7 @@ class PointClickGrasp:
 
                 # check status
                 if self.state == 'idle':
-                    self.jarvis.setBaseVelocity([0, 0])
+                    #self.jarvis.setBaseVelocity([0, 0])
                     continue
 
                 ##### receive new map and replan global path
@@ -519,7 +502,7 @@ class PointClickGrasp:
                         print("new global path is empty")
                         self.jarvis.sendConfirmationUI('Error',
                                                        'A global path does not seem to be possible....Returning to idle')
-                        self.jarvis.setBaseVelocity([0, 0])
+                        #self.jarvis.setBaseVelocity([0, 0])
                         self.state = 'idle'
                         continue
                     self.can_send_gridmap = True
@@ -561,7 +544,7 @@ class PointClickGrasp:
         self._sharedLock.acquire()
         self.state = 'idle'
         self.status = 'idle'
-        self.jarvis.setBaseVelocity([0, 0])
+        #self.jarvis.setBaseVelocity([0, 0])
         self.confirm_request_sent = False
         self.global_path = None
         self.end = None
