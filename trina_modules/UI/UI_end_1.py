@@ -369,9 +369,9 @@ class testingWorldBuilder():
         self.floor.loadFile(model_path + "cube.off")
         self.floor.transform([floor_length, 0, 0, 0, floor_width, 0, 0, 0, 0.01],
                              [-floor_length / 2.0, -floor_width / 2.0, -0.01])
-        floor_terrain = self.w.makeTerrain("floor")
-        floor_terrain.geometry().set(self.floor)
-        floor_terrain.appearance().setColor(0.4, 0.3, 0.2, 1.0)
+        #floor_terrain = self.w.makeTerrain("floor")
+        #floor_terrain.geometry().set(self.floor)
+        #floor_terrain.appearance().setColor(0.4, 0.3, 0.2, 1.0)
 
         ###colors
         self.light_blue = [3.0 / 255.0, 140.0 / 255.0, 252.0 / 255.0, 1.0]
