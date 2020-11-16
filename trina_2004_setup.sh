@@ -24,11 +24,12 @@ sudo apt install -y ros-noetic-desktop-full
 echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 
-echo "Instaling other SLAM package"
+echo "Instaling SLAM package"
+sudo apt install -y ros-noetic-slam-gmapping
+
+echo "Creating workspace for other ROS packages"
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src
-git clone https://github.com/ros-perception/openslam_gmapping
-git clone https://github.com/ros-perception/slam_gmapping
 cd ..
 catkin_make
 echo "source /home/motion/catkin_ws/devel/setup.bash" >> ~/.bashrc
