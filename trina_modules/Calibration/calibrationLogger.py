@@ -12,7 +12,7 @@ import numpy as np
 import cv2
 from motion_client_python3 import MotionClient
 
-from utils import *
+from utils_my import *
 class CalibrationLogger:
     def __init__(self,cameras,motion_address,codename):
         self.camera = Camera_Robot(robot = [],world = [], cameras = cameras,ros_active = False, use_jarvis = False, mode = 'Physical')
@@ -35,7 +35,7 @@ class CalibrationLogger:
         self.robot.setRightLimbPositionLinear(right_q,self.init_move_time)
         self.save_path = save_path
         time.sleep(self.init_move_time + 0.5)
-
+        exit()
         #start logging the pictures and robot state
         loggingThread = threading.Thread(target = self._cameraLoggingLoop)
         loggingThread.start()

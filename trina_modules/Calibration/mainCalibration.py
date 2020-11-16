@@ -4,24 +4,28 @@ import os
 # from klampt.model import trajectory as klamptTraj
 from klampt.io import loader
 import sys
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+# sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
 import cv2.aruco as aruco
-sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
+# sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 from klampt.math import vectorops as vo
 import trimesh
 import numpy as np
 from calibrationOpt import URDFCalibration
-
+from calibrationLogger import CalibrationLogger
 def detectAruco(pic,marker_sz,IDs,dictionary,cn):
     gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
     if cn == 'realsense_left':
-        fx = 474.299
-        fy = 474.299
-        cx = 314.49
-        cy = 245.299
-        mtx = np.array([[fx,0,cx], [0,fy,cy], [0,0,1]])
-        dist = np.array([0.123036,0.135872,0.00483028,0.00670342,-0.0495168])
+        # fx = 474.299
+        # fy = 474.299
+        # cx = 314.49
+        # cy = 245.299
+        # mtx = np.array([[fx,0,cx], [0,fy,cy], [0,0,1]])
+        # dist = np.array([0.123036,0.135872,0.00483028,0.00670342,-0.0495168])
+        mtx = np.array([[608.88712495,   0.,         335.1847232 ],\
+            [  0.,         613.83332425, 207.30088459],\
+            [  0.,           0.,           1.,        ]])
+        dist = np.array([ 6.15348981e-01,-4.62934706e+00,-9.15357406e-03,9.67396092e-03,1.09356865e+01])
     elif cn == 'realsense_right':
         fx = 474.556
         fy = 474.556
@@ -58,10 +62,10 @@ def detectAruco(pic,marker_sz,IDs,dictionary,cn):
     corners, detected_ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters, \
                                                             cameraMatrix=mtx, distCoeff=dist)     
     #debugging
-    aruco.drawDetectedMarkers(pic, corners)
-    cv2.imshow('frame',pic)
-    cv2.waitKey(100000)
-    cv2.destroyAllWindows()
+    # aruco.drawDetectedMarkers(pic, corners)
+    # cv2.imshow('frame',pic)
+    # cv2.waitKey(100000)
+    # cv2.destroyAllWindows()
 
 
 
@@ -195,14 +199,14 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
     """
     if calibration_type == 'URDF':
         #The cameras should be ['left_realsense','right_realsense'] here.
-        # from calibrationLogger import CalibrationLogger
+
         # takePictures(traj_path,save_path,cameras,motion_address,codename)
         Tl,ql,Tr,qr = extractData1(save_path,cameras)
-        print('detected left limb camera markers:',len(Tl))
-        print('detected left limb camera markers:',len(Tr))
+        # print('detected left limb camera markers:',len(Tl))
+        # print('detected left limb camera markers:',len(Tr))
 
 
-        print(Tl[0])
+        # print(Tl[0])
         # np.save('Tl.npy',np.array(Tl))
         # np.save('ql.npy',np.array(ql))
         # np.save('Tr.npy',np.array(Tr))
@@ -257,7 +261,7 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
 
 
 if __name__=="__main__":
-    traj_path = ' '
+    traj_path = 'URDF_calibration.path'
     save_path = './data/1/'
     world_path = '../../Motion/data/TRINA_world_bubonic_calibration.xml'
     rob_save_folder = '../../Motion/data/robots/'
