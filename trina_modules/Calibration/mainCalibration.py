@@ -11,6 +11,8 @@ sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 from klampt.math import vectorops as vo
 import trimesh
 import numpy as np
+from calibrationOpt import URDFCalibration
+
 def detectAruco(pic,marker_sz,IDs,dictionary,cn):
     gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
     if cn == 'realsense_left':
@@ -54,7 +56,15 @@ def detectAruco(pic,marker_sz,IDs,dictionary,cn):
     parameters = aruco.DetectorParameters_create()
     aruco_dict = aruco.Dictionary_get(dictionary)
     corners, detected_ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters, \
-                                                            cameraMatrix=mtx, distCoeff=dist)        
+                                                            cameraMatrix=mtx, distCoeff=dist)     
+    #debugging
+    aruco.drawDetectedMarkers(pic, corners)
+    cv2.imshow('frame',pic)
+    cv2.waitKey(100000)
+    cv2.destroyAllWindows()
+
+
+
     #add the detected marker position 
     ps = []
     if detected_ids is not None:
@@ -64,6 +74,8 @@ def detectAruco(pic,marker_sz,IDs,dictionary,cn):
                 #get the position
                 rvec,tvec,_=aruco.estimatePoseSingleMarkers(corners[detected_ids.index(target_id)],marker_sz,mtx,dist)
                 ps.append(tvec[0,0,:].tolist())
+
+                print(target_id,tvec[0,0,:])
             else:
                 ps.append([])
     else:
@@ -103,6 +115,8 @@ def detectMarker1(pic,cn):
     y = vo.div(y,vo.norm(y))
     z = vo.cross(x,y)
     T_marker = (x+y+list(z),origin)
+
+    # exit()
     return T_marker
 
 def extractData1(save_path,cameras):
@@ -186,10 +200,24 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
         Tl,ql,Tr,qr = extractData1(save_path,cameras)
         print('detected left limb camera markers:',len(Tl))
         print('detected left limb camera markers:',len(Tr))
-        print(ql)
-        T_c_l_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
-        T_c_r_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
-        T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_path,links)
+
+
+        print(Tl[0])
+        # np.save('Tl.npy',np.array(Tl))
+        # np.save('ql.npy',np.array(ql))
+        # np.save('Tr.npy',np.array(Tr))
+        # np.save('qr.npy',np.array(qr))
+
+        # Tl = np.load('Tl.npy').tolist()
+        # ql = np.load('ql.npy').tolist()
+        # Tr = np.load('Tr.npy').tolist()
+        # qr = np.load('qr.npy').tolist()
+
+
+        # T_c_l_0 = ([1,0,0,0,0,-1,0,1,0],[0.0,-0.05,0.1])
+        # T_c_r_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
+        # T_marker_1 = ([1,0,0,0,1,0,0,0,1],[0.15,0.0,0.363]) #This is exact
+        # T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_folder + 'Bubonic.urdf',links)
 
         # #now modify the URDF 
         # robot = loader.load(URDF_path)
