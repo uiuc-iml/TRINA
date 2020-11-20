@@ -1519,6 +1519,7 @@ class Motion:
         else:
             logger.warning('Head not enabled.')
             print('Head not enabled.')
+        return True
             
     def sensedBaseVelocity(self):
         """Returns the current base velocity
