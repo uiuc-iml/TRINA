@@ -232,6 +232,7 @@ class MotionClient:
 
 	def setHeadPosition(self,q):
 		self.s.setHeadPosition(q)
+		return True
 		
 if __name__=="__main__":
 	motion = MotionClient('http://localhost:8080')
@@ -239,8 +240,17 @@ if __name__=="__main__":
 	motion.startup()
 	time.sleep(0.05)
 	try:
-		print(motion.sensedHeadPosition())
+		[a,b] = (motion.sensedHeadPosition())
+		print([a,b])
 		time.sleep(0.05)
+		motion.setHeadPosition([a+1,b+1])
+		time.sleep(0.5)
+		[a,b] = (motion.sensedHeadPosition())
+		print([a,b])
+		time.sleep(0.05)
+		motion.setHeadPosition([a+1,b+1])
+		time.sleep(0.5)
+
 	except Exception as err:
 		print("Error: {0}".format(err))
 	motion.shutdown()
