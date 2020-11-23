@@ -26,7 +26,7 @@ PROTOCOL_VERSION            = 1.0               # See which protocol version is 
 DXL_ID_tilt                 = 1                 # Dynamixel ID : 1, FOR PITCH 
 DXL_ID_pan                  = 2                 # Dynamixel ID : 2, FOR YAW
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
-DEVICENAME                  = 'COM3'            # Check which port is being used on your controller
+DEVICENAME                  = '/dev/ttyUSB0'            # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
 TORQUE_ENABLE               = 1                 # Value for enabling the torque
@@ -153,7 +153,7 @@ if __name__ == "__main__":
     time.sleep(1)
     print(a.sensedPosition())
     [pos1,pos2] = a.sensedPosition()
-    a.setPosition([pos1+2,pos2+2])
+    a.setPosition([pos1+1,pos2+1])
     time.sleep(0.5)
-
+    
     a.shutdown()
