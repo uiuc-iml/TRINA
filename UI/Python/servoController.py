@@ -3,10 +3,6 @@ import os
 import time
 import numpy as np                   # for multi-dimensional containers
 import pandas as pd                  # for DataFrames
-import plotly.graph_objects as go    # for data visualisation
-import plotly.io as pio              # to set shahin plot layout
-pio.templates['shahin'] = pio.to_templated(go.Figure().update_layout(margin=dict(t=0,r=0,b=40,l=40))).layout.template
-pio.templates.default = 'shahin'
 if os.name == 'nt':
     import msvcrt
     def getch():
@@ -40,7 +36,7 @@ PROTOCOL_VERSION            = 1.0               # See which protocol version is 
 DXL_ID_tilt                 = 1                 # Dynamixel ID : 1, FOR PITCH 
 DXL_ID_pan                  = 2                 # Dynamixel ID : 2, FOR YAW
 BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
-DEVICENAME                  = 'COM3'    # Check which port is being used on your controller
+DEVICENAME                  = '/dev/ttyUSB0'    # Check which port is being used on your controller
                                                 # ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
 
 TORQUE_ENABLE               = 1                 # Value for enabling the torque
@@ -89,7 +85,7 @@ class servoController:
             quit()
 
         #SPEED
-        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(350))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(500))
         self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_MOVING_SPEED, (int)(500))
 
         # init position
@@ -155,9 +151,6 @@ if __name__ == "__main__":
         amplitude = 1
         theta = 0
         sinewave = amplitude * np.sin(2 * np.pi * sin_frequency * sin_time + theta)
-        # fig = go.Figure(layout=dict(xaxis=dict(title='Time (sec)'),yaxis=dict(title='Amplitude')))
-        # fig.add_scatter(x=time, y=sinewave)
-        # fig.show()
 
         frequency = 60  # Hz
         period = 1.0/frequency
@@ -185,31 +178,6 @@ if __name__ == "__main__":
             while (time.time() - time_before) < period:
                 print(time.time() - time_before)
                 time.sleep(0.001)  # precision here
-
-
-
-        # # moving the head up and down, left and right, end point position control
-        # while True: 
-        #     a.dynamixel.write2ByteTxRx(a.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(130/0.08789))
-        #     a.reportServoState()
-        #     time.sleep(2)
-        #     a.dynamixel.write2ByteTxRx(a.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(230/0.08789))
-        #     a.reportServoState()
-        #     time.sleep(2)
-        #     a.dynamixel.write2ByteTxRx(a.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(180/0.08789))
-        #     a.dynamixel.write2ByteTxRx(a.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(180/0.08789))   
-        #     a.reportServoState()
-        #     time.sleep(2)
-        #     a.dynamixel.write2ByteTxRx(a.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(90/0.08789))
-        #     a.reportServoState()
-        #     time.sleep(2)
-        #     a.dynamixel.write2ByteTxRx(a.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(270/0.08789)) 
-        #     a.reportServoState()
-        #     time.sleep(2)
-        #     a.dynamixel.write2ByteTxRx(a.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(180/0.08789))
-        #     a.dynamixel.write2ByteTxRx(a.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(180/0.08789))   
-        #     a.reportServoState()
-        #     time.sleep(2)
     except KeyboardInterrupt:
         pass
           

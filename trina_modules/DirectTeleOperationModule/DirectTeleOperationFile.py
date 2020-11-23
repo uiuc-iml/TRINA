@@ -316,7 +316,7 @@ class DirectTeleOperation:
 			if(self.head_active):
 				self.headControl()
 
-			self.control('impedance')
+			# self.control('impedance')
 
 	def headControl(self):
 		def mod180(x):
