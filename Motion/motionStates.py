@@ -1,8 +1,60 @@
 import copy
 import time
 
+class KinematicLimbController:
+    def __init__(self, getConfig, getVelocity, newState):
+        self.moving = None
+        self.getVelocity = getVelocity
+        self.getConfig = getConfig
+        self.getCurrentTime = None
+        self.getWrench = lambda: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        self.zeroFTSensor = lambda: None
+
+        self.markRead = lambda: None
+        self.newState = newState
+
+class Limb:
+    def __init(self, name, controller):
+        self.name = name
+        self.controller = controller
+        self.enabled = controller is not None
+        
+        self.state = LimbState()
+
+        if self.enabled:
+            # Function pointer binding
+            self.moving = controller.moving
+            self.getVelocity = controller.getVelocity
+            self.getConfig = controller.getConfig
+            self.getCurrentTime = controller.getCurrentTime
+            self.getWrench = controller.getWrench
+            self.zeroFTSensor = controller.zeroFTSensor
+
+            #self.markRead = controller.markRead
+            #self.newState = controller.newState
+
+    def start(self):
+        res = self.controller.start()
+        time.sleep(1) #TODO: Do we need this sleep?
+        if res == False:
+            return False
+        else:
+            self.state.sensedq = self.getConfig()[0:6]
+            self.state.senseddq = self.getVelocity()[0:6]
+            self.state.sensedWrench =self.getWrench()
+            return True
+
+    def updateState(self):
+        if self.controller.newState():
+            self.state.sensedq = self.left_limb.getConfig()[0:6]
+            self.state.senseddq = self.left_limb.getVelocity()[0:6]
+            self.state.sensedWrench =self.left_limb.getWrench()
+            self.controller.markRead()
+        
+
 class LimbState:
     def __init__(self):
+        
         self.sensedq = [0.0,0.0,0.0,0.0,0.0,0.0]
         self.commandedq = []
         self.difference = []

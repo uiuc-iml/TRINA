@@ -85,14 +85,20 @@ class Motion:
         self.left_gripper_enabled = False
         self.right_gripper_enabled = False
         self.head_enabled = False
+
+        left_limb_controller = None
+        right_limb_controller = None
+
         #Initialize components
         if self.mode == "Kinematic":
             from kinematicController import KinematicController
-            self.left_limb_enabled = True
-            self.right_limb_enabled = True
+
             self.base_enabled = True
             print("initiating Kinematic controller")
             self.simulated_robot = KinematicController(self.model_path,codename = self.codename)
+            # TODO: KinematicLimbController implementation
+            left_limb_controller = KinematicLimbController()
+            right_limb_controller = KinematicLimbController()
             print("initiated Kinematic controller")
 
         elif self.mode == "Physical":
@@ -100,14 +106,14 @@ class Motion:
                 from limbController import LimbController
             for component in components:
                 if component == 'left_limb':
-                    self.left_limb = LimbController(TRINAConfig.left_limb_address,gripper=TRINAConfig.left_Robotiq,type = TRINAConfig.left_Robotiq_type,\
+                    left_limb_controller = LimbController(TRINAConfig.left_limb_address,gripper=TRINAConfig.left_Robotiq,type = TRINAConfig.left_Robotiq_type,\
                         gravity = TRINAConfig.get_left_gravity_vector_upright(self.codename),payload = TRINAConfig.left_limb_payload,cog = TRINAConfig.left_limb_cog)
-                    self.left_limb_enabled = True
+
                     logger.debug('left limb enabled')
                 elif component == 'right_limb':
-                    self.right_limb = LimbController(TRINAConfig.right_limb_address,gripper=TRINAConfig.right_Robotiq,type = TRINAConfig.right_Robotiq_type,\
+                    right_limb_controller = LimbController(TRINAConfig.right_limb_address,gripper=TRINAConfig.right_Robotiq,type = TRINAConfig.right_Robotiq_type,\
                         gravity = TRINAConfig.get_right_gravity_vector_upright(self.codename),payload = TRINAConfig.right_limb_payload,cog = TRINAConfig.right_limb_cog)
-                    self.right_limb_enabled = True
+
                     logger.debug('right limb enabled')
                 elif component == 'base':
                     from baseController import BaseController
@@ -141,8 +147,9 @@ class Motion:
             logger.error('Wrong Mode specified')
             raise RuntimeError('Wrong Mode specified')
 
-        self.left_limb_state = LimbState()
-        self.right_limb_state = LimbState()
+        self.left_limb = Limb("left", left_limb_controller)
+        self.right_limb = Limb("right", right_limb_controller)
+
         self.base_state = BaseState()
         self.torso_state = TorsoState()
         self.left_gripper_state = GripperState()
@@ -202,7 +209,7 @@ class Motion:
                     self.base.start()
                     logger.info('Motion: base started')
                     print("Motion: base started")
-                if self.left_limb_enabled or self.right_limb_enabled:
+                if self.left_limb.enabled or self.right_limb.enabled:
                     if self.torso_enabled:
                         #TODO read torso position
                         #tilt_angle =
@@ -216,9 +223,8 @@ class Motion:
                     #gravity_right = so3.apply(so3.inv(R_local_global_right),[0,0,-9.81])
                     #self.left_limb.setGravity(gravity_left)
                     #self.right_limb.setGravity(gravity_right)
-                if self.left_limb_enabled:
+                if self.left_limb.enabled:
                     res = self.left_limb.start()
-                    time.sleep(1)
                     if res == False:
                         logger.error('left limb start failure.')
                         print("motion.startup(): ERROR, left limb start failure.")
@@ -226,9 +232,6 @@ class Motion:
                     else:
                         logger.info('left limb started.')
                         print("motion.startup(): left limb started.")
-                        self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
-                        self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
-                        self.left_limb_state.sensedWrench =self.left_limb.getWrench()
 
                 if self.head_enabled:
                     res = self.head.start()
@@ -242,20 +245,16 @@ class Motion:
                         print("motion.startup(): head started.")
                         self.head_state.sensedPosition = self.head.sensedPosition()
 
-                if self.right_limb_enabled:
+                if self.right_limb.enabled:
                     res = self.right_limb.start()
-                    time.sleep(1)
                     if res == False:
-                        #better to replace this with logger
                         logger.error('right limb start failure.')
                         print("motion.startup(): ERROR, right limb start failure.")
                         return False
                     else:
                         logger.info('right limb started.')
                         print("motion.startup(): right limb started.")
-                        self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
-                        self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
-                        self.right_limb_state.sensedWrench = self.right_limb.getWrench()
+
                 if self.left_gripper_enabled:
                     self.left_gripper.start()
                     print('left gripper started')
@@ -296,14 +295,15 @@ class Motion:
             if self.mode == "Physical":
                 if self.stop_motion_flag:
                     if not self.stop_motion_sent: #send only once to avoid drifting... currently this not used
+                        if self.left_limb.enabled:
+                            self.left_limb.stopMotion()
+                        if self.right_limb.enabled:
+                            self.right_limb.stopMotion()
+
                         if self.torso_enabled:
                             self.torso.stopMotion()
                         if self.base_enabled:
                             self.base.stopMotion()
-                        if self.left_limb_enabled:
-                            self.left_limb.stopMotion()
-                        if self.right_limb_enabled:
-                            self.right_limb.stopMotion()
                         if self.left_gripper_enabled:
                             self.left_gripper.stopMotion()
                         if self.right_gripper_enabled:
@@ -324,16 +324,10 @@ class Motion:
                         self.torso_state.measuredHeight = height
                         self.torso.markRead()
 
-                    if self.left_limb_enabled and self.left_limb.newState():
-                        self.left_limb_state.sensedq = self.left_limb.getConfig()[0:6]
-                        self.left_limb_state.senseddq = self.left_limb.getVelocity()[0:6]
-                        self.left_limb_state.sensedWrench =self.left_limb.getWrench()
-                        self.left_limb.markRead()
-                    if self.right_limb_enabled and self.right_limb.newState():
-                        self.right_limb_state.sensedq = self.right_limb.getConfig()[0:6]
-                        self.right_limb_state.senseddq = self.right_limb.getVelocity()[0:6]
-                        self.right_limb_state.sensedWrench = self.right_limb.getWrench()
-                        self.right_limb.markRead()
+                    if self.left_limb.enabled:
+                        self.left_limb.updateState()
+                    if self.right_limb.enabled:
+                        self.right_limb.updateState()
 
                     if self.left_gripper_enabled and self.left_gripper.newState():
                         self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
@@ -344,11 +338,11 @@ class Motion:
                         self.head.markRead()
 
                     #Send Commands
-                    if self.left_limb_enabled:
-                        if self.left_limb_state.commandQueue:
-                            if self.left_limb_state.commandType == 0:
-                                tmp = time.time() - self.left_limb_state.commandQueueTime
-                                if tmp <= self.left_limb_state.commandedQueueDuration:
+                    if self.left_limb.enabled:
+                        if self.left_limb.state.commandQueue:
+                            if self.left_limb.state.commandType == 0:
+                                tmp = time.time() - self.left_limb.state.commandQueueTime
+                                if tmp <= self.left_limb.state.commandedQueueDuration:
                                     #? what is the simulated robot doing here...
                                     #self.simulated_robot.setLeftLimbConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,tmp/self.left_limb_state.commandedQueueDuration)))
                                     self.left_limb.setConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,tmp/self.left_limb_state.commandedQueueDuration)))
@@ -356,27 +350,29 @@ class Motion:
                                     self.left_limb.setConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
                                     #self.simulated_robot.setLeftLimbConfig(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
                                     self.setLeftLimbPosition(vectorops.add(self.left_limb_state.commandedqQueueStart,vectorops.mul(self.left_limb_state.difference,1.0)))
+
                         #### cartesian drive mode
-                        elif self.left_limb_state.cartesianDrive:
+                        elif self.left_limb.state.cartesianDrive:
                             flag = 1
                             while flag == 1:
-                                res, target_config = self._left_limb_cartesian_drive(self.left_limb_state.driveTransform)
+                                res, target_config = self._left_limb_cartesian_drive(self.left_limb.state.driveTransform)
                                 if res == 0:
                                     #res = 0 means IK has failed completely, 1 means keep trying smaller steps, 2 means success
                                     self.cartesian_drive_failure = True
                                     #set to position mode...
-                                    self.left_limb_state.set_mode_position(self.sensedLeftLimbPosition())
+                                    self.left_limb.state.set_mode_position(self.sensedLeftLimbPosition())
                                     break
                                 elif res == 1:
                                     flag = 1
                                 elif res == 2:
                                     flag = 0
                                     self.left_limb.setConfig(target_config)
-                        elif self.left_limb_state.impedanceControl:
+
+                        elif self.left_limb.state.impedanceControl:
                             res,target_config = self._left_limb_imdepance_drive()
                             if res == 0:
                                 self.cartesian_drive_failure = True
-                                self.left_limb_state.set_mode_position(self.sensedLeftLimbPosition())
+                                self.left_limb.state.set_mode_position(self.sensedLeftLimbPosition())
                             elif res == 1:
                                 self.left_limb.setConfig(target_config)
                             elif res == 2:
@@ -1776,7 +1772,7 @@ class Motion:
             print("wrong robot mode.")
 
     def cartesianDriveFail(self):
-        """ Return if cartedian drive has failed or not
+        """ Return if cartesian drive has failed or not
 
         Return:
         ----------------
@@ -1820,27 +1816,9 @@ class Motion:
         """
         self._controlLoopLock.acquire()
         if self.left_limb_enabled:
-            self.left_limb_state.commandedq = []
-            self.left_limb_state.difference = []
-            self.left_limb_state.commandedqQueueStart = []
-            self.left_limb_state.commandQueueTime = 0.0
-            self.left_limb_state.commandedQueueDuration = 0.0
-            self.left_limb_state.commandSent = True
-            self.left_limb_state.commandQueue = False
-            self.left_limb_state.commandeddq = []
-            self.left_limb_state.cartesianDrive = False
-            self.left_limb_state.impedanceControl = False
+            self.left_limb_state.set_mode_reset()
         if self.right_limb_enabled:
-            self.right_limb_state.commandedq = []
-            self.right_limb_state.difference = []
-            self.right_limb_state.commandedqQueueStart = []
-            self.right_limb_state.commandQueueTime = 0.0
-            self.right_limb_state.commandedQueueDuration = 0.0
-            self.right_limb_state.commandSent = True
-            self.right_limb_state.commandQueue = False
-            self.right_limb_state.commandeddq = []
-            self.right_limb_state.cartesianDrive = False
-            self.right_limb_state.impedanceControl = False
+            self.right_limb_state.set_mode_reset()
         if self.base_enabled:
             self.base_state.commandedVel = [0.0, 0.0]
             self.base_state.commandedTargetPosition = [] #[x, y, theta]
