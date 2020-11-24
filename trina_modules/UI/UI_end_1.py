@@ -17,10 +17,11 @@ from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 from klampt.vis import glinit
+glinit.init()
 sys.path.append(os.path.abspath('../../'))
 from Jarvis import Jarvis
-if glinit._PyQtAvailable:
-    if glinit._PyQt5Available:
+if glinit.available("PyQt"):
+    if glinit.available("PyQt5"):
         from PyQt5.QtWidgets import *
     else:
         from PyQt4.QtGui import *
@@ -354,16 +355,10 @@ class MyGLPlugin(vis.GLPluginInterface):
 
 
 class UI_end_1:
-    def __init__(self,placeholder):
+    def __init__(self, placeholder, args):
         # file_dir = "../../data/TRINA_world.xml"
-        file_dir = "../../Motion/data/TRINA_world_anthrax_PointClick.xml"
-        world = klampt.WorldModel()
-        res = world.readFile(file_dir)
-        self.world = world
         self.dt = 0.05
         self.UIState = {'controllerPositionState': {'leftController': {'controllerOrientation': [0.07739845663309097, -0.19212138652801514, 0.3228720426559448, 0.9235001802444458], 'controllerPosition': [-0.021801471710205078, -0.4208446145057678, 0.5902314186096191]}, 'rightController': {'controllerOrientation': [0.052883781492710114, 0.20788685977458954, -0.30593231320381165, 0.927573025226593], 'controllerPosition': [0.15437912940979004, -0.4229428172111511, 0.5827353000640869]}}, 'headSetPositionState': {'deviceRotation': [-0.027466144412755966, 0.7671623826026917, 0.003965826239436865, 0.6408524513244629]}, 'controllerButtonState': {'leftController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}, 'rightController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}}, 'UIlogicState': {'stop': False, 'autonomousMode': False, 'teleoperationMode': False}, 'title': 'UI Outputs'}
-        if not res:
-            raise RuntimeError("Unable to load model "+file_dir)
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
@@ -373,12 +368,23 @@ class UI_end_1:
         self.global_state = {'collectRaySignal':[False,False],'feedbackId':{'getRayClick':''}}
         self.jarvis = Jarvis(str("UI"),trina_queue = TrinaQueue(str("UI")))
         self.screenElement = set([])
-        self._serveVis()
+        if "--teleop" in args:
+            self.jarvis.changeActivityStatus(["DirectTeleOperation"])
+        if "--testing" in args:
+            self.jarvis.changeActivityStatus(["testing"])
+        if not "--trigger" in args:
+            file_dir = "../../Motion/data/TRINA_world_anthrax_PointClick.xml"
+            world = klampt.WorldModel()
+            res = world.readFile(file_dir)
+            self.world = world
+            if not res:
+                raise RuntimeError("Unable to load model "+file_dir)
+            self._serveVis()
 
 
     def _serveVis(self):
         """Runs a custom Qt frame around a visualization window"""
-        if not glinit._PyQtAvailable:
+        if not glinit.available("PyQt5"):
             print ("PyQt5 is not available on your system, try sudo apt-get install python-qt5")
             return
         world = self.world
@@ -433,5 +439,9 @@ class TrinaQueue(object):
 if __name__ == "__main__":
     print ("""================================================================================
     UI_end_1.py: powered by klampt vis
+    
+    Options:
+        --trigger: Don't start the UI.
+        --teleop: Send a command to start teleop mode. Use with --trigger for testing.
     """)
-    UI_end_1("name")
+    UI_end_1("name", sys.argv)

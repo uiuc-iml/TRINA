@@ -78,7 +78,7 @@ class DirectTeleOperation:
 		self.infoLoop_rate = 0.05
 		self.max_arm_speed = 0.5
 		self.robot = Jarvis
-		self.components =  ['base','left_limb','right_limb', 'left_gripper']
+		self.components =  ['head']
 		#self.robot.getComponents()
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
@@ -132,7 +132,7 @@ class DirectTeleOperation:
 		self.init_headset_orientation = {} #matrix
 		self.init_headset_rotation = {"x": 0, "y": 0} #x,y position
 		self.panLimits = {"center": 180, "min":90, "max":270} #head limits
-        self.tiltLimits = {"center": 180, "min":130, "max":230} #head limits
+		self.tiltLimits = {"center": 180, "min":130, "max":230} #head limits
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
@@ -196,7 +196,7 @@ class DirectTeleOperation:
 			if(self.right_limb.active):
 				self.right_limb.init_pos = self.right_limb.sensedEETransform()
 			self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
-			self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1],"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]}
+			self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1]/DEGREE_2_RADIAN,"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]/DEGREE_2_RADIAN}
 
 		while(True):
 			if self.state == 'idle':
@@ -278,7 +278,7 @@ class DirectTeleOperation:
 					print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
 					self.init_UI_state = self.UI_state
 					self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-					self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1],"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]}
+					self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1]/DEGREE_2_RADIAN,"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]/DEGREE_2_RADIAN}
 
 					for limb in (self.left_limb, self.right_limb):
 						limb.init_pos = limb.sensedEETransform()
@@ -294,7 +294,7 @@ class DirectTeleOperation:
 								self.UI_state["controllerPositionState"][limb.joystick]['controllerRotation'])
 
 							self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-							self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1],"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]}
+							self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1]/DEGREE_2_RADIAN,"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]/DEGREE_2_RADIAN}
 							
 							limb.init_pos = limb.sensedEETransform(self.tool.tolist())
 
@@ -310,9 +310,9 @@ class DirectTeleOperation:
 							self.K, self.M, [[10*x for x in a] for a in self.B], 
 							tool_center=self.tool.tolist())
 
-			if(self.base_active):
-				self.baseControl()
-			
+			# if(self.base_active):
+			# 	self.baseControl()
+		
 			if(self.head_active):
 				self.headControl()
 
@@ -320,23 +320,24 @@ class DirectTeleOperation:
 
 	def headControl(self):
 		def mod180(x):
-            while x >= 180:
-                x = x - 360
-            while x < -180:
-                x = x + 360
-            return x
-		
-        def limitTo(x,min,max):
-            if x > max:
-                return max
-            elif x < min:
-                return min
-            return x
+			while x >= 180:
+				x = x - 360
+			while x < -180:
+				x = x + 360
+			return x
 
-        orientation = {"y":self.UI_state['headSetPositionState']['deviceRotation'][1], "x":self.UI_state['headSetPositionState']['deviceRotation'][0]}
-        
-        panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - self.init_headset_rotation["y"])), self.panLimits["min"], self.panLimits["max"])
-        tiltAngle = limitTo((self.tiltLimits["center"] + mod180(orientation["x"] - self.init_headset_rotation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
+		def limitTo(x,min,max):
+			if x > max:
+				return max
+			elif x < min:
+				return min
+			return x
+
+		orientation = {"y":(self.UI_state['headSetPositionState']['deviceRotation'][1]/DEGREE_2_RADIAN), "x":(self.UI_state['headSetPositionState']['deviceRotation'][0]/DEGREE_2_RADIAN)}
+		print(orientation)
+		print(self.init_headset_rotation)
+		panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - self.init_headset_rotation["y"])), self.panLimits["min"], self.panLimits["max"])
+		tiltAngle = limitTo((self.tiltLimits["center"] + mod180(orientation["x"] - self.init_headset_rotation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
 		try:
 			self.robot.setHeadPosition([panAngle*DEGREE_2_RADIAN, tiltAngle*DEGREE_2_RADIAN])
 		except Exception as err:
@@ -357,8 +358,8 @@ class DirectTeleOperation:
 			try:
 				self.robot.setBaseVelocity(base_velocity)
 			except Exception as err:
-                    print("Error: {0}".format(err))
-					pass
+				print("Error: {0}".format(err))
+				pass
 
 	def control(self, mode):
 		if self.left_limb.active and self.left_limb.teleoperationState == 2:
@@ -376,6 +377,7 @@ class DirectTeleOperation:
 				self.robot.openLeftRobotiqGripper()
 
 		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
+		pass
 
 	"""
 	Control an arm based on UI state and other jazz. Might lock it.

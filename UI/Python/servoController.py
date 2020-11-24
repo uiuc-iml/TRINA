@@ -85,7 +85,7 @@ class servoController:
             quit()
 
         #SPEED
-        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(500))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(350))
         self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_MOVING_SPEED, (int)(500))
 
         # init position
