@@ -115,9 +115,9 @@ def _setRightEEVelocity(v, tool):
 	robot.setRightEEVelocity(v,tool)
 	return 0
 
-def _sensedLeftEETransform():
+def _sensedLeftEETransform(tool_center=[0,0,0]):
 	global robot
-	return robot.sensedLeftEETransform()
+	return robot.sensedLeftEETransform(tool_center=tool_center)
 
 def _sensedRightEETransform():
 	global robot
@@ -261,12 +261,12 @@ def _closeRightRobotiqGripper():
 	global robot
 	return robot.closeRightRobotiqGripper()
 
-def _setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
+def _setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center):
 	global robot
 	K = np.array(K)
 	B = np.array(B)
 	M = np.array(M)
-	return robot.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
+	return robot.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
 
 def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
 	global robot
@@ -280,7 +280,7 @@ def _setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,tool_center):
 	K = np.array(K)
 	B = np.array(B)
 	M = np.array(M)
-	return robot.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
+	return robot.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,tool_center)
 
 def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
 	global robot

@@ -89,9 +89,9 @@ class MotionClient:
 			tool = [0,0,0]
 		self.s.setRightEEVelocity(v,tool)
 
-	def sensedLeftEETransform(self):
+	def sensedLeftEETransform(self, tool_center=[0,0,0]):
 		"""Return the transform w.r.t. the base frame"""
-		return self.s.sensedLeftEETransform()
+		return self.s.sensedLeftEETransform(tool_center)
 
 	def sensedRightEETransform(self):
 		"""Return the transform w.r.t. the base frame"""
@@ -210,22 +210,22 @@ class MotionClient:
 		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		K = K.tolist()
-		B = B.tolist()
-		M = M.tolist()
-		self.s.setRightEETransformImpedance(Tg,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+		# K = K.tolist()
+		# B = B.tolist()
+		# M = M.tolist()
+		self.s.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		K = K.tolist()
 		B = B.tolist()
 		M = M.tolist()
-		self.s.setLeftLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+		self.s.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		K = K.tolist()
 		B = B.tolist()
 		M = M.tolist()
-		self.s.setRightLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+		self.s.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 	def sensedHeadPosition(self):
 		return self.s.sensedHeadPosition()

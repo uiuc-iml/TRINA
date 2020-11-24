@@ -51,7 +51,7 @@ class LimbController:
             self._history_tx = []
             self._history_ty = []
             self._history_tz = []
-            self._history_length = 50
+            self._history_length = 10#50
 
             ## filter parameters
             Wn=0.08
