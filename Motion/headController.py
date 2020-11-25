@@ -66,8 +66,9 @@ class HeadController:
             print("Headcontroller: Failed to change the baudrate")
 
         #SPEED
-        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(350))
-        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_MOVING_SPEED, (int)(500))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(50))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_MOVING_SPEED, (int)(50))
+        time.sleep(0.5)
 
         # init position
         self.dynamixel.write4ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(self.tiltLimits["center"]/0.08789))
@@ -83,7 +84,7 @@ class HeadController:
         while not self.exit:
             ##update the state
             self._controlLoopLock.acquire()
-            self.position = self._getHeadPosition()
+            # self.position = self._getHeadPosition()
             self.newStateFlag = True
             ##send command if there is a new one
             if self.newCommand:
