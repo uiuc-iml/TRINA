@@ -130,7 +130,7 @@ class DirectTeleOperation:
 
 		self.UI_state = {}
 		self.init_headset_orientation = {} #matrix
-		self.init_headset_rotation = {"x": 0, "y": 0} #x,y position
+		self.init_headset_rotation = {} #x,y position
 		self.panLimits = {"center": 180, "min":90, "max":270} #head limits
 		self.tiltLimits = {"center": 180, "min":130, "max":230} #head limits
 		self.startup = True
@@ -196,7 +196,7 @@ class DirectTeleOperation:
 			if(self.right_limb.active):
 				self.right_limb.init_pos = self.right_limb.sensedEETransform()
 			self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
-			self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1]/DEGREE_2_RADIAN,"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]/DEGREE_2_RADIAN}
+			self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
 
 		while(True):
 			if self.state == 'idle':
@@ -278,7 +278,7 @@ class DirectTeleOperation:
 					print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
 					self.init_UI_state = self.UI_state
 					self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-					self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1]/DEGREE_2_RADIAN,"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]/DEGREE_2_RADIAN}
+					self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
 
 					for limb in (self.left_limb, self.right_limb):
 						limb.init_pos = limb.sensedEETransform()
@@ -294,7 +294,7 @@ class DirectTeleOperation:
 								self.UI_state["controllerPositionState"][limb.joystick]['controllerRotation'])
 
 							self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-							self.init_headset_rotation = {"y":self.init_UI_state['headSetPositionState']['deviceRotation'][1]/DEGREE_2_RADIAN,"x":self.init_UI_state['headSetPositionState']['deviceRotation'][0]/DEGREE_2_RADIAN}
+							self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
 							
 							limb.init_pos = limb.sensedEETransform(self.tool.tolist())
 
@@ -333,11 +333,21 @@ class DirectTeleOperation:
 				return min
 			return x
 
-		orientation = {"y":(self.UI_state['headSetPositionState']['deviceRotation'][1]/DEGREE_2_RADIAN), "x":(self.UI_state['headSetPositionState']['deviceRotation'][0]/DEGREE_2_RADIAN)}
-		print(orientation)
-		print(self.init_headset_rotation)
-		panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - self.init_headset_rotation["y"])), self.panLimits["min"], self.panLimits["max"])
-		tiltAngle = limitTo((self.tiltLimits["center"] + mod180(orientation["x"] - self.init_headset_rotation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
+		def to_rotvec(orientation):
+			# print("quat",orientation)
+			right_handed_rotvec =  np.array([-orientation[2],orientation[0],-orientation[1],-(np.pi/180)*orientation[3]])
+
+			partial_rotation = R.from_rotvec(right_handed_rotvec[:3]*right_handed_rotvec[3])
+			# we then get its equivalent row, pitch and yaw
+			rpy = partial_rotation.as_euler('ZYX',degrees=True)
+			rpy2 = partial_rotation.as_euler('YZX',degrees=True)
+			return {"y":rpy[0],"x":rpy2[0]}
+
+		orientation = to_rotvec(self.UI_state['headSetPositionState']['deviceRotation'])
+		init_orientation = to_rotvec(self.init_headset_rotation)
+		panAngle = limitTo((self.panLimits["center"] + mod180(orientation["y"] - init_orientation["y"])), self.panLimits["min"], self.panLimits["max"])
+		tiltAngle = limitTo((self.tiltLimits["center"] + mod180(orientation["x"] - init_orientation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
+		
 		try:
 			self.robot.setHeadPosition([panAngle*DEGREE_2_RADIAN, tiltAngle*DEGREE_2_RADIAN])
 		except Exception as err:
