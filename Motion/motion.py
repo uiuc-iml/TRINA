@@ -448,7 +448,7 @@ class Motion:
                     #res = 0 means IK has failed completely, 1 means keep trying smaller steps, 2 means success
                     self.cartesian_drive_failure = True
                     #set to position mode... TODO: Do we need to limb.setConfig() as well?
-                    limb.state.set_mode_position(self.limb.state.sensedq)
+                    limb.state.set_mode_position(limb.state.sensedq)
                     break
                 elif res == 1:
                     flag = 1
@@ -461,7 +461,7 @@ class Motion:
             if res == 0:
                 # TODO: Why is this cartesian_drive_failure?
                 self.cartesian_drive_failure = True
-                limb.state.set_mode_position(self.limb.state.sensedq)
+                limb.state.set_mode_position(limb.state.sensedq)
             elif res == 1:
                 limb.setConfig(target_config)
             elif res == 2:
