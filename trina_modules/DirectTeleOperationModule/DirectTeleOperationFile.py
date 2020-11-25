@@ -345,8 +345,8 @@ class DirectTeleOperation:
 
 		orientation = to_rotvec(self.UI_state['headSetPositionState']['deviceRotation'])
 		init_orientation = to_rotvec(self.init_headset_rotation)
-		panAngle = limitTo((self.panLimits["center"] + mod180(orientation["y"] - init_orientation["y"])), self.panLimits["min"], self.panLimits["max"])
-		tiltAngle = limitTo((self.tiltLimits["center"] + mod180(orientation["x"] - init_orientation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
+		panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - init_orientation["y"])), self.panLimits["min"], self.panLimits["max"])
+		tiltAngle = limitTo((self.tiltLimits["center"] - mod180(orientation["x"] - init_orientation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
 		
 		try:
 			self.robot.setHeadPosition([panAngle*DEGREE_2_RADIAN, tiltAngle*DEGREE_2_RADIAN])
