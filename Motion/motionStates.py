@@ -51,6 +51,7 @@ class LimbState:
         #range for ignoring the wrench readings
         self.deadband = [0]*6
         self.prev_wrench = np.array([0]*6)
+        self.increaseB = False
 
     def set_mode_reset(self):
         #self.commandSent = True
@@ -66,6 +67,7 @@ class LimbState:
         self.difference = []
         self.commandedqQueueStart = []
         self.Xs = []
+        self.increaseB = False
 
     def set_mode_position(self, position):
         self.set_mode_reset()

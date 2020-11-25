@@ -2253,14 +2253,36 @@ class Motion:
             wrench = np.array(wrench)
             displace_wrench = np.array(wrench[:3])
             mag = np.linalg.norm(displace_wrench)
-            err_vec = np.array(self.left_limb_state.T_mass[1]) - np.array(self.left_limb_state.T_g[1])
-            
-            err_direction_match = np.dot(err_vec, wrench[:3])
+            old_wrench = self.left_limb_state.prev_wrench[:3]
 
-            if err_direction_match > 0 and mag > 10 and mag < np.linalg.norm(self.left_limb_state.prev_wrench):
-                v_trans = np.array(self.left_limb_state.x_dot_mass[:3])
-                aligned_component_mag = np.dot(v_trans, displace_wrench) / mag
-                self.left_limb_state.x_dot_mass[:3] -= displace_wrench * (aligned_component_mag / mag * 0.75)
+            effective_b = np.copy(self.left_limb_state.B)
+
+            START_THRESHOLD = 1.5
+            STOP_THRESHOLD = 4
+
+            if self.left_limb_state.increaseB:
+                if mag < STOP_THRESHOLD:
+                    self.left_limb_state.increaseB = False
+            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
+                self.left_limb_state.increaseB = True
+
+            print(f"DAMPING STATE: {[self.left_limb_state.increaseB,mag]}")
+            if self.left_limb_state.increaseB:
+                effective_b *= 20
+
+
+#            OLD collision detection and velocity killing
+            # err_vec = np.array(self.left_limb_state.T_mass[1]) - np.array(self.left_limb_state.T_g[1])
+           
+            # err_direction_match = np.dot(err_vec, wrench[:3])
+
+            # if err_direction_match > 0 and mag > 10 and mag < np.linalg.norm(self.left_limb_state.prev_wrench):
+            #     v_trans = np.array(self.left_limb_state.x_dot_mass[:3])
+            #     aligned_component_mag = np.dot(v_trans, displace_wrench) / mag
+            #     self.left_limb_state.x_dot_mass[:3] -= displace_wrench * (aligned_component_mag / mag * 0.75)
+            #     print("VELOCITY KILLED")
+            # else:
+            #     print("VELOCITY NORMAL")
 
             for i in range(6):
                 if self.left_limb_state.deadband[i] > 0:
@@ -2268,10 +2290,12 @@ class Motion:
                         wrench[i] = 0
 
             self.left_limb_state.T_mass, self.left_limb_state.x_dot_mass = self._simulate_2(wrench = wrench,m_inv = self.left_limb_state.Minv,\
-                K = self.left_limb_state.K,B = self.left_limb_state.B,T_curr = self.left_limb_state.T_mass,x_dot_curr = self.left_limb_state.x_dot_mass,\
+                K = self.left_limb_state.K,B = effective_b,T_curr = self.left_limb_state.T_mass,x_dot_curr = self.left_limb_state.x_dot_mass,\
                 T_g = self.left_limb_state.T_g,x_dot_g = self.left_limb_state.x_dot_g,dt = self.dt) 
             self.left_limb_state.counter += 1
+
             self.left_limb_state.prev_wrench = np.array(wrench)
+
             #orthogonalize the rotation matrix
             # if self.left_limb_state.counter % 100 == 0:
             #     self.left_limb_state.T_mass = (so3.from_moment(so3.moment(self.left_limb_state.T_mass[0])),self.left_limb_state.T_mass[1])
@@ -2279,9 +2303,9 @@ class Motion:
 
         goal = ik.objective(self.left_EE_link,R=T[0],\
             t = vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
-        print(vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
-        print(self.sensedLeftEETransform()[1])
-        print(self.left_limb_state.toolCenter)
+        # print(vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
+        # print(self.sensedLeftEETransform()[1])
+        # print(self.left_limb_state.toolCenter)
         initialConfig = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.0001)
         if not res:
