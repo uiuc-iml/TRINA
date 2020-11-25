@@ -1721,8 +1721,9 @@ class Motion:
                 limb.state.driveSpeedAdjustment += 0.1
 
         self.robot_model.setConfig(initialConfig)
-
-        return 2,target_config #2 means success..
+        
+        # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS!
+        return 2,target_config.tolist() #2 means success..
 
     def _simulate_2(self,wrench,m_inv,K,B,T_curr,x_dot_curr,T_g,x_dot_g,dt):
         """
@@ -1836,9 +1837,10 @@ class Motion:
         self.robot_model.setConfig(initialConfig)
 
         if stop:
-            return 2,target_config
+            # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS
+            return 2,target_config.tolist()
         else:
-            return 1,target_config
+            return 1,target_config.tolist()
 
     def _simulate_1(self,wrench,m_inv,K,B,x_curr,x_dot_curr,x_g,x_dot_g,dt):
         """
