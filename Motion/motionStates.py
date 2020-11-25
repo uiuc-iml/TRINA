@@ -34,8 +34,11 @@ class KinematicLimbController:
         # This is needed.
         self.stop = lambda: True
 
+        self.closeGripper = lambda: None
+        self.openGripper = lambda: None
+
 class Limb:
-    def __init(self, name, EE_link, active_dofs, wrench_transform_CB, controller):
+    def __init__(self, name, EE_link, active_dofs, wrench_transform_CB, controller):
         """
         Parameters:
         -------------
@@ -69,6 +72,9 @@ class Limb:
             self.zeroFTSensor = controller.zeroFTSensor
 
             self.stop = controller.stop
+
+            self.closeGripper = controller.closeGripper
+            self.openGripper = controller.openGripper
 
             #self.markRead = controller.markRead
             #self.newState = controller.newState
@@ -118,7 +124,7 @@ class Limb:
         """
         # Promoting internal consistency maybe...?????
         if tool_center is None:
-            tool_center = self.state.tool_center
+            tool_center = self.state.toolCenter
 
         T = self.EE_link.getTransform()
         return (T[0],vectorops.add(T[1],so3.apply(T[0],tool_center)))
@@ -135,7 +141,7 @@ class Limb:
         (v,w), a tuple of 2 velocity vectors
 
         """
-        position_J = np.array(self.EE_link.getJacobian(local_pt))[self.active_dofs]
+        position_J = np.array(self.EE_link.getJacobian(local_pt))[:, self.active_dofs]
         EE_vel = np.dot(position_J,self.state.senseddq).tolist()
         return (EE_vel[3:],EE_vel[:3])
 
@@ -155,7 +161,7 @@ class Limb:
         """
 
         if tool_center is None:
-            tool_center = self.state.tool_center
+            tool_center = self.state.toolCenter
 
         wrench_raw = self.state.sensedWrench #this wrench is expressed in the robot base frame
         (R,t) = self.sensedEETransform(tool_center=[0, 0, 0]) #current EE R in global frame
