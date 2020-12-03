@@ -28,54 +28,54 @@ pcl::visualization::PCLVisualizer::Ptr viewer(new pcl::visualization::PCLVisuali
 void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & inputCloudMsg) {
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
   pcl::fromROSMsg(*inputCloudMsg, *cloud);
-
+cout << "Please enter an integer value: ";
   // Remove NaN values and make it dense
   std::vector<int> nanIndices;
   pcl::removeNaNFromPointCloud(*cloud, *cloud, nanIndices);
 
   // Remove background points
-  pcl::PassThrough<pcl::PointXYZRGB> ptFilter;
-  ptFilter.setInputCloud(cloud);
-  ptFilter.setFilterFieldName("z");
-  ptFilter.setFilterLimits(0.0, 1.5);
-  ptFilter.filter(*cloud);
-
-  ptFilter.setInputCloud(cloud);
-  ptFilter.setFilterFieldName("y");
-  ptFilter.setFilterLimits(-0.55, 0.40);
-  ptFilter.filter(*cloud);
-
-  ptFilter.setInputCloud(cloud);
-  ptFilter.setFilterFieldName("x");
-  ptFilter.setFilterLimits(-0.50, 0.50);
-  ptFilter.filter(*cloud);
-
-  // Create the segmentation object for the planar model and set all the parameters
-  pcl::SACSegmentation<pcl::PointXYZRGB> sacSegmentator;
-  pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-  pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPlane(new pcl::PointCloud<pcl::PointXYZRGB>());
-
-  sacSegmentator.setModelType(pcl::SACMODEL_PLANE);
-  sacSegmentator.setMethodType(pcl::SAC_RANSAC);
-  sacSegmentator.setMaxIterations(50);
-  sacSegmentator.setDistanceThreshold(0.02);
-  sacSegmentator.setInputCloud(cloud);
-  sacSegmentator.segment(*inliers, *coefficients);
-
-  // Remove the planar inliers, extract the rest
-  pcl::ExtractIndices<pcl::PointXYZRGB> indExtractor;
-  indExtractor.setInputCloud(cloud);
-  indExtractor.setIndices(inliers);
-  indExtractor.setNegative(false);
-
-  // Get the points associated with the planar surface
-  indExtractor.filter(*cloudPlane);
-
-  // Remove the planar inliers, extract the rest
-  indExtractor.setNegative(true);
-  indExtractor.filter(*cloud);
-
+  // pcl::PassThrough<pcl::PointXYZRGB> ptFilter;
+  // ptFilter.setInputCloud(cloud);
+  // ptFilter.setFilterFieldName("z");
+  // ptFilter.setFilterLimits(0.0, 1.5);
+  // ptFilter.filter(*cloud);
+  //
+  // ptFilter.setInputCloud(cloud);
+  // ptFilter.setFilterFieldName("y");
+  // ptFilter.setFilterLimits(-0.55, 0.40);
+  // ptFilter.filter(*cloud);
+  //
+  // ptFilter.setInputCloud(cloud);
+  // ptFilter.setFilterFieldName("x");
+  // ptFilter.setFilterLimits(-0.50, 0.50);
+  // ptFilter.filter(*cloud);
+  //
+  // // Create the segmentation object for the planar model and set all the parameters
+  // pcl::SACSegmentation<pcl::PointXYZRGB> sacSegmentator;
+  // pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+  // pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+  // pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudPlane(new pcl::PointCloud<pcl::PointXYZRGB>());
+  //
+  // sacSegmentator.setModelType(pcl::SACMODEL_PLANE);
+  // sacSegmentator.setMethodType(pcl::SAC_RANSAC);
+  // sacSegmentator.setMaxIterations(50);
+  // sacSegmentator.setDistanceThreshold(0.02);
+  // sacSegmentator.setInputCloud(cloud);
+  // sacSegmentator.segment(*inliers, *coefficients);
+  //
+  // // Remove the planar inliers, extract the rest
+  // pcl::ExtractIndices<pcl::PointXYZRGB> indExtractor;
+  // indExtractor.setInputCloud(cloud);
+  // indExtractor.setIndices(inliers);
+  // indExtractor.setNegative(false);
+  //
+  // // Get the points associated with the planar surface
+  // indExtractor.filter(*cloudPlane);
+  //
+  // // Remove the planar inliers, extract the rest
+  // indExtractor.setNegative(true);
+  // indExtractor.filter(*cloud);
+  //
   // Creating the KdTree object for the search method of the extraction
   pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGB>);
   tree->setInputCloud(cloud);
@@ -112,7 +112,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & inputCloudMsg) {
     for (it = clusterIndices.begin(); it != clusterIndices.end(); ++it) {
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr objectCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
 
-      for (std::vector<int>::const_iterator pit = it->indices.begin(); 
+      for (std::vector<int>::const_iterator pit = it->indices.begin();
           pit != it->indices.end(); ++pit)
         objectCloud->points.push_back(cloud->points[*pit]);
 
@@ -188,7 +188,7 @@ void cloudCallback(const sensor_msgs::PointCloud2ConstPtr & inputCloudMsg) {
       axeZ.values[5] = bestPose.midPointPose.linear()(2, 2);
 
       viewer->addLine(axeZ, objectLabel + "Pose axeZ");
-      
+
       objectNumber++;
     }
 
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 
   ros::NodeHandle n("~");
   std::string cloudTopic;
-  
+
   n.getParam("topic", cloudTopic);
 
   ros::Subscriber sub = n.subscribe<sensor_msgs::PointCloud2>(cloudTopic, 1, cloudCallback);

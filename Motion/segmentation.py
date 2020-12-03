@@ -173,23 +173,31 @@ def remove_noise(PointCloud, k = 50, std_mul = 1):
 
 
 if __name__ == '__main__':
-    scene = o3d.io.read_point_cloud('pcd_samples/sample_table.pcd')
-    o3d.visualization.draw_geometries([scene])
-    scene = remove_floor(scene)
-    o3d.visualization.draw_geometries([scene])
-    scene = remove_wall(scene)
-    o3d.visualization.draw_geometries([scene])
-    plane, scene = remove_plane(scene)
-    o3d.visualization.draw_geometries([scene])
-    scene = remove_stuff_below_table(scene, plane)
+    scene = o3d.io.read_point_cloud('creeper-isolated.pcd')
+    #scene = o3d.io.read_point_cloud('Segmented_Object_2.pcd')
+
+    # # o3d.visualization.draw_geometries([scene])
+    # scene = remove_floor(scene)
+    # # o3d.visualization.draw_geometries([scene])
+    # scene = remove_wall(scene)
+    # # o3d.visualization.draw_geometries([scene])
+    # plane, scene = remove_plane(scene)
+    # # o3d.visualization.draw_geometries([scene])
+    # scene = remove_stuff_below_table(scene, plane)
+    # # o3d.visualization.draw_geometries([scene])
+    # # o3d.visualization.draw_geometries([scene])
     o3d.visualization.draw_geometries([scene])
 
-    list_object = vision_segment(scene)
-    for object in list_object:
-        i = 0
-        o3d.visualization.draw_geometries([object])
-        o3d.io.write_point_cloud("Segmented_Object_" + i.str() + ".pcd", pcd)
-        i+=1
+    o3d.io.write_point_cloud("test_test.pcd", scene)
+    # list_object = vision_segment(scene)
+    # i = 0
+    # for object in list_object:
+    #     if object.has_points():
+    #         object.paint_uniform_color([0.1, 0.9, 0.1])
+    #         o3d.visualization.draw_geometries([object])
+    #         o3d.io.write_point_cloud("Segmented_Object_" + str(i) + ".pcd", object)
+    #         i+=1
+
     # scene = remove_plane(scene)
     # scene = remove_noise(scene)
     # o3d.visualization.draw_geometries([scene])
