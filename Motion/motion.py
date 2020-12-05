@@ -162,6 +162,7 @@ class Motion:
         self.shut_down_flag = False
         self.cartesian_drive_failure = False
         self._controlLoopLock = RLock()
+        self.last_p_time = time.monotonic()
         #signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl-c)
 
     def sigint_handler(self, signum, frame):
@@ -2260,15 +2261,27 @@ class Motion:
             START_THRESHOLD = 1.5
             STOP_THRESHOLD = 4
 
-            if self.left_limb_state.increaseB:
-                if mag < STOP_THRESHOLD:
-                    self.left_limb_state.increaseB = False
-            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
-                self.left_limb_state.increaseB = True
+            # if self.left_limb_state.increaseB:
+            #     if mag < STOP_THRESHOLD:
+            #         self.left_limb_state.increaseB = False
+            # elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
+            #     self.left_limb_state.increaseB = True
 
-            print(f"DAMPING STATE: {[self.left_limb_state.increaseB,mag]}")
-            if self.left_limb_state.increaseB:
-                effective_b *= 20
+            # print(f"DAMPING STATE: {[self.left_limb_state.increaseB,mag]}")
+            # if self.left_limb_state.increaseB:
+            #     effective_b *= 20
+            wrench_diff = displace_wrench - old_wrench
+            wdn = np.linalg.norm(wrench_diff)
+            abswdn = np.linalg.norm(wrench)
+            eta = 3
+            beta = 500
+            p = ((np.exp(eta*wdn) / (np.exp(eta*wdn) + beta)) - (1 / (beta+1)))
+            if p > 0.9:
+                self.last_p_time = time.monotonic()
+            if time.monotonic() - self.last_p_time < 1:
+                p = max(0.9, p)
+            print("P", p)
+            effective_b += p * 20 * effective_b
 
 
 #            OLD collision detection and velocity killing

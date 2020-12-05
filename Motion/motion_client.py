@@ -233,66 +233,6 @@ if __name__=="__main__":
 	motion.startup()
 	time.sleep(0.05)
 	print(motion.sensedLeftEETransform())
-	rightUntuckedRotation = np.array([
-		0, 0, -1,
-		0, -1, 0,
-		-1, 0, 0
-	])
-	rotzm90 = np.array([
-		[0, 1, 0],
-		[-1, 0, 0],
-		[0, 0, 1],
-	])
-	oort = 1/np.sqrt(2)
-	rotxm45 = np.array([
-		[1,0, 0],
-		[0,oort,oort],
-		[0,-oort,oort]
-	])
-	# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
-		# rotxm45).flatten()
-	# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
-	# 	rotzm90).flatten()
-	#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
-	rightUntuckedTranslation = np.array([0.34,
-		-0.296298410887376, 1.0540173127153597])
-	# Looks like the y axis is the left-right axis.
-	# Mirroring along y axis.
-	mirror_reflect_R = np.array([
-							1, -1,  1,
-						-1,  1, -1,
-							1, -1,  1,
-					])
-	mirror_reflect_T = np.array([1, -1, 1])
-	# Element wise multiplication.
-	leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
-	leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
-
-	# TODO: This is broken for two reasons:
-	#   1. Linear move won't always work.
-	#   2. We need the "elbow out" ik solution but that isn't guaranteed yet.
-	#TODO REMOVE JANKINESS - Jing-Chen
-	tool = np.array([0,0,0])
-	K = np.array([[200.0,0.0,0.0,0.0,0.0,0.0],\
-					[0.0,200.0,0.0,0.0,0.0,0.0],\
-					[0.0,0.0,200.0,0.0,0.0,0.0],\
-					[0.0,0.0,0.0,5.0,0.0,0.0],\
-					[0.0,0.0,0.0,0.0,5.0,0.0],\
-					[0.0,0.0,0.0,0.0,0.0,5.0]])
-
-	M = np.eye(6)*5.0
-	M[3,3] = 1.0
-	M[4,4] = 1.0
-	M[5,5] = 1.0
-
-	B = 2.0*np.sqrt(4.0*np.dot(M,K))
-	B[3:6,3:6] = B[3:6,3:6]*2.0
-	# M = np.diag((2,2,2,1,1,1))
-	# B = np.sqrt(32 * K *ABSOLUTE M)
-	K = K.tolist()
-	M = M.tolist()
-	B = B.tolist()
-	input("left limb active, enter to move")
-	motion.setLeftEETransformImpedance([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()], K, M, B)
+	
 	time.sleep(0.05)
 	motion.shutdown()
