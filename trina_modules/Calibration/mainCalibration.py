@@ -200,8 +200,8 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
     if calibration_type == 'URDF':
         #The cameras should be ['left_realsense','right_realsense'] here.
 
-        # takePictures(traj_path,save_path,cameras,motion_address,codename)
-        Tl,ql,Tr,qr = extractData1(save_path,cameras)
+        takePictures(traj_path,save_path,cameras,motion_address,codename)
+        # Tl,ql,Tr,qr = extractData1(save_path,cameras)
         # print('detected left limb camera markers:',len(Tl))
         # print('detected left limb camera markers:',len(Tr))
 
@@ -262,7 +262,7 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
 
 if __name__=="__main__":
     traj_path = 'URDF_calibration.path'
-    save_path = './data/1/'
+    save_path = './data/3/'
     world_path = '../../Motion/data/TRINA_world_bubonic_calibration.xml'
     rob_save_folder = '../../Motion/data/robots/'
 

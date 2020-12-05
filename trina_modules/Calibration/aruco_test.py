@@ -5,8 +5,8 @@ sys.path.append('../../Motion/')
 import cv2,cv2.aruco as aruco
 import numpy as np
 
-#cn = 'realsense_left'
-cn = 'zed_overhead'
+cn = 'realsense_left'
+# cn = 'zed_overhead'
 camera = Camera_Robot(robot = [],world = [], cameras = [cn],ros_active = False, use_jarvis = False, mode = 'Physical')
 time.sleep(2)
 res = camera.get_rgbd_images()
@@ -69,7 +69,8 @@ camera.safely_close_all()
 
  #add the detected marker position 
 ps = []
-IDs = [0,1,2,3,4]
+# IDs = [0,1,2,3,4]
+IDs = [0]
 print(detected_ids)
 if detected_ids is not None:
     detected_ids = detected_ids.flatten().tolist()
@@ -80,9 +81,17 @@ if detected_ids is not None:
                 marker_sz = 0.06
             else:
                 marker_sz = 0.045
-            rvec,tvec,_=aruco.estimatePoseSingleMarkers(corners[detected_ids.index(target_id)],marker_sz,mtx,dist)
+            rvec,tvec,output_pts=aruco.estimatePoseSingleMarkers(corners[detected_ids.index(target_id)],marker_sz,mtx,dist)
             ps.append(tvec[0,0,:].tolist())
 
-            print(target_id,tvec[0,0,:])
+            total = np.zeros(4)
+            for j in range(4):
+                total += corners[0][0][j]
+            mean = total/4.0
+
+            print('ID:',target_id,'Aruco position:',tvec[0,0,:])
+            # print()
+            # print('The corners:',corners[detected_ids.index(target_id)])
+            # print(output_pts)
         else:
             ps.append([])
