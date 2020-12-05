@@ -262,6 +262,10 @@ class DirectTeleOperation:
 					self.sensitivity = 1.0
 				else:
 					self.sensitivity = 0.25
+				self.init_UI_state["controllerPositionState"][limb.joystick]["controllerPosition"] = (
+					self.UI_state["controllerPositionState"][limb.joystick]["controllerPosition"])
+				self.init_UI_state["controllerPositionState"][limb.joystick]['controllerRotation'] = (
+					self.UI_state["controllerPositionState"][limb.joystick]['controllerRotation'])
 			self.last_sens_button_state = (self.UI_state
 				["controllerButtonState"]["rightController"]["press"][0])
 			if self.controller_mode == ControllerMode.ABSOLUTE:
