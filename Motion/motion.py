@@ -1799,18 +1799,30 @@ class Motion:
 
             effective_b = np.copy(state.B)
 
-            START_THRESHOLD = 1.5
-            STOP_THRESHOLD = 4
+            # START_THRESHOLD = 1.5
+            # STOP_THRESHOLD = 4
 
-            if state.increaseB:
-                if mag < STOP_THRESHOLD:
-                    state.increaseB = False
-            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
-                state.increaseB = True
+            # if self.left_limb_state.increaseB:
+            #     if mag < STOP_THRESHOLD:
+            #         self.left_limb_state.increaseB = False
+            # elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
+            #     self.left_limb_state.increaseB = True
 
-            print(f"DAMPING STATE: {[self.left_limb.state.increaseB,mag]}")
-            if state.increaseB:
-                effective_b *= 20
+            # print(f"DAMPING STATE: {[self.left_limb_state.increaseB,mag]}")
+            # if self.left_limb_state.increaseB:
+            #     effective_b *= 20
+            wrench_diff = displace_wrench - old_wrench
+            wdn = np.linalg.norm(wrench_diff)
+            abswdn = np.linalg.norm(wrench)
+            eta = 3
+            beta = 500
+            p = ((np.exp(eta*wdn) / (np.exp(eta*wdn) + beta)) - (1 / (beta+1)))
+            if p > 0.9:
+                state.last_p_time = time.monotonic()
+            if time.monotonic() - self.last_p_time < 1:
+                p = max(0.9, p)
+            print("P", p)
+            effective_b += p * 20 * effective_b
 
             for i in range(6):
                 if state.deadband[i] > 0:

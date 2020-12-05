@@ -241,6 +241,7 @@ class LimbState:
         self.deadband = [0]*6
         self.prev_wrench = np.array([0]*6)
         self.increaseB = False
+        self.last_p_time = time.monotonic()
 
     def set_mode_reset(self):
         #self.commandSent = True
