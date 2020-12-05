@@ -251,7 +251,7 @@ class DirectTeleOperation:
 		if self.left_limb.active:
 			self.left_limb.setEEInertialTransform(
 				[leftUntuckedRotation.tolist(),
-				(leftUntuckedTranslation + self.tool).tolist()], 10)
+				(leftUntuckedTranslation + self.tool).tolist()], 4)
 			# self.left_limb.setEETransformImpedance(
 			# 	[leftUntuckedRotation.tolist(),
 			# 	leftUntuckedTranslation.tolist()], 
@@ -455,21 +455,6 @@ class DirectTeleOperation:
 
 		RR_final = (RR_rw_rh*RR_ch_cc).as_dcm().flatten().tolist()
 		return RR_final, RT_final, curr_transform
-
-	def logTeleoperation(self,name):
-		q = self.robotPoser.get()
-		left_limb_command = q[10:16]
-		right_limb_command = q[35:41]
-		self.fileName = 'Teleoperation_log/motion' + ''.join(name) + '.csv'
-		self.saveStartTime =  datetime.datetime.utcnow()
-		self.saveEndTime = datetime.datetime.utcnow() + datetime.timedelta(0,3.1)
-		fields = ['timestep', 'Left Shoulder', 'Left UpperArm', 'Left ForeArm', 'Left Wrist1','Left Wrist2','Left Wrist3','Right Shoulder', 'Right UpperArm', 'Right ForeArm', 'Right Wrist1','Right Wrist2','Right Wrist3','Left EE Transform', 'Right EE Transform' ]
-		with open(self.fileName, 'w') as csvfile:
-			# creating a csv writer object
-			csvwriter = csv.writer(csvfile)
-			csvwriter.writerow(fields)
-		self.robot.setLeftLimbPositionLinear(left_limb_command,3)
-		self.robot.setRightLimbPositionLinear(right_limb_command,3)
 
 	def treat_headset_orientation(self,headset_orientation):
 		"""

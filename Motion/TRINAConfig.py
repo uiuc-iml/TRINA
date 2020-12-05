@@ -210,11 +210,11 @@ def get_right_active_Dofs(name):
 
 def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
     if((name == 'anthrax')|(name=="anthrax_lowpoly")|(name == "bubonic")):
-        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + left_limb + [0]*2 + right_limb + [0]
+        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(left_limb) + [0]*2 + list(right_limb) + [0]
     elif(name == 'seed'):
-        return base[0:3] + [0]*7 + left_limb + [0]*19 + right_limb + [0]*18
+        return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + list(right_limb) + [0]*18
     elif(name == 'half_anthrax'):
-        return base[0:3] + [0]*7 + left_limb + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
+        return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
     else:
         print("wrong model name used.")
         return None

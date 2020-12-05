@@ -5,6 +5,11 @@ import time
 from klampt import WorldModel
 import os
 import numpy as np
+
+from xmlrpc.client import Marshaller
+Marshaller.dispatch[np.float64] = Marshaller.dump_double
+Marshaller.dispatch[np.ndarray] = Marshaller.dump_array
+
 dirname = os.path.dirname(__file__)
 #getting absolute model name
 model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")
@@ -178,10 +183,10 @@ class MotionClient:
 		return self.s.cartesianDriveFail()
 
 	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedLeftEEVelcocity(local_pt)
+		return self.s.sensedLeftEEVelocity(local_pt)
 
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedRightEEVelcocity(local_pt)
+		return self.s.sensedRightEEVelocity(local_pt)
 
 	def sensedLeftEEWrench(self,frame= 'global'):
 		return self.s.sensedLeftEEWrench(frame)

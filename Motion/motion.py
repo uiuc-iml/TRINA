@@ -552,7 +552,7 @@ class Motion:
         return
 
     # TODO: Refactor incomplete
-    def setLimbPositionLinear(self, limb, q):
+    def setLimbPositionLinear(self, limb, q, duration):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -564,9 +564,9 @@ class Motion:
         duration: double. The desired duration.
         """
         if limb.name == "left":
-            self.setLeftLimbPositionLinear(q)
+            self.setLeftLimbPositionLinear(q, duration)
         else:
-            self.setRightLimbPositionLinear(q)
+            self.setRightLimbPositionLinear(q, duration)
 
 
     def setLeftLimbPositionLinear(self,q,duration):
@@ -775,6 +775,7 @@ class Motion:
             status = f'{limb.name} limb not enabled'
             logger.warning(status)
             print(status)
+            return status
         return ''
 
     def setLeftEEInertialTransform(self,Ttarget,duration):
@@ -1807,7 +1808,7 @@ class Motion:
             elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
                 state.increaseB = True
 
-            print(f"DAMPING STATE: {[self.left_limb_state.increaseB,mag]}")
+            print(f"DAMPING STATE: {[self.left_limb.state.increaseB,mag]}")
             if state.increaseB:
                 effective_b *= 20
 
@@ -1847,95 +1848,11 @@ class Motion:
         else:
             return 1,target_config.tolist()
 
-    def _simulate_1(self,wrench,m_inv,K,B,x_curr,x_dot_curr,x_g,x_dot_g,dt):
-        """
-        Simulate a mass spring damper under external load, semi-implicit Euler integration
-
-        Parameters:
-        -----------------
-        m_inv: 6x6 numpp array,inverse of the mass matrix
-        K: 6x6 numpy array, spring constant matrix
-        B, 6x6 numpy array, damping constant matrix
-        x_curr: 
-        x_dot_curr: lost of 6, curent speed
-        x_g: 
-        x_dot_g: a list of 6
-        dt:simulation dt
-
-        Return:
-        -----------------
-        x,v: list of 6
-        """
-        x = np.array(x_curr)
-        e = np.array(x_g) - x
-        x_dot_g = np.array(x_dot_g)
-        v = np.array(x_dot_curr)
-        e_dot = x_dot_g - v
-        wrench_total = wrench + np.dot(K,e) + np.dot(B,e_dot)
-        a = np.dot(m_inv,wrench_total)
-        #limit maximum acceleration
-        a = np.clip(a,[-1,-1,-1,-4,-4,-4],[1,1,1,4,4,4])
-        v = v + a*dt
-        #limit maximum velocity
-        v = np.clip(v,[-1,-1,-1,-2,-2,-2],[1,1,1,2,2,2])
-        x = x + v*dt
-
-        return x.tolist(),v.tolist()
-
-    # def _left_limb_impedance_drive(self):
-    #     """Calculate the next goal for impedance control
-    #     Parameters:
-    #     --------------
-
-    #     Return:
-    #     --------------
-    #     Result flag
-    #     target_config : list of doubles, the target limb config
-    #     """
-    #     wrench = self.sensedLeftEEWrench(frame = 'global')
-    #     # wrench = [0,0,0,0,0,0]
-    #     stop = False
-    #     if vectorops.norm_L2(wrench[0:3]) > 50:
-    #         stop = True
-
-    #     if stop:
-    #         TEE = self.sensedLeftEETransform()
-    #         T = (TEE[0],vectorops.add(TEE[1],vectorops.mul(vectorops.unit(wrench[0:3]),0.02)))
-    #     else:
-    #         for i in range(6):
-    #             if self.left_limb_state.deadband[i] > 0:
-    #                 if math.fabs(wrench[i]) < self.left_limb_state.deadband[i]:
-    #                     wrench[i] = 0
-
-    #         self.left_limb_state.x_mass, self.left_limb_state.x_dot_mass = self._simulate(wrench = wrench,m_inv = self.left_limb_state.Minv,\
-    #             K = self.left_limb_state.K,B = self.left_limb_state.B,x_curr = self.left_limb_state.x_mass,x_dot_curr = self.left_limb_state.x_dot_mass,\
-    #             x_g = self.left_limb_state.x_g,x_dot_g = self.left_limb_state.x_dot_g,dt = self.dt) 
-    #         self.left_limb_state.counter += 1
-           
-    #         T = (so3.from_moment(self.left_limb_state.x_mass[3:6]),self.left_limb_state.x_mass[0:3])
-
-    #     goal = ik.objective(self.left_EE_link,R=T[0],\
-    #         t = vectorops.sub(T[1],so3.apply(T[0],self.left_limb_state.toolCenter)))
-
-    #     initialConfig = self.robot_model.getConfig()
-    #     res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = self.left_active_Dofs,tol=0.0001)
-    #     if not res:
-    #         logger.error('CartesianDrive IK has failed y,exited..')
-    #         print("motion.controlLoop():CartesianDrive IK has failed, exited this mode")
-    #         return 0,0
-    #     else:
-    #         target_config = self.robot_model.getConfig()[self.left_active_Dofs[0]:self.left_active_Dofs[5]+1]
-    #     self.robot_model.setConfig(initialConfig)
-
-    #     if stop:
-    #         return 2,target_config
-    #     else:
-    #         return 1,target_config
 
     def _get_klampt_q(self,left_limb = [],right_limb = []):
-        if left_limb:
+        if len(left_limb):
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb, right_limb = self.right_limb.state.sensedq)
-        elif right_limb:
+        elif len(right_limb):
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb.state.sensedq, right_limb = right_limb)
 
 if __name__=="__main__":

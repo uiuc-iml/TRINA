@@ -173,10 +173,10 @@ class MotionClient:
 		return self.s.cartesianDriveFail()
 
 	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedLeftEEVelcocity(local_pt)
+		return self.s.sensedLeftEEVelocity(local_pt)
 
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedRightEEVelcocity(local_pt)
+		return self.s.sensedRightEEVelocity(local_pt)
 
 
 	def sensedLeftEEWrench(self,frame = 'global',tool_center = [0,0,0]):

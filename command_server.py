@@ -431,7 +431,7 @@ class CommandServer:
 				}
 				# print('states updated with success!')
 			except Exception as e:
-				print(e)
+				traceback.print_exc()
 			################
 			self.server['TRINA_TIME'] = time.time()
 
@@ -499,12 +499,13 @@ class CommandServer:
 				time.sleep(self.dt - elapsedTime)
 			else:
 				time.sleep(1e-6)
-
+	
 	def run(self,command):
 		try:
 			exec(command)
 		except Exception as e:
-			print('there was an error executing your command!',e)
+			tb = traceback.format_exc()
+			print('there was an error executing your command!',tb)
 		finally:
 			print("command recieved was " + str(command))
 
@@ -653,7 +654,7 @@ if __name__=="__main__":
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
 	# server = CommandServer(mode = 'Physical',components =  ['base', 'right_limb','left_limb'], modules = ['DirectTeleOperation', 'StateLogger'])
-	server = CommandServer(mode = 'Physical',components =  ['base', 'right_limb','left_limb'], modules = ['DirectTeleOperation'])
+	server = CommandServer(mode = 'Kinematic',components =  ['base', 'right_limb','left_limb'], modules = ['DirectTeleOperation'])
 	# server = CommandServer(mode = 'Physical',components =  ['base','left_limb','right_limb','left_gripper'], modules = ['C1','C2','DirectTeleOperation'])
 
 	# print("sensing position")
