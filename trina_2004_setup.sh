@@ -14,7 +14,7 @@ fi
 
 sudo apt install git
 sudo apt install python3-pip
-sudo pip3 install pyserial open3d trimesh
+pip3 install pyserial open3d trimesh
 
 echo "Instaling ROS Noetic"
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
@@ -32,7 +32,7 @@ mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src
 cd ..
 catkin_make
-echo "source /home/motion/catkin_ws/devel/setup.bash" >> ~/.bashrc
+# echo "source /home/motion/catkin_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 cd
 
@@ -80,26 +80,27 @@ echo "cloning configuration file from TRINA"
 cp ~/TRINA/redis.conf ~/database-server/redis.conf
 cd
 
-echo "Installing reem from source"
-git clone https://github.com/krishauser/reem
-cd reem
-sudo python3 setup.py install
-cd
+# echo "Installing reem from source"
+# git clone https://github.com/krishauser/reem
+# cd reem
+# sudo python3 setup.py install
+# cd
 
 source ~/.bashrc
 echo "installing necessary python libraries"
-sudo pip3 install --user unidecode scipy numpy pandas rejson redis PyOpenGL open3d jupyter jupyter-contrib-nbextensions h5py
+pip install unidecode scipy numpy pandas rejson redis PyOpenGL open3d jupyter jupyter-contrib-nbextensions h5py
+pip install reem
 
-echo "Install pyrealsense2 from source"
-git clone https://github.com/achirkin/librealsense/
-cd librealsense
-mkdir build && cd build
-cmake ../ -DFORCE_RSUSB_BACKEND=true -DBUILD_PYTHON_BINDINGS=true -DCMAKE_BUILD_TYPE=release
-make
-sudo make install
-./scripts/setup_udev_rules.sh
-echo "export PYTHONPATH=$PYTHONPATH:/usr/local/lib" >> ~/.bashrc
-source ~/.bashrc
+# echo "Install pyrealsense2 from source"
+# git clone https://github.com/achirkin/librealsense/
+# cd librealsense
+# mkdir build && cd build
+# cmake ../ -DFORCE_RSUSB_BACKEND=true -DBUILD_PYTHON_BINDINGS=true -DCMAKE_BUILD_TYPE=release
+# make
+# sudo make install
+# ./scripts/setup_udev_rules.sh
+# echo "export PYTHONPATH=$PYTHONPATH:/usr/local/lib" >> ~/.bashrc
+# source ~/.bashrc
 
 echo "Installing CUDA"
 sudo wget -O /etc/apt/preferences.d/cuda-repository-pin-600 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-ubuntu2004.pin
@@ -113,9 +114,9 @@ echo "Installing ZED for sensor module"
 wget https://download.stereolabs.com/zedsdk/3.3/cu111/ubuntu20
 chmod +x ubuntu20
 ./ubuntu20
-wget https://download.stereolabs.com/zedsdk/3.3/ubuntu20/cu111/py38
-mv py38 pyzed-3.3-cp38-cp38-linux_x86_64.whl
-pip3 install pyzed-3.3-cp38-cp38-linux_x86_64.whl
+# wget https://download.stereolabs.com/zedsdk/3.3/ubuntu20/cu111/py38
+# mv py38 pyzed-3.3-cp38-cp38-linux_x86_64.whl
+# pip3 install pyzed-3.3-cp38-cp38-linux_x86_64.whl
 
 cd ~/TRINA/robot_v2/websocket_client-0.56.0
 sudo python3 setup.py install
