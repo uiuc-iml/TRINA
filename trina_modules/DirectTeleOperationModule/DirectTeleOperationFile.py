@@ -86,7 +86,7 @@ class DirectTeleOperation:
 
 		right_limb_active = ('right_limb' in self.components)
 		right_gripper_active = ('right_gripper' in self.components)
-		self.right_limb = TeleopArmState("right", right_limb_active, right_gripper_active, 
+		self.right_limb = TeleopArmState("right", right_limb_active, right_gripper_active,
 										self.robot.sensedRightEETransform, self.robot.setRightEEInertialTransform,
 										self.robot.setRightEEVelocity, self.robot.setRightEETransformImpedance)
 
@@ -94,12 +94,7 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
 
-		self.K = np.array([[200.0,0.0,0.0,0.0,0.0,0.0],\
-                [0.0,200.0,0.0,0.0,0.0,0.0],\
-                [0.0,0.0,200.0,0.0,0.0,0.0],\
-                [0.0,0.0,0.0,5.0,0.0,0.0],\
-                [0.0,0.0,0.0,0.0,5.0,0.0],\
-                [0.0,0.0,0.0,0.0,0.0,5.0]])
+		self.K = np.diag([200.0,200.0,200.0,5.0,5.0,5.0])
 
 		self.M = np.eye(6)*5.0
 		self.M[3,3] = 1.0
@@ -115,6 +110,9 @@ class DirectTeleOperation:
 		self.B = self.B.tolist()
 
 		self.tool = np.array([0.20,0.0,0.0], dtype=np.float64)
+		self.sensitivity = 1.0
+		self.last_sens_button_state = False
+		self.sens_state = 0
 
 		# 0 - Go home
 		# 1 - Set controller home
@@ -208,11 +206,6 @@ class DirectTeleOperation:
 
 
 	def setRobotToDefault(self):
-		# rightUntuckedRotation = np.array([
-		# 	0.9996677819374474, -0.020138967102307673, 0.016085638324823164,
-		# 	-0.025232828744241535, -0.6373999040791976, 0.7701199040626047,
-		# 	-0.005256435087453611, -0.7702699424772351, -0.6376963114259705
-		# ])
 		rightUntuckedRotation = np.array([
 			0, 0, -1,
 			0, -1, 0,
@@ -229,11 +222,6 @@ class DirectTeleOperation:
 			[0,oort,oort],
 			[0,-oort,oort]
 		])
-		# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
-			# rotxm45).flatten()
-		# rightUntuckedRotation = np.matmul(rightUntuckedRotation.reshape(3,3),
-		# 	rotzm90).flatten()
-		#rightUntuckedTranslation = np.array([0.6410086795413383, -0.196298410887376, 0.8540173127153597])
 		rightUntuckedTranslation = np.array([0.34,
 			-0.296298410887376, 1.0540173127153597])
 		# Looks like the y axis is the left-right axis.
@@ -252,11 +240,6 @@ class DirectTeleOperation:
 			self.left_limb.setEEInertialTransform(
 				[leftUntuckedRotation.tolist(),
 				(leftUntuckedTranslation + self.tool).tolist()], 10)
-			# self.left_limb.setEETransformImpedance(
-			# 	[leftUntuckedRotation.tolist(),
-			# 	leftUntuckedTranslation.tolist()], 
-			# 	self.K, self.M, self.B, 
-			# 	tool_center=self.tool.tolist())
 		if self.right_limb.active:
 			pass
 			#self.right_limb.setEETransformImpedance([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()], self.K, self.M, self.B)
@@ -269,6 +252,23 @@ class DirectTeleOperation:
 				self.setRobotToDefault()
 				self.left_limb.teleoperationState = 1
 				self.right_limb.teleoperationState = 1
+			if (
+				not self.UI_state["controllerButtonState"]["rightController"]
+				["press"][0] and self.last_sens_button_state
+			):
+				# Released the right controller button
+				self.sens_state = (self.sens_state + 1) % 2
+				if self.sens_state == 0:
+					self.sensitivity = 1.0
+				else:
+					self.sensitivity = 0.25
+				for limb in (self.left_limb, self.right_limb):
+					self.init_UI_state["controllerPositionState"][limb.joystick]["controllerPosition"] = (
+						self.UI_state["controllerPositionState"][limb.joystick]["controllerPosition"])
+					self.init_UI_state["controllerPositionState"][limb.joystick]['controllerRotation'] = (
+						self.UI_state["controllerPositionState"][limb.joystick]['controllerRotation'])
+			self.last_sens_button_state = (self.UI_state
+				["controllerButtonState"]["rightController"]["press"][0])
 			if self.controller_mode == ControllerMode.ABSOLUTE:
 				if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True and self.left_limb.teleoperationState == 1):
 					print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
@@ -289,7 +289,7 @@ class DirectTeleOperation:
 								self.UI_state["controllerPositionState"][limb.joystick]['controllerRotation'])
 
 							self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-							
+
 							limb.init_pos = limb.sensedEETransform(self.tool.tolist())
 
 							print("BEGIN CLUTCHING, ZERO!")
@@ -300,8 +300,8 @@ class DirectTeleOperation:
 						limb.teleoperationState = 3
 						#limb.setEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
 						limb.setEETransformImpedance(
-							limb.sensedEETransform(tool_center=self.tool.tolist()), 
-							self.K, self.M, [[10*x for x in a] for a in self.B], 
+							limb.sensedEETransform(tool_center=self.tool.tolist()),
+							self.K, self.M, [[10*x for x in a] for a in self.B],
 							tool_center=self.tool.tolist())
 
 			if(self.base_active):
@@ -340,7 +340,7 @@ class DirectTeleOperation:
 
 	"""
 	Control an arm based on UI state and other jazz. Might lock it.
-	
+
 	limb: Arm object.
 	mode: One of position, velocity, or impedance.
 	"""
@@ -454,7 +454,9 @@ class DirectTeleOperation:
 			* self.init_headset_orientation.inv())
 
 		RR_final = (RR_rw_rh*RR_ch_cc).as_dcm().flatten().tolist()
-		return RR_final, RT_final, curr_transform
+		t_final = se3.interpolate(limb.init_pos, (RR_final, RT_final),
+			self.sensitivity)
+		return t_final[0], t_final[1], curr_transform
 
 	def logTeleoperation(self,name):
 		q = self.robotPoser.get()
