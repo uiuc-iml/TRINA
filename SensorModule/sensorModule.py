@@ -692,7 +692,12 @@ if __name__ == '__main__':
     from matplotlib import pyplot as plt
     a = Camera_Robot(robot = [],world = [], cameras =['zed_overhead'],ros_active = False, use_jarvis = False, mode = 'Physical')
     time.sleep(1)
-    print(a.get_rgbd_images()['zed_overhead'])
+    zed_overhead = a.get_rgbd_images()['zed_overhead']
+    plt.imshow(zed_overhead[1])
+    plt.show()
+    zed_o3d = a.get_point_clouds()['zed_overhead']
+    print(zed_o3d.colors)
+    print(np.asarray(zed_o3d.points))
     time.sleep(1)
     a.safely_close_all()
     # b = []

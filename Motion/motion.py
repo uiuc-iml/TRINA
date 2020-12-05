@@ -838,7 +838,6 @@ class Motion:
             logger.warning(status)
             print(status)
             return status
-
         return ''
 
     def setLeftEEVelocity(self,v, tool = [0,0,0]):
@@ -1691,7 +1690,6 @@ class Motion:
             # NOTE: Is it better to decay by binary search here?
             limb.state.driveSpeedAdjustment = limb.state.driveSpeedAdjustment - 0.1
             if limb.state.driveSpeedAdjustment < 0.001:
-
                 # self.left_limb_state.cartesianDrive = False
 
                 logger.error('CartesianDrive IK has failed completely,exited..')
@@ -1819,7 +1817,7 @@ class Motion:
             p = ((np.exp(eta*wdn) / (np.exp(eta*wdn) + beta)) - (1 / (beta+1)))
             if p > 0.9:
                 state.last_p_time = time.monotonic()
-            if time.monotonic() - self.last_p_time < 1:
+            if time.monotonic() - state.last_p_time < 1:
                 p = max(0.9, p)
             print("P", p)
             effective_b += p * 20 * effective_b
@@ -1860,7 +1858,6 @@ class Motion:
         else:
             return 1,target_config.tolist()
 
-
     def _get_klampt_q(self,left_limb = [],right_limb = []):
         if len(left_limb):
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb, right_limb = self.right_limb.state.sensedq)
@@ -1900,7 +1897,6 @@ if __name__=="__main__":
 
     # B = 2.0*np.sqrt(4.0*np.dot(m,K))
     # B[3:6,3:6] = B[3:6,3:6]*3.0
-
 
     # initialT = copy(robot.sensedLeftEETransform(tool_center=[0.27,0,0]))
 

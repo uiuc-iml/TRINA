@@ -188,7 +188,6 @@ class Limb:
         else:
             print(f"Invalid argument for frame, must be global or local, got {frame}")
             return [0]*6
-        
 
 class LimbState:
     def __init__(self):
@@ -261,6 +260,44 @@ class LimbState:
 
     def set_mode_position(self, position):
         self.set_mode_reset()   # Sets commandType to 0, which is needed.
+
+        self.commandSent = False
+        self.commandedq = copy.deepcopy(position)
+
+    def set_mode_commandqueue(self, difference, start, duration):
+        self.set_mode_reset()
+
+        self.commandSent = False
+        self.difference = difference
+        self.commandedqQueueStart = copy.deepcopy(start)
+        self.commandQueue = True
+        self.commandedQueueDuration = duration
+        self.commandQueueTime = time.time()
+
+    def set_mode_velocity(self, qdot):
+        self.set_mode_reset()
+
+        self.commandSent = False
+        self.commandeddq = copy.deepcopy(qdot)
+        self.commandType = 1
+
+    def set_mode_reset(self):
+        #self.commandSent = True
+        self.commandedq = []
+        self.commandeddq = []
+        self.commandType = 0
+        self.commandQueue = False
+        self.commandedqQueue = []
+        self.cartesianDrive = False
+        self.impedanceControl = False
+        self.commandQueueTime = 0.0
+        self.commandedQueueDuration = 0.0
+        self.difference = []
+        self.commandedqQueueStart = []
+        self.Xs = []
+
+    def set_mode_position(self, position):
+        self.set_mode_reset()
 
         self.commandSent = False
         self.commandedq = copy.deepcopy(position)
