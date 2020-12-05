@@ -1776,6 +1776,7 @@ class Motion:
         Result flag
         target_config : list of doubles, the target limb config
         """
+        state = limb.state
         wrench = limb.sensedEEWrench(frame = 'global')
         #if force too big, backup a bit and stop
         stop = False
@@ -1793,39 +1794,43 @@ class Motion:
             displace_wrench = np.array(wrench[:3])
             # Force magnitude.
             mag = np.linalg.norm(displace_wrench)
-            # Error between simulated mass position and commanded position. (Vector from target to current)
-            err_vec = np.array(limb.state.T_mass[1]) - np.array(limb.state.T_g[1])
-            
-            # Check that the force magnitude is in the same direction as the displacement.
-            err_direction_match = np.dot(err_vec, wrench[:3])
+            old_wrench = state.prev_wrench[:3]
 
-            # If the force is high and decreasing:
-            if err_direction_match > 0 and mag > 10 and mag < np.linalg.norm(limb.state.prev_wrench):
-                # Kill the velocity component in the direction of the displacement wrench.
-                v_trans = np.array(limb.state.x_dot_mass[:3])
-                aligned_component_mag = np.dot(v_trans, displace_wrench) / mag
-                limb.state.x_dot_mass[:3] -= displace_wrench * (aligned_component_mag / mag * 0.75)
+            effective_b = np.copy(state.B)
+
+            START_THRESHOLD = 1.5
+            STOP_THRESHOLD = 4
+
+            if state.increaseB:
+                if mag < STOP_THRESHOLD:
+                    state.increaseB = False
+            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
+                state.increaseB = True
+
+            print(f"DAMPING STATE: {[self.left_limb_state.increaseB,mag]}")
+            if state.increaseB:
+                effective_b *= 20
 
             for i in range(6):
-                if limb.state.deadband[i] > 0:
-                    if math.fabs(wrench[i]) < limb.state.deadband[i]:
+                if state.deadband[i] > 0:
+                    if math.fabs(wrench[i]) < state.deadband[i]:
                         wrench[i] = 0
 
-            limb.state.T_mass, limb.state.x_dot_mass = self._simulate_2(wrench = wrench,m_inv = limb.state.Minv,\
-                K = limb.state.K,B = limb.state.B,T_curr = limb.state.T_mass,x_dot_curr = limb.state.x_dot_mass,\
-                T_g = limb.state.T_g,x_dot_g = limb.state.x_dot_g,dt = self.dt) 
-            limb.state.counter += 1
-            limb.state.prev_wrench = np.array(wrench)
+            state.T_mass, state.x_dot_mass = self._simulate_2(wrench = wrench,m_inv = state.Minv,\
+                K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
+                T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt) 
+            state.counter += 1
+
+            state.prev_wrench = np.array(wrench)
+
             #orthogonalize the rotation matrix
-            # if limb.state.counter % 100 == 0:
-            #     limb.state.T_mass = (so3.from_moment(so3.moment(limb.state.T_mass[0])),limb.state.T_mass[1])
-            T = limb.state.T_mass
+            # if state.counter % 100 == 0:
+            #     state.T_mass = (so3.from_moment(so3.moment(state.T_mass[0])),state.T_mass[1])
+            T = state.T_mass
 
         goal = ik.objective(limb.EE_link,R=T[0],\
-            t = vectorops.sub(T[1],so3.apply(T[0],limb.state.toolCenter)))
-        print(vectorops.sub(T[1],so3.apply(T[0],limb.state.toolCenter)))
-        print(limb.sensedEETransform()[1])
-        print(limb.state.toolCenter)
+            t = vectorops.sub(T[1],so3.apply(T[0],state.toolCenter)))
+
         initialConfig = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = limb.active_dofs,tol=0.0001)
         if not res:

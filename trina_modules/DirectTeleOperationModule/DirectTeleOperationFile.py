@@ -249,11 +249,14 @@ class DirectTeleOperation:
 		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
 
 		if self.left_limb.active:
-			self.left_limb.setEETransformImpedance(
+			self.left_limb.setEEInertialTransform(
 				[leftUntuckedRotation.tolist(),
-				leftUntuckedTranslation.tolist()], 
-				self.K, self.M, self.B, 
-				tool_center=self.tool.tolist())
+				(leftUntuckedTranslation + self.tool).tolist()], 10)
+			# self.left_limb.setEETransformImpedance(
+			# 	[leftUntuckedRotation.tolist(),
+			# 	leftUntuckedTranslation.tolist()], 
+			# 	self.K, self.M, self.B, 
+			# 	tool_center=self.tool.tolist())
 		if self.right_limb.active:
 			pass
 			#self.right_limb.setEETransformImpedance([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()], self.K, self.M, self.B)
