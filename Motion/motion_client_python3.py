@@ -173,10 +173,10 @@ class MotionClient:
 		return self.s.cartesianDriveFail()
 
 	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedLeftEEVelcocity(local_pt)
+		return self.s.sensedLeftEEVelocity(local_pt)
 
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedRightEEVelcocity(local_pt)
+		return self.s.sensedRightEEVelocity(local_pt)
 
 
 	def sensedLeftEEWrench(self,frame = 'global',tool_center = [0,0,0]):
@@ -295,4 +295,13 @@ if __name__=="__main__":
 	B[3:6,3:6] = B[3:6,3:6]*2.0
 	motion.setLeftEETransformImpedance([leftUntuckedRotation.tolist(),leftUntuckedTranslation.tolist()], K, M, B)
 	time.sleep(5)
+	
+	# motion.startServer(mode = "Physical", components = ['left_limb'], codename = 'anthrax')
+	# motion.startup()
+	# time.sleep(0.05)
+	# try:
+		# print(motion.sensedLeftEETransform())
+		# time.sleep(0.05)
+	# except Exception as err:
+		# print("Error: {0}".format(err))
 	motion.shutdown()
