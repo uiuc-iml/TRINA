@@ -109,7 +109,7 @@ class DirectTeleOperation:
 		self.M = self.M.tolist()
 		self.B = self.B.tolist()
 
-		self.tool = np.array([0.20,0.0,0.0], dtype=np.float64)
+		self.tool = np.array([0.15,0.0,0.0], dtype=np.float64)
 		self.sensitivity = 1.0
 		self.last_sens_button_state = False
 		self.sens_state = 0
@@ -262,11 +262,13 @@ class DirectTeleOperation:
 					self.sensitivity = 1.0
 				else:
 					self.sensitivity = 0.25
+				self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 				for limb in (self.left_limb, self.right_limb):
 					self.init_UI_state["controllerPositionState"][limb.joystick]["controllerPosition"] = (
 						self.UI_state["controllerPositionState"][limb.joystick]["controllerPosition"])
 					self.init_UI_state["controllerPositionState"][limb.joystick]['controllerRotation'] = (
 						self.UI_state["controllerPositionState"][limb.joystick]['controllerRotation'])
+					limb.init_pos = limb.sensedEETransform()
 			self.last_sens_button_state = (self.UI_state
 				["controllerButtonState"]["rightController"]["press"][0])
 			if self.controller_mode == ControllerMode.ABSOLUTE:
@@ -296,7 +298,8 @@ class DirectTeleOperation:
 
 							limb.teleoperationState = 2
 
-					elif limb.teleoperationState == 2 or limb.teleoperationState == 3:
+					elif limb.teleoperationState == 2:
+						# Released button, go to idle
 						limb.teleoperationState = 3
 						#limb.setEEVelocity([0,0,0,0,0,0], tool = self.tool.tolist())
 						limb.setEETransformImpedance(

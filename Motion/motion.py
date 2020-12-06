@@ -2261,41 +2261,15 @@ class Motion:
             START_THRESHOLD = 1.5
             STOP_THRESHOLD = 4
 
-            # if self.left_limb_state.increaseB:
-            #     if mag < STOP_THRESHOLD:
-            #         self.left_limb_state.increaseB = False
-            # elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
-            #     self.left_limb_state.increaseB = True
+            if self.left_limb_state.increaseB:
+                if mag < STOP_THRESHOLD:
+                    self.left_limb_state.increaseB = False
+            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
+                self.left_limb_state.increaseB = True
 
-            # print(f"DAMPING STATE: {[self.left_limb_state.increaseB,mag]}")
-            # if self.left_limb_state.increaseB:
-            #     effective_b *= 20
-            wrench_diff = displace_wrench - old_wrench
-            wdn = np.linalg.norm(wrench_diff)
-            abswdn = np.linalg.norm(wrench)
-            eta = 3
-            beta = 500
-            p = ((np.exp(eta*wdn) / (np.exp(eta*wdn) + beta)) - (1 / (beta+1)))
-            if p > 0.9:
-                self.last_p_time = time.monotonic()
-            if time.monotonic() - self.last_p_time < 1:
-                p = max(0.9, p)
-            print("P", p)
-            effective_b += p * 20 * effective_b
-
-
-#            OLD collision detection and velocity killing
-            # err_vec = np.array(self.left_limb_state.T_mass[1]) - np.array(self.left_limb_state.T_g[1])
-           
-            # err_direction_match = np.dot(err_vec, wrench[:3])
-
-            # if err_direction_match > 0 and mag > 10 and mag < np.linalg.norm(self.left_limb_state.prev_wrench):
-            #     v_trans = np.array(self.left_limb_state.x_dot_mass[:3])
-            #     aligned_component_mag = np.dot(v_trans, displace_wrench) / mag
-            #     self.left_limb_state.x_dot_mass[:3] -= displace_wrench * (aligned_component_mag / mag * 0.75)
-            #     print("VELOCITY KILLED")
-            # else:
-            #     print("VELOCITY NORMAL")
+            print(f"DAMPING STATE: {[self.left_limb_state.increaseB,mag]}")
+            if self.left_limb_state.increaseB:
+                effective_b *= 20
 
             for i in range(6):
                 if self.left_limb_state.deadband[i] > 0:
