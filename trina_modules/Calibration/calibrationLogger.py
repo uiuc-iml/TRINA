@@ -24,7 +24,7 @@ class CalibrationLogger:
         self.camera_dt = 0.2
         self.system_start_time = time.time()
         self._lock = RLock()
-        self.init_move_time = 20.0
+        self.init_move_time = 15.0
         self.dt = 0.01
         self.cameras = cameras
         self.motion_address = motion_address
@@ -77,13 +77,23 @@ class CalibrationLogger:
             for cn in self.cameras:
                 color_frame = self.res[cn][0]
                 pcd = res2[cn]
+                pcd.transform([[1,0,0,0],[0,-1,0,0],[0,0,-1,0],[0,0,0,1]])
+                p = np.asarray(pcd.points) 
                 if cn[0:4] == 'real': #realsense camera color channels need to be adjusted
                     color = cv2.cvtColor(np.asarray(color_frame), cv2.COLOR_RGB2BGR)
                 else:
                     color = np.asarray(color_frame)
                 if counter >= 0:
                     cv2.imwrite(self.save_path + cn + '-' + str(counter).zfill(5)+img_format,color)
-                    o3d.io.wirte_point_cloud(self.save_path + cn + '-'+ str(counter).zfill(5)+ '.pcd',pcd)
+                    # o3d.io.wirte_point_cloud(self.save_path + cn + '-'+ str(counter).zfill(5)+ '.pcd',pcd)
+                    data=open(self.save_path + cn + '-' + str(counter).zfill(5)+'.txt','w')
+                    dimx = 480
+                    dimy = 640
+                    for y in range(dimx):
+                        for x in range(dimy):
+                            # data.write(str(p[y][x][0])+' '+str(p[y][x][1])+' '+str(p[y][x][2])+'\n')
+                            data.write(str(p[y*dimy+x,0])+' '+str(p[y*dimy+x,1])+' '+str(p[y*dimy+x,2])+'\n')
+                    data.close()
 
             if counter >= 0:
                 fc.write(str(t) + '\n')
