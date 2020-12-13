@@ -423,7 +423,10 @@ class CommandServer:
 		velEE_left = {}
 		posEE_right = {}
 		velEE_right = {}
-
+		global_EEWrench_left = None
+		local_EEWrench_left = None
+		global_EEWrench_right = None
+		local_EEWrench_right = None
 		# try:
 		if(self.left_limb_active):
 			posEE_left = self.query_robot.sensedLeftEETransform()
@@ -917,7 +920,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb'], modules = ['DirectTeleOperation', 'PointClickGrasp'], codename = 'bubonic')
+	server = CommandServer(mode = 'Physical',components =  ['left_limb'], modules = ['DirectTeleOperation', 'PointClickGrasp','StateLogger'], codename = 'bubonic')
 	# server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
 	print(server.robot.closeLeftRobotiqGripper())

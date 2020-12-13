@@ -104,7 +104,7 @@ class Camera_Robot:
         self.active_cameras = {}
         self.update_lock = threading.Lock()
         self.ros_active = ros_active
-
+        self.shutdown = False
 
         if(self.mode == 'Physical'):
             import pyrealsense2 as rs
@@ -116,8 +116,8 @@ class Camera_Robot:
                         try:
                             self.active_cameras.update({camera: Camera_Sensors(
                                 camera, self.serial_numbers_dict, self.config_files_dict, self.robot)})
-                            atexit.register(
-                                self.active_cameras[camera].safely_close)
+                            # atexit.register(
+                            #     self.active_cameras[camera].safely_close)
                             print('sucessfully initialized the camera! ')
                         except Exception as e:
                             print('This camera ', camera,
@@ -125,6 +125,8 @@ class Camera_Robot:
                     else:
                         raise ValueError(
                             'invalid camera selected. Please update camera selection and try again')
+            atexit.register(self.safely_close_all)
+
         elif(self.mode == 'Kinematic'):
 
             # glutInit ([])
@@ -301,8 +303,11 @@ class Camera_Robot:
             return {"realsense_right": self.right_image, "realsense_left": self.left_image}
 
     def safely_close_all(self):
-        for camera in self.active_cameras.keys():
-            self.active_cameras[camera].safely_close()
+        # print(self.shutdown)
+        if(not self.shutdown):
+            self.shutdown = True
+            for camera in self.active_cameras.keys():
+                self.active_cameras[camera].safely_close()
 
     def update_sim(self):
         time.sleep(1)
