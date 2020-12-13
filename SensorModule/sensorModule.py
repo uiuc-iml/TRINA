@@ -688,14 +688,17 @@ class Camera_Sensors:
         self.close = True
 
 if __name__ == '__main__':
+    from tqdm import tqdm
     print('\n\n\n\n\n running as Main\n\n\n\n\n')
     from matplotlib import pyplot as plt
-    a = Camera_Robot(robot = [],world = [], cameras =['realsense_left'],ros_active = False, use_jarvis = False, mode = 'Physical')
+    a = Camera_Robot(robot = [],world = [], cameras =['realsense_left','realsense_right'],ros_active = False, use_jarvis = False, mode = 'Physical')
     time.sleep(1)
-    zed_overhead = a.get_rgbd_images()['realsense_left']
-    plt.imshow(zed_overhead[1])
-    plt.show()
-    zed_o3d = a.get_point_clouds()['realsense_left']
+    print('Testing Camera images')
+    for i in tqdm(range(100)):    
+        zed_overhead = a.get_rgbd_images()['realsense_left']
+        # plt.imshow(zed_overhead[1])
+        # plt.show()
+        zed_o3d = a.get_point_clouds()['realsense_left']
     print(zed_o3d.colors)
     print(np.asarray(zed_o3d.points))
     time.sleep(1)
