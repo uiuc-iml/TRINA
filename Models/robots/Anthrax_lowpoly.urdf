@@ -968,5 +968,10 @@
     <noselfcollision pairs="right_wrist2_link right_EE_link"/>
     <noselfcollision pairs="left_EE_link right_EE_link"/>
     <noselfcollision group1="left_EE_link right_EE_link" group2="left_base_link left_shoulder_link left_upperarm_link left_forearm_link left_wrist1_link right_base_link right_shoulder_link right_upperarm_link right_forearm_link right_wrist1_link right_wrist2_link"/>
+    <sensors>
+        <LaserRangeSensor name="lidar" link="4" Tsensor="0 0 1  1 0 0  0 1 0  0.2 0 0.2"  depthMaximum="25.0" depthMinimum="0.1" depthResolution="0.01" depthVarianceLinear="0.0001" xSweepMagnitude="1.91986" measurementCount="660" />
+        <CameraSensor name="left_hand_camera" link="12" Tsensor="1 0 0  0 1 0  0 0 1   0 0 0"  xres="640" yres="480" xfov="1.2" yfov="0.95" zmin="0.4" zmax="10" zresolution="0.01" zvarianceLinear="0.00001" />
+        <CameraSensor name="right_hand_camera" link="20" Tsensor="1 0 0  0 1 0  0 0 1   0 0 0"  xres="640" yres="480" xfov="1.2" yfov="0.95" zmin="0.4" zmax="10" zresolution="0.01" zvarianceLinear="0.00001" />
+    </sensors>
   </klampt>
 </robot>

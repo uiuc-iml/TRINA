@@ -64,3 +64,5 @@ servoD	200 200 200 400 200
 dryFriction	0 0 0 0 0
 viscousFriction	25 25 25 100 100
 noselfcollision 2 4  4 7  4 8  9 7  9 8  26 7  26 8  9 10 10 11 11 12 12 13 13 14 14 15 26 27 27 28 28 29 29 30 30 31 9 26
+
+sensors <LaserRangeSensor name="lidar" link="2" Tsensor="0 0 1  1 0 0  0 1 0  0.2 0 0.2"  depthMaximum="25.0" depthMinimum="0.5" depthResolution="0.01" depthVarianceLinear="0.0001" xSweepMagnitude="1.91986" measurementCount="660"/>
