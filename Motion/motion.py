@@ -18,6 +18,7 @@ import os
 
 import sys
 sys.path.append("..")
+from Settings import trina_settings
 import trina_logging
 import logging
 from datetime import datetime
@@ -27,7 +28,7 @@ logger = trina_logging.get_logger(__name__,logging.INFO, filename)
 
 class Motion:
 
-    def __init__(self,mode = 'Kinematic', components = ['left_limb','right_limb'], debug_logging = False, codename = 'seed'):
+    def __init__(self,mode = 'Kinematic', components = ['left_limb','right_limb'], debug_logging = False, codename = 'Bubonic'):
         """
         This class provides a low-level controller to the TRINA robot.
 
@@ -35,15 +36,15 @@ class Motion:
         ------------
         mode: The 'Kinematic' mode starts a kinematic simlation of the robot. The 'Physical' mode interfaces with
             the robotic hardware directly.
-        model_path: The TRINA robot model path.
+        codename: The TRINA robot code.
         components: In the physical mode, we would like to have the option of starting only a subset of the components.
             It is a list of component names, including: left_limb, right_limb, base, torso (including the support legs.),
             left_gripper, right_gripper.
         """
         self.codename = codename
         self.mode = mode
-        self.model_path = "data/TRINA_world_" + self.codename + ".xml"
-        self.computation_model_path = "data/TRINA_world_" + self.codename + ".xml"
+        self.model_path = "../Models/robots/"+self.codename.capitalize() + ".urdf"
+        self.computation_model_path = "../Models/robots/"+self.codename.capitalize() + ".urdf"
         self.debug_logging = debug_logging
         if(self.debug_logging):
             self.logging_filename = time.time()
@@ -62,23 +63,22 @@ class Motion:
         self.world = WorldModel()
         res = self.world.readFile(self.computation_model_path)
         if not res:
-            logger.error('unable to load model')
-            raise RuntimeError("unable to load model")
+            logger.error('unable to load model '+self.computation_model_path)
+            raise RuntimeError("unable to load model "+self.computation_model_path)
 
         #Initialize collision detection
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
         #End-effector links and active dofs used for arm cartesian control and IK
-        self.left_EE_link = self.robot_model.link(TRINAConfig.get_left_tool_link_N(self.codename))
-        self.left_active_Dofs = TRINAConfig.get_left_active_Dofs(self.codename)
-        self.right_EE_link = self.robot_model.link(TRINAConfig.get_right_tool_link_N(self.codename))
-        self.right_active_Dofs = TRINAConfig.get_right_active_Dofs(self.codename)
+        self.left_EE_link = self.robot_model.link(trina_settings.left_tool_link())
+        self.left_active_Dofs = trina_settings.left_arm_dofs()
+        self.right_EE_link = self.robot_model.link(trina_settings.right_tool_link())
+        self.right_active_Dofs = trina_settings.right_arm_dofs()
         #UR5 arms need correct gravity vector
         self.currentGravityVector = [0,0,-9.81]
 
         #Enable some components of the robot
         self.left_limb_enabled = False
-
         self.right_limb_enabled = False
         self.base_enabled = False
         self.torso_enabled = False
@@ -1783,7 +1783,7 @@ class Motion:
 
     def setRobotToDefualt(self):
         """ Some helper function when debugging"""
-        leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+        leftUntuckedConfig = trina_settings.left_arm_config('untucked')
         rightUntuckedConfig = self.mirror_arm_config(leftUntuckedConfig)
         self.setLeftLimbPositionLinear(leftUntuckedConfig,1)
         self.setRightLimbPositionLinear(rightUntuckedConfig,1)

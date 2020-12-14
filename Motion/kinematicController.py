@@ -30,10 +30,6 @@ def cleanup():
   pass
 
 
-model_config_length = 43
-base_indeces = [0,3]
-left_limb_indexes = [10,16]
-right_limb_indexes = [27,33]
 class KinematicController:
     def __init__(self, model_path,codename):
         self.left_limb_state = LimbState()

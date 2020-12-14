@@ -1,26 +1,33 @@
-import xmlrpclib
+import sys
+if sys.version_info[0] >= 3:
+	from xmlrpc.client import ServerProxy
+else:
+	from xmlrpclib import ServerProxy
 from threading import Thread, Lock
 import threading
 import time
 from klampt import WorldModel
 import os
 import numpy as np
-dirname = os.path.dirname(__file__)
-#getting absolute model name
-model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")
+
+try:
+	from Settings import trina_settings
+except ImportError:
+	sys.path.append(os.path.expandpath("~/TRINA"))
+	from Settings import trina_settings
 
 class MotionClient:
-	def __init__(self, address = 'http://localhost:8000'):
-		self.s = xmlrpclib.ServerProxy(address)
+	def __init__(self, address = 'auto'):
+		if address == 'auto':
+			address = trina_settings.motion_server_addr()
+		self.s = ServerProxy(address)
 		self.dt = 0.2
 		self.shut_down = False
-		#self.world = WorldModel()
-		#res = self.world.readFile(model_name)
-		#if not res:
-		#	raise RuntimeError("unable to load model")
+		#self.world = trina_settings.simulation_world_load()
 		#self.robot = self.world.robot(0)
 
 		#print("init complete")
+
 	def _visualUpdateLoop(self):
 		while not self.shut_down:
 			q = self.getKlamptSensedPosition()
@@ -30,8 +37,23 @@ class MotionClient:
 	def startServer(self,mode,components,codename):
 		self.s.startServer(mode,components,codename)
 
-	def restartServer(self,mode,components,codename):
-		self.s.restartServer(mode,components,codename)
+	def restartServer(self,mode=None,components=None,codename=None):
+		if mode is not None:
+			self.s.restartServer2(mode,components,codename)
+		else:
+			self.s.restartServer()
+
+	def mode(self):
+		return self.s.mode()
+
+	def codename(self):
+		return self.s.codename()
+
+	def robotModel(self):
+		return self.s.robotModel()
+
+	def activeComponents(self):
+		return self.s.activeComponents()
 
 	def startup(self):
 		res = self.s.startup()
@@ -183,19 +205,17 @@ class MotionClient:
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
 		return self.s.sensedRightEEVelcocity(local_pt)
 
-	def sensedLeftEEWrench(self,frame= 'global'):
+	def sensedLeftEEWrench(self,frame = 'global'):
 		return self.s.sensedLeftEEWrench(frame)
 
-	def sensedRightEEWrench(self,frame= 'global'):
+	def sensedRightEEWrench(self,frame = 'global'):
 		return self.s.sensedRightEEWrench(frame)
 
 	def zeroLeftFTSensor(self):
-		self.s.zeroLeftFTSensor()
-		return
+		return self.s.zeroLeftFTSensor()
 
 	def zeroRightFTSensor(self):
-		self.s.zeroRightFTSensor()
-		return
+		return self.s.zeroRightFTSensor()
 
 	def openLeftRobotiqGripper(self):
 		self.s.openLeftRobotiqGripper()
@@ -209,17 +229,30 @@ class MotionClient:
 	def closeRightRobotiqGripper(self):
 		self.s.closeRightRobotiqGripper()	
 
-	def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setLeftEETransformImpedance()
+	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6):
+		K = K.tolist()
+		B = B.tolist()
+		M = M.tolist()
+		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setRightEETransformImpedance()
+		K = K.tolist()
+		B = B.tolist()
+		M = M.tolist()
+		self.s.setRightEETransformImpedance(Tg,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setLeftLimbPositionImpedance()
+		K = K.tolist()
+		B = B.tolist()
+		M = M.tolist()
+		self.s.setLeftLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setRightLimbPositionImpedance()
+		K = K.tolist()
+		B = B.tolist()
+		M = M.tolist()
+		self.s.setRightLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+
 
 	def sensedHeadPosition(self):
 		return self.s.sensedHeadPosition()
@@ -229,12 +262,11 @@ class MotionClient:
 
 if __name__=="__main__":
 	motion = MotionClient()
-	motion.startServer(mode = "Physical", components = ['head'])
 	motion.startup()
 	time.sleep(0.05)
 	try:
-		print(motion.sensedHeadPosition)
+		print(motion.sensedLeftEETransform())
 		time.sleep(0.05)
-	except:
-		print("except")
+	except Exception as err:
+		print("Error: ",str(err))
 	motion.shutdown()

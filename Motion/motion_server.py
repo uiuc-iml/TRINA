@@ -15,8 +15,9 @@ logger = get_logger(__name__,logging.DEBUG,filename)
 
 global robot
 global server_started
-server_started = False
+global server_components
 
+server_started = False
 
 def _startServer(mode,components,codename):
 	##global variable
@@ -33,7 +34,11 @@ def _startServer(mode,components,codename):
 		print("server started")
 	return 0
 
-def _restartServer(mode= "Kinematic", components = [] , codename = "seed"):
+def _restartServer():
+	global robot
+	_restartServer2(robot.mode,robot.components,robot.codename)
+
+def _restartServer2(mode= "Kinematic", components = [] , codename = "seed"):
 	global robot
 	global server_started
 	if(server_started):
@@ -52,6 +57,35 @@ def sigint_handler(signum,frame):
 	if server_started:
 		robot.shutdown()
 	sys.exit(0)
+
+def _mode():
+	global robot,server_started
+	if not server_started:
+		return ''
+	return robot.mode
+
+def _activeComponents():
+	global robot,server_started
+	if not server_started:
+		return []
+	res = []
+	for part in ['left_limb','right_limb','base','torso','left_gripper','right_gripper','head']:
+		if getattr(robot,part+'_enabled'):
+			res.append(part)
+	return res
+
+def _codename():
+	global robot,server_started
+	if not server_started:
+		return 'Anthrax'
+	return robot.codename
+
+def _robotModel():
+	global robot,server_started
+	if not server_started:
+		return ''
+	#format is ../Models/..., so strip the first 3 characters
+	return robot.model_path[3:]
 
 def _startup():
 	global robot
@@ -297,79 +331,100 @@ def _setHeadPosition(q):
 	global robot
 	return robot.setHeadPosition(q)
 
-#ip_address = '172.16.250.88'
-# ip_address = '172.16.187.91'
-#ip_address = '72.36.119.129'
+def run_server_forever(ip_address,port):
+	server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
+	server.register_introspection_functions()
+	signal.signal(signal.SIGINT, sigint_handler)
 
-# ip_address = '172.16.241.141'
-# ip_address = '10.0.242.158'#'localhost' #'10.0.242.158'#
-ip_address = 'localhost'
-port = 8080
-server = SimpleXMLRPCServer((ip_address,port), logRequests=False)
-server.register_introspection_functions()
-signal.signal(signal.SIGINT, sigint_handler)
+	##add functions...
+	server.register_function(_startServer,'startServer')
+	server.register_function(_restartServer,'restartServer')
+	server.register_function(_restartServer2,'restartServer2')
+	server.register_function(_mode,'mode')
+	server.register_function(_cactiveComponents,'activeComponents')
+	server.register_function(_codename,'codename')
+	server.register_function(_robotModel,'robotModel')
+	server.register_function(_startup,'startup')
+	server.register_function(_setLeftLimbPosition,'setLeftLimbPosition')
+	server.register_function(_setRightLimbPosition,'setRightLimbPosition')
+	server.register_function(_setLeftLimbPositionLinear,'setLeftLimbPositionLinear')
+	server.register_function(_setRightLimbPositionLinear,'setRightLimbPositionLinear')
+	server.register_function(_sensedLeftLimbPosition,'sensedLeftLimbPosition')
+	server.register_function(_sensedRightLimbPosition,'sensedRightLimbPosition')
+	server.register_function(_setLeftLimbVelocity,'setLeftLimbVelocity')
+	server.register_function(_setRightLimbVelocity,'setRightLimbVelocity')
+	server.register_function(_setLeftEEInertialTransform,'setLeftEEInertialTransform')
+	server.register_function(_setRightEEInertialTransform,'setRightEEInertialTransform')
+	server.register_function(_setLeftEEVelocity,'setLeftEEVelocity')
+	server.register_function(_setRightEEVelocity,'setRightEEVelocity')
+	server.register_function(_sensedLeftEETransform,'sensedLeftEETransform')
+	server.register_function(_sensedRightEETransform,'sensedRightEETransform')
+	server.register_function(_sensedLeftLimbVelocity,'sensedLeftLimbVelocity')
+	server.register_function(_sensedRightLimbVelocity,'sensedRightLimbVelocity')
+	server.register_function(_setBaseTargetPosition,'setBaseTargetPosition')
+	server.register_function(_setBaseVelocity,'setBaseVelocity')
+	server.register_function(_setTorsoTargetPosition,'setTorsoTargetPosition')
+	server.register_function(_sensedBaseVelocity,'sensedBaseVelocity')
+	server.register_function(_sensedBasePosition,'sensedBasePosition')
+	server.register_function(_sensedTorsoPosition,'sensedTorsoPosition')
+	server.register_function(_setLeftGripperPosition,'setLeftGripperPosition')
+	server.register_function(_setLeftGripperVelocity,'setLeftGripperVelocity')
+	server.register_function(_sensedLeftGripperPosition,'sensedLeftGripperPosition')
+	server.register_function(_getKlamptCommandedPosition,'getKlamptCommandedPosition')
+	server.register_function(_getKlamptSensedPosition,'getKlamptSensedPosition')
+	server.register_function(_shutdown,'shutdown')
+	server.register_function(_isStarted,'isStarted')
+	server.register_function(_moving,'moving')
+	server.register_function(_stopMotion,'stopMotion')
+	server.register_function(_resumeMotion,'resumeMotion')
+	server.register_function(_mirror_arm_config,'mirror_arm_config')
+	server.register_function(_getWorld,'getWorld')
+	server.register_function(_cartesianDriveFail,'cartesianDriveFail')
+	server.register_function(_startup,'startup')
+	server.register_function(_isShutDown,'isShutDown')
+	server.register_function(_sensedLeftEEVelocity,'sensedLeftEEVelcocity')
+	server.register_function(_sensedRightEEVelocity,'sensedRightEEVelcocity')
+	server.register_function(_sensedLeftEEWrench,'sensedLeftEEWrench')
+	server.register_function(_sensedRightEEWrench,'sensedRightEEWrench')
+	server.register_function(_zeroLeftFTSensor,'zeroLeftFTSensor')
+	server.register_function(_zeroRightFTSensor,'zeroRightFTSensor')
+	server.register_function(_openLeftRobotiqGripper,'openLeftRobotiqGripper')
+	server.register_function(_closeLeftRobotiqGripper,'closeLeftRobotiqGripper')
+	server.register_function(_openRightRobotiqGripper,'openRightRobotiqGripper')
+	server.register_function(_closeRightRobotiqGripper,'closeRightRobotiqGripper')
+	server.register_function(_setLeftEETransformImpedance,'setLeftEETransformImpedance')
+	server.register_function(_setRightEETransformImpedance,'setRightEETransformImpedance')
+	server.register_function(_setLeftLimbPositionImpedance,'setLeftLimbPositionImpedance')
+	server.register_function(_setRightLimbPositionImpedance,'setRightimbPositionImpedance')
+	server.register_function(_setHeadPosition,'setHeadPosition')
+	server.register_function(_sensedHeadPosition,'sensedHeadPosition')
+	##
+	print('#######################')
+	print('#######################')
+	logger.info("Server Created")
+	print('Server Created')
+	##run server
+	server.serve_forever()
 
-server.register_function(_startServer,'startServer')
-server.register_function(_restartServer,'restartServer')
-##add functions...
-server.register_function(_startup,'startup')
-server.register_function(_setLeftLimbPosition,'setLeftLimbPosition')
-server.register_function(_setRightLimbPosition,'setRightLimbPosition')
-server.register_function(_setLeftLimbPositionLinear,'setLeftLimbPositionLinear')
-server.register_function(_setRightLimbPositionLinear,'setRightLimbPositionLinear')
-server.register_function(_sensedLeftLimbPosition,'sensedLeftLimbPosition')
-server.register_function(_sensedRightLimbPosition,'sensedRightLimbPosition')
-server.register_function(_setLeftLimbVelocity,'setLeftLimbVelocity')
-server.register_function(_setRightLimbVelocity,'setRightLimbVelocity')
-server.register_function(_setLeftEEInertialTransform,'setLeftEEInertialTransform')
-server.register_function(_setRightEEInertialTransform,'setRightEEInertialTransform')
-server.register_function(_setLeftEEVelocity,'setLeftEEVelocity')
-server.register_function(_setRightEEVelocity,'setRightEEVelocity')
-server.register_function(_sensedLeftEETransform,'sensedLeftEETransform')
-server.register_function(_sensedRightEETransform,'sensedRightEETransform')
-server.register_function(_sensedLeftLimbVelocity,'sensedLeftLimbVelocity')
-server.register_function(_sensedRightLimbVelocity,'sensedRightLimbVelocity')
-server.register_function(_setBaseTargetPosition,'setBaseTargetPosition')
-server.register_function(_setBaseVelocity,'setBaseVelocity')
-server.register_function(_setTorsoTargetPosition,'setTorsoTargetPosition')
-server.register_function(_sensedBaseVelocity,'sensedBaseVelocity')
-server.register_function(_sensedBasePosition,'sensedBasePosition')
-server.register_function(_sensedTorsoPosition,'sensedTorsoPosition')
-server.register_function(_setLeftGripperPosition,'setLeftGripperPosition')
-server.register_function(_setLeftGripperVelocity,'setLeftGripperVelocity')
-server.register_function(_sensedLeftGripperPosition,'sensedLeftGripperPosition')
-server.register_function(_getKlamptCommandedPosition,'getKlamptCommandedPosition')
-server.register_function(_getKlamptSensedPosition,'getKlamptSensedPosition')
-server.register_function(_shutdown,'shutdown')
-server.register_function(_isStarted,'isStarted')
-server.register_function(_moving,'moving')
-server.register_function(_stopMotion,'stopMotion')
-server.register_function(_resumeMotion,'resumeMotion')
-server.register_function(_mirror_arm_config,'mirror_arm_config')
-server.register_function(_getWorld,'getWorld')
-server.register_function(_cartesianDriveFail,'cartesianDriveFail')
-server.register_function(_startup,'startup')
-server.register_function(_isShutDown,'isShutDown')
-server.register_function(_sensedLeftEEVelocity,'sensedLeftEEVelcocity')
-server.register_function(_sensedRightEEVelocity,'sensedRightEEVelcocity')
-server.register_function(_sensedLeftEEWrench,'sensedLeftEEWrench')
-server.register_function(_sensedRightEEWrench,'sensedRightEEWrench')
-server.register_function(_zeroLeftFTSensor,'zeroLeftFTSensor')
-server.register_function(_zeroRightFTSensor,'zeroRightFTSensor')
-server.register_function(_openLeftRobotiqGripper,'openLeftRobotiqGripper')
-server.register_function(_closeLeftRobotiqGripper,'closeLeftRobotiqGripper')
-server.register_function(_openRightRobotiqGripper,'openRightRobotiqGripper')
-server.register_function(_closeRightRobotiqGripper,'closeRightRobotiqGripper')
-server.register_function(_setLeftEETransformImpedance,'setLeftEETransformImpedance')
-server.register_function(_setRightEETransformImpedance,'setRightEETransformImpedance')
-server.register_function(_setLeftLimbPositionImpedance,'setLeftLimbPositionImpedance')
-server.register_function(_setRightLimbPositionImpedance,'setRightimbPositionImpedance')
-server.register_function(_setHeadPosition,'setHeadPosition')
-server.register_function(_sensedHeadPosition,'sensedHeadPosition')
-##
-print('#######################')
-print('#######################')
-logger.info("Server Created")
-print('Server Created')
-##run server
-server.serve_forever()
+if __name__ == '__main__':
+	import os,sys
+	sys.path.append(os.expanduser("~/TRINA"))
+	from Settings import trina_settings
+	import argparse
+	parser = argparse.ArgumentParser(description='Runs the motion server')
+	parser.add_argument('-a','--ip', default='127.0.0.1', type=str, help='Server\'s IP address')
+	parser.add_argument('-p','--port', default=trina_settings.motion_server_port(), type=int, help='Server\'s port number')
+	parser.add_argument('--components', default=trina_settings.motion_server_components(), type=str, nargs='+', help='List of active components')
+	parser.add_argument('--codename', default=trina_settings.robot_codename(), type=str, help="The robot model's codename")
+	parser.add_argument('-m', '--mode', default=trina_settings.motion_server_mode(), type=str, help='The mode (Kinematic or Physical)')
+	
+	print()
+	print("USAGE:")
+	print()
+	print("   motion_server.py [OPTIONS]")
+	print()
+	parser.print_help()
+	args = parser.parse_args(sys.argv[1:])
+
+	_startServer(args.mode,args.components,args.codename)
+	run_server_forever(args.ip,args.port)
