@@ -341,7 +341,7 @@ def run_server_forever(ip_address,port):
 	server.register_function(_restartServer,'restartServer')
 	server.register_function(_restartServer2,'restartServer2')
 	server.register_function(_mode,'mode')
-	server.register_function(_cactiveComponents,'activeComponents')
+	server.register_function(_activeComponents,'activeComponents')
 	server.register_function(_codename,'codename')
 	server.register_function(_robotModel,'robotModel')
 	server.register_function(_startup,'startup')
@@ -408,7 +408,7 @@ def run_server_forever(ip_address,port):
 
 if __name__ == '__main__':
 	import os,sys
-	sys.path.append(os.expanduser("~/TRINA"))
+	sys.path.append(os.path.expanduser("~/TRINA"))
 	from Settings import trina_settings
 	import argparse
 	parser = argparse.ArgumentParser(description='Runs the motion server')
