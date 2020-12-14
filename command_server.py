@@ -1,316 +1,40 @@
 import time,math,datetime
 import threading
-# from motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import numpy as np
-from scipy.spatial.transform import Rotation as R
 import os,csv,sys,shlex
 from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 from multiprocessing import Pool, TimeoutError,Process
-import trina_modules
 import sys, inspect
 import atexit
 import subprocess
-from TRINAConfig import *
-from SensorModule import Camera_Robot
-from klampt import WorldModel,Geometry3D
+from trina_modules.SensorModule import Camera_Robot
+from klampt import WorldModel
 import sys
 import os
 import klampt
-from klampt import vis
-from klampt import io
-from klampt.robotsim import setRandomSeed
-from klampt.vis.glcommon import GLWidgetPlugin
-from klampt import RobotPoser
-from klampt.model import ik,coordinates,config,trajectory,collide
-from klampt.math import vectorops,so3,se3
-from klampt.vis import GLSimulationPlugin
-from klampt.math import se3
-from klampt import vis, Geometry3D
-from klampt.model import sensing
 from OpenGL.GLUT import *
 from threading import Thread
-from klampt import sim
-import random
-import trimesh
-import rosgraph
 if(sys.version_info[0] < 3):
 	from future import *
 	from Motion import MotionClient
 else:
 	from Motion  import MotionClient
 	from importlib import reload
+from Settings import trina_settings
 from Jarvis import Jarvis
 import redis
 import traceback
 
-robot_ip = 'http://localhost:8080'
 
-ws_port = 1234
-
-model_name = "Motion/data/TRINA_world_seed.xml"
-
-model_path = './Resources/shared_data/objects/'
-mesh_model_path = './Resources/grasping/models/'
-
-class testingWorldBuilder():
-	def __init__(self, floor_length=20, floor_width=20, world=[]):
-		if (world == []):
-			self.w = WorldModel()
-		else:
-			self.w = world
-		self.floor = Geometry3D()
-		self.floor.loadFile(model_path + "cube.off")
-		self.floor.transform([floor_length, 0, 0, 0, floor_width, 0, 0, 0, 0.01],
-							 [-floor_length / 2.0, -floor_width / 2.0, -0.01])
-		floor_terrain = self.w.makeTerrain("floor")
-		floor_terrain.geometry().set(self.floor)
-		floor_terrain.appearance().setColor(0.4, 0.3, 0.2, 1.0)
-
-		###colors
-		self.light_blue = [3.0 / 255.0, 140.0 / 255.0, 252.0 / 255.0, 1.0]
-		self.wall_green = [50.0 / 255.0, 168.0 / 255.0, 143.0 / 255.0, 1.0]
-		###sizes
-		self.table_length = 1.2
-		self.table_width = 0.8
-		self.table_top_thickness = 0.03
-		self.table_height = 0.8
-		self.leg_width = 0.05
-		self.cube_width = 0.05
-
-	def getWorld(self):
-		return self.w
-
-	def addTableTopScenario(self, x=0, y=0):
-		"""
-		add a table with objects on top, the center of table can be set
-		Parameters:
-		--------------
-		x,y: floats, the position of the table center
-		"""
-
-		self.addTable(x, y)
-		# add some cubes
-		self.addCube((so3.from_axis_angle(([0, 0, 1], 0.5)), [x, y - 0.7, self.table_height]), self.cube_width,
-					 [1.0, 0, 0, 1], 1)
-		# add one mesh
-		random.seed(30)
-		self.addRandomMesh([0 + x, -1.0 + y, self.table_height], 1)
-		self.addRandomMesh([0 + x, -1.2 + y, self.table_height], 2)
-		self.addRandomMesh([0.2 + x, -1.0 + y, self.table_height], 3)
-		self.addRandomMesh([-0.2 + x, -1.2 + y, self.table_height], 4)
-
-	def addIndoorNavScenario(self):
-		"""
-		Add 4 rooms and a table
-		"""
-
-		wall_thickness = 0.2
-		room_size = [8.0, 6.0, 4.0]
-		self.addRoom(room_size, wall_thickness, T=([1, 0, 0, 0, 1, 0, 0, 0, 1], [-6, -6, 0]), ID=1)
-		self.addRoom(room_size, wall_thickness, T=([1, 0, 0, 0, 1, 0, 0, 0, 1], [6, -6, 0]), ID=2)
-		self.addRoom(room_size, wall_thickness, T=(so3.from_axis_angle(([0, 0, 1], math.pi / 1.0)), [6, 6, 0]), ID=3)
-		self.addRoom(room_size, wall_thickness, T=(so3.from_axis_angle(([0, 0, 1], math.pi / 1.0)), [-6, 6, 0]), ID=4)
-		self.addTable(-6, -6)
-		return
-
-	def addRoom(self, room_size=[10.0, 8.0, 4.0], wall_thickness=0.2, T=([1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0]), ID=1):
-		"""
-		Add a room to the world
-		Parameters:
-		-------------------
-		room_size = list of 3 floats, the width,depth, and height of the room
-		wall_thickess = float
-		T:rigid transform of the room
-		ID: ID of the room
-		"""
-
-		# left wall
-		self._addTerrain(model_path + "cube.off",
-						 se3.mul(T, ([wall_thickness, 0, 0, 0, room_size[1] - wall_thickness, 0, 0, 0, room_size[2]], \
-									 [-room_size[0] / 2.0, -room_size[1] / 2.0, 0])), self.wall_green,
-						 "wall1_" + str(ID))
-		# wall with window
-		self._addTerrain(model_path + "cube.off", se3.mul(T, ([room_size[0], 0, 0, 0, wall_thickness, 0, 0, 0, 1], \
-															  [-room_size[0] / 2.0, -room_size[1] / 2.0, 0])),
-						 self.wall_green, "wall2_" + str(ID))
-		self._addTerrain(model_path + "cube.off", se3.mul(T, ([room_size[0], 0, 0, 0, wall_thickness, 0, 0, 0, 2], \
-															  [-room_size[0] / 2.0, -room_size[1] / 2.0, 2])),
-						 self.wall_green, "wall3_" + str(ID))
-		self._addTerrain(model_path + "cube.off",
-						 se3.mul(T, ([room_size[0] / 2.0 - 0.5, 0, 0, 0, wall_thickness, 0, 0, 0, 1], \
-									 [-room_size[0] / 2.0, -room_size[1] / 2.0, 1])), self.wall_green,
-						 "wall4_" + str(ID))
-		self._addTerrain(model_path + "cube.off",
-						 se3.mul(T, ([room_size[0] / 2.0 - 0.5, 0, 0, 0, wall_thickness, 0, 0, 0, 1], \
-									 [0.5, -room_size[1] / 2.0, 1])), self.wall_green, "wall5_" + str(ID))
-
-		# right wall
-		self._addTerrain(model_path + "cube.off",
-						 se3.mul(T, ([wall_thickness, 0, 0, 0, room_size[1] - wall_thickness, 0, 0, 0, room_size[2]], \
-									 [room_size[0] / 2.0 - wall_thickness, -room_size[1] / 2.0, 0])), self.wall_green,
-						 "wall6_" + str(ID))
-
-		# the wall with door
-		self._addTerrain(model_path + "cube.off",
-						 se3.mul(T, ([room_size[0] - 2.5, 0, 0, 0, wall_thickness, 0, 0, 0, room_size[2]], \
-									 [-room_size[0] / 2.0, room_size[1] / 2.0 - wall_thickness, 0])), self.wall_green,
-						 "wall7_" + str(ID))
-		self._addTerrain(model_path + "cube.off", se3.mul(T, ([1, 0, 0, 0, wall_thickness, 0, 0, 0, room_size[2]], \
-															  [-room_size[0] / 2.0 + (room_size[0] - 1),
-															   room_size[1] / 2.0 - wall_thickness, 0])),
-						 self.wall_green, "wall8_" + str(ID))
-		self._addTerrain(model_path + "cube.off", se3.mul(T, ([1.5, 0, 0, 0, wall_thickness, 0, 0, 0, 1], \
-															  [-room_size[0] / 2.0 + (room_size[0] - 1 - 1.5),
-															   room_size[1] / 2.0 - wall_thickness, 3])),
-						 self.wall_green, "wall9_" + str(ID))
-
-	##Functions below add individual objects
-	def addCube(self, T, side_length, color, ID, object_mass=0.1):
-		"""
-		Add a cube to the world.
-		Parameters:
-		--------------
-		T:world transform of the cube
-		side_length: float, size of the cube
-		color: RGBA values, (0-1)
-		ID: int, cannot duplicate
-		mass:object mass added at the object geometric center
-		"""
-
-		self._addRigidObject(model_path + "cube.off",
-							 ([side_length, 0, 0, 0, side_length, 0, 0, 0, side_length, ], [0, 0, 0]), T, \
-							 color, object_mass, [side_length / 2.0, side_length / 2.0, side_length / 2.0],
-							 "cube" + str(ID))
-
-	def addMesh(self, path, T, color, mass, ID):
-		"""
-		Add a mesh to the world.
-		Parameters:
-		--------------
-		path: path to the mesh file
-		T:world transform of the mesh
-		color: RGBA values, (0-1)
-		mass:object mass added at the object geometric center
-		ID: int, cannot duplicate
-		"""
-		mesh = trimesh.load(path)
-		mesh_center = mesh.centroid.tolist()
-
-		# load the rigid object in the world
-		self._addRigidObject(path, ([1, 0, 0, 0, 1, 0, 0, 0, 1], [0] * 3), T, \
-							 color, mass, mesh_center, "item" + str(ID))
-
-	def addRandomMesh(self, t, ID=1):
-		"""
-		Add a household item to the world, randonmly selected from the library.
-		Color is also determined randomly. Mass set to 1kg arbitrarily
-		Parameters:
-		--------------
-		t:world position of the mesh
-		ID: int, cannot duplicate
-		"""
-		meshpaths = []
-		for file in os.listdir(mesh_model_path):
-			if file.endswith(".ply"):
-				meshpaths.append(os.path.join(mesh_model_path, file))
-
-		meshpath = random.choice(meshpaths)
-		mesh = trimesh.load(meshpath)
-		mesh_center = mesh.centroid.tolist()
-		# Z_min = np.min(mesh.vertices[:,2])
-
-		# t[2] = t[2]+mesh_center[2]-Z_min
-		# load the rigid object in the world
-		self._addRigidObject(meshpath, ([1, 0, 0, 0, 1, 0, 0, 0, 1], [0] * 3), ([1, 0, 0, 0, 1, 0, 0, 0, 1], t), \
-							 (random.random(), random.random(), random.random(), 1.0), 0.1, mesh_center,
-							 "item" + str(ID))
-
-	def addTable(self, x=0, y=0):
-		"""
-		Add a table to the world
-		Parameters:
-		--------------
-		x,y: floats, the x,y position of the center of the table
-		"""
-		table_top = Geometry3D()
-		table_leg_1 = Geometry3D()
-		table_leg_2 = Geometry3D()
-		table_leg_3 = Geometry3D()
-		table_leg_4 = Geometry3D()
-
-		table_top.loadFile(model_path + "cube.off")
-		table_leg_1.loadFile(model_path + "cube.off")
-		table_leg_2.loadFile(model_path + "cube.off")
-		table_leg_3.loadFile(model_path + "cube.off")
-		table_leg_4.loadFile(model_path + "cube.off")
-
-		table_top.transform([self.table_length, 0, 0, 0, self.table_width, 0, 0, 0, \
-							 self.table_top_thickness], [0, 0, self.table_height - self.table_top_thickness])
-		table_leg_1.transform([self.leg_width, 0, 0, 0, self.leg_width, 0, 0, 0, self.table_height \
-							   - self.table_top_thickness], [0, 0, 0])
-		table_leg_2.transform([self.leg_width, 0, 0, 0, self.leg_width, 0, 0, 0, self.table_height - \
-							   self.table_top_thickness], [self.table_length - self.leg_width, 0, 0])
-		table_leg_3.transform([self.leg_width, 0, 0, 0, self.leg_width, 0, 0, 0, self.table_height -
-							   self.table_top_thickness],
-							  [self.table_length - self.leg_width, self.table_width - self.leg_width, 0])
-		table_leg_4.transform([self.leg_width, 0, 0, 0, self.leg_width, 0, 0, 0, self.table_height -
-							   self.table_top_thickness], [0, self.table_width - self.leg_width, 0])
-
-		table_geom = Geometry3D()
-		table_geom.setGroup()
-		for i, elem in enumerate([table_top, table_leg_1, table_leg_2, table_leg_3, table_leg_4]):
-			g = Geometry3D(elem)
-			table_geom.setElement(i, g)
-		table_geom.transform([0, -1, 0, 1, 0, 0, 0, 0, 1], [x - self.table_length / 2.0, y - self.table_width / 2.0, 0])
-		table = self.w.makeTerrain("table")
-		table.geometry().set(table_geom)
-		table.appearance().setColor(self.light_blue[0], self.light_blue[1], self.light_blue[2], self.light_blue[3])
-
-	def addRobot(self, path, T):
-		"""
-		Add a robot to the world. You can directly use Klampt functions to add to the world as well
-		Parameters:
-		------------
-		path: path to the robot model
-		T: transform of the base of the robot
-		"""
-
-		world.loadElement(path)
-		item = world.rigidObject(0)
-		item.setTransform([1, 0, 0, 0, 1, 0, 0, 0, 1],
-						  [ee_pos[0] - mesh_center[0], ee_pos[1] - mesh_center[1], -Zmin + 0.02])
-
-	def _addRigidObject(self, path, T_g, T_p, color, object_mass, Com, name):
-		item_1_geom = Geometry3D()
-		item_1_geom.loadFile(path)
-		item_1_geom.transform(T_g[0], T_g[1])
-		item_1 = self.w.makeRigidObject(name)
-		item_1.geometry().set(item_1_geom)
-		item_1.appearance().setColor(color[0], color[1], color[2], color[3])
-		bmass = item_1.getMass()
-		bmass.setMass(object_mass)
-		bmass.setCom(Com)
-		item_1.setMass(bmass)
-		item_1.setTransform(T_p[0], T_p[1])
-		return item_1
-
-	def _addTerrain(self, path, T, color, name):
-		item_1_geom = Geometry3D()
-		item_1_geom.loadFile(path)
-		item_1_geom.transform(T[0], T[1])
-		item_1 = self.w.makeTerrain(name)
-		item_1.geometry().set(item_1_geom)
-		item_1.appearance().setColor(color[0], color[1], color[2], color[3])
-		return item_1
 
 class CommandServer:
 
-	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = [],codename = 'anthrax_lowpoly'):
+	def __init__(self,robot_ip = None,world_file = None,modules = []):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")
@@ -318,23 +42,25 @@ class CommandServer:
 			self.server = KeyValueStore(self.interface)
 			print('Reem already up and running, skipping creation process')
 		except Exception as e:
-			# if we cannot connect to redis, we start the server for once:
-			print('starting redis server because of ',e)
-			self.redis_process = Process(target = self.start_redis())
-			self.redis_process.daemon = False
-			self.redis_process.start()
-			# self.start_redis()
-			# wait for it to start
-			time.sleep(2)
-			# then we start our connections as normal:
-			self.interface = RedisInterface(host="localhost")
-			self.interface.initialize()
-			self.server = KeyValueStore(self.interface)
+			print("Reem server has not been created yet.  Try running from 'redrun start_X_redrun_conf.json'")
+			exit(1)
+			# # if we cannot connect to redis, we start the server for once:
+			# print('starting redis server because of ',e)
+			# self.redis_process = Process(target = self.start_redis())
+			# self.redis_process.daemon = False
+			# self.redis_process.start()
+			# # self.start_redis()
+			# # wait for it to start
+			# time.sleep(2)
+			# # then we start our connections as normal:
+			# self.interface = RedisInterface(host="localhost")
+			# self.interface.initialize()
+			# self.server = KeyValueStore(self.interface)
 
-		self.start_ros_stuff()
+		# self.start_ros_stuff()
 		self.world_file = world_file
 		# we then proceed with startup as normal
-		self.always_active = set(['UI','devel','debug','DirectTeleoperation'])
+		self.always_active = set(['UI','devel','debug','Apps.DirectTeleoperation'])
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
@@ -342,19 +68,19 @@ class CommandServer:
 		self.server['ROBOT_COMMAND'] = {}
 		self.server['HEALTH_LOG'] = {}
 		self.server['ACTIVITY_STATUS'] = {}
-		self.mode = mode
-		self.components = components
 		self.init_robot_state = {}
 		self.dt = 0.001
+		if robot_ip is None:
+			robot_ip = trina_settings.motion_server_addr()
 		self.robot = MotionClient(address = robot_ip)
 		# self.controller = UIController()
-		self.robot.restartServer(mode = self.mode, components = self.components,codename = codename)
 		self.robot_state = {}
 		self.robot_command = {}
 		self.modules = modules
 		self.startup = True
 		self.robot_active = True
 		self.shut_down_flag = False
+		self.components = self.robot.activeComponents()
 		self.left_limb_active = ('left_limb' in self.components)
 		self.right_limb_active = ('right_limb' in self.components)
 		self.base_active = ('base' in self.components)
@@ -362,8 +88,6 @@ class CommandServer:
 		self.right_gripper_active = ('right_gripper' in self.components)
 		self.torso_active = ('torso' in self.components)
 		self.query_robot = MotionClient(address = robot_ip)
-		# self.controller = UIController()
-		self.query_robot.startServer(mode = self.mode, components = self.components,codename = codename)
 		self.query_robot.startup()
 		res = self.robot.startup()
 		if not res:
@@ -373,12 +97,16 @@ class CommandServer:
 		self.init_robot_states()
 		print('\n\n\n\n\n\n initialized robot states sucessfully!')
 		time.sleep(1)
+		self.mode = self.robot.mode()
+		self.codename = self.robot.codename()
 		if(self.mode == 'Kinematic'):
 			self.world = WorldModel()
-			self.world.readFile(self.world_file )
-			builder = testingWorldBuilder(30,30,world = self.world)
-			builder.addTableTopScenario(x = 1.5,y = 1.0)
-			self.world = builder.getWorld()
+			if self.world_file is None:
+				res = self.world_file.readFile(self.robot.robotModel())
+			else:
+				res = self.world.readFile(self.world_file )
+			if not res:
+				raise RuntimeError("Unable to load world file")
 			self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
 			print('\n\n\n\n\n initialization of Kinematic sensor module sucessfull!!\n\n\n')
 
@@ -448,7 +176,7 @@ class CommandServer:
 			vel_base = self.query_robot.sensedBaseVelocity()
 
 		# print( self.query_robot.sensedLeftLimbPosition(),self.query_robot.sensedRightLimbPosition())
-		klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
+		klampt_q = get_klampt_model_q(self.codename,left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
 		klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 		klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 		# print("base velocity")
@@ -465,7 +193,8 @@ class CommandServer:
 			"Moving" : True, #self.query_robot.moving(),
 			"CartesianDrive" : False,#self.query_robot.cartesianDriveFail(),
 			"Components" : self.components,
-			"Mode" : self.mode
+			"Mode" : self.mode,
+			"Codename" : self.codename
 		}
 		# self.server["WORLD"] = self.world
 		self.server["ROBOT_STATE"] = {
@@ -518,65 +247,58 @@ class CommandServer:
 
 	def start_modules(self,module_names = [],startup = False):
 		import trina_modules
+		from trina_modules import Apps
 		trina_modules = reload(trina_modules)
+		Apps = reload(Apps)
 		activity_dict = {}
 		command_dict = {}
+		all_candidates = dict()
+		for name, obj in inspect.getmembers(trina_modules):
+			if not inspect.isclass(obj): continue
+			if str(obj).find('trina_modules') == -1: continue
+			all_candidates[name] = obj
+		for name, obj in inspect.getmembers(Apps):
+			if not inspect.isclass(obj): continue
+			if str(obj).find('trina_modules') == -1: continue
+			all_candidates['Apps.'+name] = obj
 		try:
 			if(startup):
-				if(module_names == []):
+				if not module_names:
 					print('\n\n Starting ALL modules available!')
-					for name, obj in inspect.getmembers(trina_modules):
-						if inspect.isclass(obj):
-							if(str(obj).find('trina_modules') != -1):
-								tmp = self.start_module(obj,name)
-								self.modules_dict.update({name:tmp})
-								self.health_dict.update({name:[True,time.time()]})
-								activity_dict.update({name:'idle'})
-								command_dict.update({name:[]})
-								if(name not in self.always_active):
-									self.active_modules[name] = False
-								else:
-									self.active_modules[name] = True
-
-					self.server['HEALTH_LOG'] = self.health_dict
-					self.server['ACTIVITY_STATUS'] = activity_dict
-					self.empty_command = command_dict
 				else:
 					print('\n\n Starting Only Modules:' + str(module_names) + '\n\n\n')
-					for name, obj in inspect.getmembers(trina_modules):
-						if inspect.isclass(obj):
-							if(str(obj).find('trina_modules') != -1):
-								if(name in module_names):
-									tmp = self.start_module(obj,name)
-									self.modules_dict.update({name:tmp})
-									self.health_dict.update({name:[True,time.time()]})
-									activity_dict.update({name:'idle'})
-									command_dict.update({name:[]})
-									if(name not in self.always_active):
-										self.active_modules[name] = False
-									else:
-										self.active_modules[name] = True
+				for name, obj in all_candidates.items():
+					if module_names and name not in module_names:
+						continue
+					tmp = self.start_module(obj,name)
+					self.modules_dict.update({name:tmp})
+					self.health_dict.update({name:[True,time.time()]})
+					activity_dict.update({name:'idle'})
+					command_dict.update({name:[]})
+					if(name not in self.always_active):
+						self.active_modules[name] = False
+					else:
+						self.active_modules[name] = True
 
-					self.server['HEALTH_LOG'] = self.health_dict
-					self.server['ACTIVITY_STATUS'] = activity_dict
-					self.empty_command = command_dict
+				self.server['HEALTH_LOG'] = self.health_dict
+				self.server['ACTIVITY_STATUS'] = activity_dict
+				self.empty_command = command_dict
 			else:
-				print('starting only modules '+ str(module_names))
-				for name, obj in inspect.getmembers(trina_modules):
-					if inspect.isclass(obj):
-						if(str(obj).find('trina_modules') != -1):
-							if(name in module_names):
-								print('killing module '+ name)
-								for pcess in self.modules_dict[name]:
-									pcess.terminate()
-								self.modules_dict.update({name:[]})
-								print('restarting only module ' + name)
-								tmp = self.start_module(obj,name)
-								self.modules_dict.update({name:tmp})
-								self.server['HEALTH_LOG'][name] = [True,time.time()]
-								self.server['ACTIVITY_STATUS'][name] = 'idle'
-								if(self.active_modules[name]):
-									self.active_modules[name] = False
+				print('Restarting only modules '+ str(module_names))
+				for name, obj in all_candidates.items():
+					if name not in module_names:
+						continue
+					print('killing module '+ name)
+					for pcess in self.modules_dict[name]:
+						pcess.terminate()
+					self.modules_dict.update({name:[]})
+					print('restarting module ' + name)
+					tmp = self.start_module(obj,name)
+					self.modules_dict.update({name:tmp})
+					self.server['HEALTH_LOG'][name] = [True,time.time()]
+					self.server['ACTIVITY_STATUS'][name] = 'idle'
+					if(self.active_modules[name]):
+						self.active_modules[name] = False
 		except Exception as e:
 			print('Failed to initialize module',name,'due to ',e)
 			traceback.print_exc()
@@ -649,7 +371,7 @@ class CommandServer:
 					pos_base = self.query_robot.sensedBasePosition()
 					vel_base = self.query_robot.sensedBaseVelocity()
 
-				klampt_q = get_klampt_model_q('anthrax',left_limb = pos_left, right_limb = pos_right, base = pos_base)
+				klampt_q = get_klampt_model_q(self.codename,left_limb = pos_left, right_limb = pos_right, base = pos_base)
 				klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 				klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 				if(self.left_gripper_active):
@@ -820,15 +542,6 @@ class CommandServer:
 		self.shut_down_flag = True
 		return 0
 
-	def setRobotToDefault(self):
-		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
-		print('right_Untucked',rightUntuckedConfig)
-		if('left_limb' in self.components):
-			self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
-		if('right_limb' in self.components):
-			self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
-
 	def start_redis(self):
 		print('starting redis')
 		origWD = os.getcwd() # remember our original working directory
@@ -915,13 +628,13 @@ class CommandLogger(object):
 if __name__=="__main__":
 	import argparse
 
-	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
+	parser = argparse.ArgumentParser(description='Runs the Jarvis command server')
+	parser.add_argument('-w','--world_file', default=trina_settings.simulation_world_file(), type=str, help='A world model for sensor simulation')
+	parser.add_argument('--modules', default=['Apps.DirectTeleOperation', 'Apps.PointClickGrasp'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
+	args = parser.parse_args(sys.argv[1:])
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb'], modules = ['DirectTeleOperation', 'PointClickGrasp'], codename = 'bubonic')
-	# server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
+	server = CommandServer(modules = args.modules, world_file=args.world_file)
 	
-	print(server.robot.closeLeftRobotiqGripper())
-	print(server.robot.sensedLeftEETransform())
 	while(True):
 		time.sleep(100)
 		pass

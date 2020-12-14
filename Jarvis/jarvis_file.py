@@ -37,6 +37,14 @@ class Jarvis:
 		self.server['ACTIVITY_STATUS'][self.name] = str('idle')
 		self.sensor_module = sensor_module
 		self.server['ROBOT_COMMAND'][self.name] = []
+
+    def motionMode(self):
+        """Returns the Motion Server mode, either 'Kinematic' or 'Physical'."""
+        return self.server['ROBOT_INFO']['Mode'].read()
+
+    def activeComponents(self):
+        """Returns a list of active components as queried by the Motion Server."""
+        return self.server['ROBOT_INFO']['Components'].read()
 		
 	def setPosition(self, q):
 		"""set the position of the entire robot

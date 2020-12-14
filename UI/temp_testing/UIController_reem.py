@@ -3,7 +3,7 @@ import time,math
 # from klampt import WorldModel
 # from klampt.model.trajectory import Trajectory
 import threading
-from Motion.motion_client_python3 import MotionClient
+from Motion.motion_client import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import pickle
@@ -11,30 +11,19 @@ from pdb import set_trace
 from numpy import linalg as LA
 import numpy as np
 from scipy.spatial.transform import Rotation as R
-import os
 import datetime
 import csv
 from threading import Thread
-import sys
-import json
+import sys,os
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 
-# robot_ip = 'http://172.16.241.141:8080'
-robot_ip = 'http://localhost:8080'
-#  robot_ip = 'http://10.194.203.22:8080'
-# robot_ip = 'http://192.168.0.5:8080'
-
-ws_port = 1234
-
-model_name = "Motion/data/TRINA_world_seed.xml"
-
-roomname = "The Lobby"
-zonename = "BasicExamples"
-userId=0
-roomId=-1
-is_closed=0
+try:
+    from Settings import trina_settings
+except ImportError:
+    sys.path.append(os.path.expanduser("~/TRINA"))
+    from Settings import trina_settings
 
 class UIController:
     """handles UI_state and motion controller logic
@@ -44,12 +33,11 @@ class UIController:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["UI_STATE"] = 0
-        self.mode = 'Kinematic'
-        self.components = ['base','left_limb','right_limb','left_gripper']
         self.init_UI_state = {}
         self.dt = 0.025
-        self.robot = MotionClient(address = robot_ip)
-        self.robot.startServer(mode = self.mode, components = self.components,codename = 'seed')
+        self.robot = MotionClient(address = 'auto')
+        self.mode = self.robot.mode()
+        self.components = self.robot.components()
         self.left_limb_active = ('left_limb' in self.components)
         self.right_limb_active = ('right_limb' in self.components)
         self.base_active = ('base' in self.components)
@@ -58,7 +46,7 @@ class UIController:
         self.torso_active = ('torso' in self.components)
         self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
         # self.robot_client = MotionClient()
-        time.sleep(5)
+        time.sleep(1)
         # self.robot = Motion()
         self.UI_state = {}
         self.init_pos_left = {}
@@ -114,7 +102,7 @@ class UIController:
 
     def moveRobotTest(self):
         # self.robot.setBaseVelocity([0,0])
-        leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974] #motionAPI format
+        leftUntuckedConfig = trina_settings.left_arm_config('untucked')
         print(np.array(leftUntuckedConfig)*180.0/np.pi)
         init_leftUntuckedConfig = [0,0,0,0,0,0] #motionAPI format
         self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,7)
@@ -122,7 +110,7 @@ class UIController:
         self.robot.setLeftLimbPositionLinear(init_leftUntuckedConfig,7)
 
     def setRobotToDefault(self):
-        leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+        leftUntuckedConfig = trina_settings.left_arm_config('untucked')
         rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
         print('right_Untucked',rightUntuckedConfig)
         if('left_limb' in self.components):

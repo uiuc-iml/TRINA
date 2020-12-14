@@ -3,7 +3,7 @@ import time,math
 # from klampt import WorldModel
 # from klampt.model.trajectory import Trajectory
 import threading
-from Motion.motion_client_python3 import MotionClient
+from Motion.motion_client import MotionClient
 robot_ip =  'http://172.16.158.123:8080'
 
 robot = MotionClient(address = robot_ip)

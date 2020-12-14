@@ -10,7 +10,7 @@ echo 'server started'
 echo "starting command server"
 
 cd ~/TRINA
-python3 command_server.py & sleep 10
+python3 command_server.py $@ & sleep 10
 
 echo "command_server_started"
 
