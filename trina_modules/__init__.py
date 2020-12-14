@@ -1,4 +1,5 @@
 import os,sys
+import traceback
 
 if(sys.version_info[0] < 3):
     # from future import *
@@ -6,24 +7,14 @@ if(sys.version_info[0] < 3):
 else:
     from importlib import reload
 
+try:
+    from . import LoggerModule
+    reload(LoggerModule)
+    from .LoggerModule import StateLogger
+except ImportError:
+    traceback.print_exc()
+    print("Error importing LoggerModule, will not be available")
+    input("Press enter to continue > ")
 
-from . import test_modules
-from . import PointClickNavModule
-from . import PointClickGraspModule
-from . import DirectTeleOperationModule
-from . import LoggerModule
-# import trina_modules.UI
-
-reload(test_modules)
-reload(PointClickNavModule)
-reload(PointClickGraspModule)
-reload(DirectTeleOperationModule)
-reload(LoggerModule)
 # UI = reload(trina_modules.UI.UI)
-
-from .test_modules import *
-from .PointClickNavModule import PointClickNav
-from .PointClickGraspModule import PointClickGrasp
-from .DirectTeleOperationModule import DirectTeleOperation
-from .LoggerModule import StateLogger
 # from trina_modules.UI.UI import *

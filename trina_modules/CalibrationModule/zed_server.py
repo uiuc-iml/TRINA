@@ -17,7 +17,7 @@ import numpy as np
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
 sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
-from motion_client_python3 import MotionClient
+from motion_client import MotionClient
 class CameraServerLogger:
     def __init__(self,ip_address = 'localhost',port = 8040, path= '.',robot_address ='http://10.0.242.158:8080',save = False):
         self.camera = Camera_Robot(robot = [],world = [], cameras =['zed_overhead'],ros_active = False, use_jarvis = False, mode = 'Physical')

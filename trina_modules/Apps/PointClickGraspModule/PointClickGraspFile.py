@@ -40,7 +40,7 @@ from skimage.color import rgb2gray, label2rgb
 from skimage import color
 
 class PointClickGrasp:
-    def __init__(self, Jarvis=None, debugging=False, mode='Kinematic'):
+    def __init__(self, Jarvis=None, debugging=False,):
         print("PointCLickGrasp starting")
         self.system_start_time = time.time()
         self.jarvis = Jarvis
@@ -51,7 +51,6 @@ class PointClickGrasp:
         self.infoLoop_rate = 0.02
         self.can_send_gridmap = False
         self.exit_flag = False
-        self.mode = mode
         self.visualization = False
         
         time.sleep(10)
@@ -60,14 +59,6 @@ class PointClickGrasp:
         else:
             base_q = self.jarvis.sensedBasePosition()
             self.curr_pose = base_q
-
-            if self.mode == 'Kinematic':
-                if self.visualization:
-                    vis.add("lidar", self.lidar)
-                    vis.show()
-            elif self.mode == 'Physical':
-                pass
-
             
         # goal for navigation from user
         self.terminate_command = False  # flag for if user commanded a termination
@@ -141,7 +132,7 @@ class PointClickGrasp:
                         print("entering main loop")
                         print(os.getcwd())
                         
-                        if self.mode == "Kinematic":
+                        if self.jarvis.motionMode() == "Kinematic":
                             leftUntuckedConfig = [-0.2028, -2.1063, -1.610, 3.7165, -0.9622, 0.0974]
                             rightUntuckedConfig = self.jarvis.mirror_arm_config(leftUntuckedConfig)
                             self.jarvis.setLeftLimbPositionLinear(leftUntuckedConfig, 2)

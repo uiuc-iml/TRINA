@@ -3,7 +3,7 @@ import sys
 import numpy as np
 from copy import copy
 sys.path.append('../../Motion/')
-from motion_client_python3 import MotionClient
+from motion_client import MotionClient
 server_address = 'http://10.0.242.158:8080' 
 server_address = server_address
 robot =  MotionClient(address = server_address)

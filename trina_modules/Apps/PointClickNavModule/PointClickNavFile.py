@@ -50,7 +50,7 @@ def convertMsg(klampt_sensor,frame,stamp = "now"):
 
 
 class PointClickNav:
-	def __init__(self,Jarvis = None, debugging = False, mode = 'Kinematic'):
+	def __init__(self,Jarvis = None, debugging = False):
 		#if true, run a test locally, otherwise, communicate with Jarvis to get state
 		self.debugging = debugging
 		self.last_timestamp = 0.0
@@ -59,7 +59,6 @@ class PointClickNav:
 		self.infoLoop_rate = 0.02
 		self.can_send_gridmap = False
 		self.exit_flag = False
-		self.mode = mode
 		self.visualization = False
 		time.sleep(10)
 		if self.debugging:
@@ -101,14 +100,6 @@ class PointClickNav:
 				self.vis_robot = self.vis_world.robot(0)
 				self.vis_robot.setConfig(get_klampt_model_q('anthrax', base = base_q))
 				vis.add("world",self.vis_world)
-
-			if self.mode == 'Kinematic':
-				if self.visualization:
-					vis.add("lidar",self.lidar)
-					vis.show()
-			elif self.mode == 'Physical':
-				pass
-				#TODO
 
 			self.system_start_time = time.time()
 		#goal for navigation from user

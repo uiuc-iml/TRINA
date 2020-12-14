@@ -3,7 +3,6 @@ import time,math
 # from klampt import WorldModel
 # from klampt.model.trajectory import Trajectory
 import threading
-# from Motion.motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import pickle
@@ -17,35 +16,21 @@ import csv
 from threading import Thread
 import sys
 import json
-from reem.connection import RedisInterface
-from reem.datatypes import KeyValueStore
 import traceback
 import signal
-from klampt.math import so3, so2
-
-robot_ip = 'http://localhost:8080'
+from klampt.math import so3
 
 
-ws_port = 1234
-
-model_name = "Motion/data/TRINA_world_seed.xml"
-
-roomname = "The Lobby"
-zonename = "BasicExamples"
-userId=0
-roomId=-1
-is_closed=0
 
 class DirectTeleOperation:
-	def __init__(self,Jarvis = None, debugging = False, mode = 'Kinematic'):
-		self.mode = mode
+	def __init__(self,Jarvis = None, debugging = False):
 		self.status = 'idle' #states are " idle, active"
 		self.state = 'idle' #states are " idle, active"
 		self.init_UI_state = {}
 		self.dt = 0.025
 		self.infoLoop_rate = 0.05
 		self.robot = Jarvis
-		self.components =  ['base','left_limb','right_limb','left_gripper']
+		self.components = Jarvis.activeComponents()
 		#self.robot.getComponents()
 		self.left_limb_active = ('left_limb' in self.components)
 		self.right_limb_active = ('right_limb' in self.components)
@@ -255,7 +240,7 @@ class DirectTeleOperation:
 				print('\n\n\n\n\n\n moving left arm \n\n\n\n\n\n\n')
 
 				self.robot.setLeftEEInertialTransform([RR_final,RT_final],actual_dt)
-				if((self.mode == 'Physical') and self.left_gripper_active):
+				if self.left_gripper_active:
 					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
 					if(closed_value >= 0.2):
 						self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])
@@ -356,7 +341,7 @@ class DirectTeleOperation:
 			else:
 				print('moving left arm \n\n\n',vel+Delta_RR)
 				self.robot.setLeftEEVelocity(vel+Delta_RR, tool = [0,0,0])
-				if((self.mode == 'Physical') and self.left_gripper_active):
+				if self.left_gripper_active:
 					closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]*2.3
 					if(closed_value >= 0.2):
 						self.robot.setLeftGripperPosition([closed_value,closed_value,closed_value,0])

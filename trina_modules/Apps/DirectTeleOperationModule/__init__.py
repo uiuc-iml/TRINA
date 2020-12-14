@@ -6,15 +6,7 @@ if(sys.version_info[0] < 3):
 else:
     from importlib import reload
 
-path = os.path.expanduser('~/TRINA/Motion/')
-sys.path.append(path)
-
-
-
-
 from . import DirectTeleOperationFile
 reload(DirectTeleOperationFile)
 
-from DirectTeleOperationFile import DirectTeleOperation
-
-sys.path.remove(path)
+from .DirectTeleOperationFile import DirectTeleOperation

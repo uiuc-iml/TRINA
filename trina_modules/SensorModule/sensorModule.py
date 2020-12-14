@@ -11,7 +11,7 @@ import klampt
 import numpy
 import time
 from klampt.math import se3
-from klampt import vis, Geometry3D
+from klampt import vis
 from klampt.model import sensing
 from threading import Thread
 import threading
@@ -24,29 +24,19 @@ from klampt.math import vectorops,so3
 from klampt.model import ik, collide
 from klampt import WorldModel, vis
 import sys
-sys.path.append('../../Motion/')
-from Motion.TRINAConfig import *
-import tf
+
+
+try:
+    import tf
+    import rospy
+    import sensor_msgs
+    from sensor_msgs.msg import LaserScan
+    _have_ros = True
+except ImportError:
+    _have_ros = False
 
 import time 
 from multiprocessing import Process, Pipe
-if(sys.version_info[0] < 3):
-    import rospy
-    import sensor_msgs
-    from sensor_msgs.msg import LaserScan
-    import sensor_msgs
-    from .utils import *
-    from .geometry import *
-
-
-
-    pass
-else:
-    import rospy
-    import sensor_msgs
-    from sensor_msgs.msg import LaserScan
-    import pyzed.sl as sl
-import pyrealsense2 as rs
 import os
 
 class Camera_Robot:
@@ -56,7 +46,7 @@ class Camera_Robot:
     """
 
     # Whenever a new realsense camera is added, please update this dictionary with its serial number
-    def __init__(self, robot, cameras= None, mode='Kinematic', components=[], world=[], ros_active = True, use_jarvis = True):
+    def __init__(self, robot, cameras= None, mode='Kinematic', components=[], world=None, ros_active = True, use_jarvis = True):
         """
         Instantiates a camera robot instance
 
@@ -70,28 +60,24 @@ class Camera_Robot:
 
     """
         import os
-# os.chdir('~/TRINA')
-        home = os.path.expanduser("~")
 
-        trina_dir = os.path.join(home,'TRINA')
+
+        trina_dir = os.path.expanduser("~TRINA")
         if(use_jarvis == True):
             self.jarvis = Jarvis("sensor_module")
             self.robot = robot
         else:
             # self.jarvis = Jarvis("sensor_module")
             self.robot = robot
-        self.serial_numbers_dict = {'realsense_left': "639206000824",
-                                    'realsense_right': '639204004320', 
-                                    'zed_torso': 24560, 
-                                    'zed_back': 24545,
-                                    'zed_overhead':23966915,
-                                    'realsense_overhead':"620201003873"}
-        self.config_files_dict = {'realsense_right': os.path.join(trina_dir,'Sensors/realsense_right_config.npy'),
-                                    'realsense_left': os.path.join(trina_dir,'Sensors/realsense_left_config.npy'),
-                                    'zed_torso': os.path.join(trina_dir,'Sensors/zed_torso_config.npy'),
-                                    'zed_back': os.path.join(trina_dir,'Sensors/zed_back_config.npy'),
-                                    'zed_overhead':os.path.join(trina_dir,'Sensors/zed_overhead_config.npy'),
-                                    'realsense_overhead':os.path.join(trina_dir,'Sensors/realsense_overhead_config.npy')}
+        import json
+        with open(os.path.join(trina_dir,"Settings/camera_serial_numbers.json"),'r') as f:
+            self.serial_numbers_dict = json.load(f)
+        self.config_files_dict = {'realsense_right': os.path.join(trina_dir,'Settings/sensors/realsense_right_config.npy'),
+                                    'realsense_left': os.path.join(trina_dir,'Settings/sensors/realsense_left_config.npy'),
+                                    'zed_torso': os.path.join(trina_dir,'Settings/sensors/zed_torso_config.npy'),
+                                    'zed_back': os.path.join(trina_dir,'Settings/sensors/zed_back_config.npy'),
+                                    'zed_overhead':os.path.join(trina_dir,'Settings/sensors/zed_overhead_config.npy'),
+                                    'realsense_overhead':os.path.join(trina_dir,'Settings/sensors/realsense_overhead_config.npy')}
         self.valid_cameras = ['realsense_right',
                               'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead']
         # we first check if the parameters are valid:
@@ -104,10 +90,15 @@ class Camera_Robot:
         self.active_cameras = {}
         self.update_lock = threading.Lock()
         self.ros_active = ros_active
+        global have_ros
+        if not _have_ros:
+            if self.ros_active:
+                print("ROS support requested, but rospy could not be imported")
+                input("Press enter to continue > ")
+            self.ros_active = False
 
 
         if(self.mode == 'Physical'):
-            import pyrealsense2 as rs
             # only import pyzed if running on python3
             if(self.cameras):
                 for camera in self.cameras:
@@ -406,7 +397,7 @@ class Camera_Robot:
 
     def update_range_finder(self, conn):
         try:
-                rospy.init_node("sensing_test_child")
+            rospy.init_node("sensing_test_child")
         except Exception as e:
             print(e)
             pass
@@ -458,12 +449,12 @@ class Camera_Robot:
 
 class RealSenseCamera:
     def __init__(self, serial_num, config_file, robot, end_effector='right'):
-
+        import pyrealsense2 as rs
+        self.serial_num = serial_num
+        self.config_file = config_file
+        self.pipeline = rs.pipeline()
+        self.config = rs.config()
         try:
-            self.serial_num = serial_num
-            self.config_file = config_file
-            self.pipeline = rs.pipeline()
-            self.config = rs.config()
             self.config.enable_device(serial_num.encode('utf-8'))
             self.config.enable_stream(
                 rs.stream.depth, 640, 480, rs.format.z16, 30)
