@@ -1729,9 +1729,8 @@ class Motion:
 
         After unpausing, the robot is still stationery until some new commands is added
         """
-        self.base.startMotion()
-        self.startMotionFlag = False
-        self.left_gripper.resume()
+        self.stop_motion_flag = False
+        self.stop_motion_sent = False
         return
 
     def mirror_arm_config(self,config):
