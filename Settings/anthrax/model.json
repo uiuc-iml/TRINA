@@ -1,0 +1,6 @@
+{
+    "left_tool_link": 13,
+    "right_tool_link": 21,
+    "left_arm_dofs": [7, 8, 9, 10, 11, 12],
+    "right_arm_dofs": [15, 16, 17, 18, 19, 20]
+}

@@ -1,0 +1,34 @@
+{
+    "name": "TRINA onboard simulation kinematic",
+    "port": 5000,
+    "launch_browser":true,
+    "http_port": 8081, 
+    "peers" : {},
+    "programs" : {
+        "database-server":  {
+            "command":"redis-5.0.4/src/redis-server redis.conf",
+            "directory":"~/trina-database-server/",
+            "description":"The Redis server used for all the REEM communication used in Jarvis"
+        },
+        "motion_server" : {
+            "command": "python3 motion_server.py",
+            "directory" : "Motion/",
+            "description":"The server that controls all motion commands -- normally run on the base computer"
+        },
+        "logger":  { "program":"~/redrun/builtins/logger.py",  "args": "redrun_logs/simulated_%time"},
+        "roscore" : {"command":"roscore"},
+        "ros_gmapping" : {"command": "rosrun gmapping slam_gmapping scan:=base_scan _xmax:=10 _xmin:=-10 _ymax:=10 _ymin:=-10" },
+        "command_server" : { "command": "python3 command_server.py -m Kinematic -r %1" },
+        "ui" : {
+            "command" : "python3 UI_end_1.py",
+            "directory" : "trina_modules/UI"
+        }
+    },
+    "startup": [
+        "logger",
+        "database-server",
+        "motion_server",
+        { "program":"command_server", "args" : ["Bubonic"], "required":0 },
+        { "program":"ui", "required":0 }
+    ]
+}

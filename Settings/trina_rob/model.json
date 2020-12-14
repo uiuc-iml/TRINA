@@ -1,0 +1,6 @@
+{
+    "left_tool_link": 16,
+    "right_tool_link": 41,
+    "left_active_dofs": [10, 11, 12, 13, 14, 15],
+    "right_active_dofs": [35, 36, 37, 38, 39, 40]
+}
