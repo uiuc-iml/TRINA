@@ -69,6 +69,7 @@ class DirectTeleOperation:
 		return []
 
 	def _infoLoop(self):
+		iters = 0
 		while(True):
 			self.robot.log_health()
 			loop_start_time = time.time()
@@ -88,15 +89,19 @@ class DirectTeleOperation:
 					self.state = 'active'
 					self.status = 'active'
 			elapsed_time = time.time() - loop_start_time
+			iters += 1
+			if iters % 100 == 0:
+				print("DirectTeleOperation: Info loop time",elapsed_time)
 			if elapsed_time < self.infoLoop_rate:
-				time.sleep(self.infoLoop_rate)
+				time.sleep(self.infoLoop_rate-elapsed_time)
 			else:
 				time.sleep(0.001)
 
 	def _serveStateReceiver(self):
 		# self.setRobotToDefault()
-		time.sleep(3)
+		time.sleep(1)
 		# while(True):
+		iters = 0
 		if((self.startup == True) and (self.robot.getUIState() !=0)):
 			print('started the initial values for the variables')
 			self.init_UI_state = self.robot.getUIState()
@@ -107,6 +112,7 @@ class DirectTeleOperation:
 				self.init_pos_right = self.robot.sensedRightEETransform()
 			self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
 		while(True):
+			loop_start_time = time.time()
 			if self.state == 'idle':
 				# print("_serveStateReceiver: idling")
 				pass
@@ -119,7 +125,11 @@ class DirectTeleOperation:
 					self.cur_pos_right = self.robot.sensedRightEETransform()
 				self.UI_state = self.robot.getUIState()
 				self.UIStateLogic()
-				time.sleep(self.dt)
+			elapsed_time = time.time() - loop_start_time
+			iters += 1
+			if iters % 100 == 0:
+				print("DirectTeleOperation: serve state time",elapsed_time)
+			time.sleep(max(self.dt-elapsed_time,0.001))
 
 
 	def setRobotToDefault(self):

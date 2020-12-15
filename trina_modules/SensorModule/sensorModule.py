@@ -18,13 +18,15 @@ import threading
 import copy
 from OpenGL.GLUT import *
 from OpenGL.GL import *
-sys.path.append('../')
 from Jarvis import Jarvis
 from klampt.math import vectorops,so3
-from klampt.model import ik, collide
 from klampt import WorldModel, vis
-import sys
-
+import sys,os
+try:
+    from Settings import trina_settings
+except ImportError:
+    sys.path.append(os.path.expanduser("~/TRINA"))
+    from Settings import trina_settings
 
 try:
     import tf
@@ -69,9 +71,7 @@ class Camera_Robot:
         else:
             # self.jarvis = Jarvis("sensor_module")
             self.robot = robot
-        import json
-        with open(os.path.join(trina_dir,"Settings/camera_serial_numbers.json"),'r') as f:
-            self.serial_numbers_dict = json.load(f)
+        self.serial_numbers_dict = trina_settings.camera_serial_numbers()
         self.config_files_dict = {'realsense_right': os.path.join(trina_dir,'Settings/sensors/realsense_right_config.npy'),
                                     'realsense_left': os.path.join(trina_dir,'Settings/sensors/realsense_left_config.npy'),
                                     'zed_torso': os.path.join(trina_dir,'Settings/sensors/zed_torso_config.npy'),

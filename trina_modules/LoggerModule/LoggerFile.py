@@ -13,10 +13,10 @@ from multiprocessing import Process, Lock
 from PIL import Image
 import sys
 from glob import glob
-import cv2
 
 if(sys.version_info[0] < 3):
     from StringIO import StringIO 
+    import cv2
 
 class TrinaQueueReader(object):
     def __init__(self, host='localhost', port=6379):

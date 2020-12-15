@@ -8,26 +8,10 @@ import numpy as np
 from multiprocessing import Process, Pipe
 import logging
 from copy import deepcopy, copy
-from klampt.math import vectorops, so3
+from klampt.math import vectorops, so3, se3
 from klampt.model import ik, collide
-from klampt import WorldModel, vis
-from TRINAConfig import *
-import sensor_msgs
-from datetime import datetime
-
-# python files
-from .global_planner import *
-from .local_planner import *
-from .motion_primitives import *
-from motion_profile import *
-from .utils import *
-from .geometry import *
-
-from sensor_msgs.msg import LaserScan
-
-from klampt import WorldModel, Geometry3D
-from klampt import vis
-from klampt.math import so3, se3
+from klampt import WorldModel, Geometry3D, vis
+import TRINAConfig
 import trimesh
 import os
 import random
@@ -117,7 +101,7 @@ class PointClickGrasp:
                 base_q = self.jarvis.sensedBasePosition()
                 self.curr_vel = self.jarvis.sensedBaseVelocity()
                 if (self.visualization):
-                    self.vis_robot.setConfig(get_klampt_model_q('anthrax', base=base_q))
+                    self.vis_robot.setConfig(TRINAConfig.get_klampt_model_q('anthrax', base=base_q))
                 status = self.jarvis.getActivityStatus()
 
                 # TODO get terminate flag question

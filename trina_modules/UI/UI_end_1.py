@@ -17,7 +17,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 from klampt.vis import glinit
 glinit.init()
-sys.path.append(os.path.abspath('../../'))
+sys.path.append(os.path.expanduser('~/TRINA'))
 import random
 import trimesh
 from Jarvis import Jarvis
@@ -191,7 +191,7 @@ class MyQtMainWindow(QMainWindow):
             self.modeText.setText("Mode: " +  q.text())
             self.mode = q.text()
             try:
-                self.jarvis.changeActivityStatus([str(self.mode)])
+                self.jarvis.changeActivityStatus(["App_"+str(self.mode)])
                 for element in self.screenElement:
                     vis.hide(element)
                 self.screenElement.clear()
@@ -301,8 +301,6 @@ class MyGLPlugin(vis.GLPluginInterface):
         time.sleep(0.0001)
         return False
 
-
-
     def click_world(self,x,y):
         """Helper: returns a list of world objects sorted in order of
         increasing distance."""
@@ -356,17 +354,15 @@ class MyGLPlugin(vis.GLPluginInterface):
             print("Error: {0}".format(err))
 
 
-
-
 class UI_end_1:
     def __init__(self,world_file):
         world = klampt.WorldModel()
-        res = world.readFile(file_dir)
+        res = world.readFile(world_file)
         self.world = world
         self.dt = 0.05
         self.UIState = {'controllerPositionState': {'leftController': {'controllerOrientation': [0.07739845663309097, -0.19212138652801514, 0.3228720426559448, 0.9235001802444458], 'controllerPosition': [-0.021801471710205078, -0.4208446145057678, 0.5902314186096191]}, 'rightController': {'controllerOrientation': [0.052883781492710114, 0.20788685977458954, -0.30593231320381165, 0.927573025226593], 'controllerPosition': [0.15437912940979004, -0.4229428172111511, 0.5827353000640869]}}, 'headSetPositionState': {'deviceRotation': [-0.027466144412755966, 0.7671623826026917, 0.003965826239436865, 0.6408524513244629]}, 'controllerButtonState': {'leftController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}, 'rightController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}}, 'UIlogicState': {'stop': False, 'autonomousMode': False, 'teleoperationMode': False}, 'title': 'UI Outputs'}
         if not res:
-            raise RuntimeError("Unable to load model "+file_dir)
+            raise RuntimeError("Unable to load model "+world_file)
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
@@ -403,16 +399,8 @@ class UI_end_1:
 
         vis.show()
         while vis.shown():
-            vis.lock()
-            try:
-                sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
-                # print(self.jarvis.sensedBaseVelocity())
-                # print(self.server["UI_STATE"]["controllerButtonState"]["rightController"]["thumbstickMovement"].read() )
-                vis_robot = world.robot(0)
-                vis_robot.setConfig(sensed_position)
-            except Exception as err:
-                print("Error: {0}".format(err))
-            vis.unlock()
+            sensed_position = self.server['ROBOT_STATE']['Position']['Robotq'].read()
+            vis.setItemConfig(vis.getItemName(world.robot(0)),sensed_position)
             time.sleep(self.dt)
         vis.kill()
 
@@ -437,11 +425,13 @@ if __name__ == "__main__":
     print ("""================================================================================
     UI_end_1.py:
 
-        USAGE: python3 UI_end_1.py WORLD_FILE
+        USAGE: python3 UI_end_1.py [WORLD_FILE]
 
     ================================================================================
     """)
     import sys
-    if len(sys.argv) <= 1:
-        exit(1)
-    UI_end_1(sys.argv[1])
+    from Settings import trina_settings
+    world_file = trina_settings.simulation_world_file()
+    if len(sys.argv) > 1:
+        world_file = sys.argv[1]
+    UI_end_1(world_file)
