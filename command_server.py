@@ -25,6 +25,7 @@ if(sys.version_info[0] < 3):
 else:
 	from Motion  import MotionClient
 	from importlib import reload
+from Motion import TRINAConfig
 from Settings import trina_settings
 from Jarvis import Jarvis
 import redis
@@ -36,8 +37,9 @@ class CommandServer:
 
 	def __init__(self,robot_ip = None,world_file = None,modules = []):
 		# we first check if redis is up and running:
+		self.redis_server_ip = trina_settings.redis_server_ip()
 		try:
-			self.interface = RedisInterface(host="localhost")
+			self.interface = RedisInterface(host=self.redis_server_ip)
 			self.interface.initialize()
 			self.server = KeyValueStore(self.interface)
 			print('Reem already up and running, skipping creation process')
@@ -60,10 +62,7 @@ class CommandServer:
 		# self.start_ros_stuff()
 		self.world_file = world_file
 		# we then proceed with startup as normal
-		self.always_active = set(['UI','devel','debug','Apps.DirectTeleoperation'])
-		self.interface = RedisInterface(host="localhost")
-		self.interface.initialize()
-		self.server = KeyValueStore(self.interface)
+		self.always_active = set(['UI','devel','debug','App_DirectTeleoperation'])
 		# self.server["ROBOT_STATE"] = 0
 		self.server['ROBOT_COMMAND'] = {}
 		self.server['HEALTH_LOG'] = {}
@@ -93,27 +92,28 @@ class CommandServer:
 		if not res:
 			print('Failed!')
 
+		self.mode = self.robot.mode()
+		self.codename = self.robot.codename()
 		print('\n\n\n\n\n\n\n Initializing robot states')
 		self.init_robot_states()
 		print('\n\n\n\n\n\n initialized robot states sucessfully!')
 		time.sleep(1)
-		self.mode = self.robot.mode()
-		self.codename = self.robot.codename()
-		if(self.mode == 'Kinematic'):
-			self.world = WorldModel()
-			if self.world_file is None:
-				res = self.world_file.readFile(self.robot.robotModel())
-			else:
-				res = self.world.readFile(self.world_file )
-			if not res:
-				raise RuntimeError("Unable to load world file")
-			self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
-			print('\n\n\n\n\n initialization of Kinematic sensor module sucessfull!!\n\n\n')
+		# if(self.mode == 'Kinematic'):
+		# 	self.world = WorldModel()
+		# 	if self.world_file is None:
+		# 		res = self.world_file.readFile(self.robot.robotModel())
+		# 	else:
+		# 		res = self.world.readFile(self.world_file )
+		# 	if not res:
+		# 		raise RuntimeError("Unable to load world file")
+		# 	self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
+		# 	print('\n\n\n\n\n initialization of Kinematic sensor module sucessfull!!\n\n\n')
 
-			time.sleep(3)
-		if(self.mode == 'Physical'):
-			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
-			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
+		# 	time.sleep(3)
+		# if(self.mode == 'Physical'):
+		# 	self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
+		# 	print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
+		self.sensor_module = None
 		self.health_dict = {}
 		# create the list of threads
 		self.modules_dict = {}
@@ -176,7 +176,7 @@ class CommandServer:
 			vel_base = self.query_robot.sensedBaseVelocity()
 
 		# print( self.query_robot.sensedLeftLimbPosition(),self.query_robot.sensedRightLimbPosition())
-		klampt_q = get_klampt_model_q(self.codename,left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
+		klampt_q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
 		klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 		klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 		# print("base velocity")
@@ -241,7 +241,7 @@ class CommandServer:
 	def start_module(self,module,name):
 		if(name != 'sensor_module'):
 			module_trina_queue = TrinaQueue(str(name))
-			module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue)
+			module_jarvis = Jarvis(str(name),self.sensor_module,module_trina_queue,host=self.redis_server_ip)
 			a = module(module_jarvis)
 			return a.return_processes()
 
@@ -260,48 +260,55 @@ class CommandServer:
 		for name, obj in inspect.getmembers(Apps):
 			if not inspect.isclass(obj): continue
 			if str(obj).find('trina_modules') == -1: continue
-			all_candidates['Apps.'+name] = obj
-		try:
-			if(startup):
-				if not module_names:
-					print('\n\n Starting ALL modules available!')
-				else:
-					print('\n\n Starting Only Modules:' + str(module_names) + '\n\n\n')
-				for name, obj in all_candidates.items():
-					if module_names and name not in module_names:
-						continue
-					tmp = self.start_module(obj,name)
-					self.modules_dict.update({name:tmp})
-					self.health_dict.update({name:[True,time.time()]})
-					activity_dict.update({name:'idle'})
-					command_dict.update({name:[]})
-					if(name not in self.always_active):
-						self.active_modules[name] = False
-					else:
-						self.active_modules[name] = True
-
-				self.server['HEALTH_LOG'] = self.health_dict
-				self.server['ACTIVITY_STATUS'] = activity_dict
-				self.empty_command = command_dict
+			all_candidates['App_'+name] = obj
+		if(startup):
+			if not module_names:
+				print('\n\n Starting ALL modules available!')
 			else:
-				print('Restarting only modules '+ str(module_names))
-				for name, obj in all_candidates.items():
-					if name not in module_names:
-						continue
-					print('killing module '+ name)
-					for pcess in self.modules_dict[name]:
-						pcess.terminate()
-					self.modules_dict.update({name:[]})
-					print('restarting module ' + name)
+				print('\n\n Starting Only Modules:' + str(module_names) + '\n\n\n')
+			for name, obj in all_candidates.items():
+				if module_names and name not in module_names:
+					continue
+				try:
 					tmp = self.start_module(obj,name)
-					self.modules_dict.update({name:tmp})
-					self.server['HEALTH_LOG'][name] = [True,time.time()]
-					self.server['ACTIVITY_STATUS'][name] = 'idle'
-					if(self.active_modules[name]):
-						self.active_modules[name] = False
-		except Exception as e:
-			print('Failed to initialize module',name,'due to ',e)
-			traceback.print_exc()
+				except Exception as e:
+					print('Failed to initialize module',name,'due to ',e)
+					traceback.print_exc()
+					continue
+				self.modules_dict.update({name:tmp})
+				self.health_dict.update({name:[True,time.time()]})
+				activity_dict.update({name:'idle'})
+				command_dict.update({name:[]})
+				if(name not in self.always_active):
+					self.active_modules[name] = False
+				else:
+					self.active_modules[name] = True
+
+			self.server['HEALTH_LOG'] = self.health_dict
+			self.server['ACTIVITY_STATUS'] = activity_dict
+			self.empty_command = command_dict
+		else:
+			print('Restarting only modules '+ str(module_names))
+			for name, obj in all_candidates.items():
+				if name not in module_names:
+					continue
+				print('killing module '+ name)
+				for pcess in self.modules_dict[name]:
+					pcess.terminate()
+				self.modules_dict.update({name:[]})
+				print('restarting module ' + name)
+				try:
+					tmp = self.start_module(obj,name)
+				except Exception as e:
+					print('Failed to initialize module',name,'due to ',e)
+					traceback.print_exc()
+					continue
+				self.modules_dict.update({name:tmp})
+				self.server['HEALTH_LOG'][name] = [True,time.time()]
+				self.server['ACTIVITY_STATUS'][name] = 'idle'
+				if(self.active_modules[name]):
+					self.active_modules[name] = False
+	
 	def switch_module_activity(self,to_activate,to_deactivate = []):
 		print('switching module activity:')
 		if(to_deactivate == []):
@@ -351,10 +358,10 @@ class CommandServer:
 		velEE_left = {}
 		posEE_right = {}
 		velEE_right = {}
-		loopStartTime = time.time()
 		while not self.shut_down_flag:
-			# print('updating states')
+			loopStartTime = time.time()
 			try:
+				#t0 = time.time()
 				if(self.left_limb_active):
 					posEE_left = self.query_robot.sensedLeftEETransform()
 					pos_left = self.query_robot.sensedLeftLimbPosition()
@@ -371,7 +378,7 @@ class CommandServer:
 					pos_base = self.query_robot.sensedBasePosition()
 					vel_base = self.query_robot.sensedBaseVelocity()
 
-				klampt_q = get_klampt_model_q(self.codename,left_limb = pos_left, right_limb = pos_right, base = pos_base)
+				klampt_q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = pos_left, right_limb = pos_right, base = pos_base)
 				klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 				klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 				if(self.left_gripper_active):
@@ -380,6 +387,9 @@ class CommandServer:
 					pos_right_gripper = self.robot.sensedRightGripperPosition()
 				if(self.torso_active):
 					pos_torso = self.robot.sensedTorsoPosition()
+
+				#t1 = time.time()
+				#print("Read robot info in time",t1-t0)
 
 				self.server["ROBOT_INFO"] = {
 					"Started" : self.query_robot.isStarted(),
@@ -423,17 +433,14 @@ class CommandServer:
 			self.server['TRINA_TIME'] = time.time()
 
 			elapsedTime = time.time() - loopStartTime
-			if elapsedTime < self.dt:
-				time.sleep(self.dt-elapsedTime)
-			else:
-				pass
+			time.sleep(max(self.dt-elapsedTime,0.001))
 		print('\n\n\n\nstopped updating state!!! \n\n\n\n')
 
 	def commandReciever(self,robot,active_modules):
 		self.trina_queue_reader = TrinaQueueReader()
 		self.dt = 0.0001
 		self.robot = robot
-		self.interface = RedisInterface(host="localhost")
+		self.interface = RedisInterface(host=self.redis_server_ip)
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
 		self.active_modules = active_modules
@@ -630,7 +637,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Runs the Jarvis command server')
 	parser.add_argument('-w','--world_file', default=trina_settings.simulation_world_file(), type=str, help='A world model for sensor simulation')
-	parser.add_argument('--modules', default=['Apps.DirectTeleOperation', 'Apps.PointClickGrasp'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
+	parser.add_argument('--modules', default=['App_DirectTeleOperation', 'App_PointClickGrasp'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
 	args = parser.parse_args(sys.argv[1:])
 
 	server = CommandServer(modules = args.modules, world_file=args.world_file)
