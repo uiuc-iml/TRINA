@@ -18,17 +18,16 @@
         "logger":  { "program":"~/redrun/builtins/logger.py",  "args": "redrun_logs/simulated_%time"},
         "roscore" : {"command":"roscore"},
         "ros_gmapping" : {"command": "rosrun gmapping slam_gmapping scan:=base_scan _xmax:=10 _xmin:=-10 _ymax:=10 _ymin:=-10" },
-        "command_server" : { "command": "python3 command_server.py -m Kinematic -r %1" },
+        "command_server" : { "command": "python3 command_server.py " },
         "ui" : {
-            "command" : "python3 UI_end_1.py",
-            "directory" : "trina_modules/UI"
+            "command" : "python3 trina_modules/UI/UI_end_1.py"
         }
     },
     "startup": [
         "logger",
         "database-server",
         "motion_server",
-        { "program":"command_server", "args" : ["Bubonic"], "required":0 },
+        { "program":"command_server", "required":0 },
         { "program":"ui", "required":0 }
     ]
 }
