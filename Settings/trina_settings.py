@@ -112,7 +112,7 @@ class _NestedJSONAccessor:
                 res[k] = v
             return res
         else:
-            self._compress(full)
+            self._compress()
             return self.val
     def _compress(self):
         for k,v in self.valueCache.items():
@@ -208,7 +208,7 @@ def model_settings():
 
 def camera_serial_numbers():
     """Returns dict of camera serial number settings"""
-    return settings()["robot"]["camera_serial_numbers"]
+    return settings()["robot"]["camera_serial_numbers"].asdict()
 
 
 
@@ -249,11 +249,11 @@ def right_arm_dofs():
 
 def left_tool_link():
     """Returns left arm tool link in model"""
-    return list(model_settings()['left_tool_link'])
+    return model_settings()['left_tool_link']
 
 def right_tool_link():
     """Returns right arm tool link in model"""
-    return list(model_settings()['right_tool_link'])
+    return model_settings()['right_tool_link']
 
 
 
@@ -272,7 +272,8 @@ def motion_server_port():
 
 def motion_server_addr():
     """Returns formatted address string for the motion server"""
-    return "http://%s:%d"%(general()["MotionServer"]["ip_address"],general()["MotionServer"]["port"])
+    mserver = settings()["MotionServer"]
+    return "http://%s:%d"%(mserver["ip_address"],mserver["port"])
 
 def motion_server_components():
     """Returns the robot components used by the motion server, by default"""
@@ -282,13 +283,13 @@ def motion_server_components():
 
 def redis_server_ip():
     """Returns the redis server IP address"""
-    return general()["RedisServer"]["ip_address"]
+    return settings()["RedisServer"]["ip_address"]
 
 
 
 def simulation_world_file():
     """Returns a suggested simulation world file"""
-    return general()["Simulation"]["world_file"]
+    return settings()["Simulation"]["world_file"]
 
 def simulation_world_load():
     """Returns a suggested simulation WorldModel"""
