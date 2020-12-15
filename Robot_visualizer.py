@@ -29,7 +29,7 @@ server = KeyValueStore(interface)
 # robot.startServer(mode = 'Kinematic', components = [])
 
 
-world = trina_settings.simulation_model_load()
+world = trina_settings.simulation_world_load()
 vis_robot = world.robot(0)
 
 vis.add("world",world)
@@ -56,9 +56,15 @@ def translate_camera(linknum):
 #     except:
 #         print('error occured!!!!!')
 #         break
-while True:
+t0 = time.time()
+while vis.shown():
     vis.lock()
+    #temp: try sending a motion
+    #robot.setBaseVelocity([0.1*math.sin(0.2*(time.time()-t0)),0])
     sensed_position = server["ROBOT_STATE"]["Position"]["Robotq"].read()
+    #qbase = robot.sensedBasePosition()
+    #sensed_position[:2] = qbase[:2]
+    #sensed_position[3] = qbase[3]
     # print(len(sensed_position))
     vis_robot.setConfig(sensed_position)
     ## end effector is 42
@@ -85,13 +91,16 @@ while True:
     
     # final_dist = so3.apply(final_view,new_dist)
     # apply the new camera view
-    vp = vis.getViewport()
-    camera = vp.camera
-    camera.set_matrix([final_view,final_dist]) 
+    #vp = vis.getViewport()
+    #camera = vp.camera
+    #camera.set_matrix([final_view,final_dist]) 
 
     # pdb.set_trace()
     vis.unlock()
 
     time.sleep(dt)
+
+robot.stopMotion()
+robot.resumeMotion()
 
 vis.kill()
