@@ -47,21 +47,15 @@ class DirectTeleOperation:
 		self.init_headset_orientation = {}
 		self.cur_pos_right = {}
 		self.startup = True
-		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
-
+	
 		stateRecieverThread = threading.Thread(target=self._serveStateReceiver)
-		main_thread = threading.Thread(target = self._infoLoop)
+		stateRecieverThread.daemon = True
 		stateRecieverThread.start()
+		main_thread = threading.Thread(target = self._infoLoop)
+		main_thread.daemon = True
 		main_thread.start()
 
-	def sigint_handler(self, signum, frame):
-		""" Catch Ctrl+C tp shutdown the api,
-			there are bugs with using sigint_handler.. not used rn.
-
-		"""
-		assert(signum == signal.SIGINT)
-		print("SIGINT caught...shutting down the api!")
-
+	
 	def return_threads(self):
 		return [self._serveStateReceiver, self._infoLoop]
 

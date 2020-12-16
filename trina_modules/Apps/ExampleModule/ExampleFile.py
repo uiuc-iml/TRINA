@@ -13,21 +13,10 @@ class Example:
 		self.status = 'idle' #states are " idle, active"
 		self.state = 'idle' #states are " idle, active
         self.robot = Jarvis
-		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
-        stateRecieverThread = threading.Thread(target=self._serveStateReciever)
-		main_thread = threading.Thread(target = self._infoLoop)
-        stateRecieverThread.start()
+        main_thread = threading.Thread(target = self._infoLoop)
+		main_thread.daemon = True
         main_thread.start()
-
-	def sigint_handler(self, signum, frame):
-		""" Catch Ctrl+C tp shutdown the api,
-			there are bugs with using sigint_handler.. not used rn.
-
-		"""
-		assert(signum == signal.SIGINT)
-		#logger.warning('SIGINT caught...shutting down the api!')
-		print("SIGINT caught...shutting down the api!")
 
 	def return_threads(self):
 		return [self._serveStateReciever, self._infoLoop]

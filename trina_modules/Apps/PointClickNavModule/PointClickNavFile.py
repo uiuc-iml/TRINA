@@ -140,9 +140,11 @@ class PointClickNav:
 		self.global_path_proc.start()
 
 		main_thread = threading.Thread(target = self._mainLoop)
-		state_thread = threading.Thread(target = self._infoLoop)
-		state_thread.start()
+		main_thread.daemon = True
 		main_thread.start()
+		state_thread = threading.Thread(target = self._infoLoop)
+		state_thread.daemon = True
+		state_thread.start()
 
 
 	def sigint_handler(self, signum, frame):
