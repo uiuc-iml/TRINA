@@ -6,7 +6,7 @@ import csv
 from threading import Thread
 import sys
 import signal
-
+from Utils import TimedLooper
 
 class Example:
 	def __init__(self,Jarvis = None, debugging = False):
@@ -25,7 +25,8 @@ class Example:
 		return []
 
 	def _infoLoop(self):
-		while(True):
+		looper = TimedLooper(0.1,name="infoLoop")
+		while looper:
 			self.robot.log_health()
 			loop_start_time = time.time()
 			status = self.robot.getActivityStatus()
@@ -41,11 +42,6 @@ class Example:
 					self.state = 'idle'
 					self.status = 'idle'
 
-			elapsed_time = time.time() - loop_start_time
-			if elapsed_time < self.infoLoop_rate:
-				time.sleep(self.infoLoop_rate)
-			else:
-				time.sleep(0.001)
 
 if __name__ == "__main__" :
     example = Example()

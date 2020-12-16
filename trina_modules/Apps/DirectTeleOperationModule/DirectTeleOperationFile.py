@@ -19,7 +19,7 @@ import json
 import traceback
 import signal
 from klampt.math import so3
-
+from Utils import TimedLooper
 
 
 class DirectTeleOperation:
@@ -63,10 +63,9 @@ class DirectTeleOperation:
 		return []
 
 	def _infoLoop(self):
-		iters = 0
-		while(True):
+		looper = TimedLooper(self.infoLoop_rate,name="DirectTeleOperation.infoLoop") 
+		while looper:
 			self.robot.log_health()
-			loop_start_time = time.time()
 			status = self.robot.getActivityStatus()
 
 			if(status == 'active'):
@@ -82,19 +81,10 @@ class DirectTeleOperation:
 					# DEBUGGING ONLY - SET TO IDLE AFTER TESTING!!!
 					self.state = 'active'
 					self.status = 'active'
-			elapsed_time = time.time() - loop_start_time
-			iters += 1
-			if iters % 100 == 0:
-				print("DirectTeleOperation: Info loop time",elapsed_time)
-			if elapsed_time < self.infoLoop_rate:
-				time.sleep(self.infoLoop_rate-elapsed_time)
-			else:
-				time.sleep(0.001)
 
 	def _serveStateReceiver(self):
 		# self.setRobotToDefault()
 		time.sleep(1)
-		# while(True):
 		iters = 0
 		if((self.startup == True) and (self.robot.getUIState() !=0)):
 			print('started the initial values for the variables')
@@ -105,8 +95,8 @@ class DirectTeleOperation:
 			if(self.right_limb_active):
 				self.init_pos_right = self.robot.sensedRightEETransform()
 			self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
-		while(True):
-			loop_start_time = time.time()
+		looper = TimedLooper(self.dt,name="DirectTeleOperation.serveState") 
+		while looper:
 			if self.state == 'idle':
 				# print("_serveStateReceiver: idling")
 				pass
@@ -119,12 +109,6 @@ class DirectTeleOperation:
 					self.cur_pos_right = self.robot.sensedRightEETransform()
 				self.UI_state = self.robot.getUIState()
 				self.UIStateLogic()
-			elapsed_time = time.time() - loop_start_time
-			iters += 1
-			if iters % 100 == 0:
-				print("DirectTeleOperation: serve state time",elapsed_time)
-			time.sleep(max(self.dt-elapsed_time,0.001))
-
 
 	def setRobotToDefault(self):
 		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]

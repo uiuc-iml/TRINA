@@ -13,6 +13,7 @@ from multiprocessing import Process, Lock
 from PIL import Image
 import sys
 from glob import glob
+from Utils import TimedLooper
 
 if(sys.version_info[0] < 3):
     from StringIO import StringIO 
@@ -146,8 +147,8 @@ class StateLogger(object):
                                 mode='w',index=False)
                     
     def update_states(self):
-        while(True):
-            start = time.time()
+        looper = TimedLooper(self.dt,name="LoggerModule.update_states")
+        while looper:
             new_name = self.jarvis.server['LOGGER_NAME'].read()
             if(new_name != self.name):
                 self.name = new_name
@@ -158,28 +159,24 @@ class StateLogger(object):
                 self.robot_state.append(str(self.jarvis.getRobotState()))
                 self.robot_state_times.append(str(self.jarvis.getTrinaTime()))
 
-            elapsed = time.time()-start
-            if(elapsed < self.dt):
-                time.sleep(self.dt-elapsed)
             if(self.close_all):
                 break
     
     def update_opearational_conditions(self):
-        while(True):
-            start = time.time()
+        looper = TimedLooper(self.dt,name="LoggerModule.update_opearational_conditions")
+        while looper:
             with self.operational_lock:
                 self.logger_status = self.jarvis.server['LOGGER_STATUS'].read()
                 self.logger_items  = self.jarvis.server['LOGGER_ITEMS'].read()    
 #             print(self.logger_items)
 #             print(self.logger_status)
-            elapsed = time.time()-start
-            if(elapsed < self.dt):
-                time.sleep(self.dt-elapsed)
+
             if(self.close_all):
                 break
     
     def update_command_logs(self):
-        while(True):
+        looper = TimedLooper(self.dt,name="LoggerModule.update_command_logs")
+        while looper:
             start = time.time()
             with self.commands_lock:
                 new_commands = self.command_reader.read('EXECUTED_COMMANDS')
@@ -189,9 +186,6 @@ class StateLogger(object):
                             self.command_list.append(new_commands)
                     except:
                         print('error')
-            elapsed = time.time()-start
-            if(elapsed < self.dt):
-                time.sleep(self.dt-elapsed)
             if(self.close_all):
                 break
 
@@ -284,7 +278,8 @@ class StateLogger(object):
         
 
     def update_images(self):
-        while(True):
+        looper = TimedLooper(self.images_dt,name="LoggerModule.update_images")
+        while looper:
             start = time.time()
             with self.images_lock:
                 tmp = self.jarvis.get_rgbd_images()
@@ -293,17 +288,12 @@ class StateLogger(object):
                     self.images[key+'_depth'].append(tmp[key][1])
                     self.image_times[key+'_color'].append(tmp[key][2])
                     self.image_times[key+'_depth'].append(tmp[key][2])
-            elapsed = time.time()-start
-            if(elapsed < self.images_dt):
-                time.sleep(self.images_dt-elapsed)
             if(self.close_all):
                 break
 
     def save_state_and_command_log(self):
-
-        while(True):
-
-            start_time = time.time()
+        looper = TimedLooper(self.dt,name="LoggerModule.save_state_and_command_log")
+        while looper:
             commands_df = self.yield_commands_df()
             states_df = self.yield_states_df()
 #             comments_df = self.yield_comments_df()
@@ -321,14 +311,12 @@ class StateLogger(object):
                 final_df.to_csv(self.status_filename, sep='|',
                                 mode='a', header=True, index=False)
 
-            elapsed = time.time()-start_time
-            if(elapsed < self.intermediate_wait):
-                time.sleep(self.intermediate_wait-elapsed)
             if(self.close_all):
                 break
 
     def save_images_to_disk(self):
-        while(True):
+        looper = TimedLooper(self.intermediate_wait,name="LoggerModule.save_images_to_disk")
+        while looper:
             start_time = time.time()
             with self.images_lock:
                 copy_images = copy(self.images)
@@ -345,10 +333,6 @@ class StateLogger(object):
                     # print('\n\n\n done adding figures to disk in {} seconds'.format(elapsed))
                 else:
                     print('\n\n not logging video! \n\n')
-            elapsed = time.time()-start_time
-            # print('\n\n\n done adding figures to disk in {} seconds'.format(elapsed))        
-            if(elapsed < self.intermediate_wait):
-                time.sleep(self.intermediate_wait-elapsed)
             if(self.close_all):
                 break
 
@@ -367,11 +351,11 @@ class StateLogger(object):
         if(sys.version_info[0] < 3):
             buf = StringIO()
                            
-            if(array.dtype == np.uint8):
+            if array.dtype == np.uint8:
                 name = directory + '/{}.png'.format(number)
                 Image.fromarray(array).save(name,"PNG")
             
-            elif(array.dtype == np.float32):
+            elif array.dtype == np.float32:
                 name = directory + '/{}.png'.format(number)
                 array =(1000*array).astype(np.uint16)
                 cv2.imwrite(name,array)
