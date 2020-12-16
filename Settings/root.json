@@ -12,6 +12,11 @@
     "RedisServer": {
         "ip_address":"localhost"
     },
+    "CommandServer":{
+        "state_receiver_dt":0.015,
+        "command_receiver_dt":0.001,
+        "heartbeat_tolerance":100000000000
+    },
     "Simulation":{
         "world_file":"Models/simulation_worlds/TRINA_world_bubonic.xml"
     },

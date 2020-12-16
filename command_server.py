@@ -28,13 +28,13 @@ else:
 from Motion import TRINAConfig
 from Settings import trina_settings
 from Jarvis import Jarvis
+from Utils import TimedLooper
 import redis
 import traceback
 
 
 
 class CommandServer:
-
 	def __init__(self,robot_ip = None,world_file = None,modules = []):
 		# we first check if redis is up and running:
 		self.redis_server_ip = trina_settings.redis_server_ip()
@@ -68,34 +68,23 @@ class CommandServer:
 		self.server['HEALTH_LOG'] = {}
 		self.server['ACTIVITY_STATUS'] = {}
 		self.init_robot_state = {}
-		self.dt = 0.001
 		if robot_ip is None:
 			robot_ip = trina_settings.motion_server_addr()
 		self.robot = MotionClient(address = robot_ip)
+		res = self.robot.startup()
 		# self.controller = UIController()
-		self.robot_state = {}
 		self.robot_command = {}
 		self.modules = modules
 		self.startup = True
 		self.robot_active = True
 		self.shut_down_flag = False
-		self.components = self.robot.activeComponents()
-		self.left_limb_active = ('left_limb' in self.components)
-		self.right_limb_active = ('right_limb' in self.components)
-		self.base_active = ('base' in self.components)
-		self.left_gripper_active = ('left_gripper' in self.components)
-		self.right_gripper_active = ('right_gripper' in self.components)
-		self.torso_active = ('torso' in self.components)
-		self.query_robot = MotionClient(address = robot_ip)
-		self.query_robot.startup()
-		res = self.robot.startup()
-		if not res:
-			print('Failed!')
-
+		
 		self.mode = self.robot.mode()
 		self.codename = self.robot.codename()
 		print('\n\n\n\n\n\n\n Initializing robot states')
-		self.init_robot_states()
+		stateReceiverThread = threading.Thread(target=stateReceiver_func,args=(self.redis_server_ip,robot_ip))
+		stateReceiverThread.daemon = True
+		stateReceiverThread.start()
 		print('\n\n\n\n\n\n initialized robot states sucessfully!')
 		time.sleep(1)
 		# if(self.mode == 'Kinematic'):
@@ -125,118 +114,18 @@ class CommandServer:
 			self.active_modules[i] = True
 		self.start_modules(self.modules,startup = True)
 
-		stateRecieverThread = threading.Thread(target=self.stateReciever)
-		stateRecieverThread.start()
-		commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
-		commandRecieverThread.daemon = True
-		commandRecieverThread.start()
+		commandReceiverThread = Process(target=self.commandReceiver, args=(self.robot, self.active_modules))
+		commandReceiverThread.daemon = True
+		commandReceiverThread.start()
 		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
+		moduleMonitorThread.daemon = True
 		moduleMonitorThread.start()
 		atexit.register(self.shutdown_all)
 		
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
 
-	def init_robot_states(self):
-		pos_left = [0,0,0,0,0,0]
-		pos_right = [0,0,0,0,0,0]
-		pos_base = [0,0,0]
-		pos_left_gripper = {}
-		pos_right_gripper = {}
-		pos_torso = {}
-		vel_base = [0,0]
-		vel_right = [0,0,0,0,0,0]
-		vel_left = [0,0,0,0,0,0]
-		posEE_left = {}
-		velEE_left = {}
-		posEE_right = {}
-		velEE_right = {}
-
-		# try:
-		if(self.left_limb_active):
-			posEE_left = self.query_robot.sensedLeftEETransform()
-			pos_left = self.query_robot.sensedLeftLimbPosition()
-			vel_left = self.query_robot.sensedLeftLimbVelocity()
-			velEE_left = self.query_robot.sensedLeftEEVelocity()
-			global_EEWrench_left = self.query_robot.sensedLeftEEWrench('global')
-			local_EEWrench_left = self.query_robot.sensedLeftEEWrench('local')
-
-
-		if(self.right_limb_active):
-			posEE_right = self.query_robot.sensedRightEETransform()
-			pos_right = self.query_robot.sensedRightLimbPosition()
-			vel_right = self.query_robot.sensedRightLimbVelocity()
-			velEE_right = self.query_robot.sensedRightEEVelocity()
-			global_EEWrench_right = self.query_robot.sensedRightEEWrench('global')
-			local_EEWrench_right = self.query_robot.sensedRightEEWrench('local')
-
-
-		if(self.base_active):
-			pos_base = self.query_robot.sensedBasePosition()
-			vel_base = self.query_robot.sensedBaseVelocity()
-
-		# print( self.query_robot.sensedLeftLimbPosition(),self.query_robot.sensedRightLimbPosition())
-		klampt_q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
-		klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
-		klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
-		# print("base velocity")
-		if(self.left_gripper_active):
-			pos_left_gripper = self.robot.sensedLeftGripperPosition()
-		if(self.right_gripper_active):
-			pos_right_gripper = self.robot.sensedRightGripperPosition()
-		if(self.torso_active):
-			pos_torso = self.robot.sensedTorsoPosition()
-
-		self.server["ROBOT_INFO"] = {
-			"Started" : self.query_robot.isStarted(),
-			"Shutdown" : self.query_robot.isShutDown(),
-			"Moving" : True, #self.query_robot.moving(),
-			"CartesianDrive" : False,#self.query_robot.cartesianDriveFail(),
-			"Components" : self.components,
-			"Mode" : self.mode,
-			"Codename" : self.codename
-		}
-		# self.server["WORLD"] = self.world
-		self.server["ROBOT_STATE"] = {
-			"Position" : {
-				"LeftArm" : pos_left,
-				"RightArm" : pos_right,
-				"Base" : pos_base,
-				"Torso": pos_torso,
-				"LeftGripper" : pos_left_gripper,
-				"RightGripper" : pos_right_gripper,
-				"Robotq": klampt_q
-			},
-			"PositionEE": {
-				"LeftArm" : posEE_left,
-				"RightArm" : posEE_right
-			},
-			"EEWrench":{
-				"LeftArm" :{
-					"global":global_EEWrench_left,
-					"local": local_EEWrench_left
-				},
-				"RightArm" :{
-					"global":global_EEWrench_right,
-					"local": local_EEWrench_right
-				}
-			},
-			"Velocity" : {
-				"LeftArm" : vel_left,
-				"RightArm" : vel_right,
-				"Base" : vel_base
-			},
-			"VelocityEE" : {
-				"LeftArm" : velEE_left,
-				"RightArm" : velEE_right
-			},
-			"KlamptCommandPos" : klampt_command_pos,
-			"KlamptSensedPos" : klampt_sensor_pos
-		}
-		self.server['TRINA_TIME'] = time.time()
-		# except Exception as e:
-		# 	print(e)
-
+	
 
 	def start_module(self,module,name):
 		if(name != 'sensor_module'):
@@ -339,119 +228,21 @@ class CommandServer:
 				except Exception as e:
 					print(e)
 					pass
-	#this is place holder for moduleMonitor
-	def activate(self,name):
-		while not self.shut_down_flag:
-			time.sleep(0.1)
-
-	def stateReciever(self):
-		pos_left = [0,0,0,0,0,0]
-		pos_right = [0,0,0,0,0,0]
-		pos_base = [0,0,0]
-		pos_left_gripper = {}
-		pos_right_gripper = {}
-		pos_torso = {}
-		vel_base = [0,0]
-		vel_right = [0,0,0,0,0,0]
-		vel_left = [0,0,0,0,0,0]
-		posEE_left = {}
-		velEE_left = {}
-		posEE_right = {}
-		velEE_right = {}
-		while not self.shut_down_flag:
-			loopStartTime = time.time()
-			try:
-				#t0 = time.time()
-				if(self.left_limb_active):
-					posEE_left = self.query_robot.sensedLeftEETransform()
-					pos_left = self.query_robot.sensedLeftLimbPosition()
-					vel_left = self.query_robot.sensedLeftLimbVelocity()
-					velEE_left = self.query_robot.sensedLeftEEVelocity()
-
-				if(self.right_limb_active):
-					posEE_right = self.query_robot.sensedRightEETransform()
-					pos_right = self.query_robot.sensedRightLimbPosition()
-					vel_right = self.query_robot.sensedRightLimbVelocity()
-					velEE_right = self.query_robot.sensedRightEEVelocity()
-
-				if(self.base_active):
-					pos_base = self.query_robot.sensedBasePosition()
-					vel_base = self.query_robot.sensedBaseVelocity()
-
-				klampt_q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = pos_left, right_limb = pos_right, base = pos_base)
-				klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
-				klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
-				if(self.left_gripper_active):
-					pos_left_gripper = self.robot.sensedLeftGripperPosition()
-				if(self.right_gripper_active):
-					pos_right_gripper = self.robot.sensedRightGripperPosition()
-				if(self.torso_active):
-					pos_torso = self.robot.sensedTorsoPosition()
-
-				#t1 = time.time()
-				#print("Read robot info in time",t1-t0)
-
-				self.server["ROBOT_INFO"] = {
-					"Started" : self.query_robot.isStarted(),
-					"Shutdown" : self.query_robot.isShutDown(),
-					"Moving" : True,#self.query_robot.moving(),
-					"CartesianDrive" : True,#self.query_robot.cartesianDriveFail(),
-					"Components" : self.components,
-					"Mode" : self.mode
-				}
-				# self.server["WORLD"] = self.world
-				self.server["ROBOT_STATE"] = {
-					"Position" : {
-						"LeftArm" : pos_left,
-						"RightArm" : pos_right,
-						"Base" : pos_base,
-						"Torso": pos_torso,
-						"LeftGripper" : pos_left_gripper,
-						"RightGripper" : pos_right_gripper,
-						"Robotq": klampt_q
-					},
-					"PositionEE": {
-						"LeftArm" : posEE_left,
-						"RightArm" : posEE_right
-					},
-					"Velocity" : {
-						"LeftArm" : vel_left,
-						"RightArm" : vel_right,
-						"Base" : vel_base
-					},
-					"VelocityEE" : {
-						"LeftArm" : velEE_left,
-						"RightArm" : velEE_right
-					},
-					"KlamptCommandPos" : klampt_command_pos,
-					"KlamptSensedPos" : klampt_sensor_pos
-				}
-				# print('states updated with success!')
-			except Exception as e:
-				print(e)
-			################
-			self.server['TRINA_TIME'] = time.time()
-
-			elapsedTime = time.time() - loopStartTime
-			time.sleep(max(self.dt-elapsedTime,0.001))
-		print('\n\n\n\nstopped updating state!!! \n\n\n\n')
-
-	def commandReciever(self,robot,active_modules):
+	
+	def commandReceiver(self,robot,active_modules):
 		self.trina_queue_reader = TrinaQueueReader()
-		self.dt = 0.0001
-		self.robot = robot
 		self.interface = RedisInterface(host=self.redis_server_ip)
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
 		self.active_modules = active_modules
-		self.init_time = time.time()
-		self.loop_counter = 0
 		self.command_logger = CommandLogger('EXECUTED_COMMANDS')
-		while(True):
-			self.loop_counter +=1
+		looper = TimedLooper(trina_settings.settings()['CommandServer']['command_receiver_dt'],name='commandReceiver')
+		last_print_time = 0
+		loop_counter = 0
+		while looper:
+			loop_counter +=1
 			for i in self.always_active:
 				self.active_modules[i] = True
-			loopStartTime = time.time()
 			self.robot_command = self.server['ROBOT_COMMAND'].read()
 			if(len(self.empty_command.keys()) != len(self.robot_command.keys())):
 				print(self.empty_command.keys(),self.robot_command.keys())
@@ -481,27 +272,22 @@ class CommandServer:
 							self.command_logger.log_command(command,time.time())
 					else:
 						print('ignoring commands from {} because it is inactive'.format(str(i)),robot_command)
-			elapsedTime = time.time() - loopStartTime	# helper func
-			if((time.time()-self.init_time) > 5):
-				all_loops_time = time.time() - self.init_time
-				self.init_time = time.time()
-				print('\nLoop Execution Frequency = {} \n'.format(self.loop_counter/all_loops_time))
-				self.loop_counter = 0
 
-			# print('\n\n Frequency of execution loop:', 1/elapsedTime,'\n\n')
-			if elapsedTime < self.dt:
-				time.sleep(self.dt-elapsedTime)
-			else:
-				pass
+			elapsedTime = looper.time_elapsed()
+			if elapsedTime-last_print_time > 5:
+				print('\nLoop Execution Frequency = {} \n'.format(loop_counter/(elapsedTime - last_print_time)))
+				loop_counter = 0
+				last_print_time = elapsedTime
 
 	def run(self,command):
+		#define the environment in which an API call should be run here
+		env = {'robot':self.robot,'switch_module_activity':self.switch_module_activity}
 		try:
-			exec(command)
+			exec(command,env)
 		except Exception as e:
 			print('there was an error executing your command!',e)
 		finally:
-			print("command recieved was " + str(command))
-
+			print("command received was " + str(command))
 			pass
 
 
@@ -509,7 +295,7 @@ class CommandServer:
 	#1 -> healthy
 	def moduleMonitor(self):
 		self.monitoring_dt = 1
-		self.tolerance = 10000000000000000
+		self.tolerance = trina_settings.settings()['CommandServer']['heartbeat_tolerance']
 		while not self.shut_down_flag:
 			to_restart = []
 
@@ -630,6 +416,130 @@ class CommandLogger(object):
 			print('\n\n\n\n\nQUEUE OVERFLOW!!!! \n\n\n\n\n SOMETHING WRONG WITH THE LOGGER?')
 		else:
 			self.r.rpush(self.key,str([command,time]))
+
+
+def stateReceiver_func(redis_addr,robot_addr):
+	interface = RedisInterface(host=redis_addr)
+	interface.initialize()
+	server = KeyValueStore(interface)
+
+	pos_left = [0,0,0,0,0,0]
+	pos_right = [0,0,0,0,0,0]
+	pos_base = [0,0,0]
+	pos_left_gripper = {}
+	pos_right_gripper = {}
+	pos_torso = {}
+	vel_base = [0,0]
+	vel_right = [0,0,0,0,0,0]
+	vel_left = [0,0,0,0,0,0]
+	posEE_left = {}
+	velEE_left = {}
+	posEE_right = {}
+	velEE_right = {}
+
+	robot = MotionClient(address = robot_addr)
+	res = robot.startup()
+	if not res:
+		print('Failed!')
+
+	mode = robot.mode()
+	codename = robot.codename()
+	components = robot.activeComponents()
+	left_limb_active = ('left_limb' in components)
+	right_limb_active = ('right_limb' in components)
+	base_active = ('base' in components)
+	left_gripper_active = ('left_gripper' in components)
+	right_gripper_active = ('right_gripper' in components)
+	torso_active = ('torso' in components)
+
+	looper = TimedLooper(trina_settings.settings()['CommandServer']['state_receiver_dt'],name='stateReceiver')
+	while looper:
+		try:
+			#t0 = time.time()
+			if(left_limb_active):
+				posEE_left = robot.sensedLeftEETransform()
+				pos_left = robot.sensedLeftLimbPosition()
+				vel_left = robot.sensedLeftLimbVelocity()
+				velEE_left = robot.sensedLeftEEVelocity()
+				global_EEWrench_left = robot.sensedLeftEEWrench('global')
+				local_EEWrench_left = robot.sensedLeftEEWrench('local')
+
+			if(right_limb_active):
+				posEE_right = robot.sensedRightEETransform()
+				pos_right = robot.sensedRightLimbPosition()
+				vel_right = robot.sensedRightLimbVelocity()
+				velEE_right = robot.sensedRightEEVelocity()
+				global_EEWrench_right = robot.sensedRightEEWrench('global')
+				local_EEWrench_right = robot.sensedRightEEWrench('local')
+
+			if(base_active):
+				pos_base = robot.sensedBasePosition()
+				vel_base = robot.sensedBaseVelocity()
+
+			klampt_q = TRINAConfig.get_klampt_model_q(codename,left_limb = pos_left, right_limb = pos_right, base = pos_base)
+			klampt_command_pos = robot.getKlamptCommandedPosition()
+			klampt_sensor_pos = robot.getKlamptSensedPosition()
+			if(left_gripper_active):
+				pos_left_gripper = robot.sensedLeftGripperPosition()
+			if(right_gripper_active):
+				pos_right_gripper = robot.sensedRightGripperPosition()
+			if(torso_active):
+				pos_torso = robot.sensedTorsoPosition()
+
+			#t1 = time.time()
+			#print("Read robot info in time",t1-t0)
+
+			server["ROBOT_INFO"] = {
+				"Started" : robot.isStarted(),
+				"Shutdown" : robot.isShutDown(),
+				"Moving" : True,#robot.moving(),
+				"CartesianDrive" : True,#robot.cartesianDriveFail(),
+				"Components" : components,
+				"Mode" : mode
+			}
+			# server["WORLD"] = world
+			server["ROBOT_STATE"] = {
+				"Position" : {
+					"LeftArm" : pos_left,
+					"RightArm" : pos_right,
+					"Base" : pos_base,
+					"Torso": pos_torso,
+					"LeftGripper" : pos_left_gripper,
+					"RightGripper" : pos_right_gripper,
+					"Robotq": klampt_q
+				},
+				"PositionEE": {
+					"LeftArm" : posEE_left,
+					"RightArm" : posEE_right
+				},
+				"EEWrench":{
+					"LeftArm" :{
+						"global":global_EEWrench_left,
+						"local": local_EEWrench_left
+					},
+					"RightArm" :{
+						"global":global_EEWrench_right,
+						"local": local_EEWrench_right
+					}
+				},
+				"Velocity" : {
+					"LeftArm" : vel_left,
+					"RightArm" : vel_right,
+					"Base" : vel_base
+				},
+				"VelocityEE" : {
+					"LeftArm" : velEE_left,
+					"RightArm" : velEE_right
+				},
+				"KlamptCommandPos" : klampt_command_pos,
+				"KlamptSensedPos" : klampt_sensor_pos
+			}
+			# print('states updated with success!')
+		except Exception as e:
+			print(e)
+		################
+		server['TRINA_TIME'] = time.time()
+	print('\n\n\n\nstopped updating state!!! \n\n\n\n')
 
 
 if __name__=="__main__":

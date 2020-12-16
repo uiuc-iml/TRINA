@@ -49,6 +49,7 @@ class Jarvis:
 		---------------
 		q: a merged list of joint positions, in the order of torso,base,left limb, right limb, left gripper...
 		"""
+		raise NotImplementedError("TODO")
 		return 0
 	
 	def mirror_arm_config(self,config):
@@ -80,7 +81,7 @@ class Jarvis:
 		--------------
 		q: a list of 6 doubles. The desired joint positions.
 		"""
-		command = self.send_command('self.robot.setLeftLimbPosition', str(q))
+		command = self.send_command('robot.setLeftLimbPosition', str(q))
 
 		return 0
 
@@ -93,7 +94,7 @@ class Jarvis:
 		--------------
 		q: a list of 6 doubles. The desired joint positions.
 		"""
-		command = self.send_command('self.robot.setRightLimbPosition', str(q))
+		command = self.send_command('robot.setRightLimbPosition', str(q))
 		return 0
 
 	def setLeftLimbPositionLinear(self, q, duration):
@@ -106,7 +107,7 @@ class Jarvis:
 		q: a list of 6 doubles. The desired joint positions.
 		duration: double. The desired duration.
 		"""
-		command = self.send_command('self.robot.setLeftLimbPositionLinear', str(q), str(duration))
+		command = self.send_command('robot.setLeftLimbPositionLinear', str(q), str(duration))
 		return 0
 
 	def setRightLimbPositionLinear(self, q, duration):
@@ -119,13 +120,13 @@ class Jarvis:
 		q: a list of 6 doubles. The desired joint positions.
 		duration: double. The desired duration.
 		"""
-		command = self.send_command('self.robot.setRightLimbPositionLinear', str(q), str(duration))
+		command = self.send_command('robot.setRightLimbPositionLinear', str(q), str(duration))
 		return 0
 
 	def setVelocity(self, qdot):
 		"""set the velocity of the entire robot, under development rn
 		"""
-		command = self.send_command('self.robot.setVelocity', str(qdot))
+		command = self.send_command('robot.setVelocity', str(qdot))
 
 	def setLeftLimbVelocity(self, qdot):
 		"""Set the left limb joint velocities
@@ -134,7 +135,7 @@ class Jarvis:
 		----------------
 		qdot: a list of 6 doubles. Joint velocities
 		"""
-		command = self.send_command('self.robot.setLeftLimbVelocity', str(qdot))
+		command = self.send_command('robot.setLeftLimbVelocity', str(qdot))
 
 	def setRightLimbVelocity(self, qdot):
 		"""Set the right limb joint velocities
@@ -143,13 +144,13 @@ class Jarvis:
 		----------------
 		qdot: a list of 6 doubles. Joint velocities
 		"""
-		command = self.send_command('self.robot.setRightLimbVelocity', str(qdot))
+		command = self.send_command('robot.setRightLimbVelocity', str(qdot))
 
 	def setLeftEEInertialTransform(self, Ttarget, duration):
 		"""Set the trasform of the arm w.r.t. the base frame, movement complsetLeftLimbCo
 		"""
 		command = self.send_command(
-			'self.robot.setLeftEEInertialTransform', str(Ttarget), str(duration))
+			'robot.setLeftEEInertialTransform', str(Ttarget), str(duration))
 
 	def setLeftEEVelocity(self, v, tool):
 		"""Set the end-effect cartesian velocity, in the base frame.
@@ -165,7 +166,7 @@ class Jarvis:
 		if not tool:
 			tool = [0, 0, 0]
 		command = self.send_command(
-			'self.robot.setLeftEEVelocity', str(v), str(tool))
+			'robot.setLeftEEVelocity', str(v), str(tool))
 
 	def setRightEEInertialTransform(self, Ttarget, duration):
 		"""Set the trasform of the arm w.r.t. the base frame, movement complete in a certain amount of time
@@ -179,7 +180,7 @@ class Jarvis:
 		duration: double. The duration of the movement
 		"""
 		command = self.send_command(
-			'self.robot.setRightEEInertialTransform', str(Ttarget), str(duration))
+			'robot.setRightEEInertialTransform', str(Ttarget), str(duration))
 
 	def setRightEEVelocity(self, v, tool):
 		"""Set the end-effect cartesian velocity, in the base frame.
@@ -195,7 +196,7 @@ class Jarvis:
 		if not tool:
 			tool = [0, 0, 0]
 		command = self.send_command(
-			'self.robot.setRightEEVelocity', str(v), str(tool))
+			'robot.setRightEEVelocity', str(v), str(tool))
 
 	def setBaseTargetPosition(self, q, vel):
 		"""Set the local target position of the base.
@@ -207,7 +208,7 @@ class Jarvis:
 		Vel: double. Desired speed along the path.
 		"""
 		command = self.send_command(
-			'self.robot.setBaseTargetPosition', str(q), str(vel))
+			'robot.setBaseTargetPosition', str(q), str(vel))
 
 	def setBaseVelocity(self, q):
 		"""Set the velocity of the base relative to the local base frame
@@ -216,7 +217,7 @@ class Jarvis:
 		---------------
 		q: a list of 2 doubles. The linear and rotational velocites.
 		"""
-		command = self.send_command('self.robot.setBaseVelocity', str(q))
+		command = self.send_command('robot.setBaseVelocity', str(q))
 
 	def setTorsoTargetPosition(self, q):
 		"""Set the torso target position.
@@ -227,7 +228,7 @@ class Jarvis:
 		--------------
 		q: a list of 2 doubles. The lift and tilt positions.
 		"""
-		command = self.send_command('self.robot.setTorsoTargetPosition', str(q))
+		command = self.send_command('robot.setTorsoTargetPosition', str(q))
 
 	def setLeftGripperPosition(self, position):
 		"""Set the position of the gripper. Moves as fast as possible.
@@ -238,7 +239,7 @@ class Jarvis:
 			the rotation of finger 1&2 (they rotate together)
 		"""
 		command = self.send_command(
-			'self.robot.setLeftGripperPosition', str(position))
+			'robot.setLeftGripperPosition', str(position))
 
 	def setLeftGripperVelocity(self, velocity):
 		"""Set the velocity of the gripper. Moves as fast as possible.
@@ -246,7 +247,7 @@ class Jarvis:
 		###Under development
 		"""
 		command = self.send_command(
-			'self.robot.setLeftGripperVelocity', str(velocity))
+			'robot.setLeftGripperVelocity', str(velocity))
 
 	def isStarted(self):
 		"""Return whether the robot has started
@@ -289,14 +290,14 @@ class Jarvis:
 
 		This is not shutdown. Just a pause.
 		"""
-		command = self.send_command('self.robot.stopMotion')
+		command = self.send_command('robot.stopMotion')
 
 	def resumeMotion(self):
 		"""Unpause the robot.
 
 		After unpausing, the robot is still stationery until some new commands is added
 		"""
-		command = self.send_command('self.robot.resumeMotion')
+		command = self.send_command('robot.resumeMotion')
 
 	def sensedLeftEEWrench(self,frame = 'global'):
 		"""
@@ -333,22 +334,22 @@ class Jarvis:
 	def openLeftRobotiqGripper(self):
 		""" Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.
 		"""
-		command = self.send_command('self.robot.openLeftRobotiqGripper')
+		command = self.send_command('robot.openLeftRobotiqGripper')
 
 	def closeLeftRobotiqGripper(self):
 		""" close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.
 		"""
-		command = self.send_command('self.robot.closeLeftRobotiqGripper')
+		command = self.send_command('robot.closeLeftRobotiqGripper')
 
 	def openRightRobotiqGripper(self):
 		""" Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.
 		"""
-		command = self.send_command('self.robot.openRightRobotiqGripper')
+		command = self.send_command('robot.openRightRobotiqGripper')
 
 	def closeRightRobotiqGripper(self):
 		""" close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.
 		"""
-		command = self.send_command('self.robot.closeRightRobotiqGripper')
+		command = self.send_command('robot.closeRightRobotiqGripper')
 
 	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6):
 		"""Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -368,7 +369,7 @@ class Jarvis:
 		-------------
 		None
 		"""
-		command = self.send_command('self.robot.setLeftEETransformImpedance',
+		command = self.send_command('robot.setLeftEETransformImpedance',
 		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband))
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
@@ -389,7 +390,7 @@ class Jarvis:
 		-------------
 		None
 		"""
-		command = self.send_command('self.robot.setRightEETransformImpedance',
+		command = self.send_command('robot.setRightEETransformImpedance',
 		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband))
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
@@ -410,7 +411,7 @@ class Jarvis:
 		-------------
 		None
 		"""
-		command = self.send_command('self.robot.setLeftLimbPositionImpedance',
+		command = self.send_command('robot.setLeftLimbPositionImpedance',
 		 str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband))
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
@@ -431,7 +432,7 @@ class Jarvis:
 		-------------
 		None
 		"""
-		command = self.send_command('self.robot.setRightLimbPositionImpedance',
+		command = self.send_command('robot.setRightLimbPositionImpedance',
 				str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband))		
 
 	def getWorld(self):
@@ -664,7 +665,7 @@ class Jarvis:
 		"""Changes the status of the module
 		"""
 		command = self.send_command(
-			'self.switch_module_activity', str(to_activate), str(to_deactivate))
+			'switch_module_activity', str(to_activate), str(to_deactivate))
 
 	def getTrinaTime(self):
 		"""Returns the trina time
