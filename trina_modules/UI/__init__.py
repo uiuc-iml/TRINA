@@ -10,8 +10,10 @@ else:
 path = os.path.expanduser('~/TRINA/Motion/trina_modules/UI')
 sys.path.append(path)
 
-import UI
+import RemoteUI
+RemoteUI = reload(RemoteUI)
+from RemoteUI import RemoteUIModule
 
-UI = reload(UI)
-
-from UI import UI
+import LocalUI
+LocalUI = reload(LocalUI)
+from LocalUI import LocalUIModule

@@ -17,30 +17,20 @@ import threading
 import sys
 import time
 import redis
+from .jarvis_api_file import JarvisAPI
 
-
-class Jarvis:
-
-	def __init__(self, name, sensor_module=None, trina_queue=None, host="localhost"):
-		self.interface = RedisInterface(host=host)
-		self.interface.initialize()
-		self.server = KeyValueStore(self.interface)
-		if(trina_queue == None):
-			self.trina_queue = TrinaQueue(str(name))
-		else:
-			self.trina_queue = trina_queue
-		self.name = str(name)
-		self.server['ACTIVITY_STATUS'][self.name] = str('idle')
-		self.sensor_module = sensor_module
-		self.server['ROBOT_COMMAND'][self.name] = []
+class JarvisMotionAPI(JarvisAPI):
+	#handled by superclass
+	#def __init__(self,*args,**kwargs):
+	#	JarvisAPI.__init__(self,*args,**kwargs)
 
 	def motionMode(self):
 		"""Returns the Motion Server mode, either 'Kinematic' or 'Physical'."""
-		return self.server['ROBOT_INFO']['Mode'].read()
+		return self._redisGet(['ROBOT_INFO','Mode'])
 
 	def activeComponents(self):
 		"""Returns a list of active components as queried by the Motion Server."""
-		return self.server['ROBOT_INFO']['Components'].read()
+		return self._redisGet(['ROBOT_INFO','Components'])
 		
 	def setPosition(self, q):
 		"""set the position of the entire robot
@@ -81,9 +71,7 @@ class Jarvis:
 		--------------
 		q: a list of 6 doubles. The desired joint positions.
 		"""
-		command = self.send_command('robot.setLeftLimbPosition', str(q))
-
-		return 0
+		return self._moduleCommand('setLeftLimbPosition', q)
 
 	def setRightLimbPosition(self, q):
 		"""Set the right limb joint positions, and the limb moves as fast as possible
@@ -94,8 +82,7 @@ class Jarvis:
 		--------------
 		q: a list of 6 doubles. The desired joint positions.
 		"""
-		command = self.send_command('robot.setRightLimbPosition', str(q))
-		return 0
+		return self._moduleCommand('setRightLimbPosition', q)
 
 	def setLeftLimbPositionLinear(self, q, duration):
 		"""Set Left limb to moves to a configuration in a certain amount of time at constant speed
@@ -107,8 +94,7 @@ class Jarvis:
 		q: a list of 6 doubles. The desired joint positions.
 		duration: double. The desired duration.
 		"""
-		command = self.send_command('robot.setLeftLimbPositionLinear', str(q), str(duration))
-		return 0
+		return self._moduleCommand('setLeftLimbPositionLinear', q, duration)
 
 	def setRightLimbPositionLinear(self, q, duration):
 		"""Set right limb to moves to a configuration in a certain amount of time at constant speed
@@ -120,13 +106,12 @@ class Jarvis:
 		q: a list of 6 doubles. The desired joint positions.
 		duration: double. The desired duration.
 		"""
-		command = self.send_command('robot.setRightLimbPositionLinear', str(q), str(duration))
-		return 0
+		return self._moduleCommand('setRightLimbPositionLinear', q, duration)
 
 	def setVelocity(self, qdot):
 		"""set the velocity of the entire robot, under development rn
 		"""
-		command = self.send_command('robot.setVelocity', str(qdot))
+		return self._moduleCommand('setVelocity',qdot)
 
 	def setLeftLimbVelocity(self, qdot):
 		"""Set the left limb joint velocities
@@ -135,7 +120,7 @@ class Jarvis:
 		----------------
 		qdot: a list of 6 doubles. Joint velocities
 		"""
-		command = self.send_command('robot.setLeftLimbVelocity', str(qdot))
+		return self._moduleCommand('setLeftLimbVelocity',qdot)
 
 	def setRightLimbVelocity(self, qdot):
 		"""Set the right limb joint velocities
@@ -144,15 +129,14 @@ class Jarvis:
 		----------------
 		qdot: a list of 6 doubles. Joint velocities
 		"""
-		command = self.send_command('robot.setRightLimbVelocity', str(qdot))
+		return self._moduleCommand('setRightLimbVelocity', qdot)
 
 	def setLeftEEInertialTransform(self, Ttarget, duration):
 		"""Set the trasform of the arm w.r.t. the base frame, movement complsetLeftLimbCo
 		"""
-		command = self.send_command(
-			'robot.setLeftEEInertialTransform', str(Ttarget), str(duration))
+		return self._moduleCommand('setLeftEEInertialTransform', Ttarget, duration)
 
-	def setLeftEEVelocity(self, v, tool):
+	def setLeftEEVelocity(self, v, tool=None):
 		"""Set the end-effect cartesian velocity, in the base frame.
 
 		Implemented using position control and IK. Will keep moving until infeasible.
@@ -163,10 +147,9 @@ class Jarvis:
 		v: A list of 6 doubled. v[0:3] is the desired cartesian position velocities and v[3:6] is the desired rotational velocity
 
 		"""
-		if not tool:
+		if tool is None:
 			tool = [0, 0, 0]
-		command = self.send_command(
-			'robot.setLeftEEVelocity', str(v), str(tool))
+		return self._moduleCommand('setLeftEEVelocity', v, tool)
 
 	def setRightEEInertialTransform(self, Ttarget, duration):
 		"""Set the trasform of the arm w.r.t. the base frame, movement complete in a certain amount of time
@@ -179,10 +162,9 @@ class Jarvis:
 		Ttarget: A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list
 		duration: double. The duration of the movement
 		"""
-		command = self.send_command(
-			'robot.setRightEEInertialTransform', str(Ttarget), str(duration))
+		return self._moduleCommand('setRightEEInertialTransform', Ttarget, duration)
 
-	def setRightEEVelocity(self, v, tool):
+	def setRightEEVelocity(self, v, tool=None):
 		"""Set the end-effect cartesian velocity, in the base frame.
 
 		Implemented using position control and IK. Will keep moving until infeasible.
@@ -193,10 +175,9 @@ class Jarvis:
 		v: A list of 6 doubled. v[0:3] is the desired cartesian position velocities and v[3:6] is the desired rotational velocity
 
 		"""
-		if not tool:
+		if tool is None:
 			tool = [0, 0, 0]
-		command = self.send_command(
-			'robot.setRightEEVelocity', str(v), str(tool))
+		return self._moduleCommand('setRightEEVelocity', v, tool)
 
 	def setBaseTargetPosition(self, q, vel):
 		"""Set the local target position of the base.
@@ -207,8 +188,7 @@ class Jarvis:
 		q: a list of 3 doubles. The desired x,y position and rotation.
 		Vel: double. Desired speed along the path.
 		"""
-		command = self.send_command(
-			'robot.setBaseTargetPosition', str(q), str(vel))
+		return self._moduleCommand('setBaseTargetPosition', q, vel)
 
 	def setBaseVelocity(self, q):
 		"""Set the velocity of the base relative to the local base frame
@@ -217,7 +197,7 @@ class Jarvis:
 		---------------
 		q: a list of 2 doubles. The linear and rotational velocites.
 		"""
-		command = self.send_command('robot.setBaseVelocity', str(q))
+		return self._moduleCommand('setBaseVelocity', q)
 
 	def setTorsoTargetPosition(self, q):
 		"""Set the torso target position.
@@ -228,7 +208,7 @@ class Jarvis:
 		--------------
 		q: a list of 2 doubles. The lift and tilt positions.
 		"""
-		command = self.send_command('robot.setTorsoTargetPosition', str(q))
+		return self._moduleCommand('setTorsoTargetPosition', q)
 
 	def setLeftGripperPosition(self, position):
 		"""Set the position of the gripper. Moves as fast as possible.
@@ -238,16 +218,14 @@ class Jarvis:
 		position: a list of 4 doubles, the angles of finger 1,2 , the angle of the thumb,
 			the rotation of finger 1&2 (they rotate together)
 		"""
-		command = self.send_command(
-			'robot.setLeftGripperPosition', str(position))
+		return self._moduleCommand('setLeftGripperPosition', position)
 
 	def setLeftGripperVelocity(self, velocity):
 		"""Set the velocity of the gripper. Moves as fast as possible.
 		#TODO
 		###Under development
 		"""
-		command = self.send_command(
-			'robot.setLeftGripperVelocity', str(velocity))
+		return self._moduleCommand('setLeftGripperVelocity', velocity)
 
 	def isStarted(self):
 		"""Return whether the robot has started
@@ -256,7 +234,7 @@ class Jarvis:
 		------------
 		bool
 		"""
-		return self.server['ROBOT_INFO']['Started'].read()
+		return self._redisGet(['ROBOT_INFO','Started'])
 
 	def isShutDown(self):
 		"""Return whether the robot is shutdown
@@ -265,7 +243,7 @@ class Jarvis:
 		------------
 		bool
 		"""
-		return self.server['ROBOT_INFO']['Shutdown'].read()
+		return self._redisGet(['ROBOT_INFO','Shutdown'])
 
 	def moving(self):
 		"""Returns true if the robot is currently moving.
@@ -274,7 +252,7 @@ class Jarvis:
 		------------
 		bool
 		"""		
-		return self.server['ROBOT_INFO']['Moving'].read()
+		return self._redisGet(['ROBOT_INFO','Moving'])
 
 	def mode(self):
 		"""Returns the current mode. "Kinematic" or "Physical"
@@ -283,21 +261,21 @@ class Jarvis:
 		------------
 		string
 		"""
-		return self.server['ROBOT_INFO']['MODE'].read()
+		return self._redisGet(['ROBOT_INFO','MODE'])
 
 	def stopMotion(self):
 		"""Pause the motion of the robot, starting from the next control loop.
 
 		This is not shutdown. Just a pause.
 		"""
-		command = self.send_command('robot.stopMotion')
+		return self._moduleCommand('stopMotion')
 
 	def resumeMotion(self):
 		"""Unpause the robot.
 
 		After unpausing, the robot is still stationery until some new commands is added
 		"""
-		command = self.send_command('robot.resumeMotion')
+		return self._moduleCommand('resumeMotion')
 
 	def sensedLeftEEWrench(self,frame = 'global'):
 		"""
@@ -311,10 +289,7 @@ class Jarvis:
 		Note:
 		The attachment weight to the ft sensor can be corrected by U5 directly
 		"""
-		if frame == 'global':
-			return self.server['ROBOT_STATE']['EEWrench']['LeftArm']['global'].read()
-		elif frame == 'local':
-			return self.server['ROBOT_STATE']['EEWrench']['LeftArm']['local'].read()
+		return self._redisGet(['ROBOT_STATE','EEWrench','LeftArm'] + [frame])
 
 	def sensedRightEEWrench(self,frame = 'global'):
 		"""
@@ -326,30 +301,27 @@ class Jarvis:
 		wrench: list of 6 floats, expressed either in global or local EE coordinate
 
 		"""
-		if frame == 'global':
-			return self.server['ROBOT_STATE']['EEWrench']['RightArm']['global'].read()
-		elif frame == 'local':
-			return self.server['ROBOT_STATE']['EEWrench']['RightArm']['local'].read()
+		return self._redisGet(['ROBOT_STATE','EEWrench','RightArm'] + [frame])
 
 	def openLeftRobotiqGripper(self):
 		""" Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.
 		"""
-		command = self.send_command('robot.openLeftRobotiqGripper')
+		return self._moduleCommand('openLeftRobotiqGripper')
 
 	def closeLeftRobotiqGripper(self):
 		""" close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.
 		"""
-		command = self.send_command('robot.closeLeftRobotiqGripper')
+		return self._moduleCommand('closeLeftRobotiqGripper')
 
 	def openRightRobotiqGripper(self):
 		""" Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.
 		"""
-		command = self.send_command('robot.openRightRobotiqGripper')
+		return self._moduleCommand('openRightRobotiqGripper')
 
 	def closeRightRobotiqGripper(self):
 		""" close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.
 		"""
-		command = self.send_command('robot.closeRightRobotiqGripper')
+		return self._moduleCommand('closeRightRobotiqGripper')
 
 	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6):
 		"""Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -369,8 +341,8 @@ class Jarvis:
 		-------------
 		None
 		"""
-		command = self.send_command('robot.setLeftEETransformImpedance',
-		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband))
+		return self._moduleCommand('setLeftEETransformImpedance',
+		 (Tg),(K),(M),(B),(x_dot_g),(deadband))
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		"""Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -390,8 +362,8 @@ class Jarvis:
 		-------------
 		None
 		"""
-		command = self.send_command('robot.setRightEETransformImpedance',
-		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband))
+		return self._moduleCommand('setRightEETransformImpedance',
+		 (Tg),(K),(M),(B),(x_dot_g),(deadband))
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		"""Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -411,8 +383,8 @@ class Jarvis:
 		-------------
 		None
 		"""
-		command = self.send_command('robot.setLeftLimbPositionImpedance',
-		 str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband))
+		return self._moduleCommand('setLeftLimbPositionImpedance',
+		 q,(K),(M),(B),(x_dot_g),(deadband))
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		"""Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -432,17 +404,8 @@ class Jarvis:
 		-------------
 		None
 		"""
-		command = self.send_command('robot.setRightLimbPositionImpedance',
-				str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband))		
-
-	def getWorld(self):
-		""" Return the simulated robot
-
-		Return:
-		-------------
-		The Klampt world of the simulated robot.
-		"""
-		return self.server["WORLD"].read()
+		return self._moduleCommand('setRightLimbPositionImpedance',
+				q,(K),(M),(B),(x_dot_g),(deadband))		
 
 	def cartesianDriveFail(self):
 		""" Return if cartedian drive has failed or not
@@ -451,7 +414,7 @@ class Jarvis:
 		----------------
 		bool
 		"""
-		return self.server["ROBOT_INFO"]["CartesianDrive"].read()
+		return self._redisGet(["ROBOT_INFO","CartesianDrive"])
 
 	def sensedLeftEEVelocity(self, local_pt=[0, 0, 0]):
 		"""Return the EE translational and rotational velocity  w.r.t. the base DataFrame
@@ -465,7 +428,7 @@ class Jarvis:
 		(v,w), a tuple of 2 velocity vectors
 
 		"""
-		return self.server["ROBOT_STATE"]["VelocityEE"]["LeftArm"].read()
+		return self._redisGet(["ROBOT_STATE","VelocityEE","LeftArm"])
 
 	def sensedRightEEVelocity(self, local_pt=[0, 0, 0]):
 		"""Return the EE translational and rotational velocity  w.r.t. the base DataFrame
@@ -479,25 +442,7 @@ class Jarvis:
 		(v,w), a tuple of 2 velocity vectors
 
 		"""
-		return self.server["ROBOT_STATE"]["VelocityEE"]["RightArm"].read()
-
-	def getUIState(self):
-		""" Return UI state dictionary
-
-		Return:
-		----------------
-		dict
-		"""
-		return self.server["UI_STATE"].read()
-
-	def getRobotState(self):
-		""" Return robot state dictionary
-
-		Return:
-		----------------
-		dict
-		"""
-		return self.server["ROBOT_STATE"].read()
+		return self._redisGet(["ROBOT_STATE","VelocityEE","RightArm"])
 
 	def getComponents(self):
 		""" Return robot component dictionary
@@ -506,22 +451,17 @@ class Jarvis:
 		----------------
 		dict
 		"""
-		return self.server["ROBOT_INFO"]["Components"].read()
-
-	def addRobotTelemetry(self, value):
-		""" Add UI robot telemetry value
-		"""
-		self.server["robotTelemetry"] = value
+		return self._redisGet(["ROBOT_INFO","Components"])
 
 	def getKlamptSensedPosition(self):
 		"""Return the entire sensed Klampt position, in Klampt format.
 		"""
-		return self.server["ROBOT_STATE"]["KlamptSensedPos"].read()
+		return self._redisGet(["ROBOT_STATE","KlamptSensedPos"])
 
 	def getKlamptCommandedPosition(self):
 		"""Return the entire commanded position, in Klampt format. The base returns velocity instead
 		"""
-		return self.server["ROBOT_STATE"]["KlamptCommandPos"].read()
+		return self._redisGet(["ROBOT_STATE","KlamptCommandPos"])
 
 	def sensedBaseVelocity(self):
 		"""Returns the current base velocity
@@ -530,7 +470,7 @@ class Jarvis:
 		-----------
 		A list of 2 doubles. Linear and Rotational velocities.
 		"""
-		return self.server["ROBOT_STATE"]["Velocity"]["Base"].read()
+		return self._redisGet(["ROBOT_STATE","Velocity","Base"])
 
 	def sensedLeftLimbVelocity(self):
 		""" Return the current limb joint velocities
@@ -539,7 +479,7 @@ class Jarvis:
 		---------------
 		A list of 6 doubles. The joint velocities.
 		"""
-		return self.server["ROBOT_STATE"]["Velocity"]["LeftArm"].read()
+		return self._redisGet(["ROBOT_STATE","Velocity","LeftArm"])
 
 	def sensedRightLimbVelocity(self):
 		""" Return the current limb joint velocities
@@ -548,7 +488,7 @@ class Jarvis:
 		---------------
 		A list of 6 doubles. The joint velocities.
 		"""
-		return self.server["ROBOT_STATE"]["Velocity"]["RightArm"].read()
+		return self._redisGet(["ROBOT_STATE","Velocity","RightArm"])
 
 	def sensedBasePosition(self):
 		"""Returns the current base position. Zero position is the position when the base is started.
@@ -558,7 +498,7 @@ class Jarvis:
 		A list of 3 doubles. Position and rotation.
 
 		"""
-		return self.server["ROBOT_STATE"]["Position"]["Base"].read()
+		return self._redisGet(["ROBOT_STATE","Position","Base"])
 
 	def sensedTorsoPosition(self):
 		"""Returns the current torso position
@@ -567,7 +507,7 @@ class Jarvis:
 		-------------
 		A list of 2 doubles. The positions.
 		"""
-		return self.server["ROBOT_STATE"]["Position"]["Torso"].read()
+		return self._redisGet(["ROBOT_STATE","Position","Torso"])
 
 	def sensedLeftEETransform(self):
 		"""Return the transform w.r.t. the base frame
@@ -576,7 +516,7 @@ class Jarvis:
 		-------------
 		(R,t)
 		"""
-		return self.server["ROBOT_STATE"]["PositionEE"]["LeftArm"].read()
+		return self._redisGet(["ROBOT_STATE","PositionEE","LeftArm"])
 
 	def sensedRightEETransform(self):
 		"""Return the transform w.r.t. the base frame
@@ -585,19 +525,19 @@ class Jarvis:
 		-------------
 		(R,t)
 		"""
-		return self.server["ROBOT_STATE"]["PositionEE"]["RightArm"].read()
+		return self._redisGet(["ROBOT_STATE","PositionEE","RightArm"])
 
 	def sensedLeftGripperPosition(self):
 		"""Return the current positions of the fingers.
 		#TODO
 		###Under development
 		"""
-		return self.server["ROBOT_STATE"]["Position"]["LeftGripper"].read()
+		return self._redisGet(["ROBOT_STATE","Position","LeftGripper"])
 
 	def sensedRobotq(self):
 		"""Return the Robotq position.
 		"""
-		return self.server["ROBOT_STATE"]["Position"]["Robotq"].read()
+		return self._redisGet(["ROBOT_STATE","Position","Robotq"])
 
 	def sensedRightLimbPosition(self):
 		"""The current joint positions of the right limb
@@ -606,7 +546,7 @@ class Jarvis:
 		--------------
 		A list of 6 doubles. The limb configuration.
 		"""
-		return self.server["ROBOT_STATE"]["Position"]["RightArm"].read()
+		return self._redisGet(["ROBOT_STATE","Position","RightArm"])
 
 	def sensedLeftLimbPosition(self):
 		"""The current joint positions of the left limb
@@ -615,84 +555,17 @@ class Jarvis:
 		--------------
 		A list of 6 doubles. The limb configuration.
 		"""
-		return self.server["ROBOT_STATE"]["Position"]["LeftArm"].read()
+		return self._redisGet(["ROBOT_STATE","Position","LeftArm"])
 
-	def getActivityStatus(self):
-		"""Returns the module activity 
 
-		Return:
-		--------------
-		dict
-		"""
-		return self.server['ACTIVITY_STATUS'][self.name].read()
-
-	def get_point_clouds(self):
-		"""Returns the point clouds from all cameras
-
-		Return:
-		--------------
-		point clouds
-		"""
-		return self.sensor_module.get_point_clouds()
-
-	def get_rgbd_images(self):
-		"""Returns the RGBD cameras from all cameras
-
-		Return:
-		--------------
-		images
-		"""
-		return self.sensor_module.get_rgbd_images()
-
-	def send_command(self, command, *args):
-		final_string = str(command) + '('
-		for index, arg in enumerate(args):
-			if(index != len(args)-1):
-				final_string += '{},'
-			else:
-				final_string += '{}'
-		final_string = (final_string + ')')
-		final_string = final_string.format(*args)
-		self.trina_queue.push(final_string)
-		print('sending ',final_string)
-
-	def log_health(self, status=True):
-		"""Add the health log of the module
-		"""
-		self.server["HEALTH_LOG"][self.name] = [status, time.time()]
-
-	def changeActivityStatus(self, to_activate, to_deactivate=[]):
-		"""Changes the status of the module
-		"""
-		command = self.send_command(
-			'switch_module_activity', str(to_activate), str(to_deactivate))
-
-	def getTrinaTime(self):
-		"""Returns the trina time
-		"""
-		return self.server['TRINA_TIME'].read()
-
-############################# All Mighty divider between motion and UI ###############################
-	def sendRayClickUI(self):
+class JarvisUIAPI(JarvisAPI):
+	def getRayClick(self):
 
 		"""once this function is called, the UI will ask the user to click twice on the map, and sending back 
 		2 ray objects according to the user clicks. first one for destination, second one for calibration
 		return:
-			id: (str) id for ui feedback
-		blocking?:
-			no
-		"""
-		id = '$' + uuid.uuid1().hex
-		self.server['UI_FEEDBACK'][str(id)] = {'REPLIED': False, 'MSG': ''}
-		# ask the user to click on a destination in the map, returns 2 rays in reem
-		self._do_rpc({'funcName': 'getRayClick', 'args': {'id': str(id)}})
-		return id
-		
-	def getRayClickUI(self,id):
-		"""get the feedback of Ray Click of id. 
-		return:
-			'NOT READY': (str) if the msg is not ready
-			or
+			JarvisRpcPromise, which will give None if the user has canceled, but otherwise will give a pair
+			of rays in the format
 			{
 				'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
 							'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
@@ -702,29 +575,7 @@ class Jarvis:
 		blocking?:
 			no
 		"""
-		return self.getFeedback(id)
-
-	def sendAndGetRayClickUI(self):
-		"""once this function is called, the UI will ask the user to click twice on the map, and sending back 
-		2 ray objects according to the user clicks. first one for destination, second one for calibration
-		
-		return:
-			
-			{
-				'FIRST_RAY': {'destination': [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],
-							'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]},
-				'SECOND_RAY': {'destination': [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],
-							'source': [12.653596500469428, 1.6440497080649081, 5.851982763380186]}
-			}
-		blocking?:
-			yes
-		"""
-		id = '$' + uuid.uuid1().hex
-		self.server['UI_FEEDBACK'][str(id)] = {'REPLIED': False, 'MSG': ''}
-		# ask the user to click on a destination in the map, returns 2 rays in reem
-		self._do_rpc({'funcName': 'getRayClick', 'args': {'id': str(id)}})
-		reply = self.checkFeedback(id)
-		return reply
+		return self._redisRpc('getRayClick')
 
 	def addTextUI(self, name, text, color, size):
 		"""add text to specfified location on UI screen. 
@@ -734,58 +585,22 @@ class Jarvis:
 			color: (list) rgb value [0,0,0]
 			size: (int) font size
 		return:
-			name: (str) the name/id the user gave 
+			None
 		blocking?:
 			no
 		"""
-		self._do_rpc({'funcName': 'addText', 'args': {
-						'name': name, 'color': color, 'size': size,  'text': text}})
-		return name
+		return self._redisRpcNoReply('addText',name,text,color,size)
 
 	def sendConfirmationUI(self,title,text):
 		"""once this function is called, the UI will display a confimation window with specified title and text, 
 		
 		return:
-			id: (str) id for ui feedback
+			JarvisRpcPromise, which will give a string, either 'YES' or 'NO'
 		blocking?:
 			no
 		"""
-		id = '$' + uuid.uuid1().hex
-		self.server['UI_FEEDBACK'][str(id)] = {'REPLIED': False, 'MSG': ''}
-		self._do_rpc({'funcName': 'addConfirmation', 'args': {
-						'id': str(id), 'title': title, 'text': text}})
-		return id
+		return self._redisRpc('addConfirmation', title, text)
 		
-	def getConfirmationUI(self,id):
-		"""get the feedback of Confirmation Window of id. 
-		return:
-			'NOT READY': (str) if the msg is not ready
-			or
-			(str) 'YES' or 'NO' if msg is ready
-		blocking?:
-			no
-		"""
-		return self.getFeedback(id)
-
-
-	def sendAndGetConfirmationUI(self,title,text):
-		"""once this function is called, the UI will display a confimation window with specified title and text, 
-			a string of 'YES' or "NO" is returned
-		args:
-			text: (str) content you wish to add
-			title: (str) window title
-		return:
-			(str) 'YES' or 'NO'
-		blocking?:
-			yes
-		"""
-		id = '$' + uuid.uuid1().hex
-		self.server['UI_FEEDBACK'][str(id)] = {'REPLIED': False, 'MSG': ''}
-		self._do_rpc({'funcName': 'addConfirmation', 'args': {
-						'id': str(id), 'title': title, 'text': text}})
-		reply = self.checkFeedback(id)
-		return reply
-
 	def sendTrajectoryUI(self,trajectory,animate = False):
 		"""send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once 
 		
@@ -793,14 +608,12 @@ class Jarvis:
 			trajectory: (klampt obj) the traj calculated
 			animate: (bool) if user wants to animate the path
 		return:
-			nothing
+			None
 		blocking?:
 			no
 		"""
 		trajectory = io.loader.toJson(trajectory, 'Trajectory')
-		self._do_rpc({'funcName': 'sendTrajectory', 'args': {
-						'trajectory': trajectory, 'animate': animate}})
-		return
+		return self._redisRpcNoReply('sendTrajectory',trajectory,animate)
 
 	def addButtonUI(self, name, text):
 		"""add a button to the UI window
@@ -808,15 +621,11 @@ class Jarvis:
 			name: (str)  id for the button object
 			text: (str) button label text
 		return:
-			name: the id user gave
-		
+			None		
 		blocking?:
 			no
 		"""
-		id = '$'+ name
-		self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':False, 'MSG':''}
-		self._do_rpc({'funcName':'addButton','args':{'name':name, 'text':text}})
-		return name
+		self._redisRpcNoReply('addButton',name,text)
 
 	def getButtonClickUI(self,name):
 		"""returns True if button with specified name is clicked
@@ -828,12 +637,7 @@ class Jarvis:
 		blocking?:
 			no
 		"""
-		id = '$' + name
-		reply = self.getFeedback(id)
-		if reply:
-			self.server['UI_FEEDBACK'][str(id)] = {
-				'REPLIED': True, 'MSG': False}
-		return reply
+		return self._redisGet(['UI_STATE',name])
 
 	def addPromptUI(self,title,text):
 		id = '$'+ uuid.uuid1().hex
@@ -861,32 +665,127 @@ class Jarvis:
 			self.server['UI_FEEDBACK']['move-to-load-signal']['REPLIED'] = False
 			return True, name
 
-	def checkFeedback(self,id):
-		while not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():
-			continue
-		return self.server['UI_FEEDBACK'][str(id)]['MSG'].read()
+	def addRobotTelemetry(self, value):
+		""" Add UI robot telemetry value
+		"""
+		self._redisSet(["robotTelemetry"],value)
 
-	def getFeedback(self,id):
-		if not self.server['UI_FEEDBACK'][str(id)]['REPLIED'].read():
-			return 'NOT READY'
-		return self.server['UI_FEEDBACK'][str(id)]['MSG'].read()
 
-	def _do_rpc(self,msg):
-		msg["from"] = self.name
-		commandQueue = self.server["UI_END_COMMAND"].read()
-		commandQueue.append(msg)
-		self.server["UI_END_COMMAND"] = commandQueue
-		print("commandQueue", commandQueue)
-		time.sleep(0.0001)
-		
-# extra trina queue class:
+class Jarvis(JarvisAPI):
+	"""Currently implemented APIs are command_server (top level APIs), motion, and sensors.
 
-class TrinaQueue(object):
+	Usage:
+		jarvis = [Jarvis instance, set up for you by command_server]
+		components = jarvis.robot.components()
+		mode = jarvis.robot.mode()
+		jarvis.ui.getRayClick()
+		etc...
+	"""
+	def __init__(self, name, apis=None, server=None, trina_queue=None):
+		if server is None:
+			#initialize
+			try:
+				from Settings import trina_settings
+			except ImportError:
+				import sys,os
+				sys.path.append(os.path.expanduser('~/TRINA'))
+				from Settings import trina_settings
+			redis_ip = trina_settings.redis_server_ip()
+			interface = RedisInterface(host=redis_ip)
+			interface.initialize()
+			server = KeyValueStore(interface)
+			trina_queue = RedisQueue(name,redis_ip)
+			#initialize basic APIs available to the module
+			apis = dict()
+			apis['robot'] = JarvisMotionAPI('robot',name,server,trina_queue)
+			apis['ui'] = JarvisUIAPI('ui',name,server,trina_queue)
+			server['ACTIVITY_STATUS'][name] = 'idle'
+			server['ROBOT_COMMAND'][name] = []
+		JarvisAPI.__init__(self,'command_server',name,server,trina_queue)
+		self.name = name
+		self.apis = apis
+		if apis is not None:
+			for apiname,apihandle in apis.items():
+				assert apiname not in self.__dict__,"Can't define a module called "+apiname+" because it conflicts with an Jarvis attribute"
+				setattr(self,apiname,apihandle)
+
+	def log_health(self, status=True):
+		"""Add the health log of the module
+		"""
+		self._redisSet(["HEALTH_LOG",self.name],[status, time.time()])
+
+
+	def getActivityStatus(self):
+		"""Returns the module activity 
+
+		Return:
+		--------------
+		dict
+		"""
+		return self._redisGet(['ACTIVITY_STATUS',self.name])
+
+	def changeActivityStatus(self, to_activate, to_deactivate=[]):
+		"""Changes the status of the module
+		"""
+		self._moduleCommand('switch_module_activity', to_activate, to_deactivate)
+
+	def getTrinaTime(self):
+		"""Returns the trina time
+		"""
+		return self._redisGet(['TRINA_TIME'])
+
+	def getUIState(self):
+		""" Return UI state dictionary
+
+		Return:
+		----------------
+		dict
+		"""
+		return self._redisGet(["UI_STATE"])
+
+	def getRobotState(self):
+		""" Return robot state dictionary
+
+		Return:
+		----------------
+		dict
+		"""
+		return self._redisGet(["ROBOT_STATE"])
+
+	def getSimulatedWorld(self):
+		""" Return the simulated world
+
+		Return:
+		-------------
+		The Klampt world of the simulated robot.
+		"""
+		return self._redisGet(["SIM_WORLD"])
+
+
+
+class RedisQueue(object):
+	"""Pushes from / reads from a module-specific queue on a Redis server.
+
+	Thread-safe (redis clients are assumed thread safe).
+	"""
 	def __init__(self,key, host = 'localhost', port = 6379):
 		self.r = redis.Redis(host = host, port = port)
 		self.key = key
 	def push(self,item):
 		self.r.rpush(self.key,item)
 
+class RedisQueueReader(object):
+	"""Write from a queue on a Redis server."""
+	def __init__(self, host = 'localhost', port = 6379):
+		self.r = redis.Redis(host = host, port = port)
+	def read(self,key):
+		with self.r.pipeline() as pipe:
+			times = self.r.llen(key)
+			for i in range(times):
+				pipe.lpop(key)
+			res = pipe.execute()
+		return res
+		
+
 if __name__=="__main__":
-	server = Jarvis()
+	server = Jarvis('untitled')

@@ -12,15 +12,17 @@ from klampt.model import ik,coordinates,config,trajectory,collide
 import json
 from SimpleWebSocketServer import SimpleWebSocketServer,WebSocket
 
+from Jarvis import JarvisAPIModule,JarvisUIAPI,JarvisModuleBase
+import weakref
 
-class UI:
+class RemoteUIModule(JarvisAPIModule):
 
-    def __init__(self,simulation_level = 1):
+    def __init__(self,Jarvis):
         """
         This class serves to provide communications between the internal TRINA system and the
-UI end. Such communications provide TRINA app developers UI related commands such as add
-texts, send trajectories while also report UI operator input to the internal TRINA system such as
-key presses and headsets orientations.
+        UI end. Such communications provide TRINA app developers UI related commands such as add
+        texts, send trajectories while also report UI operator input to the internal TRINA system such as
+        key presses and headsets orientations.
         --------
         simulation_level: the UI End specified to visualize TRINA command and sends UI Input:
             UI END 1: This is a simplified UI end that visualize all the UI commands. It tries to decouple
@@ -32,42 +34,31 @@ key presses and headsets orientations.
             UI END 3: This part will be developed by VRotors. A toy example via Unity might be built
                     for reference for the scope of this project.
         """
-        self.simulation_level = simulation_level
+        JarvisModuleBase.__init__(self,Jarvis)
+        self.ws_server = SimpleWebSocketServer('', 8000, lambda *args:UIStateReciever(self,*args))
+        self.startCustomThread(self._ws_server_loop)
+        
+    #note: this is handled internally to CommandServer too
+    def api(self,**kwargs):
+        return JarvisUIAPI('ui',**kwargs)
 
-        self.processes = []
+    def _ws_server_loop(self):
+        self.ws_server.serveforever()
 
-
-    def shutdown(self):
-        print('shutting down UI')
-        for i in self.processes:
-            i.terminate()
-
-    def return_processes(self):
-        return self.processes
+    def terminate(self):
+        self.ws_server.close()
+        JarvisAPIModule.terminate()
 
 
 class UIStateReciever(WebSocket) : 
     """the websocket server implementation for recieving UI JSON state from the UI 
         
     """
+    def __init__(self,module,*args):
+        WebSocket.__init__(self,*args)
+        self.module = weakref.proxy(module)
+        self.reem_server = module.jarvis._reem_server
     def handleMessage(self) : 
-        try:
-            self.commandQueue = self.server["UI_END_COMMAND"].read()
-            if  self.commandQueue:
-                command = self.commandQueue[0]
-                self.commandQueue.pop(0)
-                self.server["UI_END_COMMAND"] = self.commandQueue
-                if command['from'] != self.mode:
-                    print("ignoring command from " + command['from'] + "command recieved was" + command['funcName'])
-                else:
-                    message = {'title':"UI API FUNCTION CALL", 'id':command['args']['id'], 'funcName':command['funcName'],  'args':command['args']}
-                    print("pass")
-                    self.sendMessage(json.dumps(message))
-        except Exception as err:
-                print("Error: {0}".format(err))
-
-        print("message from UI")
-
         try:
             obj = json.loads(self.data)
             title = obj["title"]
@@ -77,34 +68,40 @@ class UIStateReciever(WebSocket) :
 
         if title == "UI Outputs":
             self.UI_state = obj
-            self.server["UI_STATE"] = self.UI_state
+            self.reem_server["UI_STATE"] = self.UI_state
 
         elif title == "UI API FUNCTION FEEDBACK":
             id = obj['id']
             msg = obj['MSG']
-            self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':msg}
+            self.module.setRedisRpc(id,msg)
 
+        try:
+            command = self.module.getRedisRpc()
+            if command:
+                if command['from'] == self.module.name():
+                    print("ignoring command from " + command['from'] + "command recieved was" + command['fn'])
+                else:
+                    message = {'title':"UI API FUNCTION CALL", 'id':command['id'], 'funcName':command['fn'],  'args':command['args']}
+                    print("pass")
+                    self.sendMessage(json.dumps(message))
+        except Exception as err:
+                print("Error: {0}".format(err))
 
-        
+        print("message from UI")
 
     def handleConnected(self) : 
         print(self.address, 'connected')
-        self.mode = "PointClickNav"
-        self.interface = RedisInterface(host="localhost")
-        self.interface.initialize()
-        self.server = KeyValueStore(self.interface)
-
 
     def handleClose(self) : 
         print(self.address, 'closed')
 
 
-   
 
 
 if __name__ == "__main__":
-    server = SimpleWebSocketServer('', 8000, UIStateReciever)
-    server.serveforever()
-
+    module = RemoteUIModule()
+    while True:
+        time.sleep(1.0)
+    
 
        
