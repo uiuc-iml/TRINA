@@ -8,9 +8,9 @@ else:
     from importlib import reload
 
 try:
-    from . import test_modules
+    from .. import test_modules
     reload(test_modules)
-    from .test_modules import *
+    from ..test_modules import *
 except ImportError:
     traceback.print_exc()
     print("Error importing test_modules, will not be available")
