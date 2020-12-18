@@ -18,15 +18,21 @@ import threading
 import copy
 from OpenGL.GLUT import *
 from OpenGL.GL import *
-from Jarvis import Jarvis
 from klampt.math import vectorops,so3
 from klampt import WorldModel, vis
+from klampt.model import sensing
+import klampt.io.numpy_convert
 import sys,os
 try:
     from Settings import trina_settings
+    from Jarvis import JarvisAPIModule,JarvisAPI
+    from Utils.promise import Promise
 except ImportError:
     sys.path.append(os.path.expanduser("~/TRINA"))
     from Settings import trina_settings
+    from Jarvis import JarvisAPIModule,JarvisAPI
+    from Utils.promise import Promise
+from Jarvis import Jarvis
 
 try:
     import tf
@@ -41,263 +47,260 @@ import time
 from multiprocessing import Process, Pipe
 import os
 
-class Camera_Robot:
+class CameraData:
+    def __init__(self,settings=None):
+        if settings is not None:
+            self.serial_number = settings["serial_number"]
+            self.link = settings["link"]
+            calib_fn = settings["transform"]
+            calib_fn = os.path.join(trina_dir,calib_fn )
+            transform = np.load(open(calib_fn, 'rb'))
+            # we then create the inverse transform
+            self.local_transform = klampt.io.numpy_convert.from_numpy(transform,'RigidTransform')
+        else:
+            self.serial_number = None
+            self.link = None
+            self.local_transform = None
 
+        self.driver = None
+        self.want_images = False
+        self.want_point_cloud = False
+        self.images = None
+        self.point_cloud = None
+        self.world_transform = None
+
+class SensorModule(JarvisAPIModule):
     """
     This is the primary class of this helper module. It instantiates a motion client and handles the streamed inputs from the realsense camera
     """
 
-    # Whenever a new realsense camera is added, please update this dictionary with its serial number
-    def __init__(self, robot, cameras= None, mode='Kinematic', components=[], world=None, ros_active = True, use_jarvis = True):
-        """
-        Instantiates a camera robot instance
-
-        Args:
-            robot_ip (str): the ip_address of the motion server, defauts to localhost for local simulated execution. It expects the format http://localhost:8080
-            config_file (dict): A dictionary of camera names to camera configuration file paths containing the transform between the camera and the robot's end effector
-            cameras ([str]): A list of strings containing which cameras we are using for this process - Valid entries A.T.M. - ['realsense_right','realsense_left','zed_torso','zed_back'] 
-            mode (str): The mode in which the robot will be executed - "Physical" for controlling the real robot, "Kinematic" for controlling the simulation.
-            components ([str]): A list of strings indicating which components of the robot you wish to command - valid entries : ['base','left_limb','right_limb','left_gripper']
-        Returns:
-
-    """
+    def __init__(self, robot_or_jarvis, cameras= None, mode='Kinematic', ros_active = True):
         import os
 
 
         trina_dir = os.path.expanduser("~TRINA")
-        if(use_jarvis == True):
-            self.jarvis = Jarvis("sensor_module")
-            self.robot = robot
+        if isinstance(robot_or_jarvis,Jarvis):
+            self.jarvis = robot_or_jarvis
+            self.robot = self.jarvis.robot
         else:
-            # self.jarvis = Jarvis("sensor_module")
-            self.robot = robot
-        self.serial_numbers_dict = trina_settings.camera_serial_numbers()
-        self.config_files_dict = {'realsense_right': os.path.join(trina_dir,'Settings/sensors/realsense_right_config.npy'),
-                                    'realsense_left': os.path.join(trina_dir,'Settings/sensors/realsense_left_config.npy'),
-                                    'zed_torso': os.path.join(trina_dir,'Settings/sensors/zed_torso_config.npy'),
-                                    'zed_back': os.path.join(trina_dir,'Settings/sensors/zed_back_config.npy'),
-                                    'zed_overhead':os.path.join(trina_dir,'Settings/sensors/zed_overhead_config.npy'),
-                                    'realsense_overhead':os.path.join(trina_dir,'Settings/sensors/realsense_overhead_config.npy')}
-        self.valid_cameras = ['realsense_right',
-                              'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead']
+            self.jarvis = None
+            self.robot = robot_or_jarvis
+
         # we first check if the parameters are valid:
         # checking if cameras make sense:
-        self.cameras = cameras
+        self.cameras = cameras if cameras is not None else []
         # we now verify if the camera configuration file makes sense
         # we then try to connect to the motion_client (we always use the same arm - and we never enable the base for now)
         self.mode = mode
-        self.components = components
         self.active_cameras = {}
         self.update_lock = threading.Lock()
+        self.requests = []    #a list of pending requests
         self.ros_active = ros_active
         global have_ros
         if not _have_ros:
             if self.ros_active:
+                print('\n\n\n\n')
                 print("ROS support requested, but rospy could not be imported")
-                input("Press enter to continue > ")
+                print('\n\n\n\n')
             self.ros_active = False
 
+        if self.mode == 'Physical':
+            self.world = trina_settings.robot_model_load()
+            self.temprobot = self.world.robot(0)
+            camera_settings = trina_settings.camera_settings()
+            for camera in self.cameras:
+                if camera not in camera_settings:
+                    raise ValueError('invalid camera %s selected. Valid cameras are %s (see TRINA/Settings/).\nPlease update camera selection and try again'%(camera,', '.join(camera_settings.keys())))
+                # if the camera is valid, import and configure the camera
+                self.active_cameras[camera] = CameraData(camera_settings[camera])
+                self.startSimpleThread(self.update_camera,args=(camera,),dt=camera_settings[camera].get('framerate',1.0/30.0),initfunc=self.init_camera,name=camera,dolock=False)
+        elif self.mode == 'Kinematic':
+            self.world = trina_settings.robot_model_load()
+            self.temprobot = self.world.robot(0)
+            self.simworld = trina_settings.simulation_world_load()
+            self.simrobot = self.simworld.robot(0)
+            self.sim = klampt.Simulator(self.simworld)
 
-        if(self.mode == 'Physical'):
-            # only import pyzed if running on python3
-            if(self.cameras):
-                for camera in self.cameras:
-                    if(camera in self.valid_cameras):
-                        # if the camera is a realsense_right camera, import and configure the camera
-                        try:
-                            self.active_cameras.update({camera: Camera_Sensors(
-                                camera, self.serial_numbers_dict, self.config_files_dict, self.robot)})
-                            atexit.register(
-                                self.active_cameras[camera].safely_close)
-                            print('sucessfully initialized the camera! ')
-                        except Exception as e:
-                            print('This camera ', camera,
-                                ' is currently unavailable. Verify that it is connected and try again \n\n')
-                    else:
-                        raise ValueError(
-                            'invalid camera selected. Please update camera selection and try again')
-        elif(self.mode == 'Kinematic'):
-
-            # glutInit ([])
-            # glutInitDisplayMode (GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE)
-            # glutInitWindowSize (1, 1)
-            # windowID = glutCreateWindow ("test")
-
-            # reset arms
-
-            self.world = world
-            self.simrobot = world.robot(0)
-            self.simrobot.setConfig(self.jarvis.sensedRobotq())
-            self.sim = klampt.Simulator(self.world)
-            self.simulated_cameras = {}
-            self.left_cam = self.sim.controller(0).sensor("left_hand_camera")
-            self.right_cam = self.sim.controller(0).sensor("right_hand_camera")
-            self.lidar = self.sim.controller(0).sensor("lidar")
-            self.system_start = time.time()
-            self.simulated_cameras.update(
-                {'realsense_right': self.right_cam, 'realsense_left': self.left_cam})
-            # vis.add("world",self.world)
-
-            # vis.show()
-            # vis.kill()
-            # and we start the thread that will update the simulation live:
-            self.right_image = []
-            self.left_image = []
-            self.left_point_cloud = []#np.zeros(shape=(3, 6))
-            self.right_point_cloud = []#np.zeros(shape=(3, 6))
-            self.simlock = threading.Lock()
-            # GLEW WORKAROUND
-            glutInit([])
-            glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |
-                                GLUT_DEPTH | GLUT_MULTISAMPLE)
-            glutInitWindowSize(1, 1)
-            windowID = glutCreateWindow("test")
-
-            # Default background color
-            glClearColor(0.8, 0.8, 0.9, 0)
-            # Default light source
-            glLightfv(GL_LIGHT0, GL_POSITION, [0, -1, 2, 0])
-            glLightfv(GL_LIGHT0, GL_DIFFUSE, [1, 1, 1, 1])
-            glLightfv(GL_LIGHT0, GL_SPECULAR, [1, 1, 1, 1])
-            glEnable(GL_LIGHT0)
-
-            glLightfv(GL_LIGHT1, GL_POSITION, [-1, 2, 1, 0])
-            glLightfv(GL_LIGHT1, GL_DIFFUSE, [0.5, 0.5, 0.5, 1])
-            glLightfv(GL_LIGHT1, GL_SPECULAR, [0.5, 0.5, 0.5, 1])
-            glEnable(GL_LIGHT1)
-            self.simUpdaterThread = threading.Thread(target=self.update_sim)
-            self.simUpdaterThread.daemon = True
-            self.simUpdaterThread.start()
-            self.pcUpdaterThread = threading.Thread(target=self.update_point_clouds)
-            self.pcUpdaterThread.daemon = True
-            self.pcUpdaterThread.start()
-            if(self.ros_active):
-                self.ros_parent_conn, self.ros_child_conn = Pipe()
-                self.gmapping_proc = Process(target=self.update_range_finder, args=(self.ros_child_conn, ))
-                self.gmapping_proc.daemon = True
-                # print('starts ros node')
-                self.gmapping_proc.start()
-                # print('gets here')
-                self.lidar_proc = Process(target = self.update_lidar_sim, args= (self.ros_parent_conn,self.world,self.jarvis,self.simrobot,self.lidar))
-                self.lidar_proc.daemon = True
-                self.lidar_proc.start()
-
-            ### THIS MUST COME AFTER THE OTHER PROCESS!!!!!
-            if(self.ros_active):
-                import rospy
-                from sensor_msgs.msg import LaserScan
-                try:
-                    rospy.init_node("sensing_test_parent")
-                except Exception as e:
-                    print(e)
-                    pass
+            camera_settings = trina_settings.camera_settings()
+            for camera in camera_settings:
+                cam = self.sim.controller(0).sensor(camera)
+                if len(cam.name()) > 0: # valid camera
+                    print("Updating simulated camera",cam.name(),"to match calibration in TRINA/Settings/")
+                    calib_fn = camera_settings["transform"]
+                    calib_fn = os.path.join(trina_dir,calib_fn )
+                    transform = np.load(open(calib_fn, 'rb'))
+                    sensing.set_camera_xform(cam,se3.from_homogeneous(transform))
             
+            for camera in self.cameras:
+                simcam = self.sim.controller(0).sensor(camera)
+                if len(simcam.name()) == 0: #invalid camera
+                    all_cams = []
+                    i = 0
+                    while True:
+                        sensori = self.sim.controller(0).sensor(i)
+                        if sensori.type() == 'CameraSensor':
+                            all_cams.append(sensori.name())
+                        if sensori.type() == '':  #out of sensors
+                            break
+                        i += 1
+                    raise ValueError('invalid camera %s selected. Valid cameras are %s (see robot model).\nPlease update camera selection and try again'%(camera,', '.join(all_cams)))
+                else:
+                    self.active_cameras[camera] = CameraData()
+                    self.active_cameras[camera].link = int(simcam.getSetting('link'))
+                    self.active_cameras[camera].local_transform = sensing.get_sensor_xform(simcam)
+                    self.active_cameras[camera].device = simcam
+            self.lidar = self.sim.controller(0).sensor("lidar")
+            self.lidar_data = None
+            self.lidar_transform = None
+            self.system_start = time.time()
+            
+            self.startSimpleThread(self.update_sim,0.1,init=self.init_GL,name="update_sim",dolock=False)
+        self.startSimpleThread(self.update_robot,dt=1.0/30.0,name="update_robot",dolock=False)
 
-    def get_point_clouds(self, cameras=[]):
+    def api(self,*args,**kwargs):
+        return JarvisSensorAPI(self,"sensors",*args,**kwargs)
+
+    def terminate(self):
+        JarvisAPIModule.terminate(self)
+        #by now all threads should have terminated, so no risk of problems
+        for c in self.active_cameras:
+            if hasattr(self.active_cameras[c].device,'safely_close'):
+                self.active_cameras[c].device.safely_close()
+        self.active_cameras = {}
+        self.sim = None
+        self.temprobot = None
+        self.world = None
+
+    def init_camera(self,camera_name):
+        camera = self.active_cameras[camera_name]
+        serial_number = camera.serial_number
+        try:
+            if camera_name.startswith('realsense'):
+                driver = RealSenseCamera(serial_number)
+            elif camera_name.startswith('zed'):
+                driver = ZedCamera(serial_number)
+            else:
+                print('Verify camera names, no camera match found!')
+                raise TypeError('No compatible camera found!')
+            camera.driver = driver
+            atexit.register(camera.driver.safely_close)
+            print('sucessfully initialized the camera! ')
+        except Exception as e:
+            print('This camera ', camera_name,
+                ' is currently unavailable. Verify that it is connected and try again \n\n')
+            with self.update_lock:
+                del self.active_cameras[camera_name]
+            self.stopThread(camera_name)
+
+    def update_camera(self,camera_name):
+        camera = self.active_cameras[camera_name]
+        if camera.want_images or camera.want_point_cloud:
+            camera.driver.update()
+            if camera.want_images:
+                camera.images = camera.latest_rgbd_images()
+            if camera.want_point_cloud:
+                camera.point_cloud = camera.latest_point_cloud()
+                with self.update_lock:
+                    camera.world_transform = self.camera_transform(camera_name,type='numpy')
+        with self.update_lock:
+            #check if i need to update any pending requests
+            newrequests = []
+            for req in self.requests:
+                promise,query,cameras,results = req
+                if cameras is None or camera_name in cameras:
+                    if query == 'get_rgbd_images':
+                        camera.want_images = True
+                        if camera.images is not None:
+                            results[camera_name] = camera.images
+                    elif query == 'get_point_clouds':
+                        camera.want_point_cloud = True
+                        if camera.point_cloud is not None:
+                            assert camera.world_transform is not None
+                            results[camera_name] = camera.point_cloud.transform(camera.world_transform)
+                    ntrigger = len(self.active_cameras) if cameras is None else len(cameras)
+                    if len(results) == ntrigger:
+                        #fire the callback if all camera data is available
+                        promise.callback(results)
+                        continue
+                newrequests.append(req)
+            self.requests = newrequests
+
+    def camera_transform(self, camera_name, type='klampt'):
+        #assume update_lock is called?
+        camera = self.active_cameras[camera_name]
+        link = self.temprobot.link(camera.link)
+        T = se3.mul(link.getTransform(),camera.transform)
+        if type == 'klampt':
+            return T
+        else:
+            return klampt.io.numpy_convert.to_numpy(T,'RigidTransform')
+
+    def get_rgbd_images(self, cameras=None):
+        if cameras is None:
+            cameras = list(self.active_cameras.keys())
+        output = {}
+        if type(cameras) == str:
+            cameras = [cameras]
+        elif type(cameras) != list:
+            raise TypeError(
+                'Selected cameras must be either a string or a list of strings')
+        for camera in cameras:
+            if camera not in self.valid_cameras:
+                continue
+            output[camera] = self.active_cameras[camera].images
+        return output
+
+    def get_point_clouds(self, cameras=None):
         """
         Returns the point cloud from the referred source in the robot's base frame.
 
         Args:
-            cameras ([str]): A string or list of strings containing which cameras we are using for this process - Valid entries A.T.M. - 'realsense_right' (future - 'zed')
+            cameras ([str]): A string or list of strings containing which cameras
+            we are using for this process.
         Returns:
-            output {camera:point_cloud} : A dictionary containing an open3D point cloud for each camera string for which a point_cloud is available. Returns 
-            None as a string if there is no point cloud available for the requested camera 
+            output {camera:point_cloud} : A dictionary containing an open3D point
+            cloud for each camera string for which a point_cloud is available. 
+            point_cloud is None if the requested camera is not yet producing images.
         """
-        if(cameras == []):
+        if cameras is None:
             cameras = list(self.active_cameras.keys())
-        output = {}
-        if(type(cameras) == str):
+        if type(cameras) == str:
             cameras = [cameras]
-        elif(type(cameras) != list):
+        elif type(cameras) != list:
             raise TypeError(
                 'Selected cameras must be either a string or a list of strings')
-        if(self.mode == 'Physical'):
-            for camera in cameras:
-                if(camera in self.valid_cameras):
-                    output.update(
-                        {camera: self.active_cameras[camera].get_point_cloud()})
-            return output
-        else:
-            lpc = self.left_point_cloud
-            rpc = self.right_point_cloud
-            # lpc = sensing.camera_to_points(self.left_cam, points_format='numpy', all_points=False, color_format='channels')
-            # rpc = sensing.camera_to_points(self.right_cam, points_format='numpy', all_points=False, color_format='channels')
-
-            left_pcd = o3d.geometry.PointCloud()
-            left_pcd.points = o3d.utility.Vector3dVector(lpc[:, :3])
-            left_pcd.colors = o3d.utility.Vector3dVector(lpc[:, 3:])
-            right_pcd = o3d.geometry.PointCloud()
-            right_pcd.points = o3d.utility.Vector3dVector(rpc[:, :3])
-            right_pcd.colors = o3d.utility.Vector3dVector(rpc[:, 3:])
-            # we finally transform the point clouds:
-            try:
-                klampt_to_o3d = np.array([[0,-1,0,0],[0,0,-1,0],[1,0,0,0],[0,0,0,1]])
-                inv_k_to_o3d = np.linalg.inv(klampt_to_o3d)
-                Rrotation = self.Rrotation  
-                Rtranslation = self.Rtranslation
-                Lrotation = self.Lrotation
-                Ltranslation = self.Ltranslation
-                REE_transform = np.array(
-                    se3.homogeneous((Rrotation, Rtranslation)))
-                LEE_transform = np.array(
-                    se3.homogeneous((Lrotation, Ltranslation)))
-                self.realsense_transform = np.eye(4)
-                # we then apply the necessary similarity transforms:
-                final_Rtransform = np.matmul(inv_k_to_o3d,
-                                                np.matmul(klampt_to_o3d,
-                                                    np.matmul(
-                                                        REE_transform,inv_k_to_o3d)))
-                final_Ltransform = np.matmul(inv_k_to_o3d,
-                                np.matmul(klampt_to_o3d,
-                                    np.matmul(
-                                        LEE_transform,inv_k_to_o3d)))
-                
-
-                # we then apply this transform to the point cloud
-                Rtransformed_pc = right_pcd.transform(final_Rtransform)
-                Ltransformed_pc = left_pcd.transform(final_Ltransform)
-                return {"realsense_right": Rtransformed_pc, "realsense_left": Ltransformed_pc}
-            except Exception as e:
-                print(e)
-                print('failed to communicate with robot')
-                return "Failed to Communicate"
-
-    def get_rgbd_images(self, cameras=[]):
-        if(cameras == []):
-            cameras = list(self.active_cameras.keys())
         output = {}
-        if(type(cameras) == str):
-            cameras = [cameras]
-        elif(type(cameras) != list):
-            raise TypeError(
-                'Selected cameras must be either a string or a list of strings')
-        if(self.mode == 'Physical'):
-            for camera in cameras:
-                if(camera in self.valid_cameras):
-                    output.update(
-                        {camera: self.active_cameras[camera].get_rgbd_images()})
-            return output
-        else:
-            # try:
-            #     right_image = sensing.camera_to_images(self.right_cam, image_format= 'numpy', color_format='channels')
-            # except Exception as e:
-            #     print('failed to retrieve right camera',e)
-            #     right_image = []
-            # try:
-            #     left_image = sensing.camera_to_images(self.left_cam, image_format= 'numpy', color_format='channels')
-            # except Exception as e:
-            #     print('failed to retrieve left camera',e)
-            #     left_image = []
+        for camera in cameras:
+            if camera not in self.valid_cameras:
+                #raise an error here?
+                continue
 
-            return {"realsense_right": self.right_image, "realsense_left": self.left_image}
+            local_pc = self.active_cameras[camera].point_cloud
+            if local_pc is not None:
+                with self.update_lock:
+                    assert self.active_cameras[camera].world_transform is not None
+                    world_pc = local_pc.transform(self.active_cameras[camera].world_transform))
+            else:
+                world_pc = None
+            output[camera] = world_pc
+        return output
 
+    def update_robot(self):
+        try:
+            # print(self.jarvis.sensedRobotq(),self.jarvis.sensedRightEETransform(),self.jarvis.sensedLeftEETransform())
+            q = self.jarvis.sensedRobotq()
+        except Exception as e:
+            print('error updating robot state')
+            print(e)
+            return
+        with self.update_lock:
+            self.temprobot.setConfig(q)
+            
     def safely_close_all(self):
         for camera in self.active_cameras.keys():
             self.active_cameras[camera].safely_close()
 
-    def update_sim(self):
-        time.sleep(1)
-        self.dt = 0.01
+    def init_GL(self):
         # GLEW WORKAROUND
         glutInit([])
         glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |
@@ -318,105 +321,69 @@ class Camera_Robot:
         glLightfv(GL_LIGHT1, GL_SPECULAR, [0.5, 0.5, 0.5, 1])
         glEnable(GL_LIGHT1)
 
-        while(True):
-            start_time = time.time()
-            # print('updating_sim')
-            try:
-                # print(self.jarvis.sensedRobotq(),self.jarvis.sensedRightEETransform(),self.jarvis.sensedLeftEETransform())
-                q = self.jarvis.sensedRobotq()
-                self.Rrotation, self.Rtranslation = self.jarvis.sensedRightEETransform()
-                self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftEETransform()
-            except Exception as e:
-                print('error updating robot state')
-                print(e)
-            try:
-                # print('setting config')
-                self.simrobot.setConfig(q)
-                # print('updating simulation world')
-                self.sim.updateWorld()
-                # with self.simlock:
-                # self.sim.simulate(self.dt)
-                # print('simulating left')
-                self.left_cam.kinematicSimulate(self.world, self.dt)
-                # print('simulating right')
-                self.right_cam.kinematicSimulate(self.world, self.dt) 
-                # print('returning images left')
-                time.sleep(0.01)
-                # print('updating images')
-                self.left_image = list(sensing.camera_to_images(
-                    self.left_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
-                # print('returning images right')
-                self.right_image = list(sensing.camera_to_images(
-                    self.right_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
-                # print('returned images right!')
-
-                elapsed_time = time.time() - start_time
-                # print('calculated time!')
-                # print('Simulation Frequency:',1/elapsed_time)
-                if(elapsed_time < self.dt):
-                    # print('sleeping')
-                    time.sleep(self.dt-elapsed_time)
-                    # print('done sleeping')
-            except Exception as e:
-                print(e)
-                print('Somehow there was an error during updating the simulation. WTF!?')
-        print('somehow exited the loop')
-
-    def update_point_clouds(self):
-        time.sleep(3)
-        while(True):
-            # with self.simlock:
-            # self.sim.simulate(self.dt)
-            # print(id(self))
-            self.sim.updateWorld()
-
-            # print('updating point clouds')
-            self.left_point_cloud = sensing.camera_to_points(
-                self.left_cam, points_format='numpy', all_points=False, color_format='channels')
-            self.right_point_cloud = sensing.camera_to_points(
-                self.right_cam, points_format='numpy', all_points=False, color_format='channels')
-            time.sleep(3*self.dt)
-    def update_lidar_sim(self,ros_parent_conn,world,jarvis,simrobot,lidar):
-        rospy.init_node("lidar_update_node")
-
-        dt = 0.01
-        while(True):
-            start_time = time.time()
-            q = jarvis.sensedRobotq()
-            simrobot.setConfig(q)
-            lidar.kinematicSimulate(self.world,dt)
-            if(self.ros_active):
-                curr_pose = jarvis.sensedBasePosition()
-                ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
-                ros_parent_conn.send([ros_msg, curr_pose,False])
-            elapsed_time = time.time()-start_time
-            if(elapsed_time < dt):
-                time.sleep(dt-elapsed_time)
-                # print('Lidar Update Frequency:',1/(time.time()-start_time))
+        if self.ros_active:
+            rospy.init_node("SensorModule_publisher")
+            self.pub = rospy.Publisher("base_scan", LaserScan)
 
 
-    def update_range_finder(self, conn):
-        try:
-            rospy.init_node("sensing_test_child")
-        except Exception as e:
-            print(e)
-            pass
-        pub = rospy.Publisher("base_scan", sensor_msgs.msg.LaserScan)
+    def update_sim(self):
+        with self.update_lock:
+            self.simrobot.setConfig(self.temprobot.getConfig())
+        #assume temprobot is updated
+        for k,cam in self.active_cameras.items():
+            if cam.want_images or cam.want_point_cloud:
+                cam.device.kinematicSimulate(self.simworld, self.dt)
+                images = sensing.camera_to_images(cam, image_format='numpy', color_format='channels')
+                if cam.want_point_cloud:
+                    rgb,depth = imdata
+                    local_pc = klampt.model.sensing.image_to_points(depth,rgb,xfov,yfov)
+                    pcd = o3d.geometry.PointCloud()
+                    pcd.points = o3d.utility.Vector3dVector(local_pc[:, :3])
+                    pcd.colors = o3d.utility.Vector3dVector(local_pc[:, 3:])
+                    with self.update_lock:
+                        cam.images = imaces
+                        cam.point_cloud = pcd
+                        cam.transform = self.camera_transform(k)
+                elif cam.want_images:
+                    cam.images = images
 
-        ros_msg = None
-        curr_pose_child = None
-        exit = False
-        while not exit:
-            if conn.poll():
-                ros_msg, curr_pose_child, exit = conn.recv()
-                if exit:
-                    break
-                if((ros_msg is not None)&(curr_pose_child is not None)):
-                    # print('\n\n updating topic \n\n')
-                    pub.publish(ros_msg)
-                    self._publishTf(curr_pose_child) 
-        print('----------')
-        print('publish gmapping path exited')
+        if self.ros_active:
+            self.lidar.kinematicSimulate(self.simworld,self.dt)
+            with self.update_lock:
+                self.lidar_data = self.lidar.getMeasurements()
+                self.lidar_transform = sensing.get_sensor_xform(self.lidar,self.simrobot)
+            self._publishTf(curr_pose) 
+            #ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
+            ros_msg = klampt.io.ros.to_SensorMsg(self.lidar,frame="/base_scan")
+            self.pub.publish(ros_msg)
+            
+        with self.update_lock:
+            #check for updates on pending requests
+            newrequests = []
+            for req in self.requests:
+                promise,query,cameras,results = req
+                if cameras is None:
+                    cameras = list(self.active_cameras.keys())
+                if query == 'get_rgbd_images':
+                    for name in cameras:
+                        camera = self.active_cameras[name]
+                        camera.want_images = True
+                        if camera.images is not None:
+                            results[name] = camera.images
+                elif query == 'get_point_clouds':
+                    for name in cameras:
+                        camera = self.active_cameras[name]
+                        camera.want_point_cloud = True
+                        if camera.point_cloud is not None:
+                            assert camera.world_transform is not None
+                            results[name] = camera.point_cloud.transform(camera.world_transform)
+                #fire the callback if all camera data is available
+                if len(requests) == len(cameras):
+                    promise.callback(results)
+                    continue
+                else:
+                    newrequests.append(req)
+            self.requests = newrequests
 
     def _publishTf(self,curr_pose):
         x, y, theta = curr_pose
@@ -426,6 +393,7 @@ class Camera_Robot:
         br.sendTransform([0.2, 0, 0.2], tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "base_scan", "base_link")
     
     def convertMsg(self,klampt_sensor,frame,stamp = "now"):
+        """Not sure why this is needed instead of klampt.io.ros.toMsg()"""
         measurements = klampt_sensor.getMeasurements()
         res = LaserScan()
         if stamp=='now':
@@ -448,12 +416,12 @@ class Camera_Robot:
 
 
 class RealSenseCamera:
-    def __init__(self, serial_num, config_file, robot, end_effector='right'):
+    def __init__(self, serial_num):
         import pyrealsense2 as rs
         self.serial_num = serial_num
-        self.config_file = config_file
         self.pipeline = rs.pipeline()
         self.config = rs.config()
+        self.latest_aligned_frame = None
         try:
             self.config.enable_device(serial_num.encode('utf-8'))
             self.config.enable_stream(
@@ -466,42 +434,37 @@ class RealSenseCamera:
             self.pipeline.start(self.config)
             # we sleep for 3 seconds to stabilize the color image - no idea why, but if we query it soon after starting, color image is distorted.
             self.pc = rs.pointcloud()
-
-            ##Yifan edit
-            #self.realsense_transform = np.load(
-            #    open(self.config_file, 'rb'))
-            self.realsense_transform = np.eye(4) 
-            self.robot = robot
-            self.end_effector = end_effector
-            # fs = self.pipeline.wait_for_frames()
-            # df = fs.get_depth_frame()
-            # prof = df.get_profile()
-            # video_prof = prof.as_video_stream_profile()
-            # intr = video_prof.get_intrinsics()
-            # print(intr)
         except Exception as e:
             print(e, 'Invalid Camera Serial Number')
             self.pipeline.stop()
         # atexit.register(self.safely_close)
 
-    def get_point_cloud(self):
-        """
-        Returns the point cloud from the referred source in the robot's base frame.
-
-        Args:
-        Returns:
-            transformed_pc : returns the point cloud for this camera in the robot base's coordinate frame. or None if the data is not available
-        """
-        # try:
-        # Wait for the next set of frames from the camera
+    def update(self):
         frames = self.pipeline.wait_for_frames()
+        if not frames.get_depth_frame() or not frames.get_color_frame():
+            return
         # Fetch color and depth frames and align them
         aligned_frames = self.align.process(frames)
         depth_frame = aligned_frames.get_depth_frame()
         color_frame = aligned_frames.get_color_frame()
-        if not depth_frame or not color_frame:
+        self.latest_aligned_frame = aligned_frames
+
+    def latest_point_cloud(self):
+        """
+        Returns the point cloud from the last frame.
+
+        Args:
+        Returns:
+            transformed_pc : returns the point cloud in the camera's local frame
+            as a open3D PointCloud, or None if the data is not available
+        """
+        if self.latest_aligned_frame is None:
             print("Data Not Available at the moment")
             return None
+        # Fetch color and depth frames and align them
+        depth_frame = self.latest_aligned_frame.get_depth_frame()
+        color_frame = self.latest_aligned_frame.get_color_frame()
+        
         # Tell pointcloud object to map to this color frame
         self.pc.map_to(color_frame)
         # Generate the pointcloud and texture mappings
@@ -515,43 +478,15 @@ class RealSenseCamera:
         point_cloud = o3d.geometry.PointCloud()
         point_cloud.points = o3d.utility.Vector3dVector(pure_point_cloud)
         point_cloud.colors = o3d.utility.Vector3dVector(color_t)
-        # we then obtain the transform for the arm where this is attached:
-        # if(self.end_effector == 'right'):
-        #     ## Yifan edit here, 
-        #     rotation, translation = self.robot.sensedRightEETransform()
-        # elif(self.end_effector == 'left'):
-        #     rotation, translation = self.robot.sensedLeftEETransform()
-
-
-        rotation = [1,0,0,0,1,0,0,0,1]
-        translation = [0]*3
-        EE_transform = np.array(se3.homogeneous((rotation, translation)))
-        # we then multiply this transform with the transform between the end effector and the camera
-        final_transform = np.matmul(EE_transform, self.realsense_transform)
-        # we then invert this transform using klampt se3
-        ft = se3.from_homogeneous(final_transform)
-        inverted_transform = np.array(se3.homogeneous(se3.inv(ft)))
-
-        # we then apply this transform to the point cloud
-        transformed_pc = point_cloud.transform(inverted_transform)
-
-        # o3d.visualization.draw_geometries([point_cloud])
-        # except Exception as e:
-        #     print('Something went wrong with our camera system! Please Try Again!')
-        #     return None
-        return transformed_pc
+        return point_cloud
     
-    def get_rgbd_images(self):
-        frames = self.pipeline.wait_for_frames()
-        # Fetch color and depth frames and align them
-        aligned_frames = self.align.process(frames)
-        depth_frame = aligned_frames.get_depth_frame()
-        color_frame = aligned_frames.get_color_frame()
-        if not depth_frame or not color_frame:
+    def latest_rgbd_images(self):
+        if self.latest_aligned_frame is None:
             print("Data Not Available at the moment")
             return None
-        else:
-            return [color_frame.get_data(),depth_frame.get_data()]
+        depth_frame = self.latest_aligned_frame.get_depth_frame()
+        color_frame = self.latest_aligned_frame.get_color_frame()
+        return [color_frame.get_data(),depth_frame.get_data()]
 
     def safely_close(self):
         print('safely closing Realsense camera', self.serial_num)
@@ -559,7 +494,7 @@ class RealSenseCamera:
 
 # from threading import Thread, Lock, RLock
 class ZedCamera:
-    def __init__(self, serial_num, config_file):
+    def __init__(self, serial_num):
         # only import pyzed if running on python3
         if(sys.version_info[0] < 3):
             pass
@@ -569,12 +504,8 @@ class ZedCamera:
         # Create a Camera object
         self.zed = sl.Camera()
         self.serial_num = serial_num
-        self.transform = np.load(open(config_file, 'rb'))
-        # we then create the inverse transform
-        klampt_transforms = se3.from_homogeneous(self.transform)
-        self.inverted_transform = np.array(
-            se3.homogeneous(se3.inv(klampt_transforms)))
-
+        self.connected = False
+        
         self.point_cloud = sl.Mat()
         # Create a InitParameters object and set configuration parameters
         init_params = sl.InitParameters()
@@ -592,11 +523,17 @@ class ZedCamera:
         # Open the camera
         err = self.zed.open(init_params)
         if err != sl.ERROR_CODE.SUCCESS:
-            print(
-                'There was an error while trying to access the zed camera, please revie and try again.')
-       
-    def get_point_cloud(self):
-        self.zed.grab(self.runtime_parameters)
+            print('There was an error while trying to access the zed camera, please review and try again.')
+    
+    def update(self):
+        if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
+            self.connected = True
+        else:
+            self.connected = False
+
+    def latest_point_cloud(self):
+        if not self.connected:
+            return None
         self.zed.retrieve_measure(self.point_cloud, sl.MEASURE.XYZRGBA)
         pc = self.point_cloud.get_data()
 
@@ -627,56 +564,72 @@ class ZedCamera:
         point_cloud.points = o3d.utility.Vector3dVector(reshaped_pc)
         point_cloud.colors = o3d.utility.Vector3dVector(color_t)
         # we then finally transform the point cloud to the robot's coordinates:
-        transformed_pc = point_cloud.transform(self.inverted_transform)
-        return transformed_pc
-    def get_rgbd_images(self):
-        if (self.zed.grab() == sl.ERROR_CODE.SUCCESS) :
-            # A new image is available if grab() returns SUCCESS
-            self.zed.retrieve_image(self.image, sl.VIEW.LEFT) # Get the left image
-            self.zed.retrieve_measure(self.depth, sl.MEASURE.DEPTH) # Retrieve depth Mat. Depth is aligned on the left image
-        else:
+        return point_cloud
+    def latest_rgbd_images(self):
+        if not self.connected:
             print("Data Not Available at the moment")
             return None
+        self.zed.retrieve_image(self.image, sl.VIEW.LEFT) # Get the left image
+        self.zed.retrieve_measure(self.depth, sl.MEASURE.DEPTH) # Retrieve depth Mat. Depth is aligned on the left image
         return([self.image.get_data(),self.depth.get_data()])
+    
     def safely_close(self):
         print('safely closing zed camera ', self.serial_num)
         self.zed.close()
 
 
-class Camera_Sensors:
-    def __init__(self, camera_name, serial_numbers_dict, config_files_dict, robot, end_effector='right'):
-        try:
-            if(camera_name.startswith('realsense')):
-                if(camera_name.endswith('right')):
-                    self.camera = RealSenseCamera(
-                        serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='right')
-                elif(camera_name.endswith('left')):
-                    self.camera = RealSenseCamera(
-                        serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='left')
-                elif(camera_name.endswith('overhead')):
-                    self.camera = RealSenseCamera(
-                        serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='right')
 
-            elif(camera_name.startswith('zed')):
-                self.camera = ZedCamera(
-                    serial_numbers_dict[camera_name], config_files_dict[camera_name])
-            else:
-                print('Verify camera names, no camera match found!')
-                raise TypeError('No compatible camera found!')
-        except Exception as e:
-            print('there was an error ', e,
-                  'while trying to initialize camera', camera_name)
+class JarvisSensorAPI(JarvisAPI):
+    def __init__(self,sensor_module,*args,**kwargs):
+        self.sensor_module = sensor_module
+        self.lock = sensor_module.update_lock
+        JarvisAPI.__init__(self,*args,**kwargs)
 
-    def get_point_cloud(self):
-        return self.camera.get_point_cloud()
-    
-    def get_rgbd_images(self):
-        return self.camera.get_rgbd_images()
+    def camerasAvailable(self):
+        with self.lock:
+            return list(self.sensor_module.active_cameras.keys())
 
-    def safely_close(self):
-        self.camera.safely_close()
+    def getRgbdImages(self,cameras=None):
+        """Returns the RGBD cameras from all cameras corresponding to the
+        latest images taken.
 
-        self.close = True
+        Return:
+        --------------
+        dict containing (rgb,depth) image pairs.  Each image is a numpy object.
+        """
+        with self.lock:
+            return self.sensor_module.get_rgbd_images(cameras)
+
+    def getNextRgbdImages(self,cameras=None):
+        """Returns a Promise for the next RGBD images"""
+        with self.lock:
+            p = Promise("RGBD image request from "+self._caller_name)
+            if isinstance(cameras,str):
+                cameras = [cameras]
+            self.sensor_module.requests.append((p,'get_rgbd_images',cameras,{}))
+            return p
+
+    def getPointClouds(self,cameras=None):
+        """Returns the point clouds corresponding to the latest image.
+        taken.
+
+        Return:
+        --------------
+        dict containing point clouds. Each point cloud is expressed in world
+        coordinates as Open3D PointCloud objects.
+        """
+        with self.lock:
+            return self.sensor_module.get_point_clouds(cameras)
+
+    def getNextPointClouds(self,cameras=None):
+        """Returns a Promise for the next point clouds"""
+        with self.lock:
+            p = Promise("Point cloud request from "+self._caller_name)
+            if isinstance(cameras,str):
+                cameras = [cameras]
+            self.sensor_module.requests.append((p,'get_point_clouds',cameras,{}))
+            return p
+
 
 if __name__ == '__main__':
     print('\n\n\n\n\n running as Main\n\n\n\n\n')

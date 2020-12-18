@@ -10,5 +10,5 @@ from . import sensorModule
 
 reload(sensorModule)
 
-from .sensorModule import Camera_Robot
+from .sensorModule import Camera_Robot,SensorModule
 
