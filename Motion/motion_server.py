@@ -68,11 +68,7 @@ def _activeComponents():
 	global robot,server_started
 	if not server_started:
 		return []
-	res = []
-	for part in ['left_limb','right_limb','base','torso','left_gripper','right_gripper','head']:
-		if getattr(robot,part+'_enabled'):
-			res.append(part)
-	return res
+	return robot.components
 
 def _codename():
 	global robot,server_started
