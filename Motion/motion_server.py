@@ -6,12 +6,16 @@ import signal
 import sys
 from motion import Motion
 import time
-import logging
-from datetime import datetime
-from trina_logging import get_logger
+try:
+	import trina
+except ImportError:
+	import os
+	sys.path.append(os.path.expanduser("~/TRINA"))
+	import trina
 import numpy as np
-filename = "errorLogs/logFile_" + datetime.now().strftime('%d%m%Y') + ".log"
-logger = get_logger(__name__,logging.DEBUG,filename)
+
+import logging
+logger = trina.setup.get_logger(__name__,logging.DEBUG)
 
 global robot
 global server_started
@@ -407,16 +411,13 @@ def run_server_forever(ip_address,port):
 	server.serve_forever()
 
 if __name__ == '__main__':
-	import os,sys
-	sys.path.append(os.path.expanduser("~/TRINA"))
-	from Settings import trina_settings
 	import argparse
 	parser = argparse.ArgumentParser(description='Runs the motion server')
 	parser.add_argument('-a','--ip', default='127.0.0.1', type=str, help='Server\'s IP address')
-	parser.add_argument('-p','--port', default=trina_settings.motion_server_port(), type=int, help='Server\'s port number')
-	parser.add_argument('--components', default=trina_settings.motion_server_components(), type=str, nargs='+', help='List of active components')
-	parser.add_argument('--codename', default=trina_settings.robot_codename(), type=str, help="The robot model's codename")
-	parser.add_argument('-m', '--mode', default=trina_settings.motion_server_mode(), type=str, help='The mode (Kinematic or Physical)')
+	parser.add_argument('-p','--port', default=trina.settings.motion_server_port(), type=int, help='Server\'s port number')
+	parser.add_argument('--components', default=trina.settings.motion_server_components(), type=str, nargs='+', help='List of active components')
+	parser.add_argument('--codename', default=trina.settings.robot_codename(), type=str, help="The robot model's codename")
+	parser.add_argument('-m', '--mode', default=trina.settings.motion_server_mode(), type=str, help='The mode (Kinematic or Physical)')
 	
 	print()
 	print("USAGE:")

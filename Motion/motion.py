@@ -15,16 +15,15 @@ from klampt.model import ik, collide
 import numpy as np
 from klampt import WorldModel,vis
 import os
-
 import sys
-sys.path.append("..")
-from Settings import trina_settings
-import trina_logging
-import logging
-from datetime import datetime
+try:
+    import trina
+except ImportError:
+    sys.path.append(os.path.expanduser("~/TRINA"))
+    import trina
 
-filename = "errorLogs/logFile_" + datetime.now().strftime('%d_%m_%Y') + ".log"
-logger = trina_logging.get_logger(__name__,logging.INFO, filename)
+import logging
+logger = trina.setup.get_logger(__name__,logging.INFO)
 
 class Motion:
 
@@ -43,8 +42,8 @@ class Motion:
         """
         self.codename = codename
         self.mode = mode
-        self.model_path = "../Models/robots/"+self.codename.capitalize() + ".urdf"
-        self.computation_model_path = "../Models/robots/"+self.codename.capitalize() + ".urdf"
+        self.model_path = os.path.join(trina.setup.robot_models_root(),self.codename.capitalize() + ".urdf")
+        self.computation_model_path = os.path.join(trina.setup.robot_models_root(),self.codename.capitalize() + ".urdf")
         self.debug_logging = debug_logging
         if(self.debug_logging):
             self.logging_filename = time.time()
@@ -70,10 +69,10 @@ class Motion:
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
         #End-effector links and active dofs used for arm cartesian control and IK
-        self.left_EE_link = self.robot_model.link(trina_settings.left_tool_link())
-        self.left_active_Dofs = trina_settings.left_arm_dofs()
-        self.right_EE_link = self.robot_model.link(trina_settings.right_tool_link())
-        self.right_active_Dofs = trina_settings.right_arm_dofs()
+        self.left_EE_link = self.robot_model.link(trina.settings.left_tool_link())
+        self.left_active_Dofs = trina.settings.left_arm_dofs()
+        self.right_EE_link = self.robot_model.link(trina.settings.right_tool_link())
+        self.right_active_Dofs = trina.settings.right_arm_dofs()
         #UR5 arms need correct gravity vector
         self.currentGravityVector = [0,0,-9.81]
 
@@ -1782,7 +1781,7 @@ class Motion:
 
     def setRobotToDefualt(self):
         """ Some helper function when debugging"""
-        leftUntuckedConfig = trina_settings.left_arm_config('untucked')
+        leftUntuckedConfig = trina.settings.left_arm_config('untucked')
         rightUntuckedConfig = self.mirror_arm_config(leftUntuckedConfig)
         self.setLeftLimbPositionLinear(leftUntuckedConfig,1)
         self.setRightLimbPositionLinear(rightUntuckedConfig,1)

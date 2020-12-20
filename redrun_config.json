@@ -1,5 +1,5 @@
 {
-    "name": "TRINA onboard simulation kinematic",
+    "name": "TRINA onboard with UI end 1",
     "port": 5000,
     "launch_browser":true,
     "http_port": 8081, 

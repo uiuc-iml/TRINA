@@ -1,14 +1,14 @@
 from math import sqrt,pi
 import math
 try:
-    from Settings import trina_settings
+    import trina
 except ImportError:
     import sys,os
     sys.path.append(os.path.expanduser("~/TRINA"))
-    from Settings import trina_settings
+    import trina
 
-left_limb_address = trina_settings.robot_settings()['left_limb_address']
-right_limb_address = trina_settings.robot_settings()['right_limb_address']
+left_limb_address = trina.settings.robot_settings()['left_limb_address']
+right_limb_address = trina.settings.robot_settings()['right_limb_address']
 ## The payload and cog has to be calibrated...
 # calibrated result for robotiq gripper, in klampt frame x: array([ 0.86125143,  0.05865107,  0.00479324, -0.00341504])
 # The klampt in UR EE frame rotation matrix is

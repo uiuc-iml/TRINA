@@ -11,19 +11,19 @@ import os
 import numpy as np
 
 try:
-	from Settings import trina_settings
+	import trina
 except ImportError:
 	sys.path.append(os.path.expandpath("~/TRINA"))
-	from Settings import trina_settings
+	import trina
 
 class MotionClient:
 	def __init__(self, address = 'auto'):
 		if address == 'auto':
-			address = trina_settings.motion_server_addr()
+			address = trina.settings.motion_server_addr()
 		self.s = ServerProxy(address)
 		self.dt = 0.2
 		self.shut_down = False
-		#self.world = trina_settings.simulation_world_load()
+		#self.world = trina.settings.simulation_world_load()
 		#self.robot = self.world.robot(0)
 
 		#print("init complete")
