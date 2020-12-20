@@ -3,8 +3,7 @@
     "model":"Models/robots/Bubonic.urdf",
     "model_info":"@anthrax/model.json",
     "motion_server_settings":"@anthrax/motion.json",
-    "camera_serial_numbers" : "@bubonic/camera_serial_numbers.json",
-    "calibration" : "@bubonic/calibration.json",
+    "camera_settings" : "@bubonic/camera_settings.json",
     "left_limb_address": "10.1.1.30",
     "right_limb_address": "10.1.1.20",
     "home_config": "Settings/bubonic/home.config"

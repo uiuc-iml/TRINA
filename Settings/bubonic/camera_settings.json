@@ -1,0 +1,32 @@
+{
+    "realsense_left":{
+        "serial_number":"639206000824",
+        "link" : 11,
+        "transform": "Settings/sensors/realsense_left_transform.npy"
+        },
+    "realsense_right": {
+        "serial_number":"639204004320", 
+        "link" : 19,
+        "transform": "Settings/sensors/realsense_right_transform.npy"
+        },
+    "zed_torso": {
+        "serial_number":24560, 
+        "link" : 5,
+        "transform": "Settings/sensors/zed_torso_transform.npy"
+        },
+    "zed_back": {
+        "serial_number":24545, 
+        "link" : 5,
+        "transform": "Settings/sensors/zed_back_transform.npy"
+        },
+    "zed_overhead": {
+        "serial_number":23966915,
+        "link": -1,
+        "transform": "Settings/sensors/zed_overhead_transform.npy"
+        },
+    "realsense_overhead":{
+        "serial_number":"620201003873",
+        "link": -1,
+        "transform": "Settings/sensors/realsense_overhead_transform.npy"
+        }
+}

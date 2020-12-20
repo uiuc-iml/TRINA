@@ -13,8 +13,9 @@
         "ip_address":"localhost"
     },
     "CommandServer":{
-        "state_receiver_dt":0.015,
+        "time_updater_dt":0.001,
         "command_receiver_dt":0.001,
+        "health_monitor_dt":1,
         "heartbeat_tolerance":100000000000
     },
     "Simulation":{
@@ -22,6 +23,9 @@
     },
     "DebugUI": {
         "world_file":"Models/simulation_worlds/TRINA_world_bubonic.xml"
+    },
+    "MotionModule": {
+        "state_receiver_dt":0.015
     },
     "CalibrationModule" : {
         "right_calibration_configs": "calibration/right_sensor_calibration.configs",
