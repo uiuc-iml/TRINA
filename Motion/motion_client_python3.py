@@ -10,7 +10,7 @@ dirname = os.path.dirname(__file__)
 model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")
 
 class MotionClient:
-	def __init__(self, address = 'http://127.0.0.1:8000'):
+	def __init__(self, address = 'http://127.0.0.1:8080'):
 		self.s = ServerProxy(address)
 		self.dt = 0.2
 		self.shut_down = False
