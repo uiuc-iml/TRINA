@@ -14,9 +14,8 @@ from PIL import Image
 import sys
 from glob import glob
 import jarvis
-from Utils import TimedLooper
 
-if(sys.version_info[0] < 3):
+if sys.version_info[0] < 3:
     from StringIO import StringIO 
     import cv2
 
@@ -127,26 +126,26 @@ class StateLogger(jarvis.Module):
                             self.image_times[key+'_depth'].append(tmp[key][2])
 #                         print('this is the first time!')
 #                         print(tmp[key][2])
-                    # we also start the datasets:
-                    
-                    for dataset_name in tmp.keys():
-                        this_dir = self.images_dir+'{}_color'.format(dataset_name)
-                        if(~os.path.exists(this_dir)):
-                            os.mkdir(this_dir)
-                        self.dataset_dirs.update({dataset_name+'_color':this_dir})
-                        times_df = pd.DataFrame({'trina_time':[],'image':[]})
-                        times_df.to_csv(this_dir+'/times.csv',sep='|',
-                                mode='w',index=False)
-                           
-                    #then for depth
-                    for dataset_name in tmp.keys():
-                        this_dir = self.images_dir+'{}_depth'.format(dataset_name)
-                        if(~os.path.exists(this_dir)):
-                            os.mkdir(this_dir)
-                        self.dataset_dirs.update({dataset_name+'_depth':this_dir})
-                        times_df = pd.DataFrame({'trina_time':[],'image':[]})
-                        times_df.to_csv(this_dir+'/times.csv',sep='|',
-                                mode='w',index=False)
+                        # we also start the datasets:
+                        
+                        for dataset_name in tmp.keys():
+                            this_dir = self.images_dir+'{}_color'.format(dataset_name)
+                            if(~os.path.exists(this_dir)):
+                                os.mkdir(this_dir)
+                            self.dataset_dirs.update({dataset_name+'_color':this_dir})
+                            times_df = pd.DataFrame({'trina_time':[],'image':[]})
+                            times_df.to_csv(this_dir+'/times.csv',sep='|',
+                                    mode='w',index=False)
+                               
+                        #then for depth
+                        for dataset_name in tmp.keys():
+                            this_dir = self.images_dir+'{}_depth'.format(dataset_name)
+                            if(~os.path.exists(this_dir)):
+                                os.mkdir(this_dir)
+                            self.dataset_dirs.update({dataset_name+'_depth':this_dir})
+                            times_df = pd.DataFrame({'trina_time':[],'image':[]})
+                            times_df.to_csv(this_dir+'/times.csv',sep='|',
+                                    mode='w',index=False)
                     
     def update_states(self):
         looper = TimedLooper(self.dt,name="LoggerModule.update_states")

@@ -15,7 +15,7 @@ from SimpleWebSocketServer import SimpleWebSocketServer,WebSocket
 import jarvis
 import weakref
 
-class RemoteUIModule(jarvis.Module):
+class RemoteUI(jarvis.Module):
 
     def __init__(self,Jarvis):
         """
@@ -40,10 +40,16 @@ class RemoteUIModule(jarvis.Module):
 
     def name(self):
         return "UI"
-        
+
+    def name(self):
+        return "UI"
+
+    def apiName(self):
+        return "ui"
+
     #note: this is handled internally to CommandServer too
     def api(self,**kwargs):
-        return JarvisUIAPI('ui',**kwargs)
+        return JarvisUIAPI(self.apiName,**kwargs)
 
     def _ws_server_loop(self):
         self.ws_server.serveforever()
@@ -102,7 +108,7 @@ class UIStateReciever(WebSocket) :
 
 
 if __name__ == "__main__":
-    module = RemoteUIModule()
+    module = RemoteUI()
     while True:
         time.sleep(1.0)
     

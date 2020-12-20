@@ -3,7 +3,7 @@ import os
 import sys
 try:
     import trina
-except ImportError:
+except ImportError:  #run from command line?
     sys.path.append(os.path.expanduser("~/TRINA"))
     import trina
 from trina import jarvis
@@ -70,11 +70,10 @@ class Example(jarvis.APIModule):
         self.processRedisRpcs()
 
     def doRpc(self,fn,args,kwargs):
-        print("Calling RPC",fn)
+        #can do other things here... by default it will find fn in self and call it
         return jarvis.APIModule.doRpc(self,fn,args,kwargs)
 
     def _otherLoop(self):
-        print("Module status",self.status)
         self.loopCount += 1
         self.jarvis.server.set(["Example","loopCount"],self.loopCount)
         

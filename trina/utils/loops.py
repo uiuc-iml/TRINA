@@ -37,7 +37,7 @@ class TimedLooper:
             ...
 
     """
-    def __init__(self,dt=None,rate=None,warning_frequency=100,name=None):
+    def __init__(self,dt=None,rate=None,warning_frequency='auto',name=None):
         self.dt = dt
         if dt is None:
             if rate is None:
@@ -45,6 +45,8 @@ class TimedLooper:
             self.dt = 1.0/rate
         if self.dt < 0:
             raise ValueError("dt must be positive")
+        if warning_frequency == 'auto':
+            warning_frequency = int(2.0/self.dt)
         self.warning_frequency = warning_frequency
         self.name = name
         self._iters = 0

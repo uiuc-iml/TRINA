@@ -16,11 +16,15 @@ from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 from klampt.vis import glinit
-sys.path.append(os.path.expanduser('~/TRINA'))
 import random
 import weakref
-import jarvis
-from Settings import trina_settings
+try:
+    import trina
+except ImportError:  #run from command line?
+    sys.path.append(os.path.expanduser("~/TRINA"))
+    import trina
+from trina import jarvis
+
 glinit.init()
 if glinit.available("PyQt"):
     if glinit.available("PyQt5"):
@@ -351,14 +355,14 @@ class MyGLPlugin(vis.GLPluginInterface):
 
 
 
-class LocalUIModule(jarvis.APIModule):
+class LocalUI(jarvis.APIModule):
     """Runs a custom Qt frame around a visualization window"""
     def __init__(self,Jarvis=None):
         jarvis.APIModule.__init__(self,Jarvis)
         if self.jarvis.robot.mode() == 'Kinematic':
-            self.world = trina_settings.simulation_world_load()
+            self.world = trina.setup.simulation_world_load()
         else:
-            self.world = trina_settings.robot_model_load()
+            self.world = trina.setup.robot_model_load()
             #TODO: read perception data into vis
         assert self.world.numRobots() > 0
         self.sim = Simulator(self.world) #used for viewport simulation
@@ -381,6 +385,12 @@ class LocalUIModule(jarvis.APIModule):
 
     def name(self):
         return "UI"
+
+    def apiName(self):
+        return "ui"
+
+    def api(self,other_module,*args,**kwargs):
+        return UIAPI(self.apiName(),other_module,*args,**kwargs)
 
     def _visInit(self):
         if not glinit.available("PyQt5"):
@@ -467,16 +477,6 @@ if __name__ == "__main__":
 
     ================================================================================
     """)
-<<<<<<< HEAD:trina/modules/UI/LocalUI.py
-    module = LocalUIModule()
+    module = LocalUI()
     while module.status != 'terminated':
         time.sleep(1.0)
-=======
-    import sys
-    from Settings import trina_settings
-    world_file = trina_settings.simulation_world_file()
-    if len(sys.argv) > 1:
-        world_file = sys.argv[1]
-    world_file = "../../" + world_file
-    UI_end_1(world_file)
->>>>>>> 7b0d97fdd7bef436ff319ff8604be33c9b3214b9:trina_modules/UI/UI_end_1.py

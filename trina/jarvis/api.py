@@ -110,7 +110,7 @@ class APILayer:
         have no return value.
         """
         final_string = '{}.{}({})'.format(self._api_name,fn,','.join(str(a) for a in args))
-        self._redis_client.rpush(self._name+'_MODULE_COMMANDS',final_string)
+        self._redis_client.rpush(self._caller_name+'_MODULE_COMMANDS',final_string)
         print('sending ',final_string)
 
 

@@ -51,8 +51,9 @@ def set_robot_sensor_calibration(world):
         i += 1
 
     from klampt.model import sensing
+    from klampt.math import se3
     from klampt.io import loader
-    camera_settings = trina.settings.camera_settings()
+    camera_settings = settings.camera_settings()
     for camera in camera_settings:
         cam = robot.sensor(camera)
         if len(cam.name()) > 0: # valid camera

@@ -26,6 +26,14 @@ def settings():
         _root.load(fn)
     return _root
 
+def reload():
+    """Reloads everything from files. """
+    global _root
+    fn = os.path.join(base,"root.json")
+    _root = NestedJsonAccessor()
+    _root.load(fn)
+    return _root
+
 def get(path,decode=True):
     """Retrieves a setting from a period-separated string.  If decode=True,
     this decodes the NestedJsonAccessor object."""

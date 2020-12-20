@@ -1,7 +1,7 @@
 from trina import jarvis
 from trina.utils import Promise
 
-class JarvisSensorAPI(jarvis.APILayer):
+class SensorAPI(jarvis.APILayer):
     """External API for the sensor module."""
     def __init__(self,sensor_module,*args,**kwargs):
         self.sensor_module = sensor_module

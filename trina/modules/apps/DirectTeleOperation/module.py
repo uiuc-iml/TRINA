@@ -45,25 +45,13 @@ class DirectTeleOperation(jarvis.Module):
 		self.right_gripper_active = ('right_gripper' in self.components)
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
-		time.sleep(5)
-		self.UI_state = {}
+		self.UI_state = None
 		self.init_pos_left = {}
 		self.cur_pos_left = {}
 		self.init_pos_right = {}
 		self.init_headset_orientation = {}
 		self.cur_pos_right = {}
 		self.startup = True
-
-		if (self.startup == True) and (self.jarvis.getUIState() !=0):
-			print('started the initial values for the variables')
-			self.init_UI_state = self.jarvis.getUIState()
-			self.startup = False
-			if(self.left_limb_active):
-				self.init_pos_left = self.robot.sensedLeftEETransform()
-			if(self.right_limb_active):
-				self.init_pos_right = self.robot.sensedRightEETransform()
-			self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
-			# self.setRobotToDefault()
 
 		self.startSimpleThread(self._serveStateLoop,dt=self.dt,name="serveState")
 		self.startSimpleThread(self._infoLoop,dt=self.infoLoop_rate,name="infoLoop")
@@ -83,42 +71,57 @@ class DirectTeleOperation(jarvis.Module):
 				self.status = 'idle'
 
 	def _serveStateLoop(self):	
+		if (self.startup == True) and (self.jarvis.getUIState() is not None):
+			print('DirectTeleoperation: started the initial values for the variables')
+			self.init_UI_state = self.jarvis.getUIState()
+			self.startup = False
+			if(self.left_limb_active):
+				self.init_pos_left = self.robot.sensedLeftEETransform()
+			if(self.right_limb_active):
+				self.init_pos_right = self.robot.sensedRightEETransform()
+			self.init_headset_orientation = self.treat_headset_orientation(self.init_UI_state['headSetPositionState']['deviceRotation'])
+			# self.setRobotToDefault()
+		elif self.startup:
+			#print('DirectTeleoperation: Waiting for UI to start up...')
+			return
+
 		if self.status == 'idle':
-			# print("_serveStateLoop: idling")
+			#print("_serveStateLoop: idling")
 			pass
 		elif self.status == 'active':
-			# print('_serveStateLoop:active')
+			#print('_serveStateLoop:active')
 			self.last_time = time.time()
-			if(self.left_limb_active):
+			if self.left_limb_active:
 				self.cur_pos_left = self.robot.sensedLeftEETransform()
-			if(self.right_limb_active):
+			if self.right_limb_active:
 				self.cur_pos_right = self.robot.sensedRightEETransform()
 			self.UI_state = self.jarvis.getUIState()
+			#print(self.UI_state['controllerButtonState'])
 			self.UIStateLogic()
 
 	def setRobotToDefault(self):
 		leftUntuckedConfig = trina.settings.left_arm_config('untucked')
 		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
 		print('right_Untucked',rightUntuckedConfig)
-		if('left_limb' in self.components):
+		if 'left_limb' in self.components:
 			self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
-		if('right_limb' in self.components):
+		if 'right_limb' in self.components:
 			self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
 
 	def UIStateLogic(self):
-		if type(self.UI_state)!= int:
-			if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
-				self.setRobotToDefault()
-			if (self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True):
-				print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
-				self.init_UI_state = self.UI_state
-				self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-				self.init_pos_right = self.robot.sensedRightEETransform()
-				self.init_pos_left = self.robot.sensedLeftEETransform()
+		assert self.UI_state is not None
+		if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True:
+			self.setRobotToDefault()
+		if self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True:
+			print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
+			self.init_UI_state = self.UI_state
+			self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
+			self.init_pos_right = self.robot.sensedRightEETransform()
+			self.init_pos_left = self.robot.sensedLeftEETransform()
 
-			if(self.base_active):
-				self.baseControl()
-			self.positionControl()
+		if self.base_active:
+			self.baseControl()
+		self.positionControl()
 
 
 	def baseControl(self):
@@ -130,6 +133,7 @@ class DirectTeleOperation(jarvis.Module):
 		if((curr_velocity-base_velocity_vec).sum()!= 0):
 			try:
 				self.robot.setBaseVelocity(base_velocity)
+				print("setBaseVelocity",base_velocity)
 			except:
 				print("setBaseVelocity not successful")
 				pass
@@ -338,6 +342,7 @@ class DirectTeleOperation(jarvis.Module):
 		self.robot.setLeftLimbPositionLinear(left_limb_command,3)
 		self.robot.setRightLimbPositionLinear(right_limb_command,3)
 		return
+
 	def treat_headset_orientation(self,headset_orientation):
 		"""
 		input: Rotvec of the headset position

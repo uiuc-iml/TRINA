@@ -48,6 +48,7 @@ class CameraData:
             self.serial_number = settings["serial_number"]
             self.link = settings["link"]
             calib_fn = settings["transform"]
+            trina_dir = trina.setup.root_dir()
             calib_fn = os.path.join(trina_dir,calib_fn )
             transform = np.load(open(calib_fn, 'rb'))
             # we then create the inverse transform
@@ -70,11 +71,9 @@ class SensorModule(jarvis.APIModule):
     This is the primary class of this helper module. It instantiates a motion client and handles the streamed inputs from the realsense camera
     """
 
-    def __init__(self, jarvis, cameras= None, mode='Kinematic', ros_active = True):
-        jarvis.APIModule.__init__(self,jarvis)
+    def __init__(self, Jarvis, cameras= None, mode='Kinematic', ros_active = True):
+        jarvis.APIModule.__init__(self,Jarvis)
 
-        trina_dir = os.path.expanduser("~/TRINA")
-        
         # we first check if the parameters are valid:
         # checking if cameras make sense:
         self.cameras = cameras
@@ -94,7 +93,7 @@ class SensorModule(jarvis.APIModule):
             self.ros_active = False
 
         if self.mode == 'Physical':
-            self.world = trina.settings.robot_model_load()
+            self.world = trina.setup.robot_model_load()
             self.temprobot = self.world.robot(0)
             camera_settings = trina.settings.camera_settings()
             if cameras is None:
@@ -106,9 +105,9 @@ class SensorModule(jarvis.APIModule):
                 self.active_cameras[camera] = CameraData(camera_settings[camera])
                 self.startSimpleThread(self.update_camera,args=(camera,),dt=camera_settings[camera].get('framerate',1.0/30.0),initfunc=self.init_camera,name=camera,dolock=False)
         elif self.mode == 'Kinematic':
-            self.world = trina.settings.robot_model_load()
+            self.world = trina.setup.robot_model_load()
             self.temprobot = self.world.robot(0)
-            self.simworld = trina.settings.simulation_world_load()
+            self.simworld = trina.setup.simulation_world_load()
             self.simrobot = self.simworld.robot(0)
             self.sim = trina.setup.set_robot_sensor_calibration(self.simworld)
             
@@ -139,19 +138,26 @@ class SensorModule(jarvis.APIModule):
             self.lidar_transform = None
             self.system_start = time.time()
             
+            self.glutWindowID = None
             self.startSimpleThread(self.update_sim,0.1,initfunc=self.init_GL,name="update_sim",dolock=False)
         self.startSimpleThread(self.update_robot,dt=1.0/30.0,name="update_robot",dolock=False)
 
     def api(self,*args,**kwargs):
-        return JarvisSensorAPI(self,"sensors",*args,**kwargs)
+        return SensorAPI(self,"sensors",*args,**kwargs)
 
     def terminate(self):
-        JarvisAPIModule.terminate(self)
+        jarvis.APIModule.terminate(self)
         #by now all threads should have terminated, so no risk of problems
         for c in self.active_cameras:
             if hasattr(self.active_cameras[c].device,'safely_close'):
                 self.active_cameras[c].device.safely_close()
         self.active_cameras = {}
+        if self.mode == 'Kinematic':
+            pass
+            #There's no way to restart GLUT this way
+            #if self.glutWindowID is not None:
+            #    glutDestroyWindow(self.glutWindowID)
+
         self.sim = None
         self.temprobot = None
         self.world = None
@@ -273,6 +279,7 @@ class SensorModule(jarvis.APIModule):
         return output
 
     def update_robot(self):
+        self.jarvis.log_health()
         try:
             # print(self.jarvis.robot.sensedRobotq(),self.jarvis.robot.sensedRightEETransform(),self.jarvis.robot.sensedLeftEETransform())
             q = self.jarvis.robot.sensedRobotq()
@@ -283,19 +290,13 @@ class SensorModule(jarvis.APIModule):
         with self.update_lock:
             self.temprobot.setConfig(q)
             
-    def terminate(self):
-        for camera in self.active_cameras.keys():
-            if hasattr(self.active_cameras[camera].device,'safely_close'):
-                self.active_cameras[camera].device.safely_close()
-        JarvisSensorAPI.terminate(self)
-
     def init_GL(self):
         # GLEW WORKAROUND
         glutInit([])
         glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |
                             GLUT_DEPTH | GLUT_MULTISAMPLE)
         glutInitWindowSize(1, 1)
-        windowID = glutCreateWindow("test")
+        self.glutWindowID = glutCreateWindow("Sensor module hidden GLUT window")
 
         # Default background color
         glClearColor(0.8, 0.8, 0.9, 0)

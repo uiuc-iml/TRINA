@@ -55,10 +55,11 @@ class Module:
         with self._lock:
             print("Terminating Jarvis module",self.name())
             for proc in self._processes:
+                if proc is None:
+                    continue
                 if hasattr(proc,'cleanup_func'):
                     proc.cleanup_func()
                 proc.terminate()
-                proc.close()
             for i,(thread,threaddata) in enumerate(self._threads):
                 if threaddata is not None:
                     threaddata['quit'] = True
@@ -76,7 +77,7 @@ class Module:
                 if threaddata is None:
                     print("   Joining custom thread (might hang if the implementer is not careful)")
                 else:
-                    print("   Joining simple thread",threaddata['name'])
+                    print("   Joining thread",threaddata['name'])
                 thread.join()
         print("Termination complete")
         self.status = 'terminated'
@@ -147,14 +148,15 @@ class Module:
         """Starts a new process with the function target, taking arguments args.
         It is assumed that the process will run throughout the life of this module.
 
-        An optional cleanup function cleanup() can be provided.
+        An optional cleanup function cleanup(*args) can be provided.  Note that this
+        cannot access anything from the "self" object used in the process.
 
         Thread safe.
         """
         proc = Process(target=target, args=args)
         proc.daemon = True
         if cleanup is not None:
-            proc.cleanup_func = cleanup
+            proc.cleanup_func = lambda : cleanup(*args)
         proc.start()
         with self._lock:
             self._processes.append(proc)
@@ -186,12 +188,11 @@ class Module:
             if threaddata is None:
                 print("   Joining custom thread (might hang if the implementer is not careful)")
             else:
-                print("   Joining simple thread",threaddata['name'])
+                print("   Joining thread",threaddata['name'])
             thread.join()
         else:
             print("  Not joining thread %s; terminate was called from an existing thread"%(str(index_or_name)))
         print("Done.")
-            
 
     def stopProcess(self,index):
         """Safely stops a process.
@@ -199,9 +200,12 @@ class Module:
         Thread safe.
         """
         proc = self.processes[index]
+        if proc is None:
+            print("Process",index,"already terminated")
+            return
         if hasattr(proc,'cleanup_func'):
             proc.cleanup_func()
         proc.terminate()
-        proc.close()
+        self.processes[index] = None
 
 

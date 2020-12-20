@@ -18,9 +18,9 @@
         "logger":  { "program":"~/redrun/builtins/logger.py",  "args": "redrun_logs/simulated_%time"},
         "roscore" : {"command":"roscore"},
         "ros_gmapping" : {"command": "rosrun gmapping slam_gmapping scan:=base_scan _xmax:=10 _xmin:=-10 _ymax:=10 _ymin:=-10" },
-        "command_server" : { "command": "python3 command_server.py " },
+        "command_server" : { "command": "python3 trina/command_server.py " },
         "ui" : {
-            "command" : "python3 trina_modules/UI/UI_end_1.py"
+            "command" : "python3 trina/modules/UI/LocalUI.py"
         }
     },
     "startup": [

@@ -7,7 +7,7 @@
         "mode": "Kinematic",
         "ip_address":"127.0.0.1",
         "port":8080,
-        "components":["left_limb","right_limb"]
+        "components":["left_limb","right_limb","base"]
     },
     "RedisServer": {
         "ip_address":"localhost"
@@ -16,7 +16,12 @@
         "time_updater_dt":0.001,
         "command_receiver_dt":0.001,
         "health_monitor_dt":1,
-        "heartbeat_tolerance":100000000000
+        "heartbeat_tolerance":10,
+        "module_class_map": {
+            "#_comment":"If you would like to access a different class in your module rather than ModuleName, put the class name here",
+            "Motion":"MotionModule",
+            "UI":"LocalUI"
+        }
     },
     "Simulation":{
         "world_file":"Models/simulation_worlds/TRINA_world_bubonic.xml"

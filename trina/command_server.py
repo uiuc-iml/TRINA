@@ -14,12 +14,18 @@ import sys
 import os
 import klampt
 from threading import Thread
-if(sys.version_info[0] < 3):
+if sys.version_info[0] < 3:
 	from future import *
 else:
 	from importlib import reload
-import trina
+from importlib import import_module
+try:
+	import trina
+except ImportError:  #must be run from command line
+	sys.path.append(os.path.expanduser("~/TRINA"))
+	import trina
 from trina import jarvis
+from trina.modules.UI import UIAPI
 from trina.utils import TimedLooper,lock_wrap
 import redis
 
@@ -32,7 +38,18 @@ class CommandServerJarvisHooks:
 		self.deactivate_module = lock_wrap(server.lock,server.deactivate_module)
 		self.activate_module = lock_wrap(server.lock,server.activate_module)
 		self.restart_module = lock_wrap(server.lock,server.restart_module)
-		
+
+class RunningModuleInfo:
+	def __init__(self,name,modobj=None,classobj=None,classinstance=None):
+		self.name = name,
+		self.modobj = modobj
+		self.classobj = classobj
+		self.classinstance = classinstance
+		self.jarvis = None if classinstance is None else classinstance.jarvis
+		self.active = False
+
+	def is_managed(self):
+		return self.modobj is not None
 
 class CommandServer:
 	def __init__(self,modules = []):
@@ -62,21 +79,17 @@ class CommandServer:
 		self.server['HEALTH_LOG'] = {}
 		self.server['ACTIVITY_STATUS'] = {}
 		self.module_command_env = {}
+		self.lock = Lock()
 		#define the environment in which an API call should be run here
 		self.module_command_env = {'command_server':CommandServerJarvisHooks(self)}
 		self.startup = True
 		self.shut_down_flag = False
 		
-		self.health_dict = {}
-		# create the list of threads
+		# a map for module names (brief CapWords descriptor) to RunningModuleInfo
 		self.modules_dict = {}
 
-		self.active_modules = dict()
-		for i in self.always_active:
-			self.active_modules[i] = True
-		self.start_modules(modules,startup = True)
+		self.start_modules(modules)
 
-		self.lock = Lock()
 		timeUpdaterThread = Thread(target=self.timeUpdaterLoop)
 		timeUpdaterThread.daemon = True
 		timeUpdaterThread.start()
@@ -88,102 +101,155 @@ class CommandServer:
 		moduleMonitorThread.start()
 		atexit.register(self.shutdown_all)
 
-	def start_module(self,module_class,name):
-		#set up a new redis interface and trina queue
-		module_server = trina.state_server.StateServer()
+	def create_jarvis(self,name,server=None):
 		#initialize APIs available to the module
+		if server is None:
+			server = trina.state_server.StateServer()
 		apis = dict()
-		for i in self.modules_dict:
+		for i,mod in self.modules_dict.items():
 			try:
-				api = i.api(name,module_server)
+				api = mod.classinstance.api(name,server)
 				apis[api._api_name] = api
 			except NotImplementedError:
 				pass
 			except AttributeError:
 				pass
-		#set up special APIs here
-		module_jarvis = jarvis.Jarvis(str(name),apis,module_server)
+		if 'ui' not in apis:
+			apis['ui'] = UIAPI("ui",name,server)
+		print("Available APIs for module",name,":",list(apis.keys()))
+		return jarvis.Jarvis(str(name),apis,server)
+
+	def start_module(self,module_class,name):
+		#set up a new redis interface and trina queue
+		module_server = trina.state_server.StateServer()
+		module_jarvis = self.create_jarvis(name,module_server)
 		self.server['ACTIVITY_STATUS'][name] = str('idle')
 		a = module_class(module_jarvis)
 
+		#determine whether this module implements the moduleCommand interface
 		try:
 			obj = a.moduleCommandObject()
-			self.module_command_env[name] = obj
+			self.module_command_env[a.apiName()] = obj
+			print("Module command env",list(self.module_command_env.keys()))
 		except NotImplementedError:
+			pass
+		except AttributeError:
 			pass
 
 		return a
 
-	def start_modules(self,module_names = [],startup = False):
-		from trina import modules
-		from modules import apps
+	def start_modules(self,module_names = []):
 		activity_dict = {}
 		command_dict = {}
-		all_candidates = dict()
-		for name, obj in inspect.getmembers(trina_modules):
-			if not inspect.isclass(obj): continue
-			if str(obj).find('trina_modules') == -1: continue
-			all_candidates[name] = obj
-		for name, obj in inspect.getmembers(Apps):
-			if not inspect.isclass(obj): continue
-			if str(obj).find('trina_modules') == -1: continue
-			all_candidates['App_'+name] = obj
-		if startup:
-			if not module_names:
-				print('\n\n Starting ALL modules available!')
-				module_names = list(all_candidates.keys())
-				#anything that starts with App should go at the end
-				module_names = list(reversed(sorted(module_names)))
-				print('Startup order:' + str(module_names) + '\n\n\n')
-			else:
-				print('\n\n Starting Only Modules:' + str(module_names) + '\n\n\n')
-			for name in module_names:
-				if name not in all_candidates:
-					raise RuntimeError("Invalid module name {}, valid candidates {}".format(name,list(all_candidates.keys())))
-				obj = all_candidates[name]
-				try:
-					tmp = self.start_module(obj,name)
-				except Exception as e:
-					print('Failed to initialize module',name,'due to ',e)
-					traceback.print_exc()
-					continue
-				self.modules_dict[name] = tmp
-				self.health_dict[name] = [True,time.time()]
-				activity_dict[name] = 'idle'
-				if(name not in self.always_active):
-					self.active_modules[name] = False
+		if not module_names:
+			import trina.modules
+			import trina.modules.apps
+			import trina_devel.modules
+			import trina_devel.modules.apps
+			all_modules = dict()
+			for name, obj in inspect.getmembers(trina.modules) + inspect.getmembers(trina_devel.modules):
+				if not inspect.isclass(obj): continue
+				if str(obj).find('modules') == -1: continue
+				all_modules[name] = obj
+			for name, obj in inspect.getmembers(trina.modules.apps) + inspect.getmembers(trina_devel.modules.apps):
+				if not inspect.isclass(obj): continue
+				if str(obj).find('modules') == -1: continue
+				all_modules['App_'+name] = obj
+			print('\n\n Starting ALL modules available!')
+			module_names = list(all_modules.keys())
+			#anything that starts with App should go at the end
+			module_names = list(reversed(sorted(module_names)))
+			print('Startup order:' + str(module_names) + '\n\n\n')
+		newmods = [name for name in module_names if name not in self.modules_dict]
+		restartmods = [name for name in module_names if name in self.modules_dict]
+		if newmods:
+			print('\n\n Starting New Modules:' + str(newmods) + '\n\n\n')
+		if restartmods:
+			print('\n\n Restarting Modules:' + str(restartmods) + '\n\n\n')
+		
+		if newmods:
+			import trina
+			module_locations = ['trina.modules','trina_devel.modules']
+			app_locations = ['trina.modules.apps','trina_devel.modules.apps']
+			mod_class_map = trina.settings.app_settings('CommandServer')['module_class_map']
+
+		for name in module_names:
+			briefName = name  #this is the name used by the Python module
+			if name.startswith('App_'):
+				briefName = name[4:]
+			if name not in self.modules_dict:  #new modules
+				print("  Starting module",name,"...")
+				modobj = None
+				if name.startswith('App_'):
+					for location in app_locations:
+						try:
+							modobj = import_module(location+'.'+briefName)
+						except ImportError:
+							pass
 				else:
-					self.active_modules[name] = True
-
-			self.server['HEALTH_LOG'] = self.health_dict
-			self.server['ACTIVITY_STATUS'] = activity_dict
-		else:
-			print('Restarting only modules '+ str(module_names))
-			for name in module_names:
-				if name not in all_candidates:
-					raise RuntimeError("Invalid module name {}, valid candidates {}".format(name,list(all_candidates.keys())))
-				obj = all_candidates[name]
-				print('killing module '+ name)
-				self.modules_dict[name].terminate()
-				self.modules_dict.update({name:[]})
-				print('restarting module ' + name)
+					for location in module_locations:
+						try:
+							modobj = import_module(location+'.'+briefName)
+						except ImportError:
+							pass
+				if modobj is None:
+					if name.startswith("App_"):
+						raise RuntimeError("Invalid app name {}, could not be found/loaded in {}".format(briefName,app_locations))
+					else:
+						raise RuntimeError("Invalid module name {}, could not be found/loaded in {}".format(briefName,module_locations))
+				modclassname = mod_class_map.get(name,briefName)
 				try:
-					tmp = self.start_module(obj,name)
+					modclass = getattr(modobj,modclassname)
+				except AttributeError:
+					raise RuntimeError("Class {} not found in module {}; perhaps you should set the entry point in settings.CommandServer.module_class_map?".format(modclassname,modobj.__file__))
+				try:
+					tmp = self.start_module(modclass,name)
 				except Exception as e:
 					print('Failed to initialize module',name,'due to ',e)
 					traceback.print_exc()
+					print("\n\n")
 					continue
-				self.modules_dict.update({name:tmp})
-				self.server['HEALTH_LOG'][name] = [True,time.time()]
-				self.server['ACTIVITY_STATUS'][name] = 'idle'
-				if(self.active_modules[name]):
-					self.active_modules[name] = False
-
+				print("\n\n")
+				self.modules_dict[name] = RunningModuleInfo(name,modobj,modclass,tmp)
+			else: #existing module, restart
+				print('   Killing module '+ name)
+				mod = self.modules_dict[name]
+				mod.classinstance.terminate()
+				print('   Restarting module ' + name)
+				#need to reload module and all sub-modules
+				reload(mod.modobj)
+				for k in sys.modules:
+					if k.startswith(mod.modobj.__name__):
+						reload(sys.modules[k])
+				#reload class map
+				import trina
+				trina.settings.reload()
+				mod_class_map = trina.settings.app_settings('CommandServer')['module_class_map']
+				modclassname = mod_class_map.get(name,briefName)
+				try:
+					mod.classobj = getattr(mod.modobj,modclassname)
+				except:
+					raise RuntimeError("Class {} not found in module {}; perhaps you should set the entry point in settings.CommandServer.module_class_map?".format(modclassname,mod.modobj.__file__))
+				try:
+					mod.classinstance = self.start_module(mod.classobj,name)
+				except Exception as e:
+					print('Failed to initialize module',name,'due to ',e)
+					traceback.print_exc()
+					print("\n\n")
+					continue
+				print("\n\n")
+			self.server['HEALTH_LOG'][name] = [True,time.time()]
+			self.server['ACTIVITY_STATUS'][name] = 'idle'
+			self.modules_dict[name].active = (name in self.always_active)
+			activity_dict[name] = 'idle' if not self.modules_dict[name].active else 'active'
+		return
+		
 	def restart_module(self,name):
 		"""App-accessible call."""
 		if module in self.modules_dict:
+			mod = self.modules_dict[module]
 			try:
-				self.modules_dict[module].terminate()
+				mod.classinstance.terminate()
 			except Exception as e:
 				traceback.print_exc(e)
 				print("Problem terminating module",module,", restarting anyway")
@@ -191,29 +257,33 @@ class CommandServer:
 	
 	def deactivate_module(self,name):
 		"""App-accessible call."""
-		if not self.active_modules[name]:
+		if name not in self.modules_dict:
+			raise ValueError("Invalid module name")
+		mod = self.modules_dict[name]
+		if not mod.active:
 			return
 		self.server['ACTIVITY_STATUS'][name] = 'idle'
-		self.active_modules[name] = False
-		if name in self.modules_dict:
+		mod.active = False
+		if mod.is_managed():
 			#it's managed by the CommandServer, deactivate access to other apis
-			mod = self.modules_dict[name]
 			if mod.jarvis.apis is not None:
 				for apiname in mod.jarvis.apis:
 					delattr(mod.jarvis,apiname)
 
 	def activate_module(self,name):
 		"""App-accessible call."""
-		if self.active_modules[name]:
+		if name not in self.modules_dict:
+			raise ValueError("Invalid module name")
+		mod = self.modules_dict[name]
+		if mod.active:
 			return
 		self.server['ACTIVITY_STATUS'][name] = 'active'
-		self.active_modules[name] = True
-		if name in self.modules_dict:
+		mod.active = True
+		if mod.is_managed():
 			#it's managed by the CommandServer, deactivate access to other apis
-			mod = self.modules_dict[name]
 			if mod.jarvis.apis is not None:
 				for apiname,apihandle in mod.jarvis.apis.items():
-					set(mod.jarvis,apiname,apihandle)
+					setattr(mod.jarvis,apiname,apihandle)
 
 	def switch_module_activity(self,to_activate,to_deactivate = []):
 		"""App-accessible call."""
@@ -222,20 +292,22 @@ class CommandServer:
 			tmp = self.server['ACTIVITY_STATUS'].read()
 			for i in tmp.keys():
 				# print(i)
-				if self.active_modules[str(i)]:
-					self.deactivate_module(str(i))
+				if self.modules_dict[i].active and i not in self.always_active:
+					self.deactivate_module(i)
 		else:
 			for i in to_deactivate:
-				if self.active_modules[i]:
+				if self.modules_dict[i].active and i not in self.always_active:
 					self.deactivate_module(i)
 		for i in to_activate:
-			self.reactivate_module(i)
+			self.activate_module(i)
 
 	def shutdown_all(self):
 		self.shutdown()
 		print('closing all and exiting')
 		for module in self.modules_dict.keys():
-			self.modules_dict[module].terminate()
+			if self.modules_dict[module].classinstance is not None:
+				self.modules_dict[module].classinstance.terminate()
+			self.modules_dict[module].active = False
 
 	def timeUpdaterLoop(self):
 		looper = TimedLooper(trina.settings.get('CommandServer.time_updater_dt'),name='timeUpdater')
@@ -248,43 +320,36 @@ class CommandServer:
 	def commandReceiverLoop(self):
 		command_logger = CommandLogger('EXECUTED_COMMANDS')
 		looper = TimedLooper(trina.settings.get('CommandServer.command_receiver_dt'),name='commandReceiver')
-		trina_queue_reader = jarvis.RedisQueueReader(self.redis_server_ip)
-		last_print_time = 0
-		loop_counter = 0
+		trina_queue_reader = jarvis.RedisQueueReader(trina.settings.redis_server_ip())
 		while looper:
 			if self.shut_down_flag:
 				break
 
-			loop_counter +=1
-			
 			with self.lock:
-				modules = self.active_modules.copy()
-			for i,active in modules.items():
+				module_activities = [(i,mod.active) for (i,mod) in self.modules_dict.items()]
+			for i,active in module_activities:
 				module_commands = trina_queue_reader.read(str(i)+'_MODULE_COMMANDS')
 				# print(i,":",robot_command)
 				if module_commands:
 					if active:
 						for command in module_commands:
-							self.run(command)
+							self.runModuleCommand(command)
 								# print(command)
 						for command in module_commands:
 							command_logger.log_command(command,time.time())
 					else:
 						print('ignoring commands from {} because it is inactive'.format(str(i)),module_commands)
 
-			elapsedTime = looper.time_elapsed()
-			if elapsedTime-last_print_time > 5:
-				print('\nCommand receiver execution frequency = {} \n'.format(loop_counter/(elapsedTime - last_print_time)))
-				loop_counter = 0
-				last_print_time = elapsedTime
-
-	def run(self,command):
+	def runModuleCommand(self,command):
+		#print("Executing module command",command,"in env",list(self.module_command_env.keys()))
+		print("Executing module command",command)
 		try:
 			exec(command,self.module_command_env)
 		except Exception as e:
 			print('there was an error executing your command!',e)
+			traceback.print_exc()
 		finally:
-			print("command received was " + str(command))
+			#print("command received was " + str(command))
 			pass
 
 	def moduleMonitorLoop(self):
@@ -295,40 +360,71 @@ class CommandServer:
 			if self.shut_down_flag:
 				break
 
-			#discover other modules run from command line
 			with self.lock:
-				modules = self.server['ACTIVITY_STATUS'].read()
-				for key in modules:
+				module_activity = self.server['ACTIVITY_STATUS'].read()
+				#discover other modules run from command line
+				for key in module_activity:
 					try:
-						self.active_modules[str(key)]
+						self.modules_dict[key]
 					except KeyError as e:
-						if(str(key) not in self.always_active):
-							print("Discovered module",key,"run from command line... not managed by CommandServer")
-							self.active_modules[str(key)] = False
+						active = (key in self.always_active)
+						if not active:
+							health = self.server['HEALTH_LOG'][key].read()
+							if time.time() - health[1] < heartbeat_tolerance:
+								active = True
+						if active:
+							print("\n\n\nDiscovered module",key,"run from command line... not managed by CommandServer\n\n\n")
+							self.modules_dict[key] = RunningModuleInfo(key,None,None,None)
+							if key in self.always_active:
+								self.server['ACTIVITY_STATUS'][key] = 'active'
+								self.modules_dict[key].active = True
+							else:
+								print("SETTING MODULE INACTIVE")								
+								self.modules_dict[key].active = (module_activity[key] != 'idle')
 						else:
-							self.active_modules[str(key)] = True
+							#clean up keys
+							try:
+								del self.server['HEALTH_LOG'][key]
+							except Exception:
+								pass
+							del self.server['ACTIVITY_STATUS'][key]
 
-				to_restart = []
-				for module in self.modules_dict.keys():
-					moduleStatus = self.server["HEALTH_LOG"][module].read()
-					if (time.time()-moduleStatus[1]) > heartbeat_tolerance*dt:
-						print("Module " + module + " is dead  due to timeout, queueing restart")
-						to_restart.append(module)
+				managed_restarts = []
+				unmanaged_restarts = []
+				for key in self.modules_dict:
+					health = self.server["HEALTH_LOG"][key].read()
+					mod = self.modules_dict[key]
+					if (time.time()-health[1]) > heartbeat_tolerance*dt:
+						print("Module " + key + " is dead  due to timeout, queueing restart")
+						if mod.is_managed():
+							managed_restarts.append(key)
+						else:
+							unmanaged_restarts.append(key)
+						self.server["HEALTH_LOG"][key] = [False,time.time()]
 					else:
-						mod = self.modules_dict[module]
-						if not mod.healthy():
-							print("Module " + module + " is dead due to dead process, queueing restart")
-							to_restart.append(module)
+						if mod.is_managed() and not mod.classinstance.healthy():
+							print("\n\n\nModule " + key + " is dead due to dead process / hung thread, queueing restart\n\n\n")
+							managed_restarts.append(key)
 							break
-			if to_restart:
-				print('restarting modules ' + str(to_restart))
-				for module in to_restart:
+			if managed_restarts:
+				print('\n\n\nCommandServer health monitor: restarting modules {}'.format(str(managed_restarts)))
+				for module in managed_restarts:
 					try:
-						self.modules_dict[module].terminate()
+						self.modules_dict[module].classinstance.terminate()
 					except Exception as e:
 						traceback.print_exc(e)
 						print("Problem terminating module",module,", restarting anyway")
-				self.start_modules(to_restart)
+				print('\n\n\n')
+				self.start_modules(managed_restarts)
+			for module in unmanaged_restarts:
+				#non-managed, clean this up from the activity / health keys
+				del self.modules_dict[module]
+				del self.server['ACTIVITY_STATUS'][module]
+				try:
+					del self.server['HEALTH_LOG'][module]
+				except Exception:
+					pass
+
 
 	def shutdown(self):
 		#send shutdown to all modules
@@ -407,7 +503,7 @@ if __name__=="__main__":
 	import argparse
 
 	parser = argparse.ArgumentParser(description='Runs the Jarvis command server')
-	parser.add_argument('--modules', default=['robot','App_DirectTeleOperation'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
+	parser.add_argument('--modules', default=['Motion','Example','Sensor','App_DirectTeleOperation'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
 	args = parser.parse_args(sys.argv[1:])
 
 	server = CommandServer(modules = args.modules)

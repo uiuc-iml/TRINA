@@ -2,14 +2,15 @@ from Motion import MotionClient
 from Motion import TRINAConfig
 from .api import MotionAPI
 import time
+import trina
 from trina import jarvis
-
+from trina.utils import TimedLooper
 
 class MotionModule(jarvis.APIModule):
     def __init__(self,Jarvis=None,robot_ip=None):
-        jarvis.APIModule.__init__(self)
+        jarvis.APIModule.__init__(self,Jarvis)
         if robot_ip is None:
-            robot_ip = trina_settings.motion_server_addr()
+            robot_ip = trina.settings.motion_server_addr()
         self.robot = MotionClient(address = robot_ip)
         res = self.robot.startup()
         if not res:
@@ -40,7 +41,10 @@ class MotionModule(jarvis.APIModule):
         self.velEE_right = {}
 
         print('\n\n\n\n\n\n\n Initializing robot states')
-        self.startSimpleThread(self.stateReceiver,trina_settings.settings()['MotionModule']['state_receiver_dt'],name='stateReceiver')
+        self.dt = trina.settings.app_settings('MotionModule')['state_receiver_dt']
+        self.counter = 0
+        #self.startSimpleThread(self.stateReceiver_loop,self.dt,name='stateReceiver')
+        self.startProcess(self.stateReceiver_run)
 
     def name(self):
         return "Motion"
@@ -54,7 +58,16 @@ class MotionModule(jarvis.APIModule):
     def moduleCommandObject(self):
         return self.robot
 
-    def stateReceiver_func(self):
+    def stateReceiver_run(self):
+        looper = TimedLooper(self.dt,name="MotionModule.stateReceiver")
+        while looper:
+            self.stateReceiver_loop()
+
+    def stateReceiver_loop(self):
+        self.counter += 1
+        if self.counter%100 == 0:
+            #periodically run the heartbeat
+            self.jarvis.log_health()
         robot = self.robot
         server = self.jarvis.server
         try:

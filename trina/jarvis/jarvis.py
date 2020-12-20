@@ -3,6 +3,7 @@ import sys
 import time
 from ..state_server import StateServer
 from .api import APILayer
+import redis
 
 class Jarvis(APILayer):
 	"""Currently implemented APIs are command_server (top level APIs), motion, and sensors.
@@ -20,11 +21,13 @@ class Jarvis(APILayer):
 			from trina.modules.UI import UIAPI
 			#initialize
 			server = StateServer()
-			#initialize basic APIs available to the module
-			apis = dict()
-			apis['robot'] = MotionAPI('robot',name,server)
-			apis['ui'] = UIAPI('ui',name,server)
+			server.set(['HEALTH_LOG',name],[False,0])
 			server.set(['ACTIVITY_STATUS',name],'idle')
+			#initialize basic APIs available to the module
+			if apis is None:
+				apis = dict()
+				apis['robot'] = MotionAPI('robot',name,server)
+				apis['ui'] = UIAPI('ui',name,server)
 		APILayer.__init__(self,'command_server',name,server)
 		self.server = server
 		self.name = name
@@ -59,7 +62,10 @@ class Jarvis(APILayer):
 	def getTrinaTime(self):
 		"""Returns the trina time
 		"""
-		return self._redisGet(['TRINA_TIME'])
+		try:
+			return self._redisGet(['TRINA_TIME'])
+		except Exception:
+			return None
 
 	def getUIState(self):
 		""" Return UI state dictionary
@@ -68,7 +74,10 @@ class Jarvis(APILayer):
 		----------------
 		dict
 		"""
-		return self._redisGet(["UI_STATE"])
+		try:
+			return self._redisGet(["UI_STATE"])
+		except Exception:
+			return None
 
 	def getRobotState(self):
 		""" Return robot state dictionary
@@ -77,7 +86,10 @@ class Jarvis(APILayer):
 		----------------
 		dict
 		"""
-		return self._redisGet(["ROBOT_STATE"])
+		try:
+			return self._redisGet(["ROBOT_STATE"])
+		except Exception:
+			return None
 
 	def getSimulatedWorld(self):
 		""" Return the simulated world
@@ -86,7 +98,10 @@ class Jarvis(APILayer):
 		-------------
 		The Klampt world of the simulated robot.
 		"""
-		return self._redisGet(["SIM_WORLD"])
+		try:
+			return self._redisGet(["SIM_WORLD"])
+		except Exception:
+			return None
 
 
 
