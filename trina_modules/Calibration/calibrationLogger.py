@@ -11,11 +11,12 @@ import time
 import numpy as np
 import cv2
 from motion_client_python3 import MotionClient
-
+import open3d as o3d
 from utils_my import *
 class CalibrationLogger:
     def __init__(self,cameras,motion_address,codename):
         self.camera = Camera_Robot(robot = [],world = [], cameras = cameras,ros_active = False, use_jarvis = False, mode = 'Physical')
+        print('camera initialized properly')
         self.robot =  MotionClient(address = motion_address)
         self.robot.startServer(mode = 'Physical',components = ['left_limb','right_limb'],codename = codename)
         self.robot.startup()
@@ -23,7 +24,7 @@ class CalibrationLogger:
         self.camera_dt = 0.2
         self.system_start_time = time.time()
         self._lock = RLock()
-        self.init_move_time = 10.0
+        self.init_move_time = 15.0
         self.dt = 0.01
         self.cameras = cameras
         self.motion_address = motion_address
@@ -35,7 +36,6 @@ class CalibrationLogger:
         self.robot.setRightLimbPositionLinear(right_q,self.init_move_time)
         self.save_path = save_path
         time.sleep(self.init_move_time + 0.5)
-        exit()
         #start logging the pictures and robot state
         loggingThread = threading.Thread(target = self._cameraLoggingLoop)
         loggingThread.start()
@@ -71,16 +71,29 @@ class CalibrationLogger:
             loop_start_time = time.time()
             self._lock.acquire()
             self.res = self.camera.get_rgbd_images()
+            res2 = self.camera.get_point_clouds()
             self._lock.release()
             t = time.time() - self.system_start_time
             for cn in self.cameras:
                 color_frame = self.res[cn][0]
+                pcd = res2[cn]
+                pcd.transform([[1,0,0,0],[0,-1,0,0],[0,0,-1,0],[0,0,0,1]])
+                p = np.asarray(pcd.points) 
                 if cn[0:4] == 'real': #realsense camera color channels need to be adjusted
                     color = cv2.cvtColor(np.asarray(color_frame), cv2.COLOR_RGB2BGR)
                 else:
                     color = np.asarray(color_frame)
                 if counter >= 0:
                     cv2.imwrite(self.save_path + cn + '-' + str(counter).zfill(5)+img_format,color)
+                    # o3d.io.wirte_point_cloud(self.save_path + cn + '-'+ str(counter).zfill(5)+ '.pcd',pcd)
+                    data=open(self.save_path + cn + '-' + str(counter).zfill(5)+'.txt','w')
+                    dimx = 480
+                    dimy = 640
+                    for y in range(dimx):
+                        for x in range(dimy):
+                            # data.write(str(p[y][x][0])+' '+str(p[y][x][1])+' '+str(p[y][x][2])+'\n')
+                            data.write(str(p[y*dimy+x,0])+' '+str(p[y*dimy+x,1])+' '+str(p[y*dimy+x,2])+'\n')
+                    data.close()
 
             if counter >= 0:
                 fc.write(str(t) + '\n')

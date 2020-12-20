@@ -236,11 +236,18 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
         #The cameras should be ['left_realsense','right_realsense'] here.
         # from calibrationLogger import CalibrationLogger
 
+<<<<<<< HEAD
         # takePictures(traj_path,save_path,cameras,motion_address,codename)
 
         Tl,ql,Tr,qr = extractData1(save_path,cameras,use_depth = True)
         print('detected left limb camera markers:',len(Tl))
         print('detected right limb camera markers:',len(Tr))
+=======
+        takePictures(traj_path,save_path,cameras,motion_address,codename)
+        # Tl,ql,Tr,qr = extractData1(save_path,cameras)
+        # print('detected left limb camera markers:',len(Tl))
+        # print('detected left limb camera markers:',len(Tr))
+>>>>>>> 6c276ddd6d22f3a556c1a045f390186e6231cb75
 
 
         # print(Tl[0])
