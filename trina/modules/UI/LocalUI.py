@@ -364,7 +364,7 @@ class LocalUIModule(jarvis.APIModule):
         self.sim = Simulator(self.world) #used for viewport simulation
         self.dt = 0.05
         self.UIState = {'controllerPositionState': {'leftController': {'controllerOrientation': [0.07739845663309097, -0.19212138652801514, 0.3228720426559448, 0.9235001802444458], 'controllerPosition': [-0.021801471710205078, -0.4208446145057678, 0.5902314186096191]}, 'rightController': {'controllerOrientation': [0.052883781492710114, 0.20788685977458954, -0.30593231320381165, 0.927573025226593], 'controllerPosition': [0.15437912940979004, -0.4229428172111511, 0.5827353000640869]}}, 'headSetPositionState': {'deviceRotation': [-0.027466144412755966, 0.7671623826026917, 0.003965826239436865, 0.6408524513244629]}, 'controllerButtonState': {'leftController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}, 'rightController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}}, 'UIlogicState': {'stop': False, 'autonomousMode': False, 'teleoperationMode': False}, 'title': 'UI Outputs'}
-        self.server = self.jarvis._reem_server
+        self.server = self.jarvis._state_server
         self.server["UI_STATE"] = self.UIState
         self.server["UI_END_COMMAND"] = []
         self.server['UI_FEEDBACK'] = {}
@@ -467,6 +467,16 @@ if __name__ == "__main__":
 
     ================================================================================
     """)
+<<<<<<< HEAD:trina/modules/UI/LocalUI.py
     module = LocalUIModule()
     while module.status != 'terminated':
         time.sleep(1.0)
+=======
+    import sys
+    from Settings import trina_settings
+    world_file = trina_settings.simulation_world_file()
+    if len(sys.argv) > 1:
+        world_file = sys.argv[1]
+    world_file = "../../" + world_file
+    UI_end_1(world_file)
+>>>>>>> 7b0d97fdd7bef436ff319ff8604be33c9b3214b9:trina_modules/UI/UI_end_1.py

@@ -44,6 +44,7 @@ class Motion:
         self.mode = mode
         self.model_path = os.path.join(trina.setup.robot_models_root(),self.codename.capitalize() + ".urdf")
         self.computation_model_path = os.path.join(trina.setup.robot_models_root(),self.codename.capitalize() + ".urdf")
+        self.components = components
         self.debug_logging = debug_logging
         if(self.debug_logging):
             self.logging_filename = time.time()
@@ -77,13 +78,13 @@ class Motion:
         self.currentGravityVector = [0,0,-9.81]
 
         #Enable some components of the robot
-        self.left_limb_enabled = False
-        self.right_limb_enabled = False
-        self.base_enabled = False
-        self.torso_enabled = False
-        self.left_gripper_enabled = False
-        self.right_gripper_enabled = False
-        self.head_enabled = False
+        self.left_limb_enabled = ('left_limb' in components)
+        self.right_limb_enabled = ('right_limb' in components)
+        self.base_enabled = ('base' in components)
+        self.torso_enabled = ('torso' in components)
+        self.left_gripper_enabled = ('left_gripper' in components)
+        self.right_gripper_enabled = ('right_gripper' in components)
+        self.head_enabled = ('head' in components)
         #Initialize components
         if self.mode == "Kinematic":
             from kinematicController import KinematicController
