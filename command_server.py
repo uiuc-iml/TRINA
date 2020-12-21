@@ -930,7 +930,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Kinematic',components =  ['left_limb', 'right_limb'], modules = ['DirectTeleOperation'], codename = 'bubonic')
+	server = CommandServer(mode = 'Kinematic',components =  ['left_limb', 'right_limb'], modules = ['DirectTeleOperation', 'StateLogger'], codename = 'bubonic')
 	#server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
 	print(server.robot.closeLeftRobotiqGripper())
