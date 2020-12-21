@@ -15,13 +15,12 @@ class Example(jarvis.APIModule):
     """
     def __init__(self,Jarvis = None, debugging = False):
         jarvis.APIModule.__init__(self,Jarvis)
-        self.status = 'idle' #states are " idle, active"        
         self.loopCount = 0
 
         self.t0 = time.time()
         self.jarvis.server.set(["Example"],{})
         #startSimpleThread will actually take care of the locking for you if dolock=True. 
-        self.startSimpleThread(self._infoLoop,0.1,name="infoLoop")
+        self.startMonitorAndRpcThread(0.1)
         self.startSimpleThread(self._otherLoop,1.0,name="otherLoop")
 
     def add(self,a,b):
@@ -50,25 +49,6 @@ class Example(jarvis.APIModule):
         print(args,kwargs)
         return ExampleAPI(self.apiName(),module_name,*args,**kwargs)
 
-    def _infoLoop(self):
-        self.jarvis.log_health()
-        loop_start_time = time.time()
-        status = self.jarvis.getActivityStatus()
-
-        if status == 'active':
-            if data.status == 'idle':
-                print('\n\n\n\n starting up Example Module! \n\n\n\n\n')
-                self.status = 'active'
-
-        elif status == 'idle':
-            if self.status == 'active':
-                print('loop count =',self.loopCount)
-                print('\n\n\n\n deactivating Example Module. \n\n\n\n\n')
-                self.status = 'idle'
-
-        #This is new -- added so that redisRpc calls are handled
-        self.processRedisRpcs()
-
     def doRpc(self,fn,args,kwargs):
         #can do other things here... by default it will find fn in self and call it
         return jarvis.APIModule.doRpc(self,fn,args,kwargs)
@@ -81,6 +61,7 @@ class ExampleTester(jarvis.Module):
     def __init__(self, Jarvis=None):
         jarvis.Module.__init__(self,Jarvis)
         self.count = 0
+        self.jarvis.enableHealthChecks(False)   #don't turn me off due to health problems
         self.startSimpleThread(self.testing,1.0,name="testingLoop")
 
     def testing(self):
