@@ -17,15 +17,17 @@ class StateServer(KeyValueStore):
     """StateServer should usually be treated just like a normal
     REEM KeyValueStore object.
 
-    Overall, the use of StateServer is preferable to KeyValueStore because it's:
+    Overall, the use of StateServer is preferable to ``reem.KeyValueStore``
+    because it's:
+
     - Pickleable
-    - Extra convenience functions (redis_client())
+    - Extra convenience functions (:func:`redis_client`)
 
-    Using the var, set, get methods have following advantages over using the
-    [] syntax defined in REEM:
+    Using the :func:`var`, :func:`set`, :func:`get` methods have following
+    advantages over using the [] syntax defined in REEM:
 
-    - Can accept paths in the form of string paths ['key1','key2'] or period-
-      separated keys 'key1.key2'
+    - Can accept paths in the form of string paths ``['key1','key2']`` or 
+      period- separated keys ``'key1.key2'``
     - More tolerant of uninitialized keys and will fill in empty dicts as
       needed.
 
@@ -59,7 +61,7 @@ class StateServer(KeyValueStore):
     
     def var(self,path):
         """Given a path (period-separated str or list of str), returns a 
-        StateServerVar object that can be accessed using get()/set().
+        :class:`StateServerVar` object that accesses the key using get()/set().
         """
         return StateServerVar(self,path)
 
@@ -163,8 +165,10 @@ class StateServerVar:
             self.parentnode = res
         self.node = self.parentnode[self.key]
     def get(self):
+        """Reads the value at the given key from the state server"""
         return self.node.read()
     def set(self,value):
+        """Sets the value at the given key into the state server"""
         try:
             self.parentnode[self.key] = value
         except redis.exceptions.ResponseError:
