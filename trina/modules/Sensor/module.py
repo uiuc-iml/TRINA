@@ -318,8 +318,10 @@ class SensorModule(jarvis.APIModule):
         with self.update_lock:
             self.simrobot.setConfig(self.temprobot.getConfig())
         dt = 1.0/30.0 # this is unused in kinematicSimulate
+        warn_threshold = 0.5
         #assume temprobot is updated
         for k,cam in self.active_cameras.items():
+            t0 = time.time()
             if cam.want_images or cam.want_point_cloud:
                 cam.device.kinematicSimulate(self.simworld, dt)
                 images = sensing.camera_to_images(cam.device, image_format='numpy', color_format='channels')
@@ -339,6 +341,9 @@ class SensorModule(jarvis.APIModule):
                     with self.update_lock:
                         world_transform = self.camera_transform(k,format='numpy')
                     world_pcd = camera.point_cloud.transform(world_transform)
+                    t1 = time.time()
+                    if t1-t0 > warn_threshold:
+                        print("Getting camera point clouds took time",t1-t0)
 
                     with self.update_lock:
                         #update everything in one go
@@ -347,12 +352,20 @@ class SensorModule(jarvis.APIModule):
                         cam.world_point_cloud = world_pcd
                         cam.world_transform = world_transform
                 elif cam.want_images:
+                    t1 = time.time()
+                    if t1-t0 > warn_threshold:
+                        print("Getting camera images took time",t1-t0)
                     cam.images = images
+                    #no lock needed
 
         self.lidar.kinematicSimulate(self.simworld,dt)
         with self.update_lock:
+            t0 = time.time()
             self.lidar_data = self.lidar.getMeasurements()
             self.base_transform = self.simrobot.link(int(self.lidar.getSetting('link'))).getTransform()
+            t1 = time.time()
+            if t1-t0 > warn_threshold:
+                print("Getting Lidar data took time",t1-t0)
 
         if self.ros_active: 
             print("BROADCASTING TO ROS")
@@ -367,6 +380,7 @@ class SensorModule(jarvis.APIModule):
             
         with self.update_lock:
             #check for updates on pending requests
+            t0 = time.time()
             newrequests = []
             for req in self.requests:
                 promise,query,cameras,results = req
@@ -405,6 +419,9 @@ class SensorModule(jarvis.APIModule):
                 else:
                     newrequests.append(req)
             self.requests = newrequests
+            t1 = time.time()
+            if t1-t0 > 0.001:
+                print("Answering requests took time",t1-t0)
 
         
     def get_rgbd_images(self, cameras=None):
@@ -467,15 +484,19 @@ class SensorModule(jarvis.APIModule):
         if self.lidar_data is None or self.lidar_transform is None or self.base_transform is None:
             return None
         thetamin,thetamax = self.lidar_angle_range
+        distances = np.array(self.lidar_data)
+        print("Angle range",thetamin,thetamax)
+        print("Disance range",distances.min(),distances.max())
         #convert distance readings to evenly spaced points in the space
         angles = np.linspace(thetamin,thetamax,len(self.lidar_data),endpoint=True)
         x = np.sin(angles)
         y = np.zeros(len(angles))
         z = np.cos(angles)
-        Tworld = se3.mul(self.base_transform,se3.lidar_transform)
-        R = numpy_convert.to_numpy(Tworld[0],'Matrix3')
+        pts_cols = np.multiply(np.row_stack((x,y,z)),distances)
+        Tworld = se3.mul(self.base_transform,self.lidar_transform)
+        R = klampt.io.numpy_convert.to_numpy(Tworld[0],'Matrix3')
         t = np.array(Tworld[1])
-        return np.dot(R,np.row_stack((x,y,z))).T + t
+        return np.dot(R,pts_cols).T + t
 
 
 if __name__ == '__main__':
