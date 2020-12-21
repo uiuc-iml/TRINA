@@ -219,11 +219,8 @@ def edit_left_arm_config(name):
         q = left_arm_config(name)
     except KeyError:
         q = [0]*len(dofs)
-    w = WorldModel()
-    model_path = os.path.join(os.path.expanduser("~/TRINA"),robot_model())
-    res = w.readFile(model_path)
-    if not res:
-        raise RuntimeError("Unable to read robot model "+model_path)
+    from . import setup
+    w = setup.robot_model_load()
     robot = w.robot(0)
     arm_robot = SubRobotModel(robot,dofs)
     save,result = resource.edit(name,q,'Config',world=w,referenceObject=arm_robot)
@@ -241,11 +238,8 @@ def edit_right_arm_config(name):
         q = right_arm_config(name)
     except KeyError:
         q = [0]*len(dofs)
-    w = WorldModel()
-    model_path = os.path.join(os.path.expanduser("~/TRINA"),robot_model())
-    res = w.readFile(model_path)
-    if not res:
-        raise RuntimeError("Unable to read robot model "+model_path)
+    from . import setup
+    w = setup.robot_model_load()
     robot = w.robot(0)
     arm_robot = SubRobotModel(robot,dofs)
     save,result = resource.edit(name,q,'Config',world=w,referenceObject=arm_robot)
@@ -264,26 +258,43 @@ def calibration_configs(task):
 def edit_calibration_configs(task):
     """Edits calibration configurations for the given calibration task. Saves
     to disk when OK is prssed. """
-    fn = settings()['CalibrationModule'][task+'_calibration_configs']
+    try:
+        fn = settings()['CalibrationModule'][task]['configs']
+    except Exception as e:
+        print("Could not read setting CalibrationModule.{}.configs".format(task))
+        print(e)
+        return
+    try:
+        limb = settings()['CalibrationModule'][task]['limb']
+    except Exception as e:
+        print("Could not read setting CalibrationModule.{}.limb".format(task))
+        print(e)
+        return
     from klampt.io import loader
+    print("Loading configs from",fn)
     configs = loader.load('Configs',os.path.join(base,fn))
     from klampt import WorldModel,RobotModel
     from klampt.model.subrobot import SubRobotModel
     from klampt.io import resource 
-    if sensor == 'right':
+    if limb == 'left_arm':
         dofs = left_arm_dofs()
-    else:
+    elif limb == 'right_arm':
         dofs = right_arm_dofs()
-    w = robot_model_load()
+    else:
+        raise ValueError("TODO: calibration for moving limb",limb,'?')
+    from . import setup
+    w = setup.robot_model_load()
     robot = w.robot(0)
     arm_robot = SubRobotModel(robot,dofs)
     #save,result = resource.edit(sensor,configs,'Configs',world=w,referenceObject=arm_robot)
     from klampt.model.trajectory import Trajectory
-    save,result = resource.edit(sensor,Trajectory(list(range(len(configs))),configs),'Trajectory',world=w,referenceObject=arm_robot)
+    save,result = resource.edit(task+" calibration motion",Trajectory(list(range(len(configs))),configs),'Trajectory',world=w,referenceObject=arm_robot)
     if save:
         print("Saving configs to",os.path.join(base,fn))
         loader.save(result.milestones,'Configs',os.path.join(base,fn))
+        return True
+    return False
 
 if __name__ == '__main__':
     #edit_left_arm_config('untucked')
-    edit_calibration_configs('left')
+    edit_calibration_configs('realsense_left')
