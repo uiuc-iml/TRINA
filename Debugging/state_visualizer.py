@@ -2,7 +2,6 @@
 import sys
 import time,math
 from klampt import vis
-from Motion.motion_client import MotionClient
 import numpy as np
 import os
 import pdb
@@ -13,6 +12,7 @@ try:
 except ImportError:
     sys.path.append(os.path.expanduser("~/TRINA"))
     import trina
+from Motion.motion_client import MotionClient
 
 dt = 1.0/30.0
 
@@ -25,7 +25,7 @@ server = trina.state_server.StateServer()
 # robot.startServer(mode = 'Kinematic', components = [])
 
 
-world = trina.settings.simulation_world_load()
+world = trina.setup.simulation_world_load()
 vis_robot = world.robot(0)
 
 vis.add("world",world)
