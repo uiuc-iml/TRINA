@@ -5,19 +5,23 @@ import logging
 from datetime import datetime
 
 def trina_root():
+    """Root path of TRINA folder"""
     return os.path.expanduser("~/TRINA")
 
 def models_root():
+    """Root path of TRINA Models folder"""
     return os.path.join(trina_root(),"Models")
 
 def robot_models_root():
+    """Root path of TRINA robot models folder"""
     return os.path.join(trina_root(),"Models/robots")
 
 def log_root():
+    """Root path of TRINA logging folder"""
     return os.path.join(trina_root(),"errorLogs")
 
 def robot_model_load():
-    """Loads the URDF model for the robot. Returns a WorldModel"""
+    """Loads the URDF model for the robot. Returns a klampt.WorldModel"""
     w = WorldModel()
     model_path = os.path.join(trina_root(),settings.robot_model())
     res = w.readFile(model_path)
@@ -26,7 +30,7 @@ def robot_model_load():
     return w
 
 def simulation_world_load():
-    """Returns a suggested simulation WorldModel"""
+    """Returns a suggested simulation klampt.WorldModel"""
     from klampt import WorldModel
     w = WorldModel()
     model_path = os.path.join(trina_root(),settings.simulation_world_file())
@@ -36,7 +40,7 @@ def simulation_world_load():
     return w
 
 def set_robot_sensor_calibration(world):
-    """Returns a Simulator that is calibrated according to the 
+    """Returns a klampt.Simulator that is calibrated according to the 
     sensor calibration in Settings/"""
     sim = Simulator(world)
     robot = sim.controller(0)
