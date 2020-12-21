@@ -9,12 +9,13 @@ class NestedJsonAccessor:
     loaded when accessed.
 
     Almost all dict/list accessors are implemented.  To treat this like a plain
-    dict, call asdict().  By default, this will only return the contents of the
-    immediate JSON file. To get the whole structure. call asdict(True).
-    To treat a list object as a plain list, use aslist() or list(self).
+    dict, call :func:`asdict`.  By default, this will only return the contents
+    of the immediate JSON file. To get the whole structure. call
+    ``asdict(True)``. To treat a list object as a plain list, use
+    :func:`aslist` or ``list(self)``.
 
-    To save back to disk, call the save() function.  This will preserve the 
-    data and file structure as much as possible.
+    To save back to disk, call the :func:`save` function.  This will preserve
+    the data and file structure as much as possible.
     """
     def __init__(self,val=None,parent=None,key=None):
         self.val=val
@@ -28,7 +29,7 @@ class NestedJsonAccessor:
     def load(self,fn):
         with open(fn,'r') as f:
             try:
-                self.val = json.load(f)
+                self.val = json_recode_str(json.load(f))
             except json.decoder.JSONDecodeError as e:
                 print("Error parsing JSON file",fn)
                 raise
@@ -198,3 +199,20 @@ class _NestedJsonAccessorFile:
             return self.compress(accessor.parent)
         return accessor.val
 
+import sys
+if sys.version_info[0] < 3:
+    def json_recode_str(input):
+        """Recodes JSON files as str rather than unicode"""
+        if isinstance(input, dict):
+            return {json_recode_str(key): json_recode_str(value)
+                    for key, value in input.iteritems()}
+        elif isinstance(input, list):
+            return [json_recode_str(element) for element in input]
+        elif isinstance(input, unicode):
+            return input.encode('utf-8')
+        else:
+            return input
+else:
+    def json_recode_str(input):
+        return input
+        
