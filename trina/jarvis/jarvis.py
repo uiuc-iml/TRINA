@@ -8,12 +8,14 @@ import redis
 class Jarvis(APILayer):
 	"""Currently implemented APIs are command_server (top level APIs), motion, and sensors.
 
-	Usage:
+	Usage::
+
 		jarvis = [Jarvis instance, set up for you by command_server]
 		components = jarvis.robot.components()
 		mode = jarvis.robot.mode()
 		jarvis.ui.getRayClick()
 		etc...
+	
 	"""
 	def __init__(self, name, apis=None, server=None):
 		if server is None:
@@ -21,8 +23,8 @@ class Jarvis(APILayer):
 			from trina.modules.UI import UIAPI
 			#initialize
 			server = StateServer()
-			server.set(['HEALTH_LOG',name],[False,0])
-			server.set(['ACTIVITY_STATUS',name],'idle')
+			server.set(['HEALTH_LOG',name],['off',0])
+			server.set(['ACTIVITY_STATUS',name],'active')
 			#initialize basic APIs available to the module
 			if apis is None:
 				apis = dict()
@@ -42,22 +44,33 @@ class Jarvis(APILayer):
 		"""
 		self._redisSet(["HEALTH_LOG",self.name],[status, time.time()])
 
-	def getActivityStatus(self):
-		"""Returns the module activity 
+	def enableHealthChecks(self, status=True):
+		"""If you are using a dummy module, should disable health checks."""
+		self._redisSet(["HEALTH_LOG",self.name],[True if status else 'off', time.time()])
 
-		Return:
-		--------------
-		dict
+	def getActivityStatus(self):
+		"""Returns the module activity status, as controlled by Command Server.
+		The module should respect a request to switch to 'idle' by stopping 
+		internal processes promptly.
+
+		Returns:
+			dict
 		"""
 		return self._redisGet(['ACTIVITY_STATUS',self.name])
 
-	def changeActivityStatus(self, to_activate, to_deactivate=[]):
-		"""Changes the status of the module
+	def switchModuleActivity(self, to_activate, to_deactivate=[]):
+		"""Changes the status of one or more modules
 		"""
 		self._moduleCommand('switch_module_activity', to_activate, to_deactivate)
 
 	def restartModule(self, otherModule):
 		self._moduleCommand('restart_module', otherModule)
+
+	def activateModule(self,module):
+		self._moduleCommand('activate_module', module)
+
+	def deactivateModule(self,module):
+		self._moduleCommand('deactivate_module', module)
 
 	def getTrinaTime(self):
 		"""Returns the trina time
@@ -70,9 +83,8 @@ class Jarvis(APILayer):
 	def getUIState(self):
 		""" Return UI state dictionary
 
-		Return:
-		----------------
-		dict
+		Returns:
+			dict
 		"""
 		try:
 			return self._redisGet(["UI_STATE"])
@@ -82,9 +94,8 @@ class Jarvis(APILayer):
 	def getRobotState(self):
 		""" Return robot state dictionary
 
-		Return:
-		----------------
-		dict
+		Returns:
+			dict
 		"""
 		try:
 			return self._redisGet(["ROBOT_STATE"])
@@ -94,9 +105,8 @@ class Jarvis(APILayer):
 	def getSimulatedWorld(self):
 		""" Return the simulated world
 
-		Return:
-		-------------
-		The Klampt world of the simulated robot.
+		Returns:
+			str: The Klampt world of the simulated robot.
 		"""
 		try:
 			return self._redisGet(["SIM_WORLD"])
