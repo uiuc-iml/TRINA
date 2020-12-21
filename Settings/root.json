@@ -17,17 +17,20 @@
         "command_receiver_dt":0.001,
         "health_monitor_dt":1,
         "heartbeat_tolerance":10,
+        "#_comment1":"If you would like to access a different class in your module rather than ModuleName, put the class name here",
         "module_class_map": {
-            "#_comment":"If you would like to access a different class in your module rather than ModuleName, put the class name here",
             "Motion":"MotionModule",
             "UI":"LocalUI"
-        }
+        },
+        "verbose":0,
+        "#_comment2":"To force modules to be verbose, put them here",
+        "debug":[]
     },
     "Simulation":{
-        "world_file":"Models/simulation_worlds/TRINA_world_bubonic.xml"
+        "world_file":"Models/simulation_worlds/TRINA_world_bubonic_with_obstacle.xml"
     },
     "DebugUI": {
-        "world_file":"Models/simulation_worlds/TRINA_world_bubonic.xml"
+        "world_file":"Models/simulation_worlds/TRINA_world_bubonic_with_obstacle.xml"
     },
     "MotionModule": {
         "state_receiver_dt":0.015
