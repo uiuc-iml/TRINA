@@ -165,14 +165,14 @@ class MyQtMainWindow(QMainWindow):
         if self.mode != q.text():
             self.modeText.setText("Mode: " +  q.text())
             if q.text() == 'Manual':
-                self.module.jarvis.changeActivityStatus([],"App_"+str(self.mode))
+                self.module.jarvis.deactivateModule("App_"+str(self.mode))
                 self.enableManualMode()
             else:
                 if self.mode == 'Manual':
                     self.disableManualMode()
                 self.mode = q.text()
                 try:
-                    self.module.jarvis.changeActivityStatus(["App_"+str(self.mode)])
+                    self.module.jarvis.switchModuleActivity(["App_"+str(self.mode)])
                 except Exception as err:
                     print("Error: {0}".format(err))
             for element in self.module.screenElement:
