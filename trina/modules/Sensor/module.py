@@ -1,8 +1,4 @@
-# This is a quality of life improvement module to enable students to use one of TRINA's arms equipped with an intel realsense cameras for grasping tasks
-# UIUC - IML - Feburary 2020
-# Author: Joao Marcos Marques - jmc12@illinois.equipped
-# This code must be run within the TRINA folder.
-
+from future import *
 import atexit
 import numpy as np
 import open3d as o3d
@@ -42,6 +38,12 @@ from multiprocessing import Process, Pipe
 
 from .api import *
 
+#need to convert lidar_transform to have x pointing forward, y to the left, z up
+#Klamp't convention has z pointing forward, x pointing left, y pointing up
+klampt_to_ros_lidar = so3.from_matrix([[0,1,0],
+                                       [0,0,1],
+                                       [1,0,0]])
+
 class CameraData:
     def __init__(self,settings=None):
         if settings is not None:
@@ -73,6 +75,7 @@ class SensorModule(jarvis.APIModule):
 
     def __init__(self, Jarvis, cameras= None, mode='Kinematic', ros_active = True):
         jarvis.APIModule.__init__(self,Jarvis)
+        self.status = 'active' #states are " idle, active"  --- idle means you won't be responding to API calls, so it's best to put this as active
 
         # we first check if the parameters are valid:
         # checking if cameras make sense:
@@ -87,10 +90,14 @@ class SensorModule(jarvis.APIModule):
         global have_ros
         if not _have_ros:
             if self.ros_active:
-                print('\n\n\n\n')
-                print("ROS support requested, but rospy could not be imported")
-                print('\n\n\n\n')
+                print('\n\n\n')
+                print("SensorModule: ROS support requested, but rospy could not be imported")
+                print('\n\n\n')
             self.ros_active = False
+        else:
+            if rospy.get_name() == '/unnamed':
+                rospy.init_node("TRINA_SensorModule")
+            self.ros_subscribers = []
 
         if self.mode == 'Physical':
             self.world = trina.setup.robot_model_load()
@@ -103,13 +110,18 @@ class SensorModule(jarvis.APIModule):
                     raise ValueError('invalid camera %s selected. Valid cameras are %s (see TRINA/Settings/).\nPlease update camera selection and try again'%(camera,', '.join(camera_settings.keys())))
                 # if the camera is valid, import and configure the camera
                 self.active_cameras[camera] = CameraData(camera_settings[camera])
-                self.startSimpleThread(self.update_camera,args=(camera,),dt=camera_settings[camera].get('framerate',1.0/30.0),initfunc=self.init_camera,name=camera,dolock=False)
+                self.startSimpleThread(self._update_camera,args=(camera,),dt=camera_settings[camera].get('framerate',1.0/30.0),initfunc=self._init_camera,name=camera,dolock=False)
+            self.lidar_angle_range = None
+            self.lidar_data = None
+            self.base_transform = None
+            self.lidar_transform = None
         elif self.mode == 'Kinematic':
             self.world = trina.setup.robot_model_load()
             self.temprobot = self.world.robot(0)
             self.simworld = trina.setup.simulation_world_load()
             self.simrobot = self.simworld.robot(0)
             self.sim = trina.setup.set_robot_sensor_calibration(self.simworld)
+
             
             #determine which camera sensors are available
             all_cams = []
@@ -134,13 +146,18 @@ class SensorModule(jarvis.APIModule):
                     self.active_cameras[camera].local_transform = sensing.get_sensor_xform(simcam)
                     self.active_cameras[camera].device = simcam
             self.lidar = self.sim.controller(0).sensor("lidar")
+            xmax = float(self.lidar.getSetting('xSweepMagnitude'))
+            self.lidar_angle_range = (-xmax,xmax)
             self.lidar_data = None
-            self.lidar_transform = None
+            self.base_transform = None
+            self.lidar_transform = sensing.get_sensor_xform(self.lidar)
+            if self.ros_active:
+                self.rosTfBroadcaster = tf.TransformBroadcaster()
             self.system_start = time.time()
             
             self.glutWindowID = None
-            self.startSimpleThread(self.update_sim,0.1,initfunc=self.init_GL,name="update_sim",dolock=False)
-        self.startSimpleThread(self.update_robot,dt=1.0/30.0,name="update_robot",dolock=False)
+            self.startSimpleThread(self._update_sim,0.1,initfunc=self._init_GL,name="update_sim",dolock=False)
+        self.startSimpleThread(self._update_robot,dt=1.0/30.0,name="update_robot",dolock=False)
 
     def api(self,*args,**kwargs):
         return SensorAPI(self,"sensors",*args,**kwargs)
@@ -161,8 +178,12 @@ class SensorModule(jarvis.APIModule):
         self.sim = None
         self.temprobot = None
         self.world = None
+        if self.ros_active:
+            for sub in self.ros_subscribers:
+                sub.unregister()
+            self.ros_subscribers = []
 
-    def init_camera(self,camera_name):
+    def _init_camera(self,camera_name):
         camera = self.active_cameras[camera_name]
         serial_number = camera.serial_number
         try:
@@ -171,19 +192,29 @@ class SensorModule(jarvis.APIModule):
             elif camera_name.startswith('zed'):
                 driver = ZedCamera(serial_number)
             else:
-                print('Verify camera names, no camera match found!')
+                print('SensorModule: Verify camera names, no camera match found!')
                 raise TypeError('No compatible camera found!')
             camera.driver = driver
             atexit.register(camera.driver.safely_close)
-            print('sucessfully initialized the camera! ')
+            print('SensorModule: sucessfully initialized camera',camera_name)
         except Exception as e:
-            print('This camera ', camera_name,
-                ' is currently unavailable. Verify that it is connected and try again \n\n')
+            print('SensorModule: Camera', camera_name,'is currently unavailable. Verify that it is connected and try again \n\n')
             with self.update_lock:
                 del self.active_cameras[camera_name]
             self.stopThread(camera_name)
 
-    def update_camera(self,camera_name):
+        if self.ros_active:
+            #subscribe to /base_scan updates
+            self.subscribers.append(rospy.Subscriber('/base_scan',LaserScan,callback=self._on_laser_scan,queue_size=10))
+            self.rosTfListener = tf.TransformListener()
+            lidar_transform_ros = klampt.io.ros.listen_tf(self.rosTfListener,None,'base_scan','base_link')
+            if lidar_transform_ros is None:
+                print("SensorModule: WARNING: tf module didn't seem to broadcast base_scan -> base_link?")
+            else:
+                #need to make sure this is in Klampt coordinate convention
+                self.lidar_transform = (so3.mul(lidar_transform_ros[0],so3.inv(klampt_to_ros_lidar)),lidar_transform_ros[1])
+
+    def _update_camera(self,camera_name):
         camera = self.active_cameras[camera_name]
         if camera.want_images or camera.want_point_cloud:
             camera.driver.update()
@@ -193,8 +224,13 @@ class SensorModule(jarvis.APIModule):
                 camera.point_cloud = camera.latest_point_cloud()
                 with self.update_lock:
                     camera.world_transform = self.camera_transform(camera_name,format='numpy')
-                    print("World transform",camera.world_transform)
+                    #print("SensorModule: Camera",camera_name,"world transform",camera.world_transform)
                 camera.world_point_cloud =  camera.point_cloud.transform(camera.world_transform)
+        if self.ros_active:
+            self.base_transform = klampt.io.ros.listen_tf(self.rosTfListener,None,'base_link','odom')
+            if self.base_transform is None:
+                print("SensorModule: WARNING: tf module didn't seem to broadcast base_link -> odom?")
+
         with self.update_lock:
             #check if i need to update any pending requests
             newrequests = []
@@ -214,8 +250,22 @@ class SensorModule(jarvis.APIModule):
                         #fire the callback if all camera data is available
                         promise.callback(results)
                         continue
+                if query == 'get_lidar_scan':
+                    if self.lidar_data is not None:
+                        promise.callback(self.lidar_data)
+                        continue
+                if query == 'get_lidar_point_cloud':
+                    if self.lidar_data is not None:
+                        res = self.get_lidar_point_cloud()
+                        promise.callback(res)
+                        continue
                 newrequests.append(req)
             self.requests = newrequests
+        
+    def _on_laser_scan(self,laser_scan):
+        self.lidar_angle_range = (laser_scan.angle_min,laser_scan.angle_max)
+        self.lidar_data = measurements
+        res.intensities = []
 
     def camera_transform(self, camera_name, format='klampt'):
         #assume update_lock is called?
@@ -227,7 +277,138 @@ class SensorModule(jarvis.APIModule):
         else:
             return klampt.io.numpy_convert.to_numpy(T,'RigidTransform')
 
+    def _update_robot(self):
+        self.jarvis.log_health()
+        try:
+            # print(self.jarvis.robot.sensedRobotq(),self.jarvis.robot.sensedRightEETransform(),self.jarvis.robot.sensedLeftEETransform())
+            q = self.jarvis.robot.sensedRobotq()
+        except Exception as e:
+            print('SensorModule: error updating robot state')
+            print(e)
+            return
+        with self.update_lock:
+            self.temprobot.setConfig(q)
+            
+    def _init_GL(self):
+        # GLEW WORKAROUND
+        glutInit([])
+        glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |
+                            GLUT_DEPTH | GLUT_MULTISAMPLE)
+        glutInitWindowSize(1, 1)
+        self.glutWindowID = glutCreateWindow("Sensor module hidden GLUT window")
+
+        # Default background color
+        glClearColor(0.8, 0.8, 0.9, 0)
+        # Default light source
+        glLightfv(GL_LIGHT0, GL_POSITION, [0, -1, 2, 0])
+        glLightfv(GL_LIGHT0, GL_DIFFUSE, [1, 1, 1, 1])
+        glLightfv(GL_LIGHT0, GL_SPECULAR, [1, 1, 1, 1])
+        glEnable(GL_LIGHT0)
+
+        glLightfv(GL_LIGHT1, GL_POSITION, [-1, 2, 1, 0])
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, [0.5, 0.5, 0.5, 1])
+        glLightfv(GL_LIGHT1, GL_SPECULAR, [0.5, 0.5, 0.5, 1])
+        glEnable(GL_LIGHT1)
+
+        if self.ros_active:
+            rospy.init_node("SensorModule_publisher")
+            self.ros_base_scan_subscriber = rospy.Publisher("base_scan", LaserScan)
+
+    def _update_sim(self):
+        with self.update_lock:
+            self.simrobot.setConfig(self.temprobot.getConfig())
+        dt = 1.0/30.0 # this is unused in kinematicSimulate
+        #assume temprobot is updated
+        for k,cam in self.active_cameras.items():
+            if cam.want_images or cam.want_point_cloud:
+                cam.device.kinematicSimulate(self.simworld, dt)
+                images = sensing.camera_to_images(cam.device, image_format='numpy', color_format='channels')
+                if cam.want_point_cloud:
+                    if int(cam.device.getSetting("depth")) == 0:
+                        print("SensorModule: Simulated camera",k,"does not have depth information")
+                        pcd = 'error'
+                        cam.want_point_cloud = False
+                    else:
+                        rgb,depth = images
+                        xfov = float(cam.device.getSetting('xfov'))
+                        yfov = float(cam.device.getSetting('yfov'))
+                        local_pc = klampt.model.sensing.image_to_points(depth,rgb,xfov,yfov)
+                        pcd = o3d.geometry.PointCloud()
+                        pcd.points = o3d.utility.Vector3dVector(local_pc[:, :3])
+                        pcd.colors = o3d.utility.Vector3dVector(local_pc[:, 3:])
+                    with self.update_lock:
+                        world_transform = self.camera_transform(k,format='numpy')
+                    world_pcd = camera.point_cloud.transform(world_transform)
+
+                    with self.update_lock:
+                        #update everything in one go
+                        cam.images = images
+                        cam.point_cloud = pcd
+                        cam.world_point_cloud = world_pcd
+                        cam.world_transform = world_transform
+                elif cam.want_images:
+                    cam.images = images
+
+        self.lidar.kinematicSimulate(self.simworld,dt)
+        with self.update_lock:
+            self.lidar_data = self.lidar.getMeasurements()
+            self.base_transform = self.simrobot.link(int(self.lidar.getSetting('link'))).getTransform()
+
+        if self.ros_active: 
+            print("BROADCASTING TO ROS")
+            #broadcast to ros so the mapper can run
+            t = rospy.Time.now()
+            ros_msg = klampt.io.ros.to_SensorMsg(self.lidar,frame="/base_scan",stamp=t)
+            self.ros_base_scan_subscriber.publish(ros_msg)
+
+            lidar_transform = (so3.mul(self.lidar_transform[0],klampt_to_ros_lidar),self.lidar_transform[1])
+            klampt.io.ros.broadcast_tf(self.rosTfBroadcaster,self.base_transform,frameprefix="base_link",root="odom",stamp=t)
+            klampt.io.ros.broadcast_tf(self.rosTfBroadcaster,self.lidar_transform,frameprefix="base_scan",root="base_link",stamp=t)
+            
+        with self.update_lock:
+            #check for updates on pending requests
+            newrequests = []
+            for req in self.requests:
+                promise,query,cameras,results = req
+                if cameras is None:
+                    cameras = list(self.active_cameras.keys())
+                if query == 'get_rgbd_images':
+                    for name in cameras:
+                        camera = self.active_cameras[name]
+                        camera.want_images = True
+                        if camera.images is not None:
+                            results[name] = camera.images
+                elif query == 'get_point_clouds':
+                    for name in cameras:
+                        camera = self.active_cameras[name]
+                        camera.want_point_cloud = True
+                        if camera.point_cloud is not None:
+                            if isinstance(camera.point_cloud,str):
+                                #errored out
+                                results[name] = camera.point_cloud
+                            else:
+                                assert camera.world_transform is not None
+                                results[name] = camera.point_cloud.transform(camera.world_transform)
+                if query == 'get_lidar_scan':
+                    if self.lidar_data is not None:
+                        promise.callback(self.lidar_data)
+                        continue
+                if query == 'get_lidar_point_cloud':
+                    if self.lidar_data is not None:
+                        res = self.get_lidar_point_cloud()
+                        promise.callback(res)
+                        continue
+                #fire the callback if all camera data is available
+                if len(results) == len(cameras):
+                    promise.callback(results)
+                    continue
+                else:
+                    newrequests.append(req)
+            self.requests = newrequests
+
+        
     def get_rgbd_images(self, cameras=None):
+        """API-call. """
         if cameras is None:
             cameras = list(self.active_cameras.keys())
         output = {}
@@ -245,7 +426,8 @@ class SensorModule(jarvis.APIModule):
 
     def get_point_clouds(self, cameras=None):
         """
-        Returns the point cloud from the referred source in the robot's base frame.
+        API-call. Returns the point cloud from the referred source in the robot's
+        base frame.
 
         Args:
             cameras ([str]): A string or list of strings containing which cameras
@@ -278,151 +460,22 @@ class SensorModule(jarvis.APIModule):
             output[camera] = world_pc
         return output
 
-    def update_robot(self):
-        self.jarvis.log_health()
-        try:
-            # print(self.jarvis.robot.sensedRobotq(),self.jarvis.robot.sensedRightEETransform(),self.jarvis.robot.sensedLeftEETransform())
-            q = self.jarvis.robot.sensedRobotq()
-        except Exception as e:
-            print('error updating robot state')
-            print(e)
-            return
-        with self.update_lock:
-            self.temprobot.setConfig(q)
-            
-    def init_GL(self):
-        # GLEW WORKAROUND
-        glutInit([])
-        glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE |
-                            GLUT_DEPTH | GLUT_MULTISAMPLE)
-        glutInitWindowSize(1, 1)
-        self.glutWindowID = glutCreateWindow("Sensor module hidden GLUT window")
+    def get_lidar_scan(self):
+        return self.lidar_data
 
-        # Default background color
-        glClearColor(0.8, 0.8, 0.9, 0)
-        # Default light source
-        glLightfv(GL_LIGHT0, GL_POSITION, [0, -1, 2, 0])
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, [1, 1, 1, 1])
-        glLightfv(GL_LIGHT0, GL_SPECULAR, [1, 1, 1, 1])
-        glEnable(GL_LIGHT0)
-
-        glLightfv(GL_LIGHT1, GL_POSITION, [-1, 2, 1, 0])
-        glLightfv(GL_LIGHT1, GL_DIFFUSE, [0.5, 0.5, 0.5, 1])
-        glLightfv(GL_LIGHT1, GL_SPECULAR, [0.5, 0.5, 0.5, 1])
-        glEnable(GL_LIGHT1)
-
-        if self.ros_active:
-            rospy.init_node("SensorModule_publisher")
-            self.pub = rospy.Publisher("base_scan", LaserScan)
-
-
-    def update_sim(self):
-        with self.update_lock:
-            self.simrobot.setConfig(self.temprobot.getConfig())
-        dt = 1.0/30.0 # this is unused in kinematicSimulate
-        #assume temprobot is updated
-        for k,cam in self.active_cameras.items():
-            if cam.want_images or cam.want_point_cloud:
-                cam.device.kinematicSimulate(self.simworld, dt)
-                images = sensing.camera_to_images(cam.device, image_format='numpy', color_format='channels')
-                if cam.want_point_cloud:
-                    if int(cam.device.getSetting("depth")) == 0:
-                        print("Simulated camera",k,"does not have depth information")
-                        pcd = 'error'
-                        cam.want_point_cloud = False
-                    else:
-                        rgb,depth = images
-                        xfov = float(cam.device.getSetting('xfov'))
-                        yfov = float(cam.device.getSetting('yfov'))
-                        local_pc = klampt.model.sensing.image_to_points(depth,rgb,xfov,yfov)
-                        pcd = o3d.geometry.PointCloud()
-                        pcd.points = o3d.utility.Vector3dVector(local_pc[:, :3])
-                        pcd.colors = o3d.utility.Vector3dVector(local_pc[:, 3:])
-                    with self.update_lock:
-                        world_transform = self.camera_transform(k,format='numpy')
-                    world_pcd = camera.point_cloud.transform(world_transform)
-
-                    with self.update_lock:
-                        #update everything in one go
-                        cam.images = images
-                        cam.point_cloud = pcd
-                        cam.world_point_cloud = world_pcd
-                        cam.world_transform = world_transform
-                elif cam.want_images:
-                    cam.images = images
-
-        if self.ros_active:
-            self.lidar.kinematicSimulate(self.simworld,dt)
-            with self.update_lock:
-                self.lidar_data = self.lidar.getMeasurements()
-                self.lidar_transform = sensing.get_sensor_xform(self.lidar,self.simrobot)
-            self._publishTf(curr_pose) 
-            #ros_msg = self.convertMsg(self.lidar, frame="/base_scan")
-            ros_msg = klampt.io.ros.to_SensorMsg(self.lidar,frame="/base_scan")
-            self.pub.publish(ros_msg)
-            
-        with self.update_lock:
-            #check for updates on pending requests
-            newrequests = []
-            for req in self.requests:
-                promise,query,cameras,results = req
-                if cameras is None:
-                    cameras = list(self.active_cameras.keys())
-                if query == 'get_rgbd_images':
-                    for name in cameras:
-                        camera = self.active_cameras[name]
-                        camera.want_images = True
-                        if camera.images is not None:
-                            results[name] = camera.images
-                elif query == 'get_point_clouds':
-                    for name in cameras:
-                        camera = self.active_cameras[name]
-                        camera.want_point_cloud = True
-                        if camera.point_cloud is not None:
-                            if isinstance(camera.point_cloud,str):
-                                #errored out
-                                results[name] = camera.point_cloud
-                            else:
-                                assert camera.world_transform is not None
-                                results[name] = camera.point_cloud.transform(camera.world_transform)
-                #fire the callback if all camera data is available
-                if len(results) == len(cameras):
-                    promise.callback(results)
-                    continue
-                else:
-                    newrequests.append(req)
-            self.requests = newrequests
-
-    def _publishTf(self,curr_pose):
-        x, y, theta = curr_pose
-        theta = theta % (math.pi*2)
-        br = tf.TransformBroadcaster()
-        br.sendTransform([x, y, 0], tf.transformations.quaternion_from_euler(0, 0, theta), rospy.Time.now(), "base_link", "odom")
-        br.sendTransform([0.2, 0, 0.2], tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(), "base_scan", "base_link")
-    
-    def convertMsg(self,klampt_sensor,frame,stamp = "now"):
-        """Not sure why this is needed instead of klampt.io.ros.toMsg()"""
-        measurements = klampt_sensor.getMeasurements()
-        res = LaserScan()
-        if stamp=='now':
-            stamp = rospy.Time.now()
-        elif isinstance(stamp,(int,float)):
-            stamp = rospy.Time(stamp)
-        res.header.frame_id = frame
-        res.header.stamp = stamp
-        res.angle_max = float(klampt_sensor.getSetting("xSweepMagnitude"))
-        res.angle_min = -1.0 * res.angle_max
-        measurement_count = float(klampt_sensor.getSetting("measurementCount"))
-        res.angle_increment = (res.angle_max - res.angle_min)/measurement_count
-        res.time_increment = float(klampt_sensor.getSetting("xSweepPeriod"))
-        res.range_min = float(klampt_sensor.getSetting("depthMinimum"))
-        res.range_max = float(klampt_sensor.getSetting("depthMaximum"))
-        res.ranges = measurements
-        res.intensities = []
-        return res
-
-
-
+    def get_lidar_point_cloud(self):
+        if self.lidar_data is None or self.lidar_transform is None or self.base_transform is None:
+            return None
+        thetamin,thetamax = self.lidar_angle_range
+        #convert distance readings to evenly spaced points in the space
+        angles = np.linspace(thetamin,thetamax,len(self.lidar_data),endpoint=True)
+        x = np.sin(angles)
+        y = np.zeros(len(angles))
+        z = np.cos(angles)
+        Tworld = se3.mul(self.base_transform,se3.lidar_transform)
+        R = numpy_convert.to_numpy(Tworld[0],'Matrix3')
+        t = np.array(Tworld[1])
+        return np.dot(R,np.row_stack((x,y,z))).T + t
 
 
 if __name__ == '__main__':
