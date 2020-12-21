@@ -29,16 +29,26 @@
     "Simulation":{
         "world_file":"Models/simulation_worlds/TRINA_world_bubonic_with_obstacle.xml"
     },
-    "DebugUI": {
-        "world_file":"Models/simulation_worlds/TRINA_world_bubonic_with_obstacle.xml"
-    },
     "MotionModule": {
         "state_receiver_dt":0.015
     },
     "CalibrationModule" : {
-        "right_calibration_configs": "calibration/right_sensor_calibration.configs",
-        "left_calibration_configs": "calibration/right_sensor_calibration.configs",
-        "fixed_calibration_configs": "calibration/fixed_sensor_calibration.configs"
+        "realsense_right": {
+            "configs":"calibration/right_sensor_calibration.configs",
+            "limb":"right_arm"
+        },
+        "realsense_left": {
+            "configs": "calibration/left_sensor_calibration.configs",
+            "limb":"left_arm"
+        },
+        "l515_torso": {
+            "configs": "calibration/torso_sensor_calibration.configs",
+            "limb":"left_arm"
+        },
+        "fixed_camera": {
+            "configs": "calibration/fixed_sensor_calibration.configs",
+            "limb":"right_arm"
+        }
     }
     
 }
