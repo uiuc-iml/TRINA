@@ -3,7 +3,7 @@ import time
 class TimedLooper:
     """A class to easily control how timed loops are run.
 
-    Usage:
+    Usage::
 
         looper = TimedLooper(dt=0.01)
         while looper:
@@ -16,7 +16,7 @@ class TimedLooper:
     be accurate due to the system scheduler resolution.
 
     If the code within the loop takes more than dt seconds to run, then a 
-    warning may be printed.  To turn this off, set warnings=0 in the
+    warning may be printed.  To turn this off, set ``warnings=0`` in the
     constructor.  By default, this will print a warning on the first overrun,
     and every ``warning_frequency`` overruns thereafter.
 
@@ -31,7 +31,7 @@ class TimedLooper:
             string.
 
     Warning: DO NOT attempt to save some time and call the TimedLooper()
-    constructor as the condition of your while loop!  I.e., do not do this:
+    constructor as the condition of your while loop!  I.e., do not do this::
 
         while TimedLooper(dt=0.01):
             ...
