@@ -22,14 +22,14 @@ class Promise:
 
     or blocking until it arrives using:::
 
-        val = promise.await()
+        val = promise.wait()
 
-    If you wish to put a timeout on :func:`await`, use
-    ``val = promise.await(timeout)``.
+    If you wish to put a timeout on :func:`wait`, use
+    ``val = promise.wait(timeout)``.
 
     :func:`value` will raise a RuntimeError if the value is not available yet.
 
-    ``await(timeout)`` will raise a :class:`PromiseTimeout` exception if the
+    ``wait(timeout)`` will raise a :class:`PromiseTimeout` exception if the
     timeout is reached without the result arriving.
 
     For functions writing to this value: use ``callback(value)`` to set the
@@ -74,7 +74,7 @@ class Promise:
             return self._value
         raise RuntimeError("Value is not available")
 
-    def await(self,timeout=None,resolution=0.001):
+    def wait(self,timeout=None,resolution=0.001):
         """Blocks until the response is available.  If you wish to put a timeout
         on this call, use the timeout argument.  For finer control on the polling
         frequency, change the resolution argument.

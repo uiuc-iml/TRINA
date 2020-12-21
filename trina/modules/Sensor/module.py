@@ -508,7 +508,7 @@ if __name__ == '__main__':
     res = api.getNextPointClouds()
     print("Result of getNextPointClouds",res)
     print("Waiting on Promise...")
-    print("Result of await",res.await())
+    print("Result of wait",res.wait())
     print("Beginning loop...")
     while module.status != 'terminate':
         time.sleep(1)

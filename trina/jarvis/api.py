@@ -57,9 +57,9 @@ class APILayer:
 
     RPC calls typically return a :class:`RpcPromise` object, which the caller can
     poll using :func:`RpcPromise.available` or wait on using
-    RpcPromise.await().  If you really wish to have your API call block
+    RpcPromise.wait().  If you really wish to have your API call block
     on an RPC call, your implementation can end with
-    `return self._redisRpc("foo",*args).await()`.  Note that this is dangerous
+    `return self._redisRpc("foo",*args).wait()`.  Note that this is dangerous
     in case your module hangs or goes down.
 
     .. automethod:: _redisVar
@@ -325,13 +325,13 @@ class RpcPromise:
 
     or blocking until it arrives using:
 
-        val = promise.await()
+        val = promise.wait()
 
-    If you wish to put a timeout on await, use `val = promise.await(timeout)`.
+    If you wish to put a timeout on wait, use `val = promise.wait(timeout)`.
 
     value() will raise a RuntimeError if the value is not available yet.
 
-    await(timeout) will raise a RpcPromiseTimeout exception if the
+    wait(timeout) will raise a RpcPromiseTimeout exception if the
     timeout is reached without a reply.
     """
     def __init__(self,server_key,api,fn,id):
@@ -369,7 +369,7 @@ class RpcPromise:
         """
         return self._value
 
-    def await(self,timeout=None,resolution=0.001):
+    def wait(self,timeout=None,resolution=0.001):
         """Blocks until the response is available.  If you wish to put a timeout
         on this call, use the timeout argument.  For finer control on the polling
         frequency, change the resolution argument.

@@ -44,7 +44,7 @@ class SensorAPI(jarvis.APILayer):
                   with one key)
                 - list of str: multiple cameras.
         Returns:
-            Promise: To get the next images when they arrive, call await() on the
+            Promise: To get the next images when they arrive, call wait() on the
             Promise object. value() has the same format the result of
             :func:`getRgbdImages`.
         """
@@ -87,7 +87,7 @@ class SensorAPI(jarvis.APILayer):
                 - list of str: multiple cameras.
 
         Returns:
-            Promise: To get the next point clouds when they arrive, call await() 
+            Promise: To get the next point clouds when they arrive, call wait() 
             on the Promise object.  value() has the same format the result of
             :func:`getPointClouds`.
         """
@@ -114,7 +114,7 @@ class SensorAPI(jarvis.APILayer):
         """Returns a Promise for the Lidar scan.
 
         Returns:
-            Promise: To get the next point clouds when they arrive, call await() 
+            Promise: To get the next point clouds when they arrive, call wait() 
             on the Promise object.  value() has the same result as
             :func:`getLidarScan`.
         """
@@ -127,7 +127,7 @@ class SensorAPI(jarvis.APILayer):
         """Returns a Promise for the Lidar scan.
 
         Returns:
-            Promise: To get the next point clouds when they arrive, call await() 
+            Promise: To get the next point clouds when they arrive, call wait() 
             on the Promise object.  value() has the same result as
             :func:`getLidarPointCloud`.
         """

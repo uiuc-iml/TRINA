@@ -70,19 +70,19 @@ class ExampleTester(jarvis.Module):
             promise = self.jarvis.example.add(3,5)
             print("3 + 5 =",promise)
             t0 = time.time()
-            result = promise.await()
+            result = promise.wait()
             t1 = time.time()
-            print("await 3 + 5 =",result,"returned in",t1-t0,"s")
+            print("wait 3 + 5 =",result,"returned in",t1-t0,"s")
         elif self.count == 2:
             promise = self.jarvis.example.sin([0.1,0.2,0.3,0.4])
             print("sin([0.1-0.4]) =",promise)
             t0 = time.time()
-            result = promise.await()
+            result = promise.wait()
             t1 = time.time()
-            print("await sin([0.1-0.4]) =",result,"returned in",t1-t0,"s")
+            print("wait sin([0.1-0.4]) =",result,"returned in",t1-t0,"s")
         elif self.count < 5:
-            res = self.jarvis.example.sineWave().await()
-            print("await sine wave =",res)
+            res = self.jarvis.example.sineWave().wait()
+            print("wait sine wave =",res)
 
 if __name__ == "__main__" :
     example = Example()
