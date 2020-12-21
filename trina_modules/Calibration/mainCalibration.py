@@ -3,6 +3,7 @@
 import os
 # from klampt.model import trajectory as klamptTraj
 from klampt.io import loader
+from klampt import WorldModel
 import sys
 sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
@@ -12,9 +13,12 @@ from klampt.math import vectorops as vo
 import trimesh
 import numpy as np
 from calibrationOpt import URDFCalibration
+import pickle
+
 
 def pixelToP(x,y,pcd,dimy):
-    return pcd[y*dimy+x]
+    tmp = pcd[y*dimy+x]
+    return [tmp[0],tmp[1],tmp[2]]  ##data in folder 3/ only have y and z negated. In the future, should load just as is.
 
 def loadPcd(fn):
     data=open(fn,'r')
@@ -30,6 +34,7 @@ def loadPcd(fn):
 
 def detectAruco(pic,marker_sz,IDs,dictionary,cn,use_depth = True,pcd = []):
     gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
+    ##TODO: refactor this to put these in some settings file
     if cn == 'realsense_left':
         ##Instrinsics from factory settings
         # fx = 474.299
@@ -83,7 +88,10 @@ def detectAruco(pic,marker_sz,IDs,dictionary,cn,use_depth = True,pcd = []):
     corners, detected_ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters, \
                                                             cameraMatrix=mtx, distCoeff=dist)     
     #debugging
+    # print(detected_ids)
+    # aruco.drawDetectedMarkers(pic, [corners[1]])
     # aruco.drawDetectedMarkers(pic, corners)
+    # print(corners)
     # cv2.imshow('frame',pic)
     # cv2.waitKey(100000)
     # cv2.destroyAllWindows()
@@ -96,11 +104,17 @@ def detectAruco(pic,marker_sz,IDs,dictionary,cn,use_depth = True,pcd = []):
             if target_id in detected_ids:
                 if use_depth:
                     p = [0]*3
+                    missing_depth = False
                     for i in range(4):
                         corner_p = pixelToP(int(corner[0,i,0]),int(corner[0,i,1]),pcd,dimy = dimy)
-                        print('corner position',corner_p)
-                        print('corner pixel',corner[0,i,:])
-                    exit()
+                        if vo.norm(corner_p) < 1e-3: #depth value missing
+                            missing_depth = True
+                        p = vo.add(p,corner_p)
+                    if missing_depth:
+                        ps.append([])
+                    else:
+                        ps.append(vo.div(p,4.0))
+                        print(target_id,vo.div(p,4.0))
                 else:
                     #get the position
                     rvec,tvec,_=aruco.estimatePoseSingleMarkers(corners[detected_ids.index(target_id)],marker_sz,mtx,dist)
@@ -138,7 +152,7 @@ def detectMarker1(pic,cn,use_depth = False,pcd = []):
     marker_sz = 0.06
     dictionary = aruco.DICT_4X4_50
     ps = detectAruco(pic,marker_sz,IDs,dictionary,cn,use_depth = True,pcd = pcd)
-    if [] in ps:
+    if [] in ps or len(ps) < 3:
         print('marker 1 not detected')
         return 
 
@@ -171,6 +185,10 @@ def extractData1(save_path,cameras,use_depth = False):
         with open(save_path+'robot_state.txt','r') as f:
             lines = [line.rstrip() for line in f]
         for il,l in enumerate(lines):
+
+            # if il < 50:
+            #     continue
+
             print(save_path + cn +"-%05d.png"%il)
             frame = cv2.imread(save_path + cn +"-%05d.png"%il)
             if use_depth:
@@ -224,7 +242,7 @@ def klampt_to_np(T):
 
 def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_type,cameras,links,motion_address,codename):
     """
-    There are several different types of calibration. 
+    There are several different types of calibration ('URDF','wrist','static'). 
     1) URDF calibration, the arm mountings and 2 wrist mounted cameras will be calibrated. 
     The rest here assumes that the URDF has already been calibrated.
     2) Wrist mounted camera calibration. One or multiple cameras are calibrated. 
@@ -233,34 +251,30 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
     calibration_type
     """
     if calibration_type == 'URDF':
-        #The cameras should be ['left_realsense','right_realsense'] here.
-        # from calibrationLogger import CalibrationLogger
-
-<<<<<<< HEAD
-        # takePictures(traj_path,save_path,cameras,motion_address,codename)
+        from calibrationLogger import CalibrationLogger
+        takePictures(traj_pasth,save_path,cameras,motion_address,codename)
 
         Tl,ql,Tr,qr = extractData1(save_path,cameras,use_depth = True)
         print('detected left limb camera markers:',len(Tl))
         print('detected right limb camera markers:',len(Tr))
-=======
-        takePictures(traj_path,save_path,cameras,motion_address,codename)
-        # Tl,ql,Tr,qr = extractData1(save_path,cameras)
-        # print('detected left limb camera markers:',len(Tl))
-        # print('detected left limb camera markers:',len(Tr))
->>>>>>> 6c276ddd6d22f3a556c1a045f390186e6231cb75
+        folder = 'temp/'
+        with open(folder + 'Tl', 'wb') as handle:
+            pickle.dump(Tl, handle)
+        with open(folder + 'ql', 'wb') as handle:
+            pickle.dump(ql, handle)
+        with open(folder + 'Tr', 'wb') as handle:
+            pickle.dump(Tr, handle)
+        with open(folder + 'qr', 'wb') as handle:
+            pickle.dump(qr, handle)
 
-
-        # print(Tl[0])
-        # np.save('Tl.npy',np.array(Tl))
-        # np.save('ql.npy',np.array(ql))
-        # np.save('Tr.npy',np.array(Tr))
-        # np.save('qr.npy',np.array(qr))
-
-        # Tl = np.load('Tl.npy').tolist()
-        # ql = np.load('ql.npy').tolist()
-        # Tr = np.load('Tr.npy').tolist()
-        # qr = np.load('qr.npy').tolist()
-
+        # with open(folder + 'Tl', 'rb') as handle:
+        #     Tl = pickle.load(handle)
+        # with open(folder + 'ql', 'rb') as handle:
+        #     ql = pickle.load(handle)
+        # with open(folder + 'Tr', 'rb') as handle:
+        #     Tr = pickle.load(handle)
+        # with open(folder + 'qr', 'rb') as handle:
+        #     qr = pickle.load(handle)
 
         T_c_l_0 = ([1,0,0,0,0,-1,0,1,0],[0.0,-0.05,0.1])
         T_c_r_0 = ([1,0,0,0,1,0,0,0,1],[0,0,0])
@@ -268,36 +282,46 @@ def mainCalibration(traj_path,save_path,world_path,URDF_save_folder,calibration_
         T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_folder + 'Bubonic.urdf',links)
 
         # #now modify the URDF 
-        # robot = loader.load(URDF_path)
-        # robot.link(6).setParentTransform(T_base_l[0],T_base_l[1])
+        # Hardcode these for now. Set these in the setting file in the future
+        world = WorldModel()
+        res = world.readFile(world_path)
+        if not res:
+            raise RuntimeError("unable to load model")
+        robot = world.robot(0)
+
+        robot.link(6).setParentTransform(T_base_l[0],T_base_l[1])
         # robot.link(14).setParentTransform(T_base_r[0],T_base_r[1])
-        # load.save(robot,'auto',URDF_save_path) #klampt loader only saves a robot to .rob. In addition, it does not save the meshes, and will keep
-        # #the same mesh reference path. 
-        # # mesh1 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/left_wrist2_link.STL')
-        # # mesh2 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/SR305.STL')
-        # #modify the mesh
-        # camera_l = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
-        # camera_r = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
-        # T_c_l = klampt_to_np(T_c_l)
-        # T_c_r = klampt_to_np(T_c_l)
+        loader.save(robot,'auto',URDF_save_folder + 'test.rob') #klampt loader only saves a robot to .rob. In addition, it does not save the meshes, and will keep
+        
+        #modify the mesh
+        camera_l = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
+        camera_r = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
+        # print(T_c_l,T_c_r)
+        T_c_l = klampt_to_np(T_c_l)
+        T_c_r = klampt_to_np(T_c_r)
+
+        from numpy.linalg import inv
 
         # T_c_link5 = np.array([[0,0,-1,0],\
-        #                       [0,1,0,0],\
-        #                       [-1,0,0,0],\
-        #                       [0,0,0,1]]) 
-        # from numpy.linalg import inv
+        #                 [0,1,0,0],\
+        #                 [-1,0,0,0],\
+        #                 [0,0,0,1]]) 
         # camera_l.apply_transform(inv(T_c_link5)*T_c_l*T_c_link5)
         # camera_r.apply_transform(inv(T_c_link5)*T_c_r*T_c_link5)
-        # l_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/left_wrist2_link.STL')
-        # r_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/right_wrist2_link.STL')
-        # l_link5_new = trimesh.util.concatenate([l_link5,camera_l])
-        # r_link5_new = trimesh.util.concatenate([r_link5,camera_r])
-        # ## The camera is merged with the wrist 2 geometry
-        # l_link5_new.save_mesh('~/TRINA/Motion/data/robots/Bubonic_calibrated/left_wrist2_link.STL')
-        # r_link5_new.save_mesh('~/TRINA/Motion/data/robots/Bubonic_calibrated/right_wrist2_link.STL')
 
-        # ##need to change the mesh name in the generated new .rob file to the correct 
-    elif calibration_type == 'moving': 
+        camera_l.apply_transform(T_c_l)
+        camera_r.apply_transform(T_c_r)
+        l_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/left_wrist2_link.STL')
+        r_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Anthrax_lowpoly/right_wrist2_link.STL')
+        l_link5_new = trimesh.util.concatenate([l_link5,camera_l])
+        r_link5_new = trimesh.util.concatenate([r_link5,camera_r])
+        # ## The camera is merged with the wrist 2 geometry
+        l_link5_new.export('~/TRINA/Motion/data/robots/Bubonic_calibrated/left_wrist2_link.STL')
+        r_link5_new.export('~/TRINA/Motion/data/robots/Bubonic_calibrated/right_wrist2_link.STL')
+
+        ##need to change the mesh name in the generated new .rob file to the correct mesh files
+        ##new to edit the sensors.xml files to the right link and transforms
+    elif calibration_type == 'wrist': 
         pass
     
     elif calibration_type == 'static':
@@ -309,7 +333,7 @@ if __name__=="__main__":
     save_path = './data/3/'
     world_path = '../../Motion/data/TRINA_world_bubonic_calibration.xml'
     rob_save_folder = '../../Motion/data/robots/'
-
+    cameras =['realsense_left'] #['realsense_left','realsense_right']
     mainCalibration(traj_path = traj_path,save_path = save_path, world_path = world_path,URDF_save_folder = rob_save_folder,\
-        calibration_type = 'URDF',cameras=['realsense_left','realsense_right'],links = [11,19],motion_address = 'http://localhost:8080',\
+        calibration_type = 'URDF',cameras = cameras,links = [11,19],motion_address = 'http://localhost:8080',\
         codename = 'bubonic')

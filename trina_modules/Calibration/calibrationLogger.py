@@ -77,7 +77,7 @@ class CalibrationLogger:
             for cn in self.cameras:
                 color_frame = self.res[cn][0]
                 pcd = res2[cn]
-                pcd.transform([[1,0,0,0],[0,-1,0,0],[0,0,-1,0],[0,0,0,1]])
+                pcd.transform([[-1,0,0,0],[0,-1,0,0],[0,0,-1,0],[0,0,0,1]])
                 p = np.asarray(pcd.points) 
                 if cn[0:4] == 'real': #realsense camera color channels need to be adjusted
                     color = cv2.cvtColor(np.asarray(color_frame), cv2.COLOR_RGB2BGR)

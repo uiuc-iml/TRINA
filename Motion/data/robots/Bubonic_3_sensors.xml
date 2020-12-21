@@ -1,0 +1,6 @@
+<sensors>
+    <LaserRangeSensor name="lidar" link="4" Tsensor="0 0 1  1 0 0  0 1 0  0.2 0 0.2"  depthMaximum="25.0" depthMinimum="0.1" depthResolution="0.01" depthVarianceLinear="0.0001" xSweepMagnitude="1.91986" measurementCount="660" />
+    <CameraSensor name="left_hand_camera" link="11" Tsensor="0.9888057333198887 0.0227583970002695 -0.14746279910436977 -0.14543819020312795 -0.07376258002793423 -0.98661381229844 -0.033330985346316566 0.9970161167973168 -0.06962692196444498 0.01034331 -0.0509365 0.11734698"  xres="640" yres="480" xfov="1.2" yfov="0.95" zmin="0.4" zmax="2" zresolution="0.005" zvarianceLinear="0.00001" />
+    <!--<CameraSensor name="right_hand_camera" link="19" Tsensor="1 0 0  0 1 0  0 0 1   0 0 0"  xres="640" yres="480" xfov="1.2" yfov="0.95" zmin="0.4" zmax="10" zresolution="0.01" zvarianceLinear="0.00001" />
+    -->
+</sensors>
