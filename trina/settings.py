@@ -1,13 +1,13 @@
 """A unified way of accessing TRINA settings.
 
 The settings are accessed by calling ``trina.settings.get(key1.key2)`` or
-`trina.settings.settings()[key1][key2]``.
+``trina.settings.settings()[key1][key2]``.
 
 This will produce a dictionary-like object referencing the JSON-distributed
 files in the TRINA/Settings folder, starting at TRINA/Settings/root.json.
 
-The other methods, like robot_settings(), robot_codename(), left_arm_dofs(),
-etc are all convenience methods.
+The other methods, like :func:`robot_settings`, :func:`robot_codename`,
+:func:`left_arm_dofs`, etc are all convenience methods.
 """
 
 import json

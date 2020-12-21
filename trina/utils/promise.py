@@ -11,28 +11,29 @@ class PromiseTimeout(Exception):
 
 class Promise:
     """A placeholder for an asynchronous result, inspired by the twisted
-    package. Can wait passively by testing
+    package. Can wait passively by testing::
     
         if promise:
             val = promise.value()
 
-    setting a callback function fn(value) with 
+    setting a callback function fn(value) with::
 
         promise.setCallback(fn)
 
-    or blocking until it arrives using:
+    or blocking until it arrives using:::
 
         val = promise.await()
 
-    If you wish to put a timeout on await, use `val = promise.await(timeout)`.
+    If you wish to put a timeout on :func:`await`, use
+    ``val = promise.await(timeout)``.
 
-    value() will raise a RuntimeError if the value is not available yet.
+    :func:`value` will raise a RuntimeError if the value is not available yet.
 
-    await(timeout) will raise a PromiseTimeout exception if the timeout is
-    reached without the result arriving.
+    ``await(timeout)`` will raise a :class:`PromiseTimeout` exception if the
+    timeout is reached without the result arriving.
 
-    For functions writing to this value: use callback(value) to set the value
-    when it is available.
+    For functions writing to this value: use ``callback(value)`` to set the
+    value when it is available.
     """
     def __init__(self,name=None):
         self._name = name
@@ -45,10 +46,14 @@ class Promise:
     def setCallback(self,fn):
         assert callable(fn),"fn nees to be a callable object"
         self._callback = fn
+        if self._read:
+            self._callback(self._value)
     
     def setErrback(self,fn):
         assert callable(fn),"fn nees to be a callable object"
         self._errback = fn
+        if self._read and self._error:
+            self._errback(self._error)
 
     def __nonzero__(self):
         return self.available()
