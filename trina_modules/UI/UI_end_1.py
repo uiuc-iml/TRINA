@@ -9,6 +9,8 @@ from klampt import RobotPoser, Geometry3D
 from klampt.model import ik,coordinates,config,trajectory,collide
 from klampt.math import vectorops,so3,se3
 from klampt.vis import GLSimulationPlugin
+from klampt.io import open3d_convert
+import open3d as o3d
 import json
 import time
 import math
@@ -368,10 +370,10 @@ class testingWorldBuilder():
         self.floor = Geometry3D()
         self.floor.loadFile(model_path + "cube.off")
         self.floor.transform([floor_length, 0, 0, 0, floor_width, 0, 0, 0, 0.01],
-                             [-floor_length / 2.0, -floor_width / 2.0, -0.01])
-        #floor_terrain = self.w.makeTerrain("floor")
-        #floor_terrain.geometry().set(self.floor)
-        #floor_terrain.appearance().setColor(0.4, 0.3, 0.2, 1.0)
+                             [-floor_length / 2.0, -floor_width / 2.0, 0.01])
+        floor_terrain = self.w.makeTerrain("floor")
+        floor_terrain.geometry().set(self.floor)
+        floor_terrain.appearance().setColor(0.4, 0.3, 0.2, 1.0)
 
         ###colors
         self.light_blue = [3.0 / 255.0, 140.0 / 255.0, 252.0 / 255.0, 1.0]
@@ -618,6 +620,7 @@ class UI_end_1:
         builder = testingWorldBuilder(30,30,world = world)
         builder.addTableTopScenario(x = 1.5,y = 1.0)
         world = builder.getWorld()
+        
         self.world = world
         self.world = world
         self.dt = 0.05
@@ -652,6 +655,13 @@ class UI_end_1:
         vis.add("world",world)
         vis.setWindowTitle("UI END 1")
         vis.customUI(makefunc)
+        
+        pcd = o3d.io.read_point_cloud("/home/motion/item_set/item1-68.pcd")
+        pcd = pcd.uniform_down_sample(8)
+        klampt_pcd = open3d_convert.from_open3d(pcd)
+        klampt_pcd.transform(so3.from_rpy([-3.14/2 - 0.3,-0.1,-3.14/2]), [0.5, 0 ,1.08])
+        vis.add("object_pcd", klampt_pcd)
+        
         # init plugin for getting input
         plugin = MyGLPlugin(world, self.global_state,self.server,self.jarvis, self.UIState,self.screenElement)
         vis.pushPlugin(plugin)   #put the plugin on top of the standard visualization functionality.

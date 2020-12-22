@@ -211,6 +211,8 @@ class PointClickGrasp:
                 self.rgbdimage = self.jarvis.get_rgbd_images()
                 depth_left = self.rgbdimage['realsense_left'][1]
                 color_left = self.rgbdimage['realsense_left'][0]
+                depth_right = self.rgbdimage['realsense_right'][1]
+                color_right = self.rgbdimage['realsense_right'][0]
                 color_left = np.array(color_left)[:,:,:]
                 
                 #cv2.imshow("image", np.array(depth_left))
@@ -222,7 +224,7 @@ class PointClickGrasp:
                 #labels = seg.watershed(imgray, segmented)
                 #print(labels)
                 mask_overlay = label2rgb(segmented,np.array(color_left),colors=[(255,0,0),(0,0,255), (0, 255,0), (255,255,0),(0,255,255), (255, 0,255)],alpha=0.01, bg_label=0, bg_color=None)
-                cv2.imshow("image", np.array(mask_overlay))
+                cv2.imshow("image", color_right)
                 cv2.waitKey(0)
                 
                 color = o3d.geometry.Image(np.array(color_left))
