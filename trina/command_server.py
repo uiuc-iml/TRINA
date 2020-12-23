@@ -143,6 +143,9 @@ class CommandServer:
         if name in debugModules:
             #turn on debugging
             a.verbose = max(1,a.verbose)
+        silentModules = trina.settings.app_settings('CommandServer')['silent']
+        if name in silentModules:
+            a.verbose = 0
 
         #determine whether this module implements the moduleCommand interface
         try:
@@ -561,7 +564,7 @@ if __name__=="__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Runs the Jarvis command server')
-    parser.add_argument('--modules', default=['Motion','Example','Sensor','UI','App_DirectTeleOperation'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
+    parser.add_argument('--modules', default=['Motion','Example','App_DirectTeleOperation'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
     args = parser.parse_args(sys.argv[1:])
 
     server = CommandServer(modules = args.modules)
