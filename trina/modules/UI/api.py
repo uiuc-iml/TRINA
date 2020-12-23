@@ -2,6 +2,10 @@ from trina import jarvis
 from klampt import io
 
 class UIAPI(jarvis.APILayer):
+    @classmethod
+    def name(self):
+        return "ui"
+
     def getRayClick(self):
 
         """once this function is called, the UI will ask the user to click twice on the map, and sending back 

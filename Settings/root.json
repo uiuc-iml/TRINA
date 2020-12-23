@@ -12,25 +12,33 @@
     "RedisServer": {
         "ip_address":"localhost"
     },
-    "CommandServer":{
-        "time_updater_dt":0.001,
-        "command_receiver_dt":0.001,
-        "health_monitor_dt":1,
-        "heartbeat_tolerance":10,
+    "Jarvis":{
         "#_comment1":"If you would like to access a different class in your module rather than ModuleName, put the class name here",
         "module_class_map": {
             "Motion":"MotionModule",
             "UI":"LocalUI"
         },
-        "verbose":0,
+        "module_locations":["trina.modules","trina_devel.modules"],
+        "app_locations":["trina.modules.apps","trina_devel.modules.apps"]
+    },
+    "CommandServer":{
+        "time_updater_dt":0.001,
+        "command_receiver_dt":0.001,
+        "health_monitor_dt":1,
+        "heartbeat_tolerance":10,
+        "verbose":1,
         "#_comment2":"To force modules to be verbose, put them here",
-        "debug":[]
+        "debug":["UI","App_DirectTeleOperation","Sensor"]
     },
     "Simulation":{
         "world_file":"Models/simulation_worlds/TRINA_world_bubonic_with_obstacle.xml"
     },
     "MotionModule": {
         "state_receiver_dt":0.015
+    },
+    "SensorModule": {
+        "sim_update_dt":0.3,
+        "update_robot_dt":0.05
     },
     "CalibrationModule" : {
         "realsense_right": {

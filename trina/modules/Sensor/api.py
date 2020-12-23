@@ -8,6 +8,14 @@ class SensorAPI(jarvis.APILayer):
         self.lock = sensor_module.update_lock
         jarvis.APILayer.__init__(self,*args,**kwargs)
 
+    @classmethod
+    def name(cls):
+        return "sensors"
+
+    @classmethod
+    def interprocess(cls):
+        return False
+
     def camerasAvailable(self):
         """Returns a list of strings describing available cameras"""
         with self.lock:

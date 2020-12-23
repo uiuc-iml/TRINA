@@ -51,14 +51,13 @@ class MotionModule(jarvis.APIModule):
         #self.startProcess(self.stateReceiver_run)
         self.startMonitorThread(0.5)
 
-    def name(self):
+    @classmethod
+    def name(cls):
         return "Motion"
 
-    def apiName(self):
-        return "robot"
-
-    def api(self,other_name,*args,**kwargs):
-        return MotionAPI(self.apiName(),other_name,*args,**kwargs)
+    @classmethod
+    def apiClass(cls):
+        return MotionAPI
 
     def moduleCommandObject(self):
         return self.robot
@@ -159,4 +158,6 @@ class MotionModule(jarvis.APIModule):
             # print('states updated with success!')
         except Exception as e:
             print(e)
+            import traceback
+            traceback.print_exc()
 

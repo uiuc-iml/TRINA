@@ -31,6 +31,9 @@ from trina import jarvis
 class DirectTeleOperation(jarvis.Module):
 	def __init__(self,Jarvis = None, debugging = False):
 		jarvis.Module.__init__(self,Jarvis)
+		res = self.jarvis.require(['Motion','UI'])
+		assert res[0] != None,"Motion module not available?"
+		assert res[1] != None,"UI module not available?"
 		self.robot = self.jarvis.robot
 		self.status = 'idle' #states are " idle, active"
 		self.init_UI_state = {}
@@ -122,7 +125,7 @@ class DirectTeleOperation(jarvis.Module):
 		if self.base_active:
 			self.baseControl()
 		self.positionControl()
-
+		
 
 	def baseControl(self):
 		'''controlling base movement'''
@@ -162,7 +165,7 @@ class DirectTeleOperation(jarvis.Module):
 			self.positionControlArm('right')
 			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
 		self.jarvis.ui.addRobotTelemetry(self.temp_robot_telemetry)
-
+		
 	def positionControlArm(self,side):
 		actual_dt = self.dt
 		assert (side in ['left','right']), "invalid arm selection"
@@ -377,3 +380,5 @@ class DirectTeleOperation(jarvis.Module):
 
 if __name__ == "__main__" :
 	my_controller = DirectTeleOperation()
+	while my_controller.status != 'terminated':
+		time.sleep(1.0)

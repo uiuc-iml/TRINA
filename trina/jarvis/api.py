@@ -15,12 +15,17 @@ class APILayer:
     The communication model is multi-paradigm.  Get/set, RPC, direct object
     access, shared memory, and other implementations are possible.
 
-    For users:
+    **For users**
 
     - You will need to read the implementer's documentation of the methods that
       they choose to expose for their API.
+    - Be careful if you are using multiprocessing (e.g., startProcess) to check
+      that APIs are available across process boundaries using the
+      :func:`interprocess` method. (:func:`APIModule.startProcess` will check
+      this for you and eliminate any APIs that do not support inter-process
+      communication.)
 
-    For API implementers:
+    **For API implementers**
 
     - Your subclass should implement methods and clear docstrings for each
       available method.
@@ -45,7 +50,9 @@ class APILayer:
         Server and Motion Server, but may be deprecated in the future.
 
     - For performance, you can pass shared objects to your API subclass.
-      However, you must be careful with making accesses thread-safe!
+      However, you must be careful with making accesses thread-safe!  You
+      should also overload :func:`interprocess` to indicate that the API is not
+      available in the new process.
 
     All arguments to these functions should have types compatible with JSON
     (bool, int, float, str, list, and dict).  _redisGet / _redisSet can also
@@ -69,11 +76,27 @@ class APILayer:
     .. automethod:: _redisRpcNoReply
     .. automethod:: _moduleCommand
     """
-    def __init__(self,api_name,caller_name,state_server=None):
-        self._api_name = api_name
+    def __init__(self,caller_name,state_server=None):
         self._caller_name = caller_name
         self._state_server = state_server
         self._redis_client = state_server.redis_client()
+
+    @classmethod
+    def name(cls):
+        """Returns an identifier that will be used to refer to the API under
+        jarvis and the state server.  Subclass may override this, otherwise
+        the identifier is lowercase(classname)-'api' """
+        res = cls.__name__tolower()
+        if not res.endswith('api'):
+            raise NotImplementedError("APILayer %s doesn't conform to standard naming convention.\nMust implement name() to provide jarvis identifier"%(cls.__name__))
+        return res[:-3]
+
+    @classmethod
+    def interprocess(cls):
+        """Returns True if the API is safe to pass across processes.  Returns
+        True by default; implementers that share objects should overload and
+        return False."""
+        return True
 
     def _redisVar(self,path):
         """Returns an object that you can use as a get-set variable. Typically
@@ -107,11 +130,11 @@ class APILayer:
              RpcPromise
         """
         id = str('$' + uuid.uuid1().hex)
-        self._state_server.set_new([self._api_name,'RPC_FEEDBACK',id],{'REPLIED': False, 'MSG': None})
-        rpc_node = self._state_server[self._api_name]['RPC_FEEDBACK']
+        self._state_server.set_new([self.name(),'RPC_FEEDBACK',id],{'REPLIED': False, 'MSG': None})
+        rpc_node = self._state_server[self.name()]['RPC_FEEDBACK']
         msg = {'fn': fn, 'args': args, 'kwargs':kwargs, 'id': id, 'from':self._caller_name}
-        self._redis_client.rpush(self._api_name+"_RPC_QUEUE",json.dumps(msg))
-        return RpcPromise(rpc_node,self._api_name,fn,id)
+        self._redis_client.rpush(self.name()+"_RPC_QUEUE",json.dumps(msg))
+        return RpcPromise(rpc_node,self.name(),fn,id)
 
     def _redisRpcNoReply(self,fn,*args,**kwargs):
         """Uses the Redis server to perform an RPC call with no reply.
@@ -120,7 +143,7 @@ class APILayer:
             None.
         """
         msg = {'fn': fn, 'args': args, 'kwargs':kwargs,'id': None, 'from':self._caller_name}
-        self._redis_client.rpush(self._api_name+"_RPC_QUEUE",json.dumps(msg))
+        self._redis_client.rpush(self.name()+"_RPC_QUEUE",json.dumps(msg))
 
     def _moduleCommand(self,fn,*args):
         """Calls a function fn implemented in the module, specifically a
@@ -128,9 +151,9 @@ class APILayer:
         :func:`APIModule.moduleCommandObject`. ``fn(*args)`` is expected to 
         have no return value.
         """
-        final_string = '{}.{}({})'.format(self._api_name,fn,','.join(json.dumps(a) for a in args))
+        final_string = '{}.{}({})'.format(self.name(),fn,','.join(json.dumps(a) for a in args))
         self._redis_client.rpush(self._caller_name+'_MODULE_COMMANDS',final_string)
-        print('sending ',final_string)
+        print('Sending module command',final_string,'to',self.name())
 
 
 
@@ -140,20 +163,22 @@ class APIModule(Module):
 
     The API is exposed using the :func:`api` call.  This produces a APILayer
     interface that acts as the "frontend" for your module under other modules'
-    jarvis.X objects, where X= the result from :func:`apiName`. 
+    jarvis.X objects, where X= the result from :func:`APILayer.name`. 
 
     The API interface must access shared resources in a thread-safe manner.
     The easiest way to do this is to use the Redis server as an intermediary. 
 
-    Performance-oriented modules (e.g., sensing, perception) may prefer to
-    use shared memory access.  However, your API must be carefully designed
-    with locks, etc. in order to avoid clashes.
+    **Redis-RPC**
 
     Your API can use the Redis server RPC functionality to safely call
     functions in this module.  A basic RPC server would start a thread to call
     self.processRedisRpcs in the __init__ function, like so::
 
         class MathExternalAPI(Jarvis.APILayer):
+            @classmethod
+            def name(cls):
+                return "math"
+
             def add(self,a,b):
                 #add two numbers
                 self._redisRpc("add",a,b)
@@ -166,7 +191,7 @@ class APIModule(Module):
             def __init__(self,jarvis):
                 Jarvis.APIModule.__init__(self,jarvis)
                 rate = 1.0/50.0   #serve at 50Hz ... 
-                self.startSimpleThread(self.processRedisRpcs,rate)
+                self.startMonitorAndRpcThread(rate)
 
             def add(self,a,b):
                 return a+b
@@ -174,35 +199,72 @@ class APIModule(Module):
             def foo(self,a,b):
                 return a**2+3*b*a
 
-            def api(self,other_module_name,**kwargs):
-                return SumExternalAPI(other_module_name,**kwargs)
+            # One of apiClass or api must be implemented; 
+            # Here are basic implementations for both
+            @classmethod
+            def apiClass(cls):
+                return MathExternalAPI
+
+            def api(self,other_module_name,other_comm_handles):
+                return MathExternalAPI(other_module_name,other_comm_handles)
 
     Note that it is better practice to set the rate dynamically, something like
     ``settings.get('MathModule.rate')``.
+
+
+    **Sharing memory via direct access**
+
+    Performance-oriented modules (e.g., sensing, perception) may prefer to
+    share objects directly in the API to allow other modules' threads to read
+    directly from them. 
+
+    If you choose this route, your API must be carefully designed with locks,
+    etc. in order to avoid clashes. The API should **not** use self.jarvis,
+    but should instead pass along the argument ``other_comm_handles`` to the
+    APILayer object.
+
+    Also, be aware that only other modules' threads will be able to access 
+    your module's shared objects; **processes will NOT**!  This can be 
+    confusing because they will receive a copy of the shared module's objects
+    upon fork()-ing, so to the process it will look like they have access
+    to these objects, but the access is frozen.
+
+    **Sharing memory via SharedMemory objects**
+
+    TODO: 
+    
     """
-    def __init__(self,Jarvis, Verbose=0):
+    def __init__(self, Jarvis, Verbose=0):
         Module.__init__(self,Jarvis,Verbose)
         self.status = 'active'
 
-    def apiName(self):
-        """Returns an identifier that will be used to refer to the API under
-        jarvis and the state server."""
-        return self.name()
+    @classmethod
+    def apiClass(cls):
+        """Returns the class used to implement the API layer.  Must be 
+        overridden by subclass.
+        """
+        raise NotImplementedError("jarvis.APIModule {} needs to implement apiClass (as a classmethod)".format(cls.__name__))
 
-    def api(self,other_module_name,**jarvis_handles):
+    def api(self,other_module_name,other_comm_handles):
         """To implement an API module, subclass must return a :class:`APILayer`
         subclass that implements the communication from the other module to
         your module.
 
-        Typical implementation is::
+        By default, this instantiates the class in :meth:`apiClass`.
 
-            return MyJarvisAPI(self.apiName(),other_module_name,**jarvis_handles)
+        The basic implementation is::
+
+            return MyAPILayer(other_module_name,other_comm_handles)
 
         If you want to restrict which modules have access to your module, you
         can raise a NotImplementedError() if the other module should be denied
         access.
         """
-        raise NotImplementedError()
+        try:
+            cls = self.__class__.apiClass()
+        except NotImplementedError:
+            raise NotImplementedError("jarvis.APIModule %s has not implemented the api() method"%(self.__class__.__name__))
+        return cls(other_module_name,other_comm_handles)
 
     def moduleCommandObject(self):
         """If the APILayer returned by :func:`api` implements functions using
@@ -243,8 +305,9 @@ class APIModule(Module):
         calls.
         """
         redis_client = self.jarvis._redis_client
-        key = self.apiName() + "_RPC_QUEUE";
-        rpc_node = self.jarvis._state_server[self.apiName()]['RPC_FEEDBACK']
+        apiname = self.apiClass().name()
+        key = apiname + "_RPC_QUEUE";
+        rpc_node = self.jarvis._state_server[apiname]['RPC_FEEDBACK']
         with redis_client.pipeline() as pipe:
             n = redis_client.llen(key)
             for i in range(n):
@@ -263,7 +326,7 @@ class APIModule(Module):
                 try:
                     rpc_node[msg['id']] = {'MSG':res,'REPLIED':True}
                 except Exception:
-                    print("API %s warning: error responding to RPC call %s"%(self.apiName(),msg['id']))
+                    print("API %s warning: error responding to RPC call %s"%(apiname,msg['id']))
                     pass
 
     def getRedisRpc(self):
@@ -289,7 +352,8 @@ class APIModule(Module):
         is not None.
         """
         redis_client = self.jarvis._redis_client
-        key = self.apiName() + "_RPC_QUEUE";
+        apiname = self.apiClass().name()
+        key = apiname + "_RPC_QUEUE";
         n = redis_client.llen(key)
         if n > 0:
             return json.loads(pipe.lpop(key))
@@ -299,16 +363,15 @@ class APIModule(Module):
         """Manually replies to a previous request from :func:`getRedisRpc`."""
         if id is None:
             return
-        rpc_node = self.jarvis._state_server[self.apiName()]['RPC_FEEDBACK']
+        apiname = self.apiClass().name()
+        rpc_node = self.jarvis._state_server[apiname]['RPC_FEEDBACK']
         #rpc_node[msg['id']] = {'MSG':res,'REPLIED':True}
         try:
             rpc_node[msg['id']] = {'MSG':res,'REPLIED':True}
         except Exception:
             #maybe this was a stale request from a prior Ctrl+C
-            print("API %s warning: error responding to RPC call %s"%(self.apiName(),msg['id']))
+            print("API %s warning: error responding to RPC call %s"%(apiname,msg['id']))
             pass
-
-
 
 
 class RpcPromiseTimeout(Exception):

@@ -24,6 +24,7 @@ except ImportError:  #run from command line?
     sys.path.append(os.path.expanduser("~/TRINA"))
     import trina
 from trina import jarvis
+from trina.modules.UI import UIAPI
 
 glinit.init()
 if glinit.available("PyQt"):
@@ -175,6 +176,8 @@ class MyQtMainWindow(QMainWindow):
                     self.module.jarvis.switchModuleActivity(["App_"+str(self.mode)])
                 except Exception as err:
                     print("Error: {0}".format(err))
+                    import traceback
+                    traceback.print_exc()
             for element in self.module.screenElement:
                 vis.remove(element)
             self.module.screenElement.clear()
@@ -188,19 +191,19 @@ class MyQtMainWindow(QMainWindow):
             self.close()
 
     def _initScreenLayout(self,klamptGLWindow):
-        self.setFixedSize(1000, 600)
+        self.setFixedSize(1580, 720)
         self.splitter = QSplitter()
         self.left = QFrame()
-        self.left.setFixedSize(400,600)
+        self.left.setFixedSize(300,720)
         self.leftLayout = QVBoxLayout()
         self.left.setLayout(self.leftLayout)
         self.right = QFrame()
-        self.right.setFixedSize(600,600)
+        self.right.setFixedSize(1280,720)
         self.rightLayout = QVBoxLayout()
         self.right.setLayout(self.rightLayout)
         
         self.glwidget = klamptGLWindow
-        self.glwidget.do_reshape(600,600)
+        self.glwidget.do_reshape(1280,720)
         self.glwidget.setParent(self.right)
         self.rightLayout.addWidget(self.glwidget)
     
@@ -359,8 +362,16 @@ class LocalUI(jarvis.APIModule):
     """Runs a custom Qt frame around a visualization window"""
     def __init__(self,Jarvis=None):
         jarvis.APIModule.__init__(self,Jarvis)
+        res = self.jarvis.require('Motion')  #requesting 'Motion' will provide the jarvis.robot accessor API.
+        assert res != None
+        res = self.jarvis.require('Sensor')  #requesting 'Sensor' will provide the jarvis.sensor accessor API.
+        if res is None:
+            self.sensors_enabled = False
+        else:
+            self.sensors_enabled = True
         if self.jarvis.robot.mode() == 'Kinematic':
-            self.world = trina.setup.simulation_world_load()
+            #self.world = trina.setup.simulation_world_load()
+            self.world = trina.setup.robot_model_load()
         else:
             self.world = trina.setup.robot_model_load()
             #TODO: read perception data into vis
@@ -378,19 +389,21 @@ class LocalUI(jarvis.APIModule):
             'feedback':{},
             'camera':'fixed',
             }
+        self.last_cam = 'fixed'
         self.screenElement = set([])
+        self.num_frames = 0
+        self.camera_update_freq = 10
 
         self._visInit()
         self.startSimpleThread(loopfunc = self._visLoop, dt = self.dt, name = "vis thread")
 
+    @classmethod
     def name(self):
         return "UI"
 
-    def apiName(self):
-        return "ui"
-
-    def api(self,other_module,*args,**kwargs):
-        return UIAPI(self.apiName(),other_module,*args,**kwargs)
+    @classmethod
+    def apiClass(self):
+        return UIAPI
 
     def _visInit(self):
         if not glinit.available("PyQt5"):
@@ -430,6 +443,7 @@ class LocalUI(jarvis.APIModule):
     def _visLoop(self):
         if not vis.shown():
             self.stopThread("vis thread")
+        self.num_frames += 1
         self.jarvis.log_health()
         world = self.world
         robot = world.robot(0)
@@ -440,7 +454,20 @@ class LocalUI(jarvis.APIModule):
         vis.unlock()
         cam = self.global_state['camera']
         if cam != 'fixed':
+            if self.last_cam == 'fixed':
+                self.fixed_vp = vis.getViewport()
             #render from the camera's POV
+            rgb = None
+            if self.sensors_enabled:
+                res = self.jarvis.sensors.getRgbdImages(cam)[cam]
+                if res is not None:
+                    if len(res)==2:
+                        rgb = res[0]
+                    else:
+                        rgb = res
+                    #print("Got a scene image with dimensions",rgb.shape,"dtype",rgb.dtype)
+                    #print(" RGB range",rgb[:,:,0].min(),rgb[:,:,0].max(),rgb[:,:,1].min(),rgb[:,:,1].max(),rgb[:,:,2].min(),rgb[:,:,2].max())
+        
             s = self.sim.controller(0).sensor(cam)
             vis.lock()
             svp = sensing.camera_to_viewport(s,robot)
@@ -451,7 +478,16 @@ class LocalUI(jarvis.APIModule):
             svp.h = vp.h
             svp.clippingplanes = vp.clippingplanes
             vis.setViewport(svp)
+            if rgb is not None:
+                vis.scene().setBackgroundImage(rgb)
             vis.unlock()
+        else:
+            if self.last_cam != 'fixed':
+                vis.lock()
+                vis.scene().setBackgroundImage(None)
+                vis.setViewport(self.fixed_vp)
+                vis.unlock()
+        self.last_cam = cam
 
         #process RPC calls
         for i in range(10):
@@ -459,7 +495,7 @@ class LocalUI(jarvis.APIModule):
             if request is None:
                 break
             self.qt_mainwindow.doRpc(request['fn'],request['args'],request['kwargs'],request['id'])
-
+        
     def terminate(self):
         # clean up
         vis.kill()

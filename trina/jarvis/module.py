@@ -71,9 +71,12 @@ class Module:
         self._threads = []
         self._lock = RLock()
 
-    def name(self):
-        """Returns the name used in Jarvis.  Subclass may override this."""
-        return self.__class__.__name__
+    @classmethod
+    def name(cls):
+        """Returns the identifier used to refer to this module in Jarvis. 
+        Default is the class' name.  Optional override.
+        """
+        return cls.__name__
 
     def healthy(self):
         """Called by CommandServer to check the health of the module.  Optional override.
@@ -187,6 +190,10 @@ class Module:
                     initfunc(*args)
                 except Exception as e:
                     shared_data['exception'] = e
+                    if self.verbose:
+                        print("Exception {} occurred in module {} thread {} init func".format(str(e),mod_name,name))
+                        import traceback
+                        traceback.print_exc()
                     return
             looper = TimedLooper(shared_data['dt'],name=mod_name+'.'+shared_data['name'],warning_frequency=('auto' if self.verbose > 0 else 0))
             lock = shared_data['lock']
@@ -200,6 +207,10 @@ class Module:
                             loop(*loopargs)
                         except Exception as e:
                             shared_data['exception'] = e
+                            if self.verbose:
+                                print("Exception {} occurred in module {} thread {}".format(str(e),mod_name,name))
+                                import traceback
+                                traceback.print_exc()
                             break
                 else:
                     shared_data['last_update'] = time.time()
@@ -207,14 +218,18 @@ class Module:
                         loop(*loopargs)
                     except Exception as e:
                         shared_data['exception'] = e
+                        if self.verbose:
+                            print("Exception {} occurred in module {} thread {}".format(str(e),mod_name,name))
+                            import traceback
+                            traceback.print_exc()
                         break
                 if shared_data['quit']:
                     #read only, don't need to worry about 
                     break
         thread = Thread(target=thread_func,args=(shared_data,loopfunc,args))
         thread.daemon = True
-        thread.start()
         with self._lock:
+            thread.start()
             self._threads.append((thread,shared_data))
         return thread
 
@@ -225,6 +240,7 @@ class Module:
         thread.daemon = True
         with self._lock:
             self._threads.append((thread,None))
+        thread.start()
         return thread
 
     def startMonitorThread(self,dt=0.1,name="monitor",dolock=True,onLoop=None,onActivate=None,onDeactivate=None):
@@ -285,8 +301,17 @@ class Module:
         proc.daemon = True
         if cleanup is not None:
             proc.cleanup_func = lambda : cleanup(*args)
-        proc.start()
         with self._lock:
+            #disable access to any APIs that are not compatible with IPC
+            interprocess_apis = dict()
+            for k,a in self.jarvis.apis.items():
+                if a.interprocess():
+                    interprocess_apis[k] = a
+            sanitized_jarvis = Jarvis(self.jarvis.name,interprocess_apis,self.jarvis.server)
+            orig_jarvis = self.jarvis
+            self.jarvis = sanitized_jarvis
+            proc.start()  #this forks with a copy of self.jarvis
+            self.jarvis = orig_jarvis
             self._processes.append(proc)
         return proc
 

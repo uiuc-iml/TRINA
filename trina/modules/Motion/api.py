@@ -6,6 +6,10 @@ class MotionAPI(jarvis.APILayer):
     #def __init__(self,*args,**kwargs):
     #   APILayer.__init__(self,*args,**kwargs)
 
+    @classmethod
+    def name(cls):
+        return "robot"
+
     def mode(self):
         """Returns the Motion Server mode, either 'Kinematic' or 'Physical'."""
         return self._redisGet(['ROBOT_INFO','Mode'])

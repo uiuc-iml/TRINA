@@ -44,6 +44,8 @@ klampt_to_ros_lidar = so3.from_matrix([[0,1,0],
                                        [0,0,1],
                                        [1,0,0]])
 
+CAMERA_DEACTIVATION_TIME = 5.0
+
 class CameraData:
     def __init__(self,settings=None):
         if settings is not None:
@@ -63,6 +65,8 @@ class CameraData:
         self.driver = None
         self.want_images = False
         self.want_point_cloud = False
+        self.time_want_images = 0
+        self.time_want_point_cloud = 0
         self.images = None
         self.point_cloud = None
         self.world_point_cloud = None
@@ -75,6 +79,8 @@ class SensorModule(jarvis.APIModule):
 
     def __init__(self, Jarvis, cameras= None, mode='Kinematic', ros_active = True):
         jarvis.APIModule.__init__(self,Jarvis)
+        res = self.jarvis.require('Motion')
+        assert res != None
         self.status = 'active' #states are " idle, active"  --- idle means you won't be responding to API calls, so it's best to put this as active
 
         # we first check if the parameters are valid:
@@ -156,11 +162,15 @@ class SensorModule(jarvis.APIModule):
             self.system_start = time.time()
             
             self.glutWindowID = None
-            self.startSimpleThread(self._update_sim,0.1,initfunc=self._init_GL,name="update_sim",dolock=False)
-        self.startSimpleThread(self._update_robot,dt=1.0/30.0,name="update_robot",dolock=False)
+            self.startSimpleThread(self._update_sim,trina.settings.app_settings("SensorModule")['sim_update_dt'],initfunc=self._init_GL,name="update_sim",dolock=False)
+        self.startSimpleThread(self._update_robot,dt=trina.settings.app_settings("SensorModule")['update_robot_dt'],name="update_robot",dolock=False)
 
-    def api(self,*args,**kwargs):
-        return SensorAPI(self,"sensors",*args,**kwargs)
+    @classmethod
+    def apiClass(cls):
+        return SensorAPI
+
+    def api(self,other_module,other_comms):
+        return SensorAPI(self,other_module,other_comms)
 
     def terminate(self):
         jarvis.APIModule.terminate(self)
@@ -216,6 +226,10 @@ class SensorModule(jarvis.APIModule):
 
     def _update_camera(self,camera_name):
         camera = self.active_cameras[camera_name]
+        if camera.time_want_images < time.time() - CAMERA_DEACTIVATION_TIME:
+            camera.want_images = False
+        if camera.time_want_point_cloud < time.time() - CAMERA_DEACTIVATION_TIME:
+            camera.want_point_cloud = False
         if camera.want_images or camera.want_point_cloud:
             camera.driver.update()
             if camera.want_images:
@@ -239,10 +253,12 @@ class SensorModule(jarvis.APIModule):
                 if cameras is None or camera_name in cameras:
                     if query == 'get_rgbd_images':
                         camera.want_images = True
+                        camera.time_want_images = time.time()
                         if camera.images is not None:
                             results[camera_name] = camera.images
                     elif query == 'get_point_clouds':
                         camera.want_point_cloud = True
+                        camera.time_want_point_cloud = time.time()
                         if camera.world_point_cloud is not None:
                             results[camera_name] = camera.world_point_cloud
                     ntrigger = len(self.active_cameras) if cameras is None else len(cameras)
@@ -322,6 +338,10 @@ class SensorModule(jarvis.APIModule):
         #assume temprobot is updated
         for k,cam in self.active_cameras.items():
             t0 = time.time()
+            if cam.time_want_images < t0 - CAMERA_DEACTIVATION_TIME:
+                cam.want_images = False
+            if cam.time_want_point_cloud < t0 - CAMERA_DEACTIVATION_TIME:
+                cam.want_point_cloud = False
             if cam.want_images or cam.want_point_cloud:
                 cam.device.kinematicSimulate(self.simworld, dt)
                 images = sensing.camera_to_images(cam.device, image_format='numpy', color_format='channels')
@@ -390,12 +410,14 @@ class SensorModule(jarvis.APIModule):
                     for name in cameras:
                         camera = self.active_cameras[name]
                         camera.want_images = True
+                        camera.time_want_images = time.time()
                         if camera.images is not None:
                             results[name] = camera.images
                 elif query == 'get_point_clouds':
                     for name in cameras:
                         camera = self.active_cameras[name]
                         camera.want_point_cloud = True
+                        camera.time_want_point_cloud = time.time()
                         if camera.point_cloud is not None:
                             if isinstance(camera.point_cloud,str):
                                 #errored out
@@ -438,6 +460,7 @@ class SensorModule(jarvis.APIModule):
             if camera not in self.active_cameras:
                 continue
             self.active_cameras[camera].want_images = True
+            self.active_cameras[camera].time_want_images = time.time()
             output[camera] = self.active_cameras[camera].images
         return output
 
@@ -467,6 +490,7 @@ class SensorModule(jarvis.APIModule):
                 #raise an error here?
                 continue
             self.active_cameras[camera].want_point_cloud = True
+            self.active_cameras[camera].time_want_point_cloud = time.time()
             local_pc = self.active_cameras[camera].point_cloud
             if local_pc is not None:
                 with self.update_lock:
@@ -503,7 +527,8 @@ if __name__ == '__main__':
     print('\n\n\n\n\n running as Main\n\n\n\n\n')
     from matplotlib import pyplot as plt
     module = SensorModule(None, mode='Kinematic')
-    api = module.api("main_thread",None,None)
+    
+    api = module.api("main_thread",None)
     print("Available cameras:",api.camerasAvailable())
     res = api.getNextPointClouds()
     print("Result of getNextPointClouds",res)

@@ -42,12 +42,13 @@ class Example(jarvis.APIModule):
     def sineWave(self):
         return math.sin(time.time()-self.t0)
 
-    def apiName(self):
-        return "example"
+    @classmethod
+    def apiClass(cls):
+        return ExampleAPI
 
-    def api(self,module_name,*args,**kwargs):
-        print(args,kwargs)
-        return ExampleAPI(self.apiName(),module_name,*args,**kwargs)
+    def api(self,other_module_name,other_comm_handles):
+        print("Creating API for module",other_module_name)
+        return ExampleAPI(other_module_name,other_comm_handles)
 
     def doRpc(self,fn,args,kwargs):
         #can do other things here... by default it will find fn in self and call it
@@ -57,9 +58,13 @@ class Example(jarvis.APIModule):
         self.loopCount += 1
         self.jarvis.server.set(["Example","loopCount"],self.loopCount)
         
+
 class ExampleTester(jarvis.Module):
     def __init__(self, Jarvis=None):
         jarvis.Module.__init__(self,Jarvis)
+        #Request access to the Example API -- normally the Jarvis instance will be provided by the CommandServer
+        res = self.jarvis.require('Example')
+        assert res != None
         self.count = 0
         self.jarvis.enableHealthChecks(False)   #don't turn me off due to health problems
         self.startSimpleThread(self.testing,1.0,name="testingLoop")
@@ -84,12 +89,10 @@ class ExampleTester(jarvis.Module):
             res = self.jarvis.example.sineWave().wait()
             print("wait sine wave =",res)
 
+
 if __name__ == "__main__" :
     example = Example()
     tester = ExampleTester()
-    #normally this will be set up by the Command Server
-    tester.jarvis.server['example'] = {}
-    tester.jarvis.example = example.api("tester",tester.jarvis.server)
     #for testing only. Dont terminate the program after the constructor finishes.  This will exit upon Ctrl+C
     while example.status != 'terminated':
         time.sleep(1.0)

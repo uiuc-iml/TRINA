@@ -2,6 +2,10 @@ from trina import jarvis
 
 class ExampleAPI(jarvis.APILayer):
     """Matches up with the items exposed in ExampleModule"""
+
+    @classmethod
+    def name(cls):
+        return "example"
     
     def loopCount(self):
         """Returns the number of times the loop has been called"""

@@ -12,7 +12,8 @@ from klampt.model import ik,coordinates,config,trajectory,collide
 import json
 from SimpleWebSocketServer import SimpleWebSocketServer,WebSocket
 
-import jarvis
+from trina import jarvis
+from trina.modules.UI import UIAPI
 import weakref
 
 class RemoteUI(jarvis.Module):
@@ -38,18 +39,13 @@ class RemoteUI(jarvis.Module):
         self.ws_server = SimpleWebSocketServer('', 8000, lambda *args:UIStateReciever(self,*args))
         self.startCustomThread(self._ws_server_loop)
 
+    @classmethod
     def name(self):
         return "UI"
 
-    def name(self):
-        return "UI"
-
-    def apiName(self):
-        return "ui"
-
-    #note: this is handled internally to CommandServer too
-    def api(self,**kwargs):
-        return JarvisUIAPI(self.apiName,**kwargs)
+    @classmethod
+    def apiClass(self):
+        return UIAPI
 
     def _ws_server_loop(self):
         self.ws_server.serveforever()
@@ -66,7 +62,7 @@ class UIStateReciever(WebSocket) :
     def __init__(self,module,*args):
         WebSocket.__init__(self,*args)
         self.module = weakref.proxy(module)
-        self.reem_server = module.jarvis._reem_server
+        self.state_server = module.jarvis.server
     def handleMessage(self) : 
         try:
             obj = json.loads(self.data)
@@ -77,7 +73,7 @@ class UIStateReciever(WebSocket) :
 
         if title == "UI Outputs":
             self.UI_state = obj
-            self.reem_server["UI_STATE"] = self.UI_state
+            self.state_server["UI_STATE"] = self.UI_state
 
         elif title == "UI API FUNCTION FEEDBACK":
             id = obj['id']
@@ -108,7 +104,8 @@ class UIStateReciever(WebSocket) :
 
 
 if __name__ == "__main__":
-    module = RemoteUI()
+    jv = jarvis.Jarvis('UI',['Motion'])
+    module = RemoteUI(jv)
     while True:
         time.sleep(1.0)
     

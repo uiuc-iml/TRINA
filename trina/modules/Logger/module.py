@@ -36,8 +36,9 @@ class TrinaQueueReader(object):
 
 
 class StateLogger(jarvis.Module):
-    def __init__(self, jarvis, frequency=60, image_frequency=10):
-        jarvis.Module.__init__(jarvis)
+    def __init__(self, Jarvis, frequency=60, image_frequency=10):
+        jarvis.Module.__init__(Jarvis)
+        self.jarvis.require(['Motion','UI'])
         self.status = 'active'
         print('\n\n\n starting logger \n\n\n')
 

@@ -23,7 +23,6 @@ except ImportError:  #must be run from command line
     sys.path.append(os.path.expanduser("~/TRINA"))
     import trina
 from trina import jarvis
-from trina.modules.UI import UIAPI
 from trina.utils import TimedLooper,lock_wrap
 import redis
 
@@ -32,10 +31,10 @@ class CommandServerJarvisHooks:
     you believe that jarvis.APILayers should have.
     """
     def __init__(self,server):
-        self.switch_module_activity = lock_wrap(server.lock,server.switch_module_activity)
-        self.deactivate_module = lock_wrap(server.lock,server.deactivate_module)
-        self.activate_module = lock_wrap(server.lock,server.activate_module)
-        self.restart_module = lock_wrap(server.lock,server.restart_module)
+        self.switch_module_activity = server.switch_module_activity
+        self.deactivate_module = server.deactivate_module
+        self.activate_module = server.activate_module
+        self.restart_module = server.restart_module
 
 class RunningModuleInfo:
     def __init__(self,name,modobj=None,classobj=None,classinstance=None):
@@ -44,8 +43,10 @@ class RunningModuleInfo:
         self.classobj = classobj
         self.classinstance = classinstance
         try:
-            self.apiname = classinstance.apiName()
+            self.apiclass = classobj.apiClass()
+            self.apiname = classobj.apiClass().name()
         except Exception:
+            self.apiclass = None
             self.apiname = None
         self.jarvis = None if classinstance is None else classinstance.jarvis
         self.active = True
@@ -85,7 +86,7 @@ class CommandServer:
         self.module_command_env = {}
         self.lock = Lock()
         #define the environment in which an API call should be run here
-        self.module_command_env = {'command_server':CommandServerJarvisHooks(self)}
+        self.module_command_env = {'jarvis':CommandServerJarvisHooks(self)}
         self.startup = True
         self.shut_down_flag = False
         
@@ -113,13 +114,13 @@ class CommandServer:
         for i,mod in self.modules_dict.items():
             try:
                 api = mod.classinstance.api(name,server)
-                apis[api._api_name] = api
+                apis[api.name()] = api
             except NotImplementedError as e:
+                print("Module",i,"has no API",e)
                 pass
             except AttributeError as e:
+                print("Module",i,"has no API",e)
                 pass
-        if 'ui' not in apis:
-            apis['ui'] = UIAPI("ui",name,server)
         if self.verbose:
             print("Available APIs for module",name,":",list(apis.keys()))
         res = jarvis.Jarvis(str(name),apis,server)
@@ -146,7 +147,7 @@ class CommandServer:
         #determine whether this module implements the moduleCommand interface
         try:
             obj = a.moduleCommandObject()
-            self.module_command_env[a.apiName()] = obj
+            self.module_command_env[a.apiClass().name()] = obj
             if self.verbose:
                 print("Module command env",list(self.module_command_env.keys()))
         except NotImplementedError:
@@ -205,9 +206,9 @@ class CommandServer:
         
         if newmods:
             import trina
-            module_locations = ['trina.modules','trina_devel.modules']
-            app_locations = ['trina.modules.apps','trina_devel.modules.apps']
-            mod_class_map = trina.settings.app_settings('CommandServer')['module_class_map']
+            module_locations = trina.settings.app_settings('Jarvis')['module_locations']
+            app_locations = trina.settings.app_settings('Jarvis')['app_locations']
+            mod_class_map = trina.settings.app_settings('Jarvis')['module_class_map']
 
         module_updates = dict()
         for name in module_names:
@@ -238,7 +239,7 @@ class CommandServer:
                 try:
                     modclass = getattr(modobj,modclassname)
                 except AttributeError:
-                    raise RuntimeError("Class {} not found in module {}; perhaps you should set the entry point in settings.CommandServer.module_class_map?".format(modclassname,modobj.__file__))
+                    raise RuntimeError("Class {} not found in module {}; perhaps you should set the entry point in settings.Jarvis.module_class_map?".format(modclassname,modobj.__file__))
                 try:
                     classinstance = self.start_module(modclass,name)
                 except Exception as e:
@@ -264,7 +265,7 @@ class CommandServer:
                 #reload class map
                 import trina
                 trina.settings.reload()
-                mod_class_map = trina.settings.app_settings('CommandServer')['module_class_map']
+                mod_class_map = trina.settings.app_settings('Jarvis')['module_class_map']
                 modclassname = mod_class_map.get(name,briefName)
                 try:
                     mod.classobj = getattr(mod.modobj,modclassname)
@@ -384,7 +385,7 @@ class CommandServer:
                 module_activities = [(i,mod.active) for (i,mod) in self.modules_dict.items()]
             for i,active in module_activities:
                 module_commands = trina_queue_reader.read(str(i)+'_MODULE_COMMANDS')
-                # print(i,":",robot_command)
+                #print(i,":",module_commands)
                 if module_commands:
                     if active:
                         for command in module_commands:
@@ -419,7 +420,7 @@ class CommandServer:
             module_activity = self.server['ACTIVITY_STATUS'].read()
             module_health = self.server['HEALTH_LOG'].read()
             #discover other modules run from command line
-            for key in module_activity:
+            for key in module_activity:               
                 try:
                     self.modules_dict[key]
                 except KeyError as e:
@@ -560,7 +561,7 @@ if __name__=="__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Runs the Jarvis command server')
-    parser.add_argument('--modules', default=['Motion','Example','Sensor','App_DirectTeleOperation'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
+    parser.add_argument('--modules', default=['Motion','Example','Sensor','UI','App_DirectTeleOperation'], type=str, nargs='+', help='The list of modules to activate in trina_modules')
     args = parser.parse_args(sys.argv[1:])
 
     server = CommandServer(modules = args.modules)

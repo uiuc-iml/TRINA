@@ -17,11 +17,15 @@ class Example(jarvis.Module):
     """
     def __init__(self,Jarvis = None, debugging = False):
         jarvis.Module.__init__(self,Jarvis)
-        self.status = 'idle' #states are " idle, active"        
+        res = self.jarvis.require('Motion')  #requesting 'Motion' will provide the jarvis.robot accessor API.
+        assert res != None
+        self.status = 'idle' #states are " idle, active"  
         self.loopCount = 0
 
-        #startSimpleThread will actually take care of the locking for you if dolock=True. 
-        self.startSimpleThread(self._infoLoop,0.1,name="infoLoop")
+        #this infoloop does basically the same thing as the built-in monitor thread
+        self.startMonitorThread(0.1)
+        #self.startSimpleThread(self._infoLoop,0.1,name="infoLoop")
+        #startSimpleThread will take care of the locking for you if dolock=True.
         self.startSimpleThread(self._otherLoop,1.0,name="otherLoop")
 
     def _infoLoop(self):
@@ -65,6 +69,8 @@ class ExampleManualLocking(jarvis.Module):
     a thread takes extra time. """
     def __init__(self,Jarvis = None, debugging = False):
         jarvis.Module.__init__(self,Jarvis)
+        res = self.jarvis.require('Motion')  #requesting 'Motion' will provide the jarvis.robot accessor API.
+        assert res != None
         self.sharedData = ExampleSharedData()
         self.sharedData.jarvis = self.jarvis
         self.sharedData.status = 'idle' #states are " idle, active"        
