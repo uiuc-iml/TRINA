@@ -16,7 +16,8 @@
         "#_comment1":"If you would like to access a different class in your module rather than ModuleName, put the class name here",
         "module_class_map": {
             "Motion":"MotionModule",
-            "UI":"LocalUI"
+            "UI":"LocalUI",
+            "Sensor":"SensorModuleSlow"
         },
         "module_locations":["trina.modules","trina_devel.modules"],
         "app_locations":["trina.modules.apps","trina_devel.modules.apps"]
@@ -28,7 +29,9 @@
         "heartbeat_tolerance":10,
         "verbose":1,
         "#_comment2":"To force modules to be verbose, put them here",
-        "debug":["UI","App_DirectTeleOperation","Sensor"]
+        "debug":["UI","App_DirectTeleOperation","Sensor"],
+        "#_comment3":"To force modules to be silent, put them here",
+        "silent":[]
     },
     "Simulation":{
         "world_file":"Models/simulation_worlds/TRINA_world_bubonic_with_obstacle.xml"
@@ -37,7 +40,7 @@
         "state_receiver_dt":0.015
     },
     "SensorModule": {
-        "sim_update_dt":0.3,
+        "sim_update_dt":0.15,
         "update_robot_dt":0.05
     },
     "CalibrationModule" : {
