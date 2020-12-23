@@ -11,12 +11,12 @@ right_limb_address = '10.1.1.20'
 ##These are for the Righthand gripper
 # left_limb_payload = 0.86125
 # left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
-left_limb_payload =1.025# 0.71#0.1#1.025(parallel)
-left_limb_cog = [0.0,0.0,0.06]#0.06]
+left_limb_payload = 1.025 
+left_limb_cog = [0.0,0.0,0.08] 
 
 #estimated for the pusher, need to run the calibrater
-right_limb_payload = 0.0
-right_limb_cog = [0.0,0.0,0.0]
+right_limb_payload = 0.0 #0.4
+right_limb_cog = [0.0,0.0,0.06]
 left_Robotiq = True
 right_Robotiq = False
 left_Robotiq_type = 'parallel'
@@ -210,11 +210,11 @@ def get_right_active_Dofs(name):
 
 def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
     if((name == 'anthrax')|(name=="anthrax_lowpoly")|(name == "bubonic")):
-        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + left_limb + [0]*2 + right_limb + [0]
+        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(left_limb) + [0]*2 + list(right_limb) + [0]
     elif(name == 'seed'):
-        return base[0:3] + [0]*7 + left_limb + [0]*19 + right_limb + [0]*18
+        return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + list(right_limb) + [0]*18
     elif(name == 'half_anthrax'):
-        return base[0:3] + [0]*7 + left_limb + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
+        return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
     else:
         print("wrong model name used.")
         return None

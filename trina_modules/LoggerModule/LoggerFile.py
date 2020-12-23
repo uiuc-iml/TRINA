@@ -50,7 +50,7 @@ class StateLogger(object):
         self.command_reader = TrinaQueueReader()
         self.jarvis = jarvis
 
-        self.intermediate_wait = 20
+        self.intermediate_wait = 5
         tmp = datetime.now()
         if(not os.path.exists('./logs')):
             os.mkdir('./logs')
@@ -196,6 +196,7 @@ class StateLogger(object):
                 break
 
     def yield_states_df(self):
+        # print('logging state started')
         with self.states_lock:
             copy_ui_state = copy(self.ui_state)
             copy_robot_state = copy(self.robot_state)
@@ -225,6 +226,7 @@ class StateLogger(object):
         return states_df
 
     def yield_commands_df(self):
+        # print('yielding the state')
         with self.commands_lock:
             copy_command_list = copy(self.command_list)
             self.command_list = []
@@ -257,6 +259,7 @@ class StateLogger(object):
         return commands_df
     
     def yield_comments_df(self):
+        # print('yielding states')
         comments_list = self.command_reader.read('LOGGER_COMMENTS')
         print(comments_list)
         comments = []
@@ -302,7 +305,7 @@ class StateLogger(object):
     def save_state_and_command_log(self):
 
         while(True):
-
+            # print('saving state')
             start_time = time.time()
             commands_df = self.yield_commands_df()
             states_df = self.yield_states_df()

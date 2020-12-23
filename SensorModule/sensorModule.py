@@ -565,7 +565,7 @@ class RealSenseCamera:
             print("Data Not Available at the moment")
             return None
         else:
-            return [color_frame.get_data(),depth_frame.get_data()]
+            return [color_frame.get_data(),depth_frame.get_data(),time.time()]
 
     def safely_close(self):
         print('safely closing Realsense camera', self.serial_num)
@@ -651,7 +651,7 @@ class ZedCamera:
         else:
             print("Data Not Available at the moment")
             return None
-        return([self.image.get_data(),self.depth.get_data()])
+        return([self.image.get_data(),self.depth.get_data(),time.time(),time.time()])
     def safely_close(self):
         print('safely closing zed camera ', self.serial_num)
         self.zed.close()

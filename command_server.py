@@ -1,6 +1,5 @@
 import time,math,datetime
 import threading
-# from motion_client_python3 import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import numpy as np
@@ -38,15 +37,15 @@ from klampt import sim
 import random
 import trimesh
 import rosgraph
+from Motion import MotionClient
 if(sys.version_info[0] < 3):
 	from future import *
-	from Motion import MotionClient
 else:
-	from Motion  import MotionClient
 	from importlib import reload
 from Jarvis import Jarvis
 import redis
 import traceback
+import logging
 
 robot_ip = 'http://localhost:8080'
 
@@ -310,7 +309,8 @@ class testingWorldBuilder():
 
 class CommandServer:
 
-	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = [],codename = 'anthrax_lowpoly'):
+	#def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = [],codename = 'anthrax_lowpoly'):
+	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic'):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")
@@ -331,6 +331,8 @@ class CommandServer:
 			self.interface.initialize()
 			self.server = KeyValueStore(self.interface)
 
+		self.codename = codename
+
 		self.start_ros_stuff()
 		self.world_file = world_file
 		# we then proceed with startup as normal
@@ -338,6 +340,8 @@ class CommandServer:
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
+		self.logger = logging.getLogger('reem')
+		self.logger.setLevel(logging.ERROR)
 		# self.server["ROBOT_STATE"] = 0
 		self.server['ROBOT_COMMAND'] = {}
 		self.server['HEALTH_LOG'] = {}
@@ -386,24 +390,35 @@ class CommandServer:
 		if(self.mode == 'Physical'):
 			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
 			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
+			time.sleep(5)
+
 		self.health_dict = {}
 		# create the list of threads
 		self.modules_dict = {}
 
 		manager = Manager()
-
+		print('\nstarting all the modules\n')
 		self.active_modules = manager.dict()
 		for i in self.always_active:
 			self.active_modules[i] = True
 		self.start_modules(self.modules,startup = True)
+		time.sleep(3)
 
+		print('\nall modules started succesfully\n')
+		print('\n starting state receiver \n')
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
-		stateRecieverThread.start()
+		stateRecieverThread.start()		
+		print('\n state receiver started!\n')
+		print('\n starting command receiver \n')
 		commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
 		commandRecieverThread.daemon = True
 		commandRecieverThread.start()
+		print('\n command receiver started!\n')
+		print('\n starting module monitor \n')
 		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
 		moduleMonitorThread.start()
+		print('\n module monitor started\n')
+
 		atexit.register(self.shutdown_all)
 		
 		# self.switch_module_activity(['C2'])
@@ -451,7 +466,7 @@ class CommandServer:
 			vel_base = self.query_robot.sensedBaseVelocity()
 
 		# print( self.query_robot.sensedLeftLimbPosition(),self.query_robot.sensedRightLimbPosition())
-		klampt_q = get_klampt_model_q('anthrax',left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
+		klampt_q = get_klampt_model_q(self.codename,left_limb = self.query_robot.sensedLeftLimbPosition(), right_limb = self.query_robot.sensedRightLimbPosition(), base = pos_base)
 		klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 		klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 		# print("base velocity")
@@ -632,8 +647,8 @@ class CommandServer:
 		velEE_left = {}
 		posEE_right = {}
 		velEE_right = {}
-		loopStartTime = time.time()
 		while not self.shut_down_flag:
+			loopStartTime = time.time()
 			# print('updating states')
 			try:
 				if(self.left_limb_active):
@@ -652,7 +667,7 @@ class CommandServer:
 					pos_base = self.query_robot.sensedBasePosition()
 					vel_base = self.query_robot.sensedBaseVelocity()
 
-				klampt_q = get_klampt_model_q('anthrax',left_limb = pos_left, right_limb = pos_right, base = pos_base)
+				klampt_q = get_klampt_model_q(self.codename,left_limb = pos_left, right_limb = pos_right, base = pos_base)
 				klampt_command_pos = self.query_robot.getKlamptCommandedPosition()
 				klampt_sensor_pos = self.query_robot.getKlamptSensedPosition()
 				if(self.left_gripper_active):
@@ -699,15 +714,15 @@ class CommandServer:
 				}
 				# print('states updated with success!')
 			except Exception as e:
-				print(e)
+				traceback.print_exc()
 			################
 			self.server['TRINA_TIME'] = time.time()
 
 			elapsedTime = time.time() - loopStartTime
 			if elapsedTime < self.dt:
-				time.sleep(self.dt-elapsedTime)
+				time.sleep(self.dt - elapsedTime)
 			else:
-				pass
+				time.sleep(1e-6)
 		print('\n\n\n\nstopped updating state!!! \n\n\n\n')
 
 	def commandReciever(self,robot,active_modules):
@@ -745,7 +760,7 @@ class CommandServer:
 
 			for i in self.robot_command.keys():
 				robot_command = self.trina_queue_reader.read(str(i))
-				# print(robot_command)
+				# print("Command in command_server", robot_command)
 				if (robot_command != []):
 					if(self.active_modules[str(i)]):
 						commandList = robot_command
@@ -764,19 +779,18 @@ class CommandServer:
 
 			# print('\n\n Frequency of execution loop:', 1/elapsedTime,'\n\n')
 			if elapsedTime < self.dt:
-				time.sleep(self.dt-elapsedTime)
+				time.sleep(self.dt - elapsedTime)
 			else:
-				pass
-
+				time.sleep(1e-6)
+	
 	def run(self,command):
 		try:
 			exec(command)
 		except Exception as e:
-			print('there was an error executing your command!',e)
+			tb = traceback.format_exc()
+			print('there was an error executing your command!',tb)
 		finally:
 			print("command recieved was " + str(command))
-
-			pass
 
 
 	#0 -> dead
@@ -806,9 +820,9 @@ class CommandServer:
 
 			elapsedTime = time.time() - loopStartTime
 			if elapsedTime < self.monitoring_dt:
-				time.sleep(self.monitoring_dt-elapsedTime)
+				time.sleep(self.monitoring_dt - elapsedTime)
 			else:
-				pass
+				time.sleep(1e-6)
 
 
 	def sigint_handler(self, signum, frame):
@@ -817,6 +831,7 @@ class CommandServer:
 		"""
 		assert(signum == signal.SIGINT)
 		print("SIGINT caught...shutting down the api!")
+		self.shutdown()
 
 	def shutdown(self):
 		#send shutdown to all modules
@@ -910,7 +925,8 @@ class CommandLogger(object):
 	def log_command(self,command,time):
 		self.length = self.r.llen(self.key)
 		if(self.length >= self.max_length):
-			print('\n\n\n\n\nQUEUE OVERFLOW!!!! \n\n\n\n\n SOMETHING WRONG WITH THE LOGGER?')
+			print('QUEUE OVERFLOW!!!! SOMETHING WRONG WITH THE LOGGER?')
+			#print('\n\n\n\n\nQUEUE OVERFLOW!!!! \n\n\n\n\n SOMETHING WRONG WITH THE LOGGER?')
 		else:
 			self.r.rpush(self.key,str([command,time]))
 
@@ -920,8 +936,8 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb'], modules = ['DirectTeleOperation', 'PointClickGrasp','StateLogger'], codename = 'bubonic')
-	# server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
+	server = CommandServer(mode = 'Physical',components =  ['left_limb', 'right_limb'], modules = ['DirectTeleOperation'], codename = 'bubonic')
+	#server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
 	print(server.robot.closeLeftRobotiqGripper())
 	print(server.robot.sensedLeftEETransform())

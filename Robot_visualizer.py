@@ -31,7 +31,8 @@ from reem.datatypes import KeyValueStore
 robot_ip = 'http://localhost:8080'
 ws_port = 1234
 
-model_name = "Motion/data/TRINA_world_anthrax_PointClick.xml"
+#model_name = "Motion/data/TRINA_world_anthrax_PointClick.xml"
+model_name = "Motion/data/TRINA_world_bubonic.xml"
 
 
 roomname = "The Lobby"
@@ -84,7 +85,7 @@ def visualUpdateLoop():
         # apply the new camera view
         vp = vis.getViewport()
         camera = vp.camera
-        camera.set_matrix([final_view,final_dist]) 
+        #camera.set_matrix([final_view,final_dist]) 
 
         # pdb.set_trace()
         vis.unlock()
