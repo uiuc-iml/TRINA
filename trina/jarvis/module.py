@@ -60,7 +60,7 @@ class Module:
             this tells CommandServer whether the module wishes to be 
             considered active or idle on startup.
     """
-    def __init__(self, Jarvis, Verbose = 0):
+    def __init__(self, Jarvis, Verbose = 1):
         if Jarvis is None:
             from trina import jarvis
             Jarvis = jarvis.Jarvis(self.name())
