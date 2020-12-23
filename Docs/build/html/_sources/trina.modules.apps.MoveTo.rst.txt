@@ -1,0 +1,22 @@
+trina.modules.apps.MoveTo package
+=================================
+
+Submodules
+----------
+
+trina.modules.apps.MoveTo.module module
+---------------------------------------
+
+.. automodule:: trina.modules.apps.MoveTo.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.apps.MoveTo
+   :members:
+   :undoc-members:
+   :show-inheritance:

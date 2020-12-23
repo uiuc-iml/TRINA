@@ -1,0 +1,674 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.UI.LocalUI &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.modules.UI.LocalUI</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.modules.UI.LocalUI</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">klampt</span>
+<span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">vis</span>
+<span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">io</span>
+<span class="kn">from</span> <span class="nn">klampt.vis.glcommon</span> <span class="k">import</span> <span class="n">GLWidgetPlugin</span>
+<span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">RobotModel</span><span class="p">,</span><span class="n">WorldModel</span><span class="p">,</span><span class="n">Simulator</span><span class="p">,</span><span class="n">RobotPoser</span>
+<span class="kn">from</span> <span class="nn">klampt.model</span> <span class="k">import</span> <span class="n">ik</span><span class="p">,</span><span class="n">coordinates</span><span class="p">,</span><span class="n">config</span><span class="p">,</span><span class="n">trajectory</span><span class="p">,</span><span class="n">collide</span><span class="p">,</span><span class="n">sensing</span>
+<span class="kn">from</span> <span class="nn">klampt.math</span> <span class="k">import</span> <span class="n">vectorops</span><span class="p">,</span><span class="n">so3</span><span class="p">,</span><span class="n">se3</span>
+<span class="kn">from</span> <span class="nn">klampt.vis</span> <span class="k">import</span> <span class="n">GLSimulationPlugin</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Thread</span>
+<span class="kn">from</span> <span class="nn">reem.connection</span> <span class="k">import</span> <span class="n">RedisInterface</span>
+<span class="kn">from</span> <span class="nn">reem.datatypes</span> <span class="k">import</span> <span class="n">KeyValueStore</span>
+<span class="kn">from</span> <span class="nn">klampt.vis</span> <span class="k">import</span> <span class="n">glinit</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1">#run from command line?</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/TRINA&quot;</span><span class="p">))</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+<span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+
+<span class="n">glinit</span><span class="o">.</span><span class="n">init</span><span class="p">()</span>
+<span class="k">if</span> <span class="n">glinit</span><span class="o">.</span><span class="n">available</span><span class="p">(</span><span class="s2">&quot;PyQt&quot;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">glinit</span><span class="o">.</span><span class="n">available</span><span class="p">(</span><span class="s2">&quot;PyQt5&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">PyQt5.QtWidgets</span> <span class="k">import</span> <span class="o">*</span>
+        <span class="kn">from</span> <span class="nn">PyQt5.QtGui</span> <span class="k">import</span> <span class="o">*</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">PyQt4.QtGui</span> <span class="k">import</span> <span class="o">*</span>
+
+
+
+<span class="c1"># outer box</span>
+<div class="viewcode-block" id="MyQtMainWindow"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow">[docs]</a><span class="k">class</span> <span class="nc">MyQtMainWindow</span><span class="p">(</span><span class="n">QMainWindow</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">klamptGLWindow</span><span class="p">,</span><span class="n">module</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;When called, this be given a QtGLWidget object(found in klampt.vis.qtbackend).</span>
+
+<span class="sd">        You will need to place this widget into your Qt window&#39;s layout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">QMainWindow</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;Manual&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initScreenLayout</span><span class="p">(</span><span class="n">klamptGLWindow</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initMenuBar</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setMouseTracking</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MyQtMainWindow.doRpc"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.doRpc">[docs]</a>    <span class="k">def</span> <span class="nf">doRpc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">func</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">kwargs</span><span class="p">,</span><span class="nb">id</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">func</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">]:</span>  <span class="c1">#special deferred RPC calls</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">func</span><span class="p">)(</span><span class="nb">id</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwarg_pairs</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;=&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">exec</span><span class="p">(</span><span class="s1">&#39;self.</span><span class="si">{}</span><span class="s1">(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="o">+</span><span class="n">kwarg_pairs</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">setRedisRpc</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span><span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.closeEvent"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.closeEvent">[docs]</a>    <span class="k">def</span> <span class="nf">closeEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">isVisible</span><span class="p">():</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">question</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;Confirm quit&quot;</span><span class="p">,</span> <span class="s2">&quot;Do you really want to quit?&quot;</span><span class="p">,</span>
+                                    <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="o">|</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">No</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reply</span> <span class="o">==</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="p">:</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">show</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">QMainWindow</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">QMainWindow</span><span class="o">.</span><span class="n">closeEvent</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.addText"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.addText">[docs]</a>    <span class="k">def</span> <span class="nf">addText</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">text</span><span class="p">,</span><span class="n">color</span><span class="p">,</span><span class="n">size</span><span class="p">,</span><span class="n">name</span><span class="p">):</span> 
+        <span class="n">vis</span><span class="o">.</span><span class="n">addText</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">screenElement</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">setColor</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">color</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">color</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">color</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">setAttribute</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="s2">&quot;size&quot;</span><span class="p">,</span><span class="n">size</span><span class="p">)</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.addConfirmation"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.addConfirmation">[docs]</a>    <span class="k">def</span> <span class="nf">addConfirmation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">id</span><span class="p">,</span><span class="n">text</span><span class="p">,</span><span class="n">title</span><span class="p">):</span>
+        <span class="n">reply</span> <span class="o">=</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">question</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span>
+                                    <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="o">|</span><span class="n">QMessageBox</span><span class="o">.</span><span class="n">No</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reply</span> <span class="o">==</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;YES&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39;NO&#39;</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.addPrompt"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.addPrompt">[docs]</a>    <span class="k">def</span> <span class="nf">addPrompt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">text</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.addInputBox"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.addInputBox">[docs]</a>    <span class="k">def</span> <span class="nf">addInputBox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">text</span><span class="p">,</span><span class="n">fields</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.sendTrajectory"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.sendTrajectory">[docs]</a>    <span class="k">def</span> <span class="nf">sendTrajectory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">trajectory</span><span class="p">,</span><span class="n">animate</span><span class="p">):</span>
+        <span class="n">world</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">world</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;inside sendTrajectory&quot;</span><span class="p">)</span>
+        <span class="n">trajectory</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">fromJson</span><span class="p">(</span><span class="n">trajectory</span><span class="p">,</span><span class="s1">&#39;Trajectory&#39;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;pass from Json&quot;</span><span class="p">)</span>
+        <span class="n">robotPath</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;world&quot;</span><span class="p">,</span><span class="n">world</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">getName</span><span class="p">())</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;robot trajectory&quot;</span><span class="p">,</span><span class="n">trajectory</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screenElement</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;robot trajectory&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">animate</span><span class="p">:</span>
+            <span class="n">vis</span><span class="o">.</span><span class="n">animate</span><span class="p">(</span><span class="n">robotPath</span><span class="p">,</span><span class="n">trajectory</span><span class="p">,</span><span class="n">endBehavior</span><span class="o">=</span><span class="s1">&#39;halt&#39;</span><span class="p">)</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.getRayClick"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.getRayClick">[docs]</a>    <span class="k">def</span> <span class="nf">getRayClick</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">id</span><span class="p">):</span>
+        <span class="c1"># ask the user to click the destination</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;collectRaySignal&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span><span class="kc">False</span><span class="p">]:</span>
+            <span class="n">reply</span> <span class="o">=</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">question</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;Click Navigation&quot;</span><span class="p">,</span> <span class="s2">&quot;Please specify destination by right click on the map.&quot;</span><span class="p">,</span>
+                                        <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">reply</span> <span class="o">==</span> <span class="n">QMessageBox</span><span class="o">.</span><span class="n">Yes</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;collectRaySignal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span><span class="kc">False</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;feedback&#39;</span><span class="p">][</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;feedbackId&#39;</span><span class="p">][</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">id</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">setRedisRpc</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">setRedisRpc</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.addButton"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.addButton">[docs]</a>    <span class="k">def</span> <span class="nf">addButton</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rpc_args</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+        <span class="n">text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rpc_args</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buttons</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_STATE&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buttons</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">pressed</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handleButtonPress</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buttons</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">released</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_handleButtonRelease</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leftLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">buttons</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">_handleButtonPress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_STATE&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_handleButtonRelease</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_STATE&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        
+    <span class="k">def</span> <span class="nf">_initMenuBar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">menuBar</span><span class="p">()</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="s2">&quot;Mode Switch&quot;</span><span class="p">)</span>
+        <span class="n">mode</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;Manual&quot;</span><span class="p">)</span>
+        <span class="n">mode</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;PointClickNav&quot;</span><span class="p">)</span>
+        <span class="n">mode</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;PointClickGrasp&quot;</span><span class="p">)</span>
+        <span class="n">mode</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;DirectTeleOperation&quot;</span><span class="p">)</span>
+        <span class="n">mode</span><span class="o">.</span><span class="n">triggered</span><span class="p">[</span><span class="n">QAction</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_processModeTrigger</span><span class="p">)</span>
+
+        <span class="n">action</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">addMenu</span><span class="p">(</span><span class="s2">&quot;Quick Action&quot;</span><span class="p">)</span>
+        <span class="n">action</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;Robot Stop&quot;</span><span class="p">)</span>
+        <span class="n">action</span><span class="o">.</span><span class="n">addAction</span><span class="p">(</span><span class="s2">&quot;Quit&quot;</span><span class="p">)</span>
+        <span class="n">action</span><span class="o">.</span><span class="n">triggered</span><span class="p">[</span><span class="n">QAction</span><span class="p">]</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_processActionTrigger</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MyQtMainWindow.enableManualMode"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.enableManualMode">[docs]</a>    <span class="k">def</span> <span class="nf">enableManualMode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">robot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s1">&#39;ghost&#39;</span><span class="p">,</span><span class="n">robot</span><span class="o">.</span><span class="n">getConfig</span><span class="p">(),</span><span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.5</span><span class="p">))</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">edit</span><span class="p">(</span><span class="s1">&#39;ghost&#39;</span><span class="p">)</span>
+        <span class="c1">#TODO: connect to push button</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moveToPushButton</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s1">&#39; Move to&#39;</span><span class="p">)</span>
+        <span class="n">play_icon</span> <span class="o">=</span> <span class="n">QIcon</span><span class="o">.</span><span class="n">fromTheme</span><span class="p">(</span><span class="s1">&#39;media-playback-start&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moveToPushButton</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">play_icon</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leftLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">moveToPushButton</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MyQtMainWindow.disableManualMode"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyQtMainWindow.disableManualMode">[docs]</a>    <span class="k">def</span> <span class="nf">disableManualMode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;ghost&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moveToPushButton</span><span class="o">.</span><span class="n">setParent</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_processModeTrigger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">q</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot; is triggered&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="n">q</span><span class="o">.</span><span class="n">text</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modeText</span><span class="o">.</span><span class="n">setText</span><span class="p">(</span><span class="s2">&quot;Mode: &quot;</span> <span class="o">+</span>  <span class="n">q</span><span class="o">.</span><span class="n">text</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">text</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Manual&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">deactivateModule</span><span class="p">(</span><span class="s2">&quot;App_&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">enableManualMode</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;Manual&#39;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">disableManualMode</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">text</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">switchModuleActivity</span><span class="p">([</span><span class="s2">&quot;App_&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">)])</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">screenElement</span><span class="p">:</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">screenElement</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_processActionTrigger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">q</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="p">(</span><span class="n">q</span><span class="o">.</span><span class="n">text</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot; is triggered&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">q</span><span class="o">.</span><span class="n">text</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Emergency Stop&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">stopMotion</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">q</span><span class="o">.</span><span class="n">text</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;Quit&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_initScreenLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">klamptGLWindow</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setFixedSize</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">600</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">splitter</span> <span class="o">=</span> <span class="n">QSplitter</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span> <span class="o">=</span> <span class="n">QFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">setFixedSize</span><span class="p">(</span><span class="mi">400</span><span class="p">,</span><span class="mi">600</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leftLayout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">leftLayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span> <span class="o">=</span> <span class="n">QFrame</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">setFixedSize</span><span class="p">(</span><span class="mi">600</span><span class="p">,</span><span class="mi">600</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rightLayout</span> <span class="o">=</span> <span class="n">QVBoxLayout</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="o">.</span><span class="n">setLayout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rightLayout</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">glwidget</span> <span class="o">=</span> <span class="n">klamptGLWindow</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">glwidget</span><span class="o">.</span><span class="n">do_reshape</span><span class="p">(</span><span class="mi">600</span><span class="p">,</span><span class="mi">600</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">glwidget</span><span class="o">.</span><span class="n">setParent</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rightLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">glwidget</span><span class="p">)</span>
+    
+        <span class="bp">self</span><span class="o">.</span><span class="n">buttons</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">welcomeText</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;Welcome to TRINA UI! </span><span class="se">\n\n\n</span><span class="s2">Please Refer To Menu Bar Actions For Selecting Operation Mode.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modeText</span> <span class="o">=</span> <span class="n">QLabel</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modeText</span><span class="o">.</span><span class="n">setWordWrap</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">welcomeText</span><span class="o">.</span><span class="n">setWordWrap</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">leftLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">welcomeText</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leftLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modeText</span><span class="p">)</span>
+
+        <span class="c1">#determine which camera sensors are available</span>
+        <span class="n">all_cams</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;fixed&#39;</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">sensori</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sensor</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sensori</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;CameraSensor&#39;</span><span class="p">:</span>
+                <span class="n">all_cams</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sensori</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">sensori</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1">#out of sensors</span>
+                <span class="k">break</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cameraSelector</span> <span class="o">=</span> <span class="n">QComboBox</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_cams</span> <span class="o">=</span> <span class="n">all_cams</span>
+        <span class="k">for</span> <span class="n">cam</span> <span class="ow">in</span> <span class="n">all_cams</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cameraSelector</span><span class="o">.</span><span class="n">addItem</span><span class="p">(</span><span class="n">cam</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">onSelectCamera</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s2">&quot;camera&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_cams</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cameraSelector</span><span class="o">.</span><span class="n">activated</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">onSelectCamera</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leftLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cameraSelector</span><span class="p">)</span>
+
+        <span class="c1">#testing</span>
+        <span class="n">stop_icon</span> <span class="o">=</span> <span class="n">QIcon</span><span class="o">.</span><span class="n">fromTheme</span><span class="p">(</span><span class="s2">&quot;process-stop&quot;</span><span class="p">)</span>
+        <span class="n">button</span> <span class="o">=</span> <span class="n">QPushButton</span><span class="p">(</span><span class="s2">&quot; Emergency Stop&quot;</span><span class="p">)</span>
+        <span class="n">button</span><span class="o">.</span><span class="n">setIcon</span><span class="p">(</span><span class="n">stop_icon</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">leftLayout</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="n">button</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">enableManualMode</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">splitter</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">splitter</span><span class="o">.</span><span class="n">addWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">splitter</span><span class="o">.</span><span class="n">setHandleWidth</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setCentralWidget</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">splitter</span><span class="p">)</span></div>
+    
+
+<span class="c1"># inner vis plugin</span>
+<div class="viewcode-block" id="MyGLPlugin"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyGLPlugin">[docs]</a><span class="k">class</span> <span class="nc">MyGLPlugin</span><span class="p">(</span><span class="n">vis</span><span class="o">.</span><span class="n">GLPluginInterface</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">module</span><span class="p">):</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">GLPluginInterface</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span> <span class="o">=</span> <span class="n">module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">world</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">world</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">collider</span> <span class="o">=</span> <span class="n">collide</span><span class="o">.</span><span class="n">WorldCollider</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">world</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MyGLPlugin.initialize"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyGLPlugin.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">GLPluginInterface</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="MyGLPlugin.mousefunc"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyGLPlugin.mousefunc">[docs]</a>    <span class="k">def</span> <span class="nf">mousefunc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">button</span><span class="p">,</span><span class="n">state</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;collectRaySignal&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span><span class="kc">False</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;mouse&quot;</span><span class="p">,</span><span class="n">button</span><span class="p">,</span><span class="n">state</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">button</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">state</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;Click list...&quot;</span><span class="p">,[</span><span class="n">o</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">click_world</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)])</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="MyGLPlugin.motionfunc"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyGLPlugin.motionfunc">[docs]</a>    <span class="k">def</span> <span class="nf">motionfunc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">dx</span><span class="p">,</span><span class="n">dy</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="MyGLPlugin.keyboardfunc"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyGLPlugin.keyboardfunc">[docs]</a>    <span class="k">def</span> <span class="nf">keyboardfunc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;Pressed&quot;</span><span class="p">,</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">rightJoystickMock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">UIState</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;rightController&quot;</span><span class="p">][</span><span class="s2">&quot;thumbstickMovement&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;w&#39;</span><span class="p">:</span>
+            <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;s&#39;</span><span class="p">:</span>
+            <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span>
+            <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span>
+            <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">UIState</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;rightController&quot;</span><span class="p">][</span><span class="s2">&quot;thumbstickMovement&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rightJoystickMock</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s2">&quot;UI_STATE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">UIState</span> 
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0001</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="MyGLPlugin.keyboardupfunc"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyGLPlugin.keyboardupfunc">[docs]</a>    <span class="k">def</span> <span class="nf">keyboardupfunc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+        <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;Released&quot;</span><span class="p">,</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">rightJoystickMock</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">UIState</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;rightController&quot;</span><span class="p">][</span><span class="s2">&quot;thumbstickMovement&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;w&#39;</span> <span class="ow">and</span> <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;s&#39;</span> <span class="ow">and</span> <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">:</span>
+            <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span> <span class="ow">and</span> <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">:</span> 
+            <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="o">==</span> <span class="s1">&#39;d&#39;</span> <span class="ow">and</span> <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="n">rightJoystickMock</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">UIState</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;rightController&quot;</span><span class="p">][</span><span class="s2">&quot;thumbstickMovement&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">rightJoystickMock</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s2">&quot;UI_STATE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">UIState</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0001</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="MyGLPlugin.click_world"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.MyGLPlugin.click_world">[docs]</a>    <span class="k">def</span> <span class="nf">click_world</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Helper: returns a list of world objects sorted in order of</span>
+<span class="sd">        increasing distance.&quot;&quot;&quot;</span>
+        <span class="c1">#get the viewport ray</span>
+        <span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">d</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">click_ray</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_collect_ray</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">d</span><span class="p">)</span>
+
+        <span class="c1">#run the collision tests</span>
+        <span class="n">collided</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">collider</span><span class="o">.</span><span class="n">geomList</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">hit</span><span class="p">,</span><span class="n">pt</span><span class="p">)</span> <span class="o">=</span> <span class="n">g</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">rayCast</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">d</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">hit</span><span class="p">:</span>
+                <span class="n">dist</span> <span class="o">=</span> <span class="n">vectorops</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vectorops</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span><span class="n">s</span><span class="p">),</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">collided</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dist</span><span class="p">,</span><span class="n">g</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">pt</span><span class="p">))</span>
+
+       
+        <span class="k">return</span> <span class="p">[</span><span class="n">g</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">collided</span><span class="p">)]</span></div>
+
+    
+    <span class="k">def</span> <span class="nf">_collect_ray</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">collided</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;feedbackId&#39;</span><span class="p">][</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;collectRaySignal&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">addText</span><span class="p">(</span><span class="s2">&quot;pointclick&quot;</span><span class="p">,</span><span class="s2">&quot;You have clicked the destination,</span><span class="se">\n</span><span class="s2"> Please indicate the direction.&quot;</span><span class="p">)</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">setColor</span><span class="p">(</span><span class="s2">&quot;pointclick&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">setAttribute</span><span class="p">(</span><span class="s2">&quot;pointclick&quot;</span><span class="p">,</span><span class="s2">&quot;size&quot;</span><span class="p">,</span><span class="mi">30</span><span class="p">)</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;destination&quot;</span><span class="p">,</span><span class="nb">sorted</span><span class="p">(</span><span class="n">collided</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">screenElement</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;destination&quot;</span><span class="p">)</span>
+
+                <span class="n">vis</span><span class="o">.</span><span class="n">setColor</span><span class="p">(</span><span class="s2">&quot;destination&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">setAttribute</span><span class="p">(</span><span class="s2">&quot;destination&quot;</span><span class="p">,</span><span class="s2">&quot;size&quot;</span><span class="p">,</span><span class="mi">10</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;feedback&#39;</span><span class="p">][</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;FIRST_RAY&#39;</span><span class="p">:{</span><span class="s1">&#39;source&#39;</span><span class="p">:[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">s</span><span class="p">],</span> <span class="s1">&#39;destination&#39;</span><span class="p">:[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">d</span><span class="p">]}}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;collectRaySignal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span><span class="kc">True</span><span class="p">]</span>
+
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;collectRaySignal&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">addText</span><span class="p">(</span><span class="s2">&quot;pointclick&quot;</span><span class="p">,</span><span class="s2">&quot;You have clicked the point for calibration&quot;</span><span class="p">)</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">setColor</span><span class="p">(</span><span class="s2">&quot;pointclick&quot;</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">setAttribute</span><span class="p">(</span><span class="s2">&quot;pointclick&quot;</span><span class="p">,</span><span class="s2">&quot;size&quot;</span><span class="p">,</span><span class="mi">30</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;feedback&#39;</span><span class="p">][</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">][</span><span class="s1">&#39;SECOND_RAY&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;source&#39;</span><span class="p">:[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">s</span><span class="p">],</span> <span class="s1">&#39;destination&#39;</span><span class="p">:[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">d</span><span class="p">]}</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">setRedisRpc</span><span class="p">(</span><span class="nb">id</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;feedback&#39;</span><span class="p">][</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;collectRaySignal&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span><span class="kc">False</span><span class="p">]</span>
+
+                <span class="n">vis</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s2">&quot;pointclick&quot;</span><span class="p">)</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="LocalUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.LocalUI">[docs]</a><span class="k">class</span> <span class="nc">LocalUI</span><span class="p">(</span><span class="n">jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Runs a custom Qt frame around a visualization window&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Jarvis</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Jarvis</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">mode</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Kinematic&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">world</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">simulation_world_load</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">world</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">robot_model_load</span><span class="p">()</span>
+            <span class="c1">#TODO: read perception data into vis</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">numRobots</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">world</span><span class="p">)</span> <span class="c1">#used for viewport simulation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="mf">0.05</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">UIState</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;controllerPositionState&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;leftController&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;controllerOrientation&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.07739845663309097</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.19212138652801514</span><span class="p">,</span> <span class="mf">0.3228720426559448</span><span class="p">,</span> <span class="mf">0.9235001802444458</span><span class="p">],</span> <span class="s1">&#39;controllerPosition&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.021801471710205078</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.4208446145057678</span><span class="p">,</span> <span class="mf">0.5902314186096191</span><span class="p">]},</span> <span class="s1">&#39;rightController&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;controllerOrientation&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.052883781492710114</span><span class="p">,</span> <span class="mf">0.20788685977458954</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.30593231320381165</span><span class="p">,</span> <span class="mf">0.927573025226593</span><span class="p">],</span> <span class="s1">&#39;controllerPosition&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.15437912940979004</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.4229428172111511</span><span class="p">,</span> <span class="mf">0.5827353000640869</span><span class="p">]}},</span> <span class="s1">&#39;headSetPositionState&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;deviceRotation&#39;</span><span class="p">:</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.027466144412755966</span><span class="p">,</span> <span class="mf">0.7671623826026917</span><span class="p">,</span> <span class="mf">0.003965826239436865</span><span class="p">,</span> <span class="mf">0.6408524513244629</span><span class="p">]},</span> <span class="s1">&#39;controllerButtonState&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;leftController&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;nearTouch&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="s1">&#39;press&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="s1">&#39;thumbstickMovement&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="s1">&#39;touch&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="s1">&#39;squeeze&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]},</span> <span class="s1">&#39;rightController&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;nearTouch&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="s1">&#39;press&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="s1">&#39;thumbstickMovement&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="s1">&#39;touch&#39;</span><span class="p">:</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">],</span> <span class="s1">&#39;squeeze&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]}},</span> <span class="s1">&#39;UIlogicState&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;stop&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;autonomousMode&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;teleoperationMode&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span> <span class="s1">&#39;title&#39;</span><span class="p">:</span> <span class="s1">&#39;UI Outputs&#39;</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">_state_server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s2">&quot;UI_STATE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UIState</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s2">&quot;UI_END_COMMAND&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_FEEDBACK&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_state</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;collectRaySignal&#39;</span><span class="p">:[</span><span class="kc">False</span><span class="p">,</span><span class="kc">False</span><span class="p">],</span>
+            <span class="s1">&#39;feedbackId&#39;</span><span class="p">:{</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">:</span><span class="s1">&#39;&#39;</span><span class="p">},</span>
+            <span class="s1">&#39;feedback&#39;</span><span class="p">:{},</span>
+            <span class="s1">&#39;camera&#39;</span><span class="p">:</span><span class="s1">&#39;fixed&#39;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">screenElement</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_visInit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="n">loopfunc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_visLoop</span><span class="p">,</span> <span class="n">dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;vis thread&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LocalUI.name"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.LocalUI.name">[docs]</a>    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;UI&quot;</span></div>
+
+<div class="viewcode-block" id="LocalUI.apiName"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.LocalUI.apiName">[docs]</a>    <span class="k">def</span> <span class="nf">apiName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;ui&quot;</span></div>
+
+<div class="viewcode-block" id="LocalUI.api"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.LocalUI.api">[docs]</a>    <span class="k">def</span> <span class="nf">api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other_module</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">UIAPI</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">apiName</span><span class="p">(),</span><span class="n">other_module</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_visInit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">glinit</span><span class="o">.</span><span class="n">available</span><span class="p">(</span><span class="s2">&quot;PyQt5&quot;</span><span class="p">):</span>
+            <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;PyQt5 is not available on your system, try sudo apt-get install python-qt5&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        
+        <span class="c1"># init qtmain window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qt_mainwindow</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">def</span> <span class="nf">makefunc</span><span class="p">(</span><span class="n">gl_backend</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qt_mainwindow</span> <span class="o">=</span> <span class="n">MyQtMainWindow</span><span class="p">(</span><span class="n">gl_backend</span><span class="p">,</span><span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">qt_mainwindow</span>
+        <span class="n">world</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">world</span>
+
+        <span class="n">sensed_position</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRobotq</span><span class="p">()</span>
+        <span class="n">world</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">setConfig</span><span class="p">(</span><span class="n">sensed_position</span><span class="p">)</span>
+
+        <span class="n">vis</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;world&quot;</span><span class="p">,</span><span class="n">world</span><span class="p">)</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">hide</span><span class="p">((</span><span class="s2">&quot;world&quot;</span><span class="p">,</span><span class="n">world</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">getName</span><span class="p">()))</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;robot_sensed&quot;</span><span class="p">,</span><span class="n">world</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">getConfig</span><span class="p">())</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">sensori</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sensor</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sensori</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;CameraSensor&#39;</span><span class="p">:</span>
+                <span class="n">vis</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="s2">&quot;Camera &quot;</span><span class="o">+</span><span class="n">sensori</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="n">sensori</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">sensori</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1">#out of sensors</span>
+                <span class="k">break</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">vis</span><span class="o">.</span><span class="n">setWindowTitle</span><span class="p">(</span><span class="s2">&quot;LocalUI&quot;</span><span class="p">)</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">customUI</span><span class="p">(</span><span class="n">makefunc</span><span class="p">)</span>
+        <span class="c1"># init plugin for getting input</span>
+        <span class="n">plugin</span> <span class="o">=</span> <span class="n">MyGLPlugin</span><span class="p">(</span><span class="n">weakref</span><span class="o">.</span><span class="n">proxy</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">pushPlugin</span><span class="p">(</span><span class="n">plugin</span><span class="p">)</span>   <span class="c1">#put the plugin on top of the standard visualization functionality.</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_visLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">vis</span><span class="o">.</span><span class="n">shown</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stopThread</span><span class="p">(</span><span class="s2">&quot;vis thread&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">log_health</span><span class="p">()</span>
+        <span class="n">world</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">world</span>
+        <span class="n">robot</span> <span class="o">=</span> <span class="n">world</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">sensed_position</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRobotq</span><span class="p">()</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">setItemConfig</span><span class="p">(</span><span class="s2">&quot;robot_sensed&quot;</span><span class="p">,</span><span class="n">sensed_position</span><span class="p">)</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">lock</span><span class="p">()</span>
+        <span class="n">robot</span><span class="o">.</span><span class="n">setConfig</span><span class="p">(</span><span class="n">sensed_position</span><span class="p">)</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+        <span class="n">cam</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_state</span><span class="p">[</span><span class="s1">&#39;camera&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">cam</span> <span class="o">!=</span> <span class="s1">&#39;fixed&#39;</span><span class="p">:</span>
+            <span class="c1">#render from the camera&#39;s POV</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sensor</span><span class="p">(</span><span class="n">cam</span><span class="p">)</span>
+            <span class="n">vis</span><span class="o">.</span><span class="n">lock</span><span class="p">()</span>
+            <span class="n">svp</span> <span class="o">=</span> <span class="n">sensing</span><span class="o">.</span><span class="n">camera_to_viewport</span><span class="p">(</span><span class="n">s</span><span class="p">,</span><span class="n">robot</span><span class="p">)</span>
+            <span class="n">vp</span> <span class="o">=</span> <span class="n">vis</span><span class="o">.</span><span class="n">getViewport</span><span class="p">()</span>
+            <span class="n">svp</span><span class="o">.</span><span class="n">x</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">x</span>
+            <span class="n">svp</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">y</span>
+            <span class="n">svp</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">w</span>
+            <span class="n">svp</span><span class="o">.</span><span class="n">h</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">h</span>
+            <span class="n">svp</span><span class="o">.</span><span class="n">clippingplanes</span> <span class="o">=</span> <span class="n">vp</span><span class="o">.</span><span class="n">clippingplanes</span>
+            <span class="n">vis</span><span class="o">.</span><span class="n">setViewport</span><span class="p">(</span><span class="n">svp</span><span class="p">)</span>
+            <span class="n">vis</span><span class="o">.</span><span class="n">unlock</span><span class="p">()</span>
+
+        <span class="c1">#process RPC calls</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+            <span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getRedisRpc</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">request</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qt_mainwindow</span><span class="o">.</span><span class="n">doRpc</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="n">request</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span><span class="n">request</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">],</span><span class="n">request</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="LocalUI.terminate"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.LocalUI.LocalUI.terminate">[docs]</a>    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># clean up</span>
+        <span class="n">vis</span><span class="o">.</span><span class="n">kill</span><span class="p">()</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">qt_mainwindow</span>
+        <span class="n">jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="o">.</span><span class="n">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
+
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="nb">print</span> <span class="p">(</span><span class="s2">&quot;&quot;&quot;================================================================================</span>
+<span class="s2">    LocalUI.py:</span>
+
+<span class="s2">        USAGE: python3 LocalUI.py</span>
+
+<span class="s2">    ================================================================================</span>
+<span class="s2">    &quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">LocalUI</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">module</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s1">&#39;terminated&#39;</span><span class="p">:</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

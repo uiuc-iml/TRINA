@@ -1,0 +1,683 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.Motion.api &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.modules.Motion.api</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.modules.Motion.api</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="MotionAPI"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI">[docs]</a><span class="k">class</span> <span class="nc">MotionAPI</span><span class="p">(</span><span class="n">jarvis</span><span class="o">.</span><span class="n">APILayer</span><span class="p">):</span>
+    <span class="c1">#handled by superclass</span>
+    <span class="c1">#def __init__(self,*args,**kwargs):</span>
+    <span class="c1">#   APILayer.__init__(self,*args,**kwargs)</span>
+
+<div class="viewcode-block" id="MotionAPI.name"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.name">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;robot&quot;</span></div>
+
+<div class="viewcode-block" id="MotionAPI.mode"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.mode">[docs]</a>    <span class="k">def</span> <span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the Motion Server mode, either &#39;Kinematic&#39; or &#39;Physical&#39;.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;ROBOT_INFO&#39;</span><span class="p">,</span><span class="s1">&#39;Mode&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.activeComponents"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.activeComponents">[docs]</a>    <span class="k">def</span> <span class="nf">activeComponents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of active components as queried by the Motion Server.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;ROBOT_INFO&#39;</span><span class="p">,</span><span class="s1">&#39;Components&#39;</span><span class="p">])</span></div>
+        
+<div class="viewcode-block" id="MotionAPI.setKlamptPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setKlamptPosition">[docs]</a>    <span class="k">def</span> <span class="nf">setKlamptPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">duration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;set the position of the entire robot as the Klamp&#39;t model configuration</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: a merged list of joint positions, in the order of torso,base,left limb, right limb, left gripper...</span>
+<span class="sd">            duration (float): desired time to reach q (s)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setKlamptPosition&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="MotionAPI.mirror_arm_config"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.mirror_arm_config">[docs]</a>    <span class="k">def</span> <span class="nf">mirror_arm_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;given the Klampt config of the left or right arm, return the other</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            A list of 6 floats. Limb configuration.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of 6 floats. Limb configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">RConfig</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+        <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">RConfig</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftLimbPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftLimbPosition">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftLimbPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the left limb joint positions, and the limb moves as fast as possible</span>
+
+<span class="sd">        This will clear the motion queue.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: a list of 6 floats. The desired joint positions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftLimbPosition&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setRightLimbPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setRightLimbPosition">[docs]</a>    <span class="k">def</span> <span class="nf">setRightLimbPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the right limb joint positions, and the limb moves as fast as possible</span>
+
+<span class="sd">        This will clear the motion queue.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: a list of 6 floats. The desired joint positions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setRightLimbPosition&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftLimbPositionLinear"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftLimbPositionLinear">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftLimbPositionLinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">duration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set Left limb to moves to a configuration in a certain amount of time at constant speed</span>
+
+<span class="sd">        Set a motion queue, this will clear the setPosition() commands</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: a list of 6 floats. The desired joint positions.</span>
+<span class="sd">            duration (float): The desired duration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftLimbPositionLinear&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setRightLimbPositionLinear"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setRightLimbPositionLinear">[docs]</a>    <span class="k">def</span> <span class="nf">setRightLimbPositionLinear</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">duration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set right limb to moves to a configuration in a certain amount of time at constant speed</span>
+
+<span class="sd">        Set a motion queue, this will clear the setPosition() commands</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: a list of 6 floats. The desired joint positions.</span>
+<span class="sd">            duration (float): The desired duration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setRightLimbPositionLinear&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">setVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qdot</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;set the velocity of the entire robot, under development rn</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setVelocity&#39;</span><span class="p">,</span><span class="n">qdot</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftLimbVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftLimbVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftLimbVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qdot</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the left limb joint velocities</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qdot: a list of 6 floats. Joint velocities</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftLimbVelocity&#39;</span><span class="p">,</span><span class="n">qdot</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setRightLimbVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setRightLimbVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">setRightLimbVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qdot</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the right limb joint velocities</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qdot: a list of 6 floats. Joint velocities</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setRightLimbVelocity&#39;</span><span class="p">,</span> <span class="n">qdot</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftEEInertialTransform"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftEEInertialTransform">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftEEInertialTransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Ttarget</span><span class="p">,</span> <span class="n">duration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the trasform of the arm w.r.t. the base frame, movement complsetLeftLimbCo</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftEEInertialTransform&#39;</span><span class="p">,</span> <span class="n">Ttarget</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftEEVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftEEVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftEEVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the end-effect cartesian velocity, in the base frame.</span>
+
+<span class="sd">        Implemented using position control and IK. Will keep moving until infeasible.</span>
+<span class="sd">        TODO: implement collision detection</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            v: A list of 6 floatd. v[0:3] is the desired cartesian position velocities and v[3:6] is the desired rotational velocity</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tool</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftEEVelocity&#39;</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setRightEEInertialTransform"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setRightEEInertialTransform">[docs]</a>    <span class="k">def</span> <span class="nf">setRightEEInertialTransform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Ttarget</span><span class="p">,</span> <span class="n">duration</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the trasform of the arm w.r.t. the base frame, movement complete in a certain amount of time</span>
+
+<span class="sd">        This current version assmumes that the torso is at zero position.</span>
+<span class="sd">        #TODO: implement version with torso not at zero.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Ttarget: A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list</span>
+<span class="sd">            duration (float): The duration of the movement</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setRightEEInertialTransform&#39;</span><span class="p">,</span> <span class="n">Ttarget</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setRightEEVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setRightEEVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">setRightEEVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">tool</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the end-effect cartesian velocity, in the base frame.</span>
+
+<span class="sd">        Implemented using position control and IK. Will keep moving until infeasible.</span>
+<span class="sd">        TODO: implement collision detection</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            v: A list of 6 floats. v[0:3] is the desired cartesian position velocities and v[3:6] is the desired rotational velocity</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tool</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tool</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setRightEEVelocity&#39;</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">tool</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setBaseTargetPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setBaseTargetPosition">[docs]</a>    <span class="k">def</span> <span class="nf">setBaseTargetPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">vel</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the local target position of the base.</span>
+
+<span class="sd">        The base constructs a path to go to the desired position, following the desired speed along the path</span>
+<span class="sd">        Args:</span>
+<span class="sd">            q: a list of 3 floats. The desired x,y position and rotation.</span>
+<span class="sd">            Vel (float): Desired speed along the path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setBaseTargetPosition&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">vel</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setBaseVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setBaseVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">setBaseVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the velocity of the base relative to the local base frame</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: a list of 2 floats. The linear and rotational velocites.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setBaseVelocity&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setTorsoTargetPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setTorsoTargetPosition">[docs]</a>    <span class="k">def</span> <span class="nf">setTorsoTargetPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">q</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the torso target position.</span>
+
+<span class="sd">        Moves to the target as fast as possible.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: a list of 2 floats. The lift and tilt positions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setTorsoTargetPosition&#39;</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftGripperPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftGripperPosition">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftGripperPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">position</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the position of the gripper. Moves as fast as possible.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            position: a list of 4 floats, the angles of finger 1,2 , the angle of the thumb,</span>
+<span class="sd">                the rotation of finger 1&amp;2 (they rotate together)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftGripperPosition&#39;</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftGripperVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftGripperVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftGripperVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">velocity</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the velocity of the gripper. Moves as fast as possible.</span>
+<span class="sd">        #TODO</span>
+<span class="sd">        ###Under development</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftGripperVelocity&#39;</span><span class="p">,</span> <span class="n">velocity</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.isStarted"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.isStarted">[docs]</a>    <span class="k">def</span> <span class="nf">isStarted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return whether the robot has started</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;ROBOT_INFO&#39;</span><span class="p">,</span><span class="s1">&#39;Started&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.isShutDown"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.isShutDown">[docs]</a>    <span class="k">def</span> <span class="nf">isShutDown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return whether the robot is shutdown</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;ROBOT_INFO&#39;</span><span class="p">,</span><span class="s1">&#39;Shutdown&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.moving"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.moving">[docs]</a>    <span class="k">def</span> <span class="nf">moving</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns true if the robot is currently moving.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>     
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;ROBOT_INFO&#39;</span><span class="p">,</span><span class="s1">&#39;Moving&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.stopMotion"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.stopMotion">[docs]</a>    <span class="k">def</span> <span class="nf">stopMotion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Pause the motion of the robot, starting from the next control loop.</span>
+
+<span class="sd">        This is not shutdown. Just a pause.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;stopMotion&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.resumeMotion"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.resumeMotion">[docs]</a>    <span class="k">def</span> <span class="nf">resumeMotion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Unpause the robot.</span>
+
+<span class="sd">        After unpausing, the robot is still stationery until some new commands is added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;resumeMotion&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedLeftEEWrench"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedLeftEEWrench">[docs]</a>    <span class="k">def</span> <span class="nf">sensedLeftEEWrench</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">frame</span> <span class="o">=</span> <span class="s1">&#39;global&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            frame (str):  &#39;global&#39; or &#39;local&#39;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            wrench: list of 6 floats, expressed either in global or local EE coordinate, gravity of the attachement compensated for</span>
+
+<span class="sd">        Note:</span>
+<span class="sd">        The attachment weight to the ft sensor can be corrected by U5 directly</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;ROBOT_STATE&#39;</span><span class="p">,</span><span class="s1">&#39;EEWrench&#39;</span><span class="p">,</span><span class="s1">&#39;LeftArm&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">frame</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedRightEEWrench"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedRightEEWrench">[docs]</a>    <span class="k">def</span> <span class="nf">sensedRightEEWrench</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">frame</span> <span class="o">=</span> <span class="s1">&#39;global&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            frame (sr): &#39;global&#39; or &#39;local&#39;</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            wrench: list of 6 floats, expressed either in global or local EE coordinate</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;ROBOT_STATE&#39;</span><span class="p">,</span><span class="s1">&#39;EEWrench&#39;</span><span class="p">,</span><span class="s1">&#39;RightArm&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">frame</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.openLeftRobotiqGripper"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.openLeftRobotiqGripper">[docs]</a>    <span class="k">def</span> <span class="nf">openLeftRobotiqGripper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;openLeftRobotiqGripper&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.closeLeftRobotiqGripper"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.closeLeftRobotiqGripper">[docs]</a>    <span class="k">def</span> <span class="nf">closeLeftRobotiqGripper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;closeLeftRobotiqGripper&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.openRightRobotiqGripper"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.openRightRobotiqGripper">[docs]</a>    <span class="k">def</span> <span class="nf">openRightRobotiqGripper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;openRightRobotiqGripper&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.closeRightRobotiqGripper"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.closeRightRobotiqGripper">[docs]</a>    <span class="k">def</span> <span class="nf">closeRightRobotiqGripper</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;closeRightRobotiqGripper&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftEETransformImpedance"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftEETransformImpedance">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftEETransformImpedance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Tg</span><span class="p">,</span><span class="n">K</span><span class="p">,</span><span class="n">M</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">x_dot_g</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">,</span><span class="n">deadband</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.</span>
+<span class="sd">        The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,</span>
+<span class="sd">        and the inertia matrix</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Tg: target transform of the EE, in Klampt format</span>
+<span class="sd">            K: a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.</span>
+<span class="sd">            B: a 6x6 numpy 2D array. The damping matrix.</span>
+<span class="sd">            M: a 6x6 numpy 2D array. The inertia matrix.</span>
+<span class="sd">            x_dot_g: list of 6 elements. The optional desired EE velocity</span>
+<span class="sd">            deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like &quot;deadband&quot;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftEETransformImpedance&#39;</span><span class="p">,</span>
+         <span class="p">(</span><span class="n">Tg</span><span class="p">),(</span><span class="n">K</span><span class="p">),(</span><span class="n">M</span><span class="p">),(</span><span class="n">B</span><span class="p">),(</span><span class="n">x_dot_g</span><span class="p">),(</span><span class="n">deadband</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setRightEETransformImpedance"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setRightEETransformImpedance">[docs]</a>    <span class="k">def</span> <span class="nf">setRightEETransformImpedance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Tg</span><span class="p">,</span><span class="n">K</span><span class="p">,</span><span class="n">M</span><span class="p">,</span><span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span><span class="n">x_dot_g</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">,</span><span class="n">deadband</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.</span>
+<span class="sd">        The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,</span>
+<span class="sd">        and the inertia matrix</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            Tg: target transform of the EE, in Klampt format</span>
+<span class="sd">            K: a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.</span>
+<span class="sd">            B: a 6x6 numpy 2D array. The damping matrix.</span>
+<span class="sd">            M: a 6x6 numpy 2D array. The inertia matrix.</span>
+<span class="sd">            x_dot_g: list of 6 elements. The optional desired EE velocity</span>
+<span class="sd">            deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like &quot;deadband&quot;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setRightEETransformImpedance&#39;</span><span class="p">,</span>
+         <span class="p">(</span><span class="n">Tg</span><span class="p">),(</span><span class="n">K</span><span class="p">),(</span><span class="n">M</span><span class="p">),(</span><span class="n">B</span><span class="p">),(</span><span class="n">x_dot_g</span><span class="p">),(</span><span class="n">deadband</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setLeftLimbPositionImpedance"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setLeftLimbPositionImpedance">[docs]</a>    <span class="k">def</span> <span class="nf">setLeftLimbPositionImpedance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">q</span><span class="p">,</span><span class="n">K</span><span class="p">,</span><span class="n">M</span><span class="p">,</span><span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span><span class="n">x_dot_g</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">,</span><span class="n">deadband</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.</span>
+<span class="sd">        The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,</span>
+<span class="sd">        and the inertia matrix</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: target positin of the limb</span>
+<span class="sd">            K: a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.</span>
+<span class="sd">            B: a 6x6 numpy 2D array. The damping matrix.</span>
+<span class="sd">            M: a 6x6 numpy 2D array. The inertia matrix.</span>
+<span class="sd">            x_dot_g: list of 6 elements. The optional desired EE velocity</span>
+<span class="sd">            deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like &quot;deadband&quot;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setLeftLimbPositionImpedance&#39;</span><span class="p">,</span>
+         <span class="n">q</span><span class="p">,(</span><span class="n">K</span><span class="p">),(</span><span class="n">M</span><span class="p">),(</span><span class="n">B</span><span class="p">),(</span><span class="n">x_dot_g</span><span class="p">),(</span><span class="n">deadband</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="MotionAPI.setRightLimbPositionImpedance"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.setRightLimbPositionImpedance">[docs]</a>    <span class="k">def</span> <span class="nf">setRightLimbPositionImpedance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">q</span><span class="p">,</span><span class="n">K</span><span class="p">,</span><span class="n">M</span><span class="p">,</span><span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span><span class="n">x_dot_g</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">,</span><span class="n">deadband</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">6</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.</span>
+<span class="sd">        The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,</span>
+<span class="sd">        and the inertia matrix</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            q: target positin of the limb</span>
+<span class="sd">            K: a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.</span>
+<span class="sd">            B: a 6x6 numpy 2D array. The damping matrix.</span>
+<span class="sd">            M: a 6x6 numpy 2D array. The inertia matrix.</span>
+<span class="sd">            x_dot_g: list of 6 elements. The optional desired EE velocity</span>
+<span class="sd">            deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like &quot;deadband&quot;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;setRightLimbPositionImpedance&#39;</span><span class="p">,</span>
+                <span class="n">q</span><span class="p">,(</span><span class="n">K</span><span class="p">),(</span><span class="n">M</span><span class="p">),(</span><span class="n">B</span><span class="p">),(</span><span class="n">x_dot_g</span><span class="p">),(</span><span class="n">deadband</span><span class="p">))</span>     </div>
+
+<div class="viewcode-block" id="MotionAPI.cartesianDriveFail"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.cartesianDriveFail">[docs]</a>    <span class="k">def</span> <span class="nf">cartesianDriveFail</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return if cartesian drive has failed or not</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            bool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_INFO&quot;</span><span class="p">,</span><span class="s2">&quot;CartesianDrive&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedLeftEEVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedLeftEEVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">sensedLeftEEVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_pt</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;Return the EE translational and rotational velocity  w.r.t. the base DataFrame</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            local_pt: the local point in the EE local frame.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (v,w), a tuple of 2 velocity vectors</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;VelocityEE&quot;</span><span class="p">,</span><span class="s2">&quot;LeftArm&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedRightEEVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedRightEEVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">sensedRightEEVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_pt</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;Return the EE translational and rotational velocity  w.r.t. the base DataFrame</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            local_pt: the local point in the EE local frame.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (v,w), a tuple of 2 velocity vectors</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;VelocityEE&quot;</span><span class="p">,</span><span class="s2">&quot;RightArm&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.getComponents"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.getComponents">[docs]</a>    <span class="k">def</span> <span class="nf">getComponents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return robot component dictionary</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_INFO&quot;</span><span class="p">,</span><span class="s2">&quot;Components&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.getKlamptSensedPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.getKlamptSensedPosition">[docs]</a>    <span class="k">def</span> <span class="nf">getKlamptSensedPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the entire sensed Klampt position, in Klampt format.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;KlamptSensedPos&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.getKlamptCommandedPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.getKlamptCommandedPosition">[docs]</a>    <span class="k">def</span> <span class="nf">getKlamptCommandedPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the entire commanded position, in Klampt format. The base returns velocity instead</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;KlamptCommandPos&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedBaseVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedBaseVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">sensedBaseVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the current base velocity</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of 2 floats. Linear and Rotational velocities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Velocity&quot;</span><span class="p">,</span><span class="s2">&quot;Base&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedLeftLimbVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedLeftLimbVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">sensedLeftLimbVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the current limb joint velocities</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of 6 floats. The joint velocities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Velocity&quot;</span><span class="p">,</span><span class="s2">&quot;LeftArm&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedRightLimbVelocity"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedRightLimbVelocity">[docs]</a>    <span class="k">def</span> <span class="nf">sensedRightLimbVelocity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the current limb joint velocities</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of 6 floats. The joint velocities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Velocity&quot;</span><span class="p">,</span><span class="s2">&quot;RightArm&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedBasePosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedBasePosition">[docs]</a>    <span class="k">def</span> <span class="nf">sensedBasePosition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the current base position. Zero position is the position when the base is started.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of 3 floats. Position and rotation.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Position&quot;</span><span class="p">,</span><span class="s2">&quot;Base&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedTorsoPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedTorsoPosition">[docs]</a>    <span class="k">def</span> <span class="nf">sensedTorsoPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the current torso position</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of 2 floats. The positions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Position&quot;</span><span class="p">,</span><span class="s2">&quot;Torso&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedLeftEETransform"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedLeftEETransform">[docs]</a>    <span class="k">def</span> <span class="nf">sensedLeftEETransform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the transform w.r.t. the base frame</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (R,t)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;PositionEE&quot;</span><span class="p">,</span><span class="s2">&quot;LeftArm&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedRightEETransform"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedRightEETransform">[docs]</a>    <span class="k">def</span> <span class="nf">sensedRightEETransform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the transform w.r.t. the base frame</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (R,t)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;PositionEE&quot;</span><span class="p">,</span><span class="s2">&quot;RightArm&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedLeftGripperPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedLeftGripperPosition">[docs]</a>    <span class="k">def</span> <span class="nf">sensedLeftGripperPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the current positions of the fingers.</span>
+<span class="sd">        #TODO</span>
+<span class="sd">        ###Under development</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Position&quot;</span><span class="p">,</span><span class="s2">&quot;LeftGripper&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedRobotq"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedRobotq">[docs]</a>    <span class="k">def</span> <span class="nf">sensedRobotq</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the Robotq position.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Position&quot;</span><span class="p">,</span><span class="s2">&quot;Robotq&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedRightLimbPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedRightLimbPosition">[docs]</a>    <span class="k">def</span> <span class="nf">sensedRightLimbPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The current joint positions of the right limb</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of 6 floats. The limb configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Position&quot;</span><span class="p">,</span><span class="s2">&quot;RightArm&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MotionAPI.sensedLeftLimbPosition"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.api.MotionAPI.sensedLeftLimbPosition">[docs]</a>    <span class="k">def</span> <span class="nf">sensedLeftLimbPosition</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The current joint positions of the left limb</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of 6 floats. The limb configuration.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">,</span><span class="s2">&quot;Position&quot;</span><span class="p">,</span><span class="s2">&quot;LeftArm&quot;</span><span class="p">])</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

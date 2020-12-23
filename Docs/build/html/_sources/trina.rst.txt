@@ -1,0 +1,57 @@
+trina package
+=============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   trina.jarvis
+   trina.modules
+   trina.sensors
+   trina.utils
+
+Submodules
+----------
+
+trina.command\_server module
+----------------------------
+
+.. automodule:: trina.command_server
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.settings module
+---------------------
+
+.. automodule:: trina.settings
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.setup module
+------------------
+
+.. automodule:: trina.setup
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.state\_server module
+--------------------------
+
+.. automodule:: trina.state_server
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina
+   :members:
+   :undoc-members:
+   :show-inheritance:

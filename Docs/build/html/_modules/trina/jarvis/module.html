@@ -1,0 +1,562 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.jarvis.module &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.jarvis.module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.jarvis.module</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Thread</span><span class="p">,</span> <span class="n">RLock</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Process</span><span class="p">,</span> <span class="n">Manager</span><span class="p">,</span> <span class="n">Pipe</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="k">import</span> <span class="n">TimedLooper</span>
+
+<span class="n">THREAD_TIMEOUT</span> <span class="o">=</span> <span class="mf">30.0</span>
+
+<div class="viewcode-block" id="Module"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module">[docs]</a><span class="k">class</span> <span class="nc">Module</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Base class for Jarvis modules (APIModules and Apps).  Provides some</span>
+<span class="sd">    convenient functions for starting threads and processes, and monitoring the</span>
+<span class="sd">    health of those threads.</span>
+
+<span class="sd">    Your app should implement name(), and in __init__ it should start the module</span>
+<span class="sd">    activity.  We recommend using startSimpleThread() and/or startProcess() to</span>
+<span class="sd">    create workers that can be managed by the Command Server, since they are</span>
+<span class="sd">    compatible with its health monitoring functions.</span>
+
+<span class="sd">    **Runtime responsibilities**</span>
+
+<span class="sd">    A Module has the following responsibilities:</span>
+
+<span class="sd">    1. In ``__init__``, setup common data and then start one or more threads /</span>
+<span class="sd">       processes to perform the module&#39;s functions. </span>
+<span class="sd">    2. Log its health (heartbeat) by periodically calling</span>
+<span class="sd">       ``jarvis.log_health()``. Or, call ``jarvis.enableHealthChecks(False)``</span>
+<span class="sd">       on startup to disable health monitoring for this module.</span>
+<span class="sd">    3. Respect the requests in ``jarvis.getActivityStatus()`` to switch the</span>
+<span class="sd">       module&#39;s activity to &#39;idle&#39; or &#39;active&#39; status. </span>
+<span class="sd">    4. Monitor the health of its threads in the ``healthy()`` function.</span>
+<span class="sd">    5. Terminate and release resources when ``terminate()`` is called.</span>
+
+<span class="sd">    The Module class provides helpers for items 1, 2, and 3, and automatically</span>
+<span class="sd">    implements items 4 and 5.</span>
+
+<span class="sd">    **Module activity**</span>
+
+<span class="sd">    The module activity is controlled by the Command Server, i.e. by UI and</span>
+<span class="sd">    debugging modules.  To play nice with other modules, a monitoring thread</span>
+<span class="sd">    should continually check for activity changes using</span>
+<span class="sd">    ``jarvis.getActivityStatus()``. </span>
+
+<span class="sd">    If switched to &#39;idle&#39;, the module should no longer access jarvis except</span>
+<span class="sd">    for health logigng and status checking. Your module will have API interfaces</span>
+<span class="sd">    revoked from jarvis when it is disabled, so be aware that some jarvis.X</span>
+<span class="sd">    calls may fail during &#39;idle&#39; status.</span>
+
+<span class="sd">    On startup, Command server uses ``self.status`` to determine whether the</span>
+<span class="sd">    module should start as active or inactive.  By default, Apps are started</span>
+<span class="sd">    as &#39;idle&#39; while APIModules are started as &#39;active&#39;, but you can override</span>
+<span class="sd">    this.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        jarvis (jarvis.Jarvis): the Jarvis handle. If None is provided, a </span>
+<span class="sd">            default (temp) module is assumed, which has no access to APIs </span>
+<span class="sd">            that use shared memory.</span>
+<span class="sd">        status (str): typically either &#39;idle&#39; or &#39;active&#39;.  Upon construction,</span>
+<span class="sd">            this tells CommandServer whether the module wishes to be </span>
+<span class="sd">            considered active or idle on startup.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Jarvis</span><span class="p">,</span> <span class="n">Verbose</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">Jarvis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+            <span class="n">Jarvis</span> <span class="o">=</span> <span class="n">jarvis</span><span class="o">.</span><span class="n">Jarvis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span> <span class="o">=</span> <span class="n">Jarvis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;idle&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">Verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_processes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">RLock</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Module.name"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.name">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the identifier used to refer to this module in Jarvis. </span>
+<span class="sd">        Default is the class&#39; name.  Optional override.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span></div>
+
+<div class="viewcode-block" id="Module.healthy"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.healthy">[docs]</a>    <span class="k">def</span> <span class="nf">healthy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called by CommandServer to check the health of the module.  Optional override.</span>
+
+<span class="sd">        Thread safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">pcess</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_processes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">pcess</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">thread</span><span class="p">,</span><span class="n">threaddata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">threaddata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="c1">#not a managed thread</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">threaddata</span><span class="p">[</span><span class="s1">&#39;exception&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.healthy(): exception was raised, returning False&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()))</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">t</span> <span class="o">-</span> <span class="n">threaddata</span><span class="p">[</span><span class="s1">&#39;last_update&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">THREAD_TIMEOUT</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.healthy(): thread&#39;s last update was </span><span class="si">{}</span><span class="s2">s ago, returning False&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="n">t</span> <span class="o">-</span> <span class="n">threaddata</span><span class="p">[</span><span class="s1">&#39;last_update&#39;</span><span class="p">]))</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="Module.terminate"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.terminate">[docs]</a>    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called by CommandServer to terminate the module.  Optional override</span>
+<span class="sd">        to close resources.</span>
+
+<span class="sd">        Thread safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Terminating Jarvis module&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">proc</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_processes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">proc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">proc</span><span class="p">,</span><span class="s1">&#39;cleanup_func&#39;</span><span class="p">):</span>
+                    <span class="n">proc</span><span class="o">.</span><span class="n">cleanup_func</span><span class="p">()</span>
+                <span class="n">proc</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,(</span><span class="n">thread</span><span class="p">,</span><span class="n">threaddata</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">threaddata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">threaddata</span><span class="p">[</span><span class="s1">&#39;quit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+                        <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;Untitled module&#39;</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">.terminate(): Warning, thread </span><span class="si">%d</span><span class="s2"> created by user, not sure if it can be terminated...&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">i</span><span class="p">))</span>
+            <span class="n">threads</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">[:]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">thread</span> <span class="o">==</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span> <span class="k">for</span> <span class="n">thread</span><span class="p">,</span><span class="n">threaddata</span> <span class="ow">in</span> <span class="n">threads</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Not joining threads; terminate was called from an existing thread&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">thread</span><span class="p">,</span><span class="n">threaddata</span> <span class="ow">in</span> <span class="n">threads</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">threaddata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   Joining custom thread (might hang if the implementer is not careful)&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   Joining thread&quot;</span><span class="p">,</span><span class="n">threaddata</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+                <span class="n">thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Termination complete&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;terminated&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_processes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="Module.startSimpleThread"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.startSimpleThread">[docs]</a>    <span class="k">def</span> <span class="nf">startSimpleThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">loopfunc</span><span class="p">,</span><span class="n">dt</span><span class="p">,</span><span class="n">args</span><span class="o">=</span><span class="p">(),</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">initfunc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">dolock</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Starts a simple thread that repeatedly calls ``loopfunc(*args)``</span>
+<span class="sd">        every ``dt`` seconds. </span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            loopfunc (callable): the function called every loop</span>
+<span class="sd">            dt (float): the frequency of the loop.</span>
+<span class="sd">            args (tuple, optional): the arguments passed to ``loopfunc``</span>
+<span class="sd">            name (str, optional): an identifier that can be used to refer to</span>
+<span class="sd">                the thread</span>
+<span class="sd">            initfunc (callable, optional): if given, this is called within the</span>
+<span class="sd">                created thread.</span>
+<span class="sd">            dolock (bool, optional): if True (default), this uses a module-wide</span>
+<span class="sd">                lock (``self._lock``) that allows ``loopfunc`` to access</span>
+<span class="sd">                ``self`` safely.</span>
+<span class="sd">        </span>
+<span class="sd">        The default ``dolock=True`` is the safest option.  However, if</span>
+<span class="sd">        ``loopfunc`` blocks or has long-running calls, then you may want to set</span>
+<span class="sd">        ``dolock = False`` and implement your own locking mechanisms for better</span>
+<span class="sd">        performance.</span>
+
+<span class="sd">        Thread safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="n">callable</span><span class="p">(</span><span class="n">loopfunc</span><span class="p">),</span><span class="s2">&quot;Need a callable loop callback&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Untitled thread&quot;</span>
+        
+        <span class="n">mod_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+
+        <span class="n">shared_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span><span class="n">name</span><span class="p">,</span>
+            <span class="s1">&#39;dt&#39;</span><span class="p">:</span><span class="n">dt</span><span class="p">,</span>
+            <span class="s1">&#39;lock&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">,</span>
+            <span class="s1">&#39;quit&#39;</span><span class="p">:</span><span class="kc">False</span><span class="p">,</span>
+            <span class="s1">&#39;dolock&#39;</span><span class="p">:</span><span class="n">dolock</span><span class="p">,</span>
+            <span class="s1">&#39;last_update&#39;</span><span class="p">:</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+            <span class="s1">&#39;exception&#39;</span><span class="p">:</span><span class="kc">None</span>
+        <span class="p">}</span>
+
+        <span class="k">def</span> <span class="nf">thread_func</span><span class="p">(</span><span class="n">shared_data</span><span class="p">,</span><span class="n">loop</span><span class="p">,</span><span class="n">loopargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">initfunc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">initfunc</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;exception&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exception </span><span class="si">{}</span><span class="s2"> occurred in module </span><span class="si">{}</span><span class="s2"> thread </span><span class="si">{}</span><span class="s2"> init func&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span><span class="n">mod_name</span><span class="p">,</span><span class="n">name</span><span class="p">))</span>
+                        <span class="kn">import</span> <span class="nn">traceback</span>
+                        <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                    <span class="k">return</span>
+            <span class="n">looper</span> <span class="o">=</span> <span class="n">TimedLooper</span><span class="p">(</span><span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;dt&#39;</span><span class="p">],</span><span class="n">name</span><span class="o">=</span><span class="n">mod_name</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">],</span><span class="n">warning_frequency</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;auto&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">lock</span> <span class="o">=</span> <span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;lock&#39;</span><span class="p">]</span>
+            <span class="n">dolock</span> <span class="o">=</span> <span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;dolock&#39;</span><span class="p">]</span>
+            <span class="k">while</span> <span class="n">looper</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">dolock</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">lock</span><span class="p">:</span>  
+                        <span class="c1">#protect against shared self access</span>
+                        <span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;last_update&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">loop</span><span class="p">(</span><span class="o">*</span><span class="n">loopargs</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;exception&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span>
+                            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exception </span><span class="si">{}</span><span class="s2"> occurred in module </span><span class="si">{}</span><span class="s2"> thread </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span><span class="n">mod_name</span><span class="p">,</span><span class="n">name</span><span class="p">))</span>
+                                <span class="kn">import</span> <span class="nn">traceback</span>
+                                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                            <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;last_update&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">loop</span><span class="p">(</span><span class="o">*</span><span class="n">loopargs</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;exception&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">e</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exception </span><span class="si">{}</span><span class="s2"> occurred in module </span><span class="si">{}</span><span class="s2"> thread </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span><span class="n">mod_name</span><span class="p">,</span><span class="n">name</span><span class="p">))</span>
+                            <span class="kn">import</span> <span class="nn">traceback</span>
+                            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="n">shared_data</span><span class="p">[</span><span class="s1">&#39;quit&#39;</span><span class="p">]:</span>
+                    <span class="c1">#read only, don&#39;t need to worry about </span>
+                    <span class="k">break</span>
+        <span class="n">thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">thread_func</span><span class="p">,</span><span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">shared_data</span><span class="p">,</span><span class="n">loopfunc</span><span class="p">,</span><span class="n">args</span><span class="p">))</span>
+        <span class="n">thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">thread</span><span class="p">,</span><span class="n">shared_data</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">thread</span></div>
+
+<div class="viewcode-block" id="Module.startCustomThread"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.startCustomThread">[docs]</a>    <span class="k">def</span> <span class="nf">startCustomThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">target</span><span class="p">,</span><span class="n">args</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&quot;&quot;&quot;Starts an unmanaged thread.  You are warned that to properly terminate,</span>
+<span class="sd">        you will need to overload terminate() and close this thread manually.&quot;&quot;&quot;</span>
+        <span class="n">thread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span><span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">thread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">thread</span><span class="p">,</span><span class="kc">None</span><span class="p">))</span>
+        <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">thread</span></div>
+
+<div class="viewcode-block" id="Module.startMonitorThread"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.startMonitorThread">[docs]</a>    <span class="k">def</span> <span class="nf">startMonitorThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;monitor&quot;</span><span class="p">,</span><span class="n">dolock</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">onLoop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">onActivate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">onDeactivate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Starts a thread to update the module&#39;s health and status. This </span>
+<span class="sd">        handles heartbeats and activity status updates.</span>
+
+<span class="sd">        The dt, name, and dolock arguments are the same as in</span>
+<span class="sd">        :func:`startSimpleThread`.</span>
+
+<span class="sd">        To add additional calls per loop, provide a function as onLoop.</span>
+
+<span class="sd">        To call a funciton when the module is activated / deactivated, provide</span>
+<span class="sd">        onActivate / onDeactivate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">_infoLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">log_health</span><span class="p">()</span>
+            <span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">getActivityStatus</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;active&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;idle&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1"> Activating Module </span><span class="si">{}</span><span class="s1"> </span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+                    <span class="k">if</span> <span class="n">onActivate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">onActivate</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">onLoop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">onLoop</span><span class="p">()</span>
+
+            <span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;idle&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;active&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1"> Deactivating Module </span><span class="si">{}</span><span class="s1"> </span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;idle&#39;</span>
+                    <span class="k">if</span> <span class="n">onDeactivate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">onDeactivate</span><span class="p">()</span>
+
+            <span class="c1">#This is new -- added so that redisRpc calls are handled</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">processRedisRpcs</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="n">_infoLoop</span><span class="p">,</span><span class="n">dt</span><span class="p">,</span><span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,),</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span><span class="n">dolock</span><span class="o">=</span><span class="n">dolock</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Module.startProcess"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.startProcess">[docs]</a>    <span class="k">def</span> <span class="nf">startProcess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">target</span><span class="p">,</span><span class="n">args</span><span class="o">=</span><span class="p">(),</span><span class="n">cleanup</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Starts a new process with the function ``target``, taking arguments</span>
+<span class="sd">        ``args``. It is assumed that the process will run throughout the life</span>
+<span class="sd">        of this module.</span>
+
+<span class="sd">        An optional cleanup function ``cleanup(*args)`` can be provided. </span>
+
+<span class="sd">        .. note::</span>
+<span class="sd">            The target function cannot communicate to the calling thread or any</span>
+<span class="sd">            other process through the &quot;self&quot; object. Instead, the class</span>
+<span class="sd">            constructor must use some inter-process communication primitives</span>
+<span class="sd">            in the ``multiprocessing`` module.</span>
+
+<span class="sd">        Thread safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">proc</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">cleanup</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">proc</span><span class="o">.</span><span class="n">cleanup_func</span> <span class="o">=</span> <span class="k">lambda</span> <span class="p">:</span> <span class="n">cleanup</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="c1">#disable access to any APIs that are not compatible with IPC</span>
+            <span class="n">interprocess_apis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">interprocess</span><span class="p">():</span>
+                    <span class="n">interprocess_apis</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span>
+            <span class="n">sanitized_jarvis</span> <span class="o">=</span> <span class="n">Jarvis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">name</span><span class="p">,</span><span class="n">interprocess_apis</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">server</span><span class="p">)</span>
+            <span class="n">orig_jarvis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span> <span class="o">=</span> <span class="n">sanitized_jarvis</span>
+            <span class="n">proc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>  <span class="c1">#this forks with a copy of self.jarvis</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span> <span class="o">=</span> <span class="n">orig_jarvis</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_processes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">proc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">proc</span></div>
+
+<div class="viewcode-block" id="Module.stopThread"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.stopThread">[docs]</a>    <span class="k">def</span> <span class="nf">stopThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index_or_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Safely stops a thread.</span>
+
+<span class="sd">        Thread safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Stopping Jarvis module&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="s2">&quot;thread&quot;</span><span class="p">,</span><span class="n">index_or_name</span><span class="p">)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index_or_name</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,(</span><span class="n">thread</span><span class="p">,</span><span class="n">threaddata</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">threaddata</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">index_or_name</span><span class="p">:</span>
+                        <span class="n">index</span> <span class="o">=</span> <span class="n">i</span>
+                        <span class="k">break</span>
+                <span class="k">if</span> <span class="n">index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid thread name &quot;</span><span class="o">+</span><span class="n">index_or_name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index</span> <span class="o">=</span> <span class="n">index_or_name</span>
+            <span class="n">thread</span><span class="p">,</span><span class="n">threaddata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">threaddata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Thread </span><span class="si">%d</span><span class="s2"> created by user, can only stop threads started by startSimpleThread&quot;</span><span class="p">)</span>
+            <span class="n">threaddata</span><span class="p">[</span><span class="s1">&#39;quit&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">dojoin</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">thread</span> <span class="o">==</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">()</span> <span class="k">for</span> <span class="n">thread</span><span class="p">,</span><span class="n">threaddata</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threads</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dojoin</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">threaddata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   Joining custom thread (might hang if the implementer is not careful)&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   Joining thread&quot;</span><span class="p">,</span><span class="n">threaddata</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+            <span class="n">thread</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Not joining thread </span><span class="si">%s</span><span class="s2">; terminate was called from an existing thread&quot;</span><span class="o">%</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">index_or_name</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Done.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Module.stopProcess"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.module.Module.stopProcess">[docs]</a>    <span class="k">def</span> <span class="nf">stopProcess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Safely stops a process.</span>
+
+<span class="sd">        Thread safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">proc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processes</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">proc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Process&quot;</span><span class="p">,</span><span class="n">index</span><span class="p">,</span><span class="s2">&quot;already terminated&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">proc</span><span class="p">,</span><span class="s1">&#39;cleanup_func&#39;</span><span class="p">):</span>
+            <span class="n">proc</span><span class="o">.</span><span class="n">cleanup_func</span><span class="p">()</span>
+        <span class="n">proc</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processes</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div></div>
+
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

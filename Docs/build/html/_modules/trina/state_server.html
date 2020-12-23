@@ -1,0 +1,394 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.state_server &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.state_server</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.state_server</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">reem</span>
+<span class="kn">from</span> <span class="nn">packaging</span> <span class="k">import</span> <span class="n">version</span>
+<span class="k">if</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">reem</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">version</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s1">&#39;0.1.0&#39;</span><span class="p">):</span>
+    <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s2">&quot;Require reem version &gt;= 0.1.0, try reinstalling from source&quot;</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">reem</span> <span class="k">import</span> <span class="n">KeyValueStore</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Lock</span>
+<span class="kn">import</span> <span class="nn">redis</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">settings</span>
+<span class="k">except</span> <span class="ne">SystemError</span><span class="p">:</span> <span class="c1">#must have been run as a script</span>
+    <span class="kn">import</span> <span class="nn">sys</span>
+    <span class="kn">import</span> <span class="nn">os</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/TRINA&quot;</span><span class="p">))</span>
+    <span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">settings</span>
+
+<div class="viewcode-block" id="StateServer"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServer">[docs]</a><span class="k">class</span> <span class="nc">StateServer</span><span class="p">(</span><span class="n">KeyValueStore</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;StateServer should usually be treated just like a normal</span>
+<span class="sd">    REEM KeyValueStore object.</span>
+
+<span class="sd">    Overall, the use of StateServer is preferable to ``reem.KeyValueStore``</span>
+<span class="sd">    because it&#39;s:</span>
+
+<span class="sd">    - Pickleable</span>
+<span class="sd">    - Extra convenience functions (:func:`redis_client`)</span>
+
+<span class="sd">    Using the :func:`var`, :func:`set`, :func:`get` methods have following</span>
+<span class="sd">    advantages over using the [] syntax defined in REEM:</span>
+
+<span class="sd">    - Can accept paths in the form of string paths ``[&#39;key1&#39;,&#39;key2&#39;]`` or </span>
+<span class="sd">      period- separated keys ``&#39;key1.key2&#39;``</span>
+<span class="sd">    - More tolerant of uninitialized keys and will fill in empty dicts as</span>
+<span class="sd">      needed.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">host</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">host</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">redis_server_ip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">host</span><span class="p">,</span><span class="n">StateServer</span><span class="p">):</span>
+            <span class="n">host</span> <span class="o">=</span> <span class="n">host</span><span class="o">.</span><span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="n">KeyValueStore</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">host</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;StateServer(</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">host</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">host</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">host</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="n">interface</span> <span class="o">=</span> <span class="n">RedisInterface</span><span class="p">(</span><span class="n">host</span><span class="o">=</span><span class="n">host</span><span class="p">)</span>
+        <span class="n">interface</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+        <span class="n">KeyValueStore</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">interface</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StateServer.redis_client"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServer.redis_client">[docs]</a>    <span class="k">def</span> <span class="nf">redis_client</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a raw handle to the redis client.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">interface</span><span class="o">.</span><span class="n">client</span></div>
+    
+<div class="viewcode-block" id="StateServer.var"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServer.var">[docs]</a>    <span class="k">def</span> <span class="nf">var</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given a path (period-separated str or list of str), returns a </span>
+<span class="sd">        :class:`StateServerVar` object that accesses the key using get()/set().</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">StateServerVar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StateServer.get"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServer.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given a path (period-separated str or list of str), returns a JSON</span>
+<span class="sd">        object or numpy array at path by recursively descending into self.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="s1">&#39;&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="p">()</span><span class="o">.</span><span class="n">jsonget</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,(</span><span class="nb">list</span><span class="p">,</span><span class="nb">tuple</span><span class="p">))</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>    
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="StateServer.set"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServer.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given a path (list of str), sets a value in the state</span>
+<span class="sd">        server.  The item must be json-encodable or a numpy array.</span>
+
+<span class="sd">        If you are accessing a path with multiple subkeys that don&#39;t</span>
+<span class="sd">        exist, the subkeys will be added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;ndarray&#39;</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="s1">&#39;&#39;</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">redis_client</span><span class="p">()</span><span class="o">.</span><span class="n">jsonset</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">item</span><span class="p">)</span>
+                    <span class="k">return</span>
+                <span class="k">except</span> <span class="n">redis</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResponseError</span><span class="p">:</span>
+                    <span class="c1">#need to fall into slower method below</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">set_new</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">),</span><span class="n">item</span><span class="p">)</span>
+                    <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,(</span><span class="nb">list</span><span class="p">,</span><span class="nb">tuple</span><span class="p">))</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">item</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">item</span>
+            <span class="k">except</span> <span class="n">redis</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResponseError</span><span class="p">:</span>
+                <span class="c1">#missing subkey somewhere along the line</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_new</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">item</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="StateServer.set_new"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServer.set_new">[docs]</a>    <span class="k">def</span> <span class="nf">set_new</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates a new item if the path doesn&#39;t exist yet&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+                
+        <span class="k">def</span> <span class="nf">tryassign</span><span class="p">(</span><span class="n">node</span><span class="p">,</span><span class="n">path_remaining</span><span class="p">,</span><span class="n">path_to_me</span><span class="p">,</span><span class="n">val</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">path_remaining</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path_remaining</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                    <span class="k">return</span> <span class="n">node</span><span class="p">,</span><span class="n">val</span>
+                <span class="k">except</span> <span class="n">redis</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResponseError</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">None</span><span class="p">,{</span><span class="n">key</span><span class="p">:</span><span class="n">val</span><span class="p">}</span>
+            <span class="n">assigned</span><span class="p">,</span><span class="n">subval</span> <span class="o">=</span> <span class="n">tryassign</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">],</span><span class="n">path_remaining</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span><span class="n">path_to_me</span><span class="o">+</span><span class="p">[</span><span class="n">key</span><span class="p">],</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">assigned</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">assigned</span><span class="p">,</span><span class="n">subval</span>
+            <span class="c1">#could not assign to children, try assigning to me</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">node</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">subval</span>
+                <span class="k">return</span> <span class="n">node</span><span class="p">,</span><span class="n">subval</span>
+            <span class="k">except</span> <span class="n">redis</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResponseError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span><span class="p">,{</span><span class="n">key</span><span class="p">:</span><span class="n">subval</span><span class="p">}</span>
+
+        <span class="n">node</span><span class="p">,</span><span class="n">val</span> <span class="o">=</span> <span class="n">tryassign</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">,[],</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">node</span><span class="p">,</span><span class="n">val</span></div></div>
+
+
+<div class="viewcode-block" id="StateServerVar"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServerVar">[docs]</a><span class="k">class</span> <span class="nc">StateServerVar</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">server</span><span class="p">,</span><span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;This will create all parent keys in path upon a failed set&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">server</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,(</span><span class="nb">list</span><span class="p">,</span><span class="nb">tuple</span><span class="p">))</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parentnode</span> <span class="o">=</span> <span class="n">server</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">server</span><span class="p">[</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parentnode</span> <span class="o">=</span> <span class="n">res</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parentnode</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
+<div class="viewcode-block" id="StateServerVar.get"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServerVar.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reads the value at the given key from the state server&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></div>
+<div class="viewcode-block" id="StateServerVar.set"><a class="viewcode-back" href="../../trina.html#trina.state_server.StateServerVar.set">[docs]</a>    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sets the value at the given key into the state server&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parentnode</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">except</span> <span class="n">redis</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">ResponseError</span><span class="p">:</span>
+            <span class="n">node</span><span class="p">,</span><span class="n">subval</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set_new</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">server</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">p</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parentnode</span> <span class="o">=</span> <span class="n">res</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;StateServer testing&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">StateServer</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;example&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;example:&quot;</span><span class="p">,</span><span class="n">res</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;(correct) Empty return value under &#39;example&#39; key&quot;</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;example&quot;</span><span class="p">,{</span><span class="s1">&#39;a&#39;</span><span class="p">:{</span><span class="s1">&#39;foo&#39;</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span><span class="s1">&#39;bar&#39;</span><span class="p">:[</span><span class="mi">6</span><span class="p">,</span><span class="mi">8</span><span class="p">]},</span><span class="s1">&#39;b&#39;</span><span class="p">:</span><span class="mi">5</span><span class="p">})</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">([</span><span class="s2">&quot;example&quot;</span><span class="p">,</span><span class="s1">&#39;a&#39;</span><span class="p">])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[example][a]&quot;</span><span class="p">,</span><span class="n">res</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;example.a&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;example.a&quot;</span><span class="p">,</span><span class="n">res</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;example.a.bar&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;example.a.bar&quot;</span><span class="p">,</span><span class="n">res</span><span class="p">)</span>
+    <span class="n">svar</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="s1">&#39;example.a.foo&#39;</span><span class="p">)</span>
+    <span class="n">svar</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="mi">1234</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;example.a.foo&quot;</span><span class="p">,</span><span class="n">svar</span><span class="o">.</span><span class="n">get</span><span class="p">(),</span><span class="s2">&quot; = 1234&quot;</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;example.c.foo&quot;</span><span class="p">,</span><span class="mi">12345</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;example.c&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;example.c&quot;</span><span class="p">),</span><span class="s2">&quot; = 12345&quot;</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

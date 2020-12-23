@@ -1,0 +1,30 @@
+trina.modules.Sensor package
+============================
+
+Submodules
+----------
+
+trina.modules.Sensor.api module
+-------------------------------
+
+.. automodule:: trina.modules.Sensor.api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.Sensor.module module
+----------------------------------
+
+.. automodule:: trina.modules.Sensor.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.Sensor
+   :members:
+   :undoc-members:
+   :show-inheritance:

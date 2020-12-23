@@ -1,0 +1,30 @@
+trina.modules.Motion package
+============================
+
+Submodules
+----------
+
+trina.modules.Motion.api module
+-------------------------------
+
+.. automodule:: trina.modules.Motion.api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.Motion.module module
+----------------------------------
+
+.. automodule:: trina.modules.Motion.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.Motion
+   :members:
+   :undoc-members:
+   :show-inheritance:

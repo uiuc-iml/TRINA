@@ -1,0 +1,638 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.jarvis.api &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.jarvis.api</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.jarvis.api</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Thread</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">.module</span> <span class="k">import</span> <span class="n">Module</span>
+
+
+<div class="viewcode-block" id="APILayer"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer">[docs]</a><span class="k">class</span> <span class="nc">APILayer</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;An APILayer is an abstract base class that should provide a frontend </span>
+<span class="sd">    for an APIModule for other modules to use.  These methods may interact </span>
+<span class="sd">    with the APIModule in various ways, as designed by the implementer of the</span>
+<span class="sd">    APIModule.</span>
+
+<span class="sd">    The communication model is multi-paradigm.  Get/set, RPC, direct object</span>
+<span class="sd">    access, shared memory, and other implementations are possible.</span>
+
+<span class="sd">    **For users**</span>
+
+<span class="sd">    - You will need to read the implementer&#39;s documentation of the methods that</span>
+<span class="sd">      they choose to expose for their API.</span>
+<span class="sd">    - Be careful if you are using multiprocessing (e.g., startProcess) to check</span>
+<span class="sd">      that APIs are available across process boundaries using the</span>
+<span class="sd">      :func:`interprocess` method. (:func:`APIModule.startProcess` will check</span>
+<span class="sd">      this for you and eliminate any APIs that do not support inter-process</span>
+<span class="sd">      communication.)</span>
+
+<span class="sd">    **For API implementers**</span>
+
+<span class="sd">    - Your subclass should implement methods and clear docstrings for each</span>
+<span class="sd">      available method.</span>
+<span class="sd">    - In each of your methods, it is recommended that you implement your API </span>
+<span class="sd">      using :func:`_redisGet`, :func:`_redisSet`, :func:`_redisRpc`,</span>
+<span class="sd">      :func:`_redisRpcNoReply`, or :func:`_moduleCommand`. </span>
+
+<span class="sd">      * :func:`_redisGet` retrieves a key from the Redis database.  (In your</span>
+<span class="sd">        API-module, you will probably set the same key for users to read.)</span>
+<span class="sd">      * :func:`_redisSet` sets a key from the Redis database.  (In your API-</span>
+<span class="sd">        module, you will probably read from this key to see what users have</span>
+<span class="sd">        set.)</span>
+<span class="sd">      * :func:`_redisRpc` uses an RPC mechanism to allow other users to call </span>
+<span class="sd">        functions in your module.  By default, if you implement a method</span>
+<span class="sd">        ``foo`` in your module and your API implements ``foo(self,*args)``</span>
+<span class="sd">        using ``return self._redisRpc(&quot;foo&quot;,*args)``, then RPC will call your</span>
+<span class="sd">        module&#39;s ``foo`` and return the result to the caller.</span>
+<span class="sd">      * :func:`_redisRpcNoReply` is the same as :func:`_redisRpc` but does not</span>
+<span class="sd">        request a return value. </span>
+<span class="sd">      * :func:`_moduleCommand` uses a lightweight, one-way RPC similar to</span>
+<span class="sd">        _redisRpcNoReply. It currently is used to communicate with the Command</span>
+<span class="sd">        Server and Motion Server, but may be deprecated in the future.</span>
+
+<span class="sd">    - For performance, you can pass shared objects to your API subclass.</span>
+<span class="sd">      However, you must be careful with making accesses thread-safe!  You</span>
+<span class="sd">      should also overload :func:`interprocess` to indicate that the API is not</span>
+<span class="sd">      available in the new process.</span>
+
+<span class="sd">    All arguments to these functions should have types compatible with JSON</span>
+<span class="sd">    (bool, int, float, str, list, and dict).  _redisGet / _redisSet can also</span>
+<span class="sd">    accept numpy arrays.  If you wish to allow your API to accept / return</span>
+<span class="sd">    other datatypes, you must do the conversion.</span>
+
+<span class="sd">    Note that if you need to respond to sets/gets differently depending on the</span>
+<span class="sd">    other module making the call, use ``self._caller_name`` in the path. </span>
+
+<span class="sd">    RPC calls typically return a :class:`RpcPromise` object, which the caller can</span>
+<span class="sd">    poll using :func:`RpcPromise.available` or wait on using</span>
+<span class="sd">    RpcPromise.wait().  If you really wish to have your API call block</span>
+<span class="sd">    on an RPC call, your implementation can end with</span>
+<span class="sd">    `return self._redisRpc(&quot;foo&quot;,*args).wait()`.  Note that this is dangerous</span>
+<span class="sd">    in case your module hangs or goes down.</span>
+
+<span class="sd">    .. automethod:: _redisVar</span>
+<span class="sd">    .. automethod:: _redisGet</span>
+<span class="sd">    .. automethod:: _redisSet</span>
+<span class="sd">    .. automethod:: _redisRpc</span>
+<span class="sd">    .. automethod:: _redisRpcNoReply</span>
+<span class="sd">    .. automethod:: _moduleCommand</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">caller_name</span><span class="p">,</span><span class="n">state_server</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_caller_name</span> <span class="o">=</span> <span class="n">caller_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_server</span> <span class="o">=</span> <span class="n">state_server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redis_client</span> <span class="o">=</span> <span class="n">state_server</span><span class="o">.</span><span class="n">redis_client</span><span class="p">()</span>
+
+<div class="viewcode-block" id="APILayer.name"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer.name">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns an identifier that will be used to refer to the API under</span>
+<span class="sd">        jarvis and the state server.  Subclass may override this, otherwise</span>
+<span class="sd">        the identifier is lowercase(classname)-&#39;api&#39; &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__name__tolower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;api&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;APILayer </span><span class="si">%s</span><span class="s2"> doesn&#39;t conform to standard naming convention.</span><span class="se">\n</span><span class="s2">Must implement name() to provide jarvis identifier&quot;</span><span class="o">%</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">res</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="APILayer.interprocess"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer.interprocess">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">interprocess</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns True if the API is safe to pass across processes.  Returns</span>
+<span class="sd">        True by default; implementers that share objects should overload and</span>
+<span class="sd">        return False.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="APILayer._redisVar"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer._redisVar">[docs]</a>    <span class="k">def</span> <span class="nf">_redisVar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns an object that you can use as a get-set variable. Typically</span>
+<span class="sd">        used in __init__ by calling:</span>
+
+<span class="sd">            self.[ITEM_NAME] = self._redisVar([&#39;PATH&#39;,&#39;TO&#39;,&#39;OBJECT&#39;])</span>
+
+<span class="sd">        and then users can call self.[ITEM_NAME].set(value) and</span>
+<span class="sd">        self.[ITEM_NAME].get(value).</span>
+
+<span class="sd">        Slightly faster than implementing API calls as separate _redisGet /</span>
+<span class="sd">        _redisSet pairs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_server</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="APILayer._redisGet"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer._redisGet">[docs]</a>    <span class="k">def</span> <span class="nf">_redisGet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Uses the Redis server to retrieve a value under one or more keys given</span>
+<span class="sd">        in path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_server</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="APILayer._redisSet"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer._redisSet">[docs]</a>    <span class="k">def</span> <span class="nf">_redisSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Uses the Redis server to set a value from path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_server</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">item</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="APILayer._redisRpc"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer._redisRpc">[docs]</a>    <span class="k">def</span> <span class="nf">_redisRpc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fn</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Uses the Redis server to perform an RPC call.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">             RpcPromise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="s1">&#39;$&#39;</span> <span class="o">+</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid1</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state_server</span><span class="o">.</span><span class="n">set_new</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="s1">&#39;RPC_FEEDBACK&#39;</span><span class="p">,</span><span class="nb">id</span><span class="p">],{</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;MSG&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+        <span class="n">rpc_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_server</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()][</span><span class="s1">&#39;RPC_FEEDBACK&#39;</span><span class="p">]</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;fn&#39;</span><span class="p">:</span> <span class="n">fn</span><span class="p">,</span> <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="n">args</span><span class="p">,</span> <span class="s1">&#39;kwargs&#39;</span><span class="p">:</span><span class="n">kwargs</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s1">&#39;from&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">_caller_name</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redis_client</span><span class="o">.</span><span class="n">rpush</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot;_RPC_QUEUE&quot;</span><span class="p">,</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">RpcPromise</span><span class="p">(</span><span class="n">rpc_node</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="n">fn</span><span class="p">,</span><span class="nb">id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="APILayer._redisRpcNoReply"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer._redisRpcNoReply">[docs]</a>    <span class="k">def</span> <span class="nf">_redisRpcNoReply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fn</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Uses the Redis server to perform an RPC call with no reply.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;fn&#39;</span><span class="p">:</span> <span class="n">fn</span><span class="p">,</span> <span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="n">args</span><span class="p">,</span> <span class="s1">&#39;kwargs&#39;</span><span class="p">:</span><span class="n">kwargs</span><span class="p">,</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;from&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">_caller_name</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redis_client</span><span class="o">.</span><span class="n">rpush</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot;_RPC_QUEUE&quot;</span><span class="p">,</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="APILayer._moduleCommand"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APILayer._moduleCommand">[docs]</a>    <span class="k">def</span> <span class="nf">_moduleCommand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fn</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calls a function fn implemented in the module, specifically a</span>
+<span class="sd">        function defined in the result of</span>
+<span class="sd">        :func:`APIModule.moduleCommandObject`. ``fn(*args)`` is expected to </span>
+<span class="sd">        have no return value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">final_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1">.</span><span class="si">{}</span><span class="s1">(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="n">fn</span><span class="p">,</span><span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redis_client</span><span class="o">.</span><span class="n">rpush</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_caller_name</span><span class="o">+</span><span class="s1">&#39;_MODULE_COMMANDS&#39;</span><span class="p">,</span><span class="n">final_string</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Sending module command&#39;</span><span class="p">,</span><span class="n">final_string</span><span class="p">,</span><span class="s1">&#39;to&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">())</span></div></div>
+
+
+
+<div class="viewcode-block" id="APIModule"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule">[docs]</a><span class="k">class</span> <span class="nc">APIModule</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for  modules that implement an API that can be used by </span>
+<span class="sd">    other modules (apps and API-modules) through the Jarvis handle. </span>
+
+<span class="sd">    The API is exposed using the :func:`api` call.  This produces a APILayer</span>
+<span class="sd">    interface that acts as the &quot;frontend&quot; for your module under other modules&#39;</span>
+<span class="sd">    jarvis.X objects, where X= the result from :func:`APILayer.name`. </span>
+
+<span class="sd">    The API interface must access shared resources in a thread-safe manner.</span>
+<span class="sd">    The easiest way to do this is to use the Redis server as an intermediary. </span>
+
+<span class="sd">    **Redis-RPC**</span>
+
+<span class="sd">    Your API can use the Redis server RPC functionality to safely call</span>
+<span class="sd">    functions in this module.  A basic RPC server would start a thread to call</span>
+<span class="sd">    self.processRedisRpcs in the __init__ function, like so::</span>
+
+<span class="sd">        class MathExternalAPI(Jarvis.APILayer):</span>
+<span class="sd">            @classmethod</span>
+<span class="sd">            def name(cls):</span>
+<span class="sd">                return &quot;math&quot;</span>
+
+<span class="sd">            def add(self,a,b):</span>
+<span class="sd">                #add two numbers</span>
+<span class="sd">                self._redisRpc(&quot;add&quot;,a,b)</span>
+
+<span class="sd">            def foo(self,a,b):</span>
+<span class="sd">                #do something mysterious</span>
+<span class="sd">                self._redisRpc(&quot;foo&quot;,a,b)</span>
+
+<span class="sd">        class MathAPIModule(Jarvis.APIModule):</span>
+<span class="sd">            def __init__(self,jarvis):</span>
+<span class="sd">                Jarvis.APIModule.__init__(self,jarvis)</span>
+<span class="sd">                rate = 1.0/50.0   #serve at 50Hz ... </span>
+<span class="sd">                self.startMonitorAndRpcThread(rate)</span>
+
+<span class="sd">            def add(self,a,b):</span>
+<span class="sd">                return a+b</span>
+
+<span class="sd">            def foo(self,a,b):</span>
+<span class="sd">                return a**2+3*b*a</span>
+
+<span class="sd">            # One of apiClass or api must be implemented; </span>
+<span class="sd">            # Here are basic implementations for both</span>
+<span class="sd">            @classmethod</span>
+<span class="sd">            def apiClass(cls):</span>
+<span class="sd">                return MathExternalAPI</span>
+
+<span class="sd">            def api(self,other_module_name,other_comm_handles):</span>
+<span class="sd">                return MathExternalAPI(other_module_name,other_comm_handles)</span>
+
+<span class="sd">    Note that it is better practice to set the rate dynamically, something like</span>
+<span class="sd">    ``settings.get(&#39;MathModule.rate&#39;)``.</span>
+
+
+<span class="sd">    **Sharing memory via direct access**</span>
+
+<span class="sd">    Performance-oriented modules (e.g., sensing, perception) may prefer to</span>
+<span class="sd">    share objects directly in the API to allow other modules&#39; threads to read</span>
+<span class="sd">    directly from them. </span>
+
+<span class="sd">    If you choose this route, your API must be carefully designed with locks,</span>
+<span class="sd">    etc. in order to avoid clashes. The API should **not** use self.jarvis,</span>
+<span class="sd">    but should instead pass along the argument ``other_comm_handles`` to the</span>
+<span class="sd">    APILayer object.</span>
+
+<span class="sd">    Also, be aware that only other modules&#39; threads will be able to access </span>
+<span class="sd">    your module&#39;s shared objects; **processes will NOT**!  This can be </span>
+<span class="sd">    confusing because they will receive a copy of the shared module&#39;s objects</span>
+<span class="sd">    upon fork()-ing, so to the process it will look like they have access</span>
+<span class="sd">    to these objects, but the access is frozen.</span>
+
+<span class="sd">    **Sharing memory via SharedMemory objects**</span>
+
+<span class="sd">    TODO: </span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Jarvis</span><span class="p">,</span> <span class="n">Verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Jarvis</span><span class="p">,</span><span class="n">Verbose</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+
+<div class="viewcode-block" id="APIModule.apiClass"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule.apiClass">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">apiClass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the class used to implement the API layer.  Must be </span>
+<span class="sd">        overridden by subclass.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;jarvis.APIModule </span><span class="si">{}</span><span class="s2"> needs to implement apiClass (as a classmethod)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="APIModule.api"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule.api">[docs]</a>    <span class="k">def</span> <span class="nf">api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other_module_name</span><span class="p">,</span><span class="n">other_comm_handles</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;To implement an API module, subclass must return a :class:`APILayer`</span>
+<span class="sd">        subclass that implements the communication from the other module to</span>
+<span class="sd">        your module.</span>
+
+<span class="sd">        By default, this instantiates the class in :meth:`apiClass`.</span>
+
+<span class="sd">        The basic implementation is::</span>
+
+<span class="sd">            return MyAPILayer(other_module_name,other_comm_handles)</span>
+
+<span class="sd">        If you want to restrict which modules have access to your module, you</span>
+<span class="sd">        can raise a NotImplementedError() if the other module should be denied</span>
+<span class="sd">        access.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">apiClass</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;jarvis.APIModule </span><span class="si">%s</span><span class="s2"> has not implemented the api() method&quot;</span><span class="o">%</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">other_module_name</span><span class="p">,</span><span class="n">other_comm_handles</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="APIModule.moduleCommandObject"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule.moduleCommandObject">[docs]</a>    <span class="k">def</span> <span class="nf">moduleCommandObject</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If the APILayer returned by :func:`api` implements functions using</span>
+<span class="sd">        :func:`APILayer._moduleCommand`, return a pair ``(api_name,object)``</span>
+<span class="sd">        object whose methods will be called. </span>
+
+<span class="sd">        Note: the object&#39;s methods will be called from an arbitrary non-module</span>
+<span class="sd">        thread, so make sure the methods are thread-safe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="APIModule.startMonitorAndRpcThread"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule.startMonitorAndRpcThread">[docs]</a>    <span class="k">def</span> <span class="nf">startMonitorAndRpcThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;monitor+rpc&quot;</span><span class="p">,</span><span class="n">dolock</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span><span class="n">onLoop</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">onActivate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">onDeactivate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Same functions as the normal monitor thread, but also calls</span>
+<span class="sd">        :func:`processRedisRpcs`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">oldOnLoop</span> <span class="o">=</span> <span class="n">onLoop</span>
+        <span class="k">def</span> <span class="nf">newOnLoop</span><span class="p">(</span><span class="n">self_</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span><span class="n">oldfunc</span><span class="o">=</span><span class="n">oldOnLoop</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">oldfunc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">oldfunc</span><span class="p">()</span>
+            <span class="n">self_</span><span class="o">.</span><span class="n">processRedisRpcs</span><span class="p">()</span>
+        <span class="n">onLoop</span> <span class="o">=</span> <span class="n">newOnLoop</span>
+        <span class="n">Module</span><span class="o">.</span><span class="n">startMonitorThread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dt</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">dolock</span><span class="p">,</span><span class="n">onLoop</span><span class="p">,</span><span class="n">onActivate</span><span class="p">,</span><span class="n">onDeactivate</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="APIModule.doRpc"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule.doRpc">[docs]</a>    <span class="k">def</span> <span class="nf">doRpc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fn</span><span class="p">,</span><span class="n">args</span><span class="p">,</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;To implement an API module that implements RPC calls, subclass may </span>
+<span class="sd">        override this to process an RPC call.  Default implementation looks for</span>
+<span class="sd">        ``fn`` in ``self``, and executes the arguments as interpreted as python</span>
+<span class="sd">        strings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fn</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">fn</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="c1">#return getattr(self,fn)(*args)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;RPC call &quot;</span><span class="o">+</span><span class="n">fn</span><span class="o">+</span><span class="s2">&quot; is not implemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="APIModule.processRedisRpcs"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule.processRedisRpcs">[docs]</a>    <span class="k">def</span> <span class="nf">processRedisRpcs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If you are implementing an API module that implements _redisRpc</span>
+<span class="sd">        calls, your main module must this periodically to process redis-RPC</span>
+<span class="sd">        calls.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">redis_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">_redis_client</span>
+        <span class="n">apiname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apiClass</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">apiname</span> <span class="o">+</span> <span class="s2">&quot;_RPC_QUEUE&quot;</span><span class="p">;</span>
+        <span class="n">rpc_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">_state_server</span><span class="p">[</span><span class="n">apiname</span><span class="p">][</span><span class="s1">&#39;RPC_FEEDBACK&#39;</span><span class="p">]</span>
+        <span class="k">with</span> <span class="n">redis_client</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span> <span class="k">as</span> <span class="n">pipe</span><span class="p">:</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">redis_client</span><span class="o">.</span><span class="n">llen</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">pipe</span><span class="o">.</span><span class="n">lpop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">msg</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doRpc</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exception while executing&quot;</span><span class="p">,</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="s2">&quot;with args&quot;</span><span class="p">,</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">],</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">])</span>
+                <span class="kn">import</span> <span class="nn">traceback</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;__REDIS_RPC_ERROR__&quot;</span>    
+            <span class="k">if</span> <span class="n">msg</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">rpc_node</span><span class="p">[</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;MSG&#39;</span><span class="p">:</span><span class="n">res</span><span class="p">,</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">}</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;API </span><span class="si">%s</span><span class="s2"> warning: error responding to RPC call </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">apiname</span><span class="p">,</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]))</span>
+                    <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="APIModule.getRedisRpc"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule.getRedisRpc">[docs]</a>    <span class="k">def</span> <span class="nf">getRedisRpc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Manual alternative to :func:`processRedisRpcs`: you can periodically</span>
+<span class="sd">        call this to get individual RPC requests.  This is useful for long-</span>
+<span class="sd">        running RPC calls where you do not want to block your module.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict or None: None if there are no pending RPC requests.  </span>
+<span class="sd">            Otherwise, returns a dict ``request`` with fields &quot;fn&quot;, &quot;args&quot;,</span>
+<span class="sd">            &quot;kwargs&quot;, and &quot;id&quot;. It will also have &quot;from&quot; indicating which</span>
+<span class="sd">            module it&#39;s coming from, but this can be ignored.</span>
+
+<span class="sd">        Usage is::</span>
+
+<span class="sd">            request = self.getRedisRpc()</span>
+<span class="sd">            res = self.doRpc(request[&#39;fn&#39;],request[args],request[kwargs])</span>
+<span class="sd">            if request[&#39;id&#39;] is not None:</span>
+<span class="sd">                self.setRedisRpc(request[&#39;id&#39;],res)</span>
+
+<span class="sd">        Once you handle the request, you must pass the contents of</span>
+<span class="sd">        ``request[&#39;id&#39;]`` back to :func:`setRedisRpc` as its first argument, if it</span>
+<span class="sd">        is not None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">redis_client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">_redis_client</span>
+        <span class="n">apiname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apiClass</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">apiname</span> <span class="o">+</span> <span class="s2">&quot;_RPC_QUEUE&quot;</span><span class="p">;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">redis_client</span><span class="o">.</span><span class="n">llen</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pipe</span><span class="o">.</span><span class="n">lpop</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="APIModule.setRedisRPC"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.APIModule.setRedisRPC">[docs]</a>    <span class="k">def</span> <span class="nf">setRedisRPC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="nb">id</span><span class="p">,</span><span class="n">reply</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Manually replies to a previous request from :func:`getRedisRpc`.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="n">apiname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">apiClass</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+        <span class="n">rpc_node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">_state_server</span><span class="p">[</span><span class="n">apiname</span><span class="p">][</span><span class="s1">&#39;RPC_FEEDBACK&#39;</span><span class="p">]</span>
+        <span class="c1">#rpc_node[msg[&#39;id&#39;]] = {&#39;MSG&#39;:res,&#39;REPLIED&#39;:True}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">rpc_node</span><span class="p">[</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;MSG&#39;</span><span class="p">:</span><span class="n">res</span><span class="p">,</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">:</span><span class="kc">True</span><span class="p">}</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c1">#maybe this was a stale request from a prior Ctrl+C</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;API </span><span class="si">%s</span><span class="s2"> warning: error responding to RPC call </span><span class="si">%s</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">apiname</span><span class="p">,</span><span class="n">msg</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]))</span>
+            <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="RpcPromiseTimeout"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.RpcPromiseTimeout">[docs]</a><span class="k">class</span> <span class="nc">RpcPromiseTimeout</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">promise</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">promise</span> <span class="o">=</span> <span class="n">promise</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;jarvis.RpcPromise </span><span class="si">%s</span><span class="s2">.</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> timed out&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">promise</span><span class="o">.</span><span class="n">api</span><span class="p">,</span><span class="n">promise</span><span class="o">.</span><span class="n">fn</span><span class="p">,</span><span class="n">promise</span><span class="o">.</span><span class="n">id</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RpcPromise"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.RpcPromise">[docs]</a><span class="k">class</span> <span class="nc">RpcPromise</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A placeholder for an RPC result.  Can wait passively by testing</span>
+<span class="sd">    </span>
+<span class="sd">        if promise:</span>
+<span class="sd">            val = promise.value()</span>
+
+<span class="sd">    or blocking until it arrives using:</span>
+
+<span class="sd">        val = promise.wait()</span>
+
+<span class="sd">    If you wish to put a timeout on wait, use `val = promise.wait(timeout)`.</span>
+
+<span class="sd">    value() will raise a RuntimeError if the value is not available yet.</span>
+
+<span class="sd">    wait(timeout) will raise a RpcPromiseTimeout exception if the</span>
+<span class="sd">    timeout is reached without a reply.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">server_key</span><span class="p">,</span><span class="n">api</span><span class="p">,</span><span class="n">fn</span><span class="p">,</span><span class="nb">id</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server_key</span> <span class="o">=</span> <span class="n">server_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">api</span> <span class="o">=</span> <span class="n">api</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fn</span> <span class="o">=</span> <span class="n">fn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="nb">id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_read</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="kc">None</span>
+    
+    <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="RpcPromise.available"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.RpcPromise.available">[docs]</a>    <span class="k">def</span> <span class="nf">available</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_key</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">][</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="RpcPromise.value"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.RpcPromise.value">[docs]</a>    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_key</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Value is not available&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;ERROR&#39;</span> <span class="ow">in</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s2">&quot;jarvis.RpcPromise errored out with message &quot;</span><span class="o">+</span><span class="n">res</span><span class="p">[</span><span class="s1">&#39;ERROR&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_read</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s1">&#39;MSG&#39;</span><span class="p">]</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        #TODO: delete from reply queue, making sure this is done atomically</span>
+<span class="sd">        all_replies = self.server_key.read()</span>
+<span class="sd">        del all_replies[self.id]</span>
+<span class="sd">        self.server_key = all_replies</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span></div>
+
+<div class="viewcode-block" id="RpcPromise.wait"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.api.RpcPromise.wait">[docs]</a>    <span class="k">def</span> <span class="nf">wait</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">resolution</span><span class="o">=</span><span class="mf">0.001</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Blocks until the response is available.  If you wish to put a timeout</span>
+<span class="sd">        on this call, use the timeout argument.  For finer control on the polling</span>
+<span class="sd">        frequency, change the resolution argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">available</span><span class="p">():</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">resolution</span><span class="p">)</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">t</span> <span class="o">-</span> <span class="n">t0</span> <span class="o">&gt;</span> <span class="n">timeout</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RpcPromiseTimeout</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

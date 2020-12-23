@@ -1,0 +1,310 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.UI.api &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.modules.UI.api</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.modules.UI.api</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+<span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">io</span>
+
+<div class="viewcode-block" id="UIAPI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI">[docs]</a><span class="k">class</span> <span class="nc">UIAPI</span><span class="p">(</span><span class="n">jarvis</span><span class="o">.</span><span class="n">APILayer</span><span class="p">):</span>
+<div class="viewcode-block" id="UIAPI.name"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.name">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;ui&quot;</span></div>
+
+<div class="viewcode-block" id="UIAPI.getRayClick"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.getRayClick">[docs]</a>    <span class="k">def</span> <span class="nf">getRayClick</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+        <span class="sd">&quot;&quot;&quot;once this function is called, the UI will ask the user to click twice on the map, and sending back </span>
+<span class="sd">        2 ray objects according to the user clicks. first one for destination, second one for calibration</span>
+<span class="sd">        return:</span>
+<span class="sd">            jarvis.RpcPromise, which will give None if the user has canceled, but otherwise will give a pair</span>
+<span class="sd">            of rays in the format</span>
+<span class="sd">            {</span>
+<span class="sd">                &#39;FIRST_RAY&#39;: {&#39;destination&#39;: [-0.8490072256426063,-0.2846905378876157,-0.4451269801347757],</span>
+<span class="sd">                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]},</span>
+<span class="sd">                &#39;SECOND_RAY&#39;: {&#39;destination&#39;: [-0.8590257360168888,-0.20712234383654582,-0.46816142466493127],</span>
+<span class="sd">                            &#39;source&#39;: [12.653596500469428, 1.6440497080649081, 5.851982763380186]}</span>
+<span class="sd">            }</span>
+<span class="sd">        blocking?:</span>
+<span class="sd">            no</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisRpc</span><span class="p">(</span><span class="s1">&#39;getRayClick&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UIAPI.addTextUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.addTextUI">[docs]</a>    <span class="k">def</span> <span class="nf">addTextUI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">color</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;add text to specfified location on UI screen. </span>
+<span class="sd">        args:</span>
+<span class="sd">            name: (str) id for the text object</span>
+<span class="sd">            text: (str) content you wish to add</span>
+<span class="sd">            color: (list) rgb value [0,0,0]</span>
+<span class="sd">            size: (int) font size</span>
+<span class="sd">        return:</span>
+<span class="sd">            None</span>
+<span class="sd">        blocking?:</span>
+<span class="sd">            no</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisRpcNoReply</span><span class="p">(</span><span class="s1">&#39;addText&#39;</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">text</span><span class="p">,</span><span class="n">color</span><span class="p">,</span><span class="n">size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UIAPI.sendConfirmationUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.sendConfirmationUI">[docs]</a>    <span class="k">def</span> <span class="nf">sendConfirmationUI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;once this function is called, the UI will display a confimation window with specified title and text, </span>
+<span class="sd">        </span>
+<span class="sd">        return:</span>
+<span class="sd">            jarvis.RpcPromise, which will give a string, either &#39;YES&#39; or &#39;NO&#39;</span>
+<span class="sd">        blocking?:</span>
+<span class="sd">            no</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisRpc</span><span class="p">(</span><span class="s1">&#39;addConfirmation&#39;</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="UIAPI.sendTrajectoryUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.sendTrajectoryUI">[docs]</a>    <span class="k">def</span> <span class="nf">sendTrajectoryUI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">trajectory</span><span class="p">,</span><span class="n">animate</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;send a trajectory to UI, UI will add the path preview and animate? the robot ghost immediately for only once </span>
+<span class="sd">        </span>
+<span class="sd">        args:</span>
+<span class="sd">            trajectory: (klampt obj) the traj calculated</span>
+<span class="sd">            animate: (bool) if user wants to animate the path</span>
+<span class="sd">        return:</span>
+<span class="sd">            None</span>
+<span class="sd">        blocking?:</span>
+<span class="sd">            no</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">trajectory</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">loader</span><span class="o">.</span><span class="n">toJson</span><span class="p">(</span><span class="n">trajectory</span><span class="p">,</span> <span class="s1">&#39;Trajectory&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisRpcNoReply</span><span class="p">(</span><span class="s1">&#39;sendTrajectory&#39;</span><span class="p">,</span><span class="n">trajectory</span><span class="p">,</span><span class="n">animate</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UIAPI.addButtonUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.addButtonUI">[docs]</a>    <span class="k">def</span> <span class="nf">addButtonUI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;add a button to the UI window</span>
+<span class="sd">        args:</span>
+<span class="sd">            name: (str)  id for the button object</span>
+<span class="sd">            text: (str) button label text</span>
+<span class="sd">        return:</span>
+<span class="sd">            None        </span>
+<span class="sd">        blocking?:</span>
+<span class="sd">            no</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redisRpcNoReply</span><span class="p">(</span><span class="s1">&#39;addButton&#39;</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">text</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UIAPI.getButtonClickUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.getButtonClickUI">[docs]</a>    <span class="k">def</span> <span class="nf">getButtonClickUI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns True if button with specified name is clicked</span>
+<span class="sd">        args:</span>
+<span class="sd">            name: (str) id for the button object</span>
+<span class="sd">        return:</span>
+<span class="sd">            (bool) True or False</span>
+<span class="sd">        </span>
+<span class="sd">        blocking?:</span>
+<span class="sd">            no</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;UI_STATE&#39;</span><span class="p">,</span><span class="n">name</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="UIAPI.addPromptUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.addPromptUI">[docs]</a>    <span class="k">def</span> <span class="nf">addPromptUI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">text</span><span class="p">):</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span><span class="o">+</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid1</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+        <span class="c1"># TODO</span>
+        <span class="k">return</span>  <span class="nb">id</span></div>
+
+<div class="viewcode-block" id="UIAPI.addInputBoxUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.addInputBoxUI">[docs]</a>    <span class="k">def</span> <span class="nf">addInputBoxUI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">title</span><span class="p">,</span><span class="n">text</span><span class="p">,</span><span class="n">fields</span><span class="p">):</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="s1">&#39;$&#39;</span><span class="o">+</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid1</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+        <span class="c1"># TODO</span>
+        <span class="k">return</span> <span class="nb">id</span></div>
+
+<div class="viewcode-block" id="UIAPI.getSaveConfigSignalUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.getSaveConfigSignalUI">[docs]</a>    <span class="k">def</span> <span class="nf">getSaveConfigSignalUI</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_FEEDBACK&#39;</span><span class="p">][</span><span class="s1">&#39;move-to-save-signal&#39;</span><span class="p">][</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
+            <span class="k">return</span> <span class="s1">&#39;NOT READY&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_FEEDBACK&#39;</span><span class="p">][</span><span class="s1">&#39;move-to-save-signal&#39;</span><span class="p">][</span><span class="s1">&#39;MSG&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_FEEDBACK&#39;</span><span class="p">][</span><span class="s1">&#39;move-to-save-signal&#39;</span><span class="p">][</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">name</span></div>
+
+<div class="viewcode-block" id="UIAPI.getLoadConfigSignalUI"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.getLoadConfigSignalUI">[docs]</a>    <span class="k">def</span> <span class="nf">getLoadConfigSignalUI</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_FEEDBACK&#39;</span><span class="p">][</span><span class="s1">&#39;move-to-load-signal&#39;</span><span class="p">][</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">():</span>
+            <span class="k">return</span> <span class="s1">&#39;NOT READY&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_FEEDBACK&#39;</span><span class="p">][</span><span class="s1">&#39;move-to-load-signal&#39;</span><span class="p">][</span><span class="s1">&#39;MSG&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;UI_FEEDBACK&#39;</span><span class="p">][</span><span class="s1">&#39;move-to-load-signal&#39;</span><span class="p">][</span><span class="s1">&#39;REPLIED&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="n">name</span></div>
+
+<div class="viewcode-block" id="UIAPI.addRobotTelemetry"><a class="viewcode-back" href="../../../../trina.modules.UI.html#trina.modules.UI.api.UIAPI.addRobotTelemetry">[docs]</a>    <span class="k">def</span> <span class="nf">addRobotTelemetry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add UI robot telemetry value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redisSet</span><span class="p">([</span><span class="s2">&quot;robotTelemetry&quot;</span><span class="p">],</span><span class="n">value</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

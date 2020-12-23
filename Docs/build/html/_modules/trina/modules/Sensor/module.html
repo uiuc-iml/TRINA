@@ -1,0 +1,795 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.Sensor.module &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.modules.Sensor.module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.modules.Sensor.module</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">future</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">open3d</span> <span class="k">as</span> <span class="nn">o3d</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">klampt</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">klampt.model</span> <span class="k">import</span> <span class="n">sensing</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Thread</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">OpenGL.GLUT</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">OpenGL.GL</span> <span class="k">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">klampt.math</span> <span class="k">import</span> <span class="n">vectorops</span><span class="p">,</span><span class="n">so3</span><span class="p">,</span><span class="n">se3</span>
+<span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">WorldModel</span><span class="p">,</span> <span class="n">vis</span>
+<span class="kn">import</span> <span class="nn">klampt.io.numpy_convert</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/TRINA&quot;</span><span class="p">))</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+<span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+<span class="kn">from</span> <span class="nn">trina.sensors</span> <span class="k">import</span> <span class="n">ZedCamera</span><span class="p">,</span><span class="n">RealSenseCamera</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">tf</span>
+    <span class="kn">import</span> <span class="nn">rospy</span>
+    <span class="kn">import</span> <span class="nn">sensor_msgs</span>
+    <span class="kn">from</span> <span class="nn">sensor_msgs.msg</span> <span class="k">import</span> <span class="n">LaserScan</span>
+    <span class="n">_have_ros</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">_have_ros</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Process</span><span class="p">,</span> <span class="n">Pipe</span>
+
+<span class="kn">from</span> <span class="nn">trina.modules.Sensor.api</span> <span class="k">import</span> <span class="o">*</span>
+
+<span class="c1">#need to convert lidar_transform to have x pointing forward, y to the left, z up</span>
+<span class="c1">#Klamp&#39;t convention has z pointing forward, x pointing left, y pointing up</span>
+<span class="n">klampt_to_ros_lidar</span> <span class="o">=</span> <span class="n">so3</span><span class="o">.</span><span class="n">from_matrix</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+                                       <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span>
+
+<span class="n">CAMERA_DEACTIVATION_TIME</span> <span class="o">=</span> <span class="mf">5.0</span>
+
+<div class="viewcode-block" id="CameraData"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.CameraData">[docs]</a><span class="k">class</span> <span class="nc">CameraData</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">settings</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">settings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">serial_number</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;serial_number&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">link</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;link&quot;</span><span class="p">]</span>
+            <span class="n">calib_fn</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;transform&quot;</span><span class="p">]</span>
+            <span class="n">trina_dir</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">root_dir</span><span class="p">()</span>
+            <span class="n">calib_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trina_dir</span><span class="p">,</span><span class="n">calib_fn</span> <span class="p">)</span>
+            <span class="n">transform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">calib_fn</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">))</span>
+            <span class="c1"># we then create the inverse transform</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">local_transform</span> <span class="o">=</span> <span class="n">klampt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">numpy_convert</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">transform</span><span class="p">,</span><span class="s1">&#39;RigidTransform&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">serial_number</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">link</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">local_transform</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">want_images</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_want_images</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_want_point_cloud</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">images</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">point_cloud</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">world_point_cloud</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">world_transform</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="SensorModule"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule">[docs]</a><span class="k">class</span> <span class="nc">SensorModule</span><span class="p">(</span><span class="n">jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    This is the primary class of this helper module. It instantiates a motion client and handles the streamed inputs from the realsense camera</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Jarvis</span><span class="p">,</span> <span class="n">cameras</span><span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;Kinematic&#39;</span><span class="p">,</span> <span class="n">ros_active</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="n">jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Jarvis</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="s1">&#39;Motion&#39;</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">res</span> <span class="o">!=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span> <span class="c1">#states are &quot; idle, active&quot;  --- idle means you won&#39;t be responding to API calls, so it&#39;s best to put this as active</span>
+
+        <span class="c1"># we first check if the parameters are valid:</span>
+        <span class="c1"># checking if cameras make sense:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cameras</span> <span class="o">=</span> <span class="n">cameras</span>
+        <span class="c1"># we now verify if the camera configuration file makes sense</span>
+        <span class="c1"># we then try to connect to the motion_client (we always use the same arm - and we never enable the base for now)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requests</span> <span class="o">=</span> <span class="p">[]</span>    <span class="c1">#a list of pending requests</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span> <span class="o">=</span> <span class="n">ros_active</span>
+        <span class="k">global</span> <span class="n">have_ros</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_have_ros</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SensorModule: ROS support requested, but rospy could not be imported&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">rospy</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;/unnamed&#39;</span><span class="p">:</span>
+                <span class="n">rospy</span><span class="o">.</span><span class="n">init_node</span><span class="p">(</span><span class="s2">&quot;TRINA_SensorModule&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ros_subscribers</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;Physical&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">world</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">robot_model_load</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temprobot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">camera_settings</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">camera_settings</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">cameras</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cameras</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cameras</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">camera</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cameras</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">camera</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">camera_settings</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid camera </span><span class="si">%s</span><span class="s1"> selected. Valid cameras are </span><span class="si">%s</span><span class="s1"> (see TRINA/Settings/).</span><span class="se">\n</span><span class="s1">Please update camera selection and try again&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">camera_settings</span><span class="o">.</span><span class="n">keys</span><span class="p">())))</span>
+                <span class="c1"># if the camera is valid, import and configure the camera</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span> <span class="o">=</span> <span class="n">CameraData</span><span class="p">(</span><span class="n">camera_settings</span><span class="p">[</span><span class="n">camera</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_update_camera</span><span class="p">,</span><span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">camera</span><span class="p">,),</span><span class="n">dt</span><span class="o">=</span><span class="n">camera_settings</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;framerate&#39;</span><span class="p">,</span><span class="mf">1.0</span><span class="o">/</span><span class="mf">30.0</span><span class="p">),</span><span class="n">initfunc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_init_camera</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="n">camera</span><span class="p">,</span><span class="n">dolock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_angle_range</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_transform</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_transform</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;Kinematic&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">world</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">robot_model_load</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temprobot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">world</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">simworld</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">simulation_world_load</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">simrobot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simworld</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">setup</span><span class="o">.</span><span class="n">set_robot_sensor_calibration</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simworld</span><span class="p">)</span>
+
+            
+            <span class="c1">#determine which camera sensors are available</span>
+            <span class="n">all_cams</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">sensori</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sensor</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">sensori</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;CameraSensor&#39;</span><span class="p">:</span>
+                    <span class="n">all_cams</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sensori</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
+                <span class="k">if</span> <span class="n">sensori</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1">#out of sensors</span>
+                    <span class="k">break</span>
+                <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cameras</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">cameras</span> <span class="o">=</span> <span class="n">all_cams</span>
+
+            <span class="k">for</span> <span class="n">camera</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cameras</span><span class="p">:</span>
+                <span class="n">simcam</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sensor</span><span class="p">(</span><span class="n">camera</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">simcam</span><span class="o">.</span><span class="n">name</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="c1">#invalid camera</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;invalid camera </span><span class="si">%s</span><span class="s1"> selected. Valid cameras are </span><span class="si">%s</span><span class="s1"> (see robot model).</span><span class="se">\n</span><span class="s1">Please update camera selection and try again&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">camera</span><span class="p">,</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">all_cams</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span> <span class="o">=</span> <span class="n">CameraData</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">link</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">simcam</span><span class="o">.</span><span class="n">getSetting</span><span class="p">(</span><span class="s1">&#39;link&#39;</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">local_transform</span> <span class="o">=</span> <span class="n">sensing</span><span class="o">.</span><span class="n">get_sensor_xform</span><span class="p">(</span><span class="n">simcam</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">simcam</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sim</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sensor</span><span class="p">(</span><span class="s2">&quot;lidar&quot;</span><span class="p">)</span>
+            <span class="n">xmax</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar</span><span class="o">.</span><span class="n">getSetting</span><span class="p">(</span><span class="s1">&#39;xSweepMagnitude&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_angle_range</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="n">xmax</span><span class="p">,</span><span class="n">xmax</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_transform</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_transform</span> <span class="o">=</span> <span class="n">sensing</span><span class="o">.</span><span class="n">get_sensor_xform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rosTfBroadcaster</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">TransformBroadcaster</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">system_start</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            
+            <span class="bp">self</span><span class="o">.</span><span class="n">glutWindowID</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_update_sim</span><span class="p">,</span><span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s2">&quot;SensorModule&quot;</span><span class="p">)[</span><span class="s1">&#39;sim_update_dt&#39;</span><span class="p">],</span><span class="n">initfunc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_init_GL</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;update_sim&quot;</span><span class="p">,</span><span class="n">dolock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_update_robot</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s2">&quot;SensorModule&quot;</span><span class="p">)[</span><span class="s1">&#39;update_robot_dt&#39;</span><span class="p">],</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;update_robot&quot;</span><span class="p">,</span><span class="n">dolock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SensorModule.apiClass"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.apiClass">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">apiClass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SensorAPI</span></div>
+
+<div class="viewcode-block" id="SensorModule.api"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.api">[docs]</a>    <span class="k">def</span> <span class="nf">api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other_module</span><span class="p">,</span><span class="n">other_comms</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SensorAPI</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other_module</span><span class="p">,</span><span class="n">other_comms</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SensorModule.terminate"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.terminate">[docs]</a>    <span class="k">def</span> <span class="nf">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="o">.</span><span class="n">terminate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="c1">#by now all threads should have terminated, so no risk of problems</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">,</span><span class="s1">&#39;safely_close&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">safely_close</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;Kinematic&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+            <span class="c1">#There&#39;s no way to restart GLUT this way</span>
+            <span class="c1">#if self.glutWindowID is not None:</span>
+            <span class="c1">#    glutDestroyWindow(self.glutWindowID)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sim</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temprobot</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">world</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ros_subscribers</span><span class="p">:</span>
+                <span class="n">sub</span><span class="o">.</span><span class="n">unregister</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ros_subscribers</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+    <span class="k">def</span> <span class="nf">_init_camera</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">camera_name</span><span class="p">):</span>
+        <span class="n">camera</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera_name</span><span class="p">]</span>
+        <span class="n">serial_number</span> <span class="o">=</span> <span class="n">camera</span><span class="o">.</span><span class="n">serial_number</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">camera_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;realsense&#39;</span><span class="p">):</span>
+                <span class="n">driver</span> <span class="o">=</span> <span class="n">RealSenseCamera</span><span class="p">(</span><span class="n">serial_number</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">camera_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;zed&#39;</span><span class="p">):</span>
+                <span class="n">driver</span> <span class="o">=</span> <span class="n">ZedCamera</span><span class="p">(</span><span class="n">serial_number</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SensorModule: Verify camera names, no camera match found!&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;No compatible camera found!&#39;</span><span class="p">)</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">driver</span> <span class="o">=</span> <span class="n">driver</span>
+            <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">camera</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">safely_close</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SensorModule: sucessfully initialized camera&#39;</span><span class="p">,</span><span class="n">camera_name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SensorModule: Camera&#39;</span><span class="p">,</span> <span class="n">camera_name</span><span class="p">,</span><span class="s1">&#39;is currently unavailable. Verify that it is connected and try again </span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_lock</span><span class="p">:</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera_name</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stopThread</span><span class="p">(</span><span class="n">camera_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span><span class="p">:</span>
+            <span class="c1">#subscribe to /base_scan updates</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">subscribers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rospy</span><span class="o">.</span><span class="n">Subscriber</span><span class="p">(</span><span class="s1">&#39;/base_scan&#39;</span><span class="p">,</span><span class="n">LaserScan</span><span class="p">,</span><span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_laser_scan</span><span class="p">,</span><span class="n">queue_size</span><span class="o">=</span><span class="mi">10</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rosTfListener</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">TransformListener</span><span class="p">()</span>
+            <span class="n">lidar_transform_ros</span> <span class="o">=</span> <span class="n">klampt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ros</span><span class="o">.</span><span class="n">listen_tf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rosTfListener</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="s1">&#39;base_scan&#39;</span><span class="p">,</span><span class="s1">&#39;base_link&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lidar_transform_ros</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SensorModule: WARNING: tf module didn&#39;t seem to broadcast base_scan -&gt; base_link?&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1">#need to make sure this is in Klampt coordinate convention</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">lidar_transform</span> <span class="o">=</span> <span class="p">(</span><span class="n">so3</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">lidar_transform_ros</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">so3</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">klampt_to_ros_lidar</span><span class="p">)),</span><span class="n">lidar_transform_ros</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_update_camera</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">camera_name</span><span class="p">):</span>
+        <span class="n">camera</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera_name</span><span class="p">]</span>
+        <span class="c1">#determine whether to deactivate camera reading</span>
+        <span class="k">if</span> <span class="n">camera</span><span class="o">.</span><span class="n">time_want_images</span> <span class="o">&lt;</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">CAMERA_DEACTIVATION_TIME</span><span class="p">:</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">want_images</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">camera</span><span class="o">.</span><span class="n">time_want_point_cloud</span> <span class="o">&lt;</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">CAMERA_DEACTIVATION_TIME</span><span class="p">:</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">camera</span><span class="o">.</span><span class="n">want_images</span> <span class="ow">or</span> <span class="n">camera</span><span class="o">.</span><span class="n">want_point_cloud</span><span class="p">:</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">camera</span><span class="o">.</span><span class="n">want_images</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_on_camera_images</span><span class="p">(</span><span class="n">camera_name</span><span class="p">,</span><span class="n">camera</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">latest_rgbd_images</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">camera</span><span class="o">.</span><span class="n">want_point_cloud</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_on_camera_point_cloud</span><span class="p">(</span><span class="n">camera_name</span><span class="p">,</span><span class="n">camera</span><span class="o">.</span><span class="n">driver</span><span class="o">.</span><span class="n">latest_point_cloud</span><span class="p">())</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">base_transform</span> <span class="o">=</span> <span class="n">klampt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ros</span><span class="o">.</span><span class="n">listen_tf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rosTfListener</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="s1">&#39;base_link&#39;</span><span class="p">,</span><span class="s1">&#39;odom&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SensorModule: WARNING: tf module didn&#39;t seem to broadcast base_link -&gt; odom?&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on_camera_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">camera_name</span><span class="p">,</span><span class="n">image</span><span class="p">):</span>
+        <span class="n">camera</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera_name</span><span class="p">]</span>
+        <span class="n">camera</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">image</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_lock</span><span class="p">:</span>
+            <span class="c1">#check if i need to update any pending requests</span>
+            <span class="n">newrequests</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests</span><span class="p">:</span>
+                <span class="n">promise</span><span class="p">,</span><span class="n">query</span><span class="p">,</span><span class="n">cameras</span><span class="p">,</span><span class="n">results</span> <span class="o">=</span> <span class="n">req</span>
+                <span class="k">if</span> <span class="n">cameras</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">camera_name</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">query</span> <span class="o">==</span> <span class="s1">&#39;get_rgbd_images&#39;</span><span class="p">:</span>
+                        <span class="n">results</span><span class="p">[</span><span class="n">camera_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">camera</span><span class="o">.</span><span class="n">images</span>
+                <span class="n">ntrigger</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">)</span> <span class="k">if</span> <span class="n">cameras</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">cameras</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">==</span> <span class="n">ntrigger</span><span class="p">:</span>
+                    <span class="c1">#fire the callback if all camera data is available</span>
+                    <span class="n">promise</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">newrequests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">requests</span> <span class="o">=</span> <span class="n">newrequests</span>
+
+    <span class="k">def</span> <span class="nf">_on_camera_point_cloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">camera_name</span><span class="p">,</span><span class="n">local_pc</span><span class="p">):</span>
+        <span class="n">camera</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera_name</span><span class="p">]</span>
+        <span class="n">camera</span><span class="o">.</span><span class="n">point_cloud</span> <span class="o">=</span> <span class="n">local_pc</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_lock</span><span class="p">:</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">world_transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_camera_transform</span><span class="p">(</span><span class="n">camera_name</span><span class="p">,</span><span class="nb">format</span><span class="o">=</span><span class="s1">&#39;numpy&#39;</span><span class="p">)</span>
+            <span class="n">camera</span><span class="o">.</span><span class="n">world_point_cloud</span> <span class="o">=</span>  <span class="n">camera</span><span class="o">.</span><span class="n">point_cloud</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">camera</span><span class="o">.</span><span class="n">world_transform</span><span class="p">)</span>
+            <span class="c1">#print(&quot;SensorModule: Camera&quot;,camera_name,&quot;world transform&quot;,camera.world_transform)</span>
+        
+    <span class="k">def</span> <span class="nf">_on_laser_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">laser_scan</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">laser_scan</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span> <span class="o">=</span> <span class="n">laser_scan</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#ROS LaserScan topic</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_angle_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">laser_scan</span><span class="o">.</span><span class="n">angle_min</span><span class="p">,</span><span class="n">laser_scan</span><span class="o">.</span><span class="n">angle_max</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span> <span class="o">=</span><span class="n">laser_scan</span><span class="o">.</span><span class="n">ranges</span>
+            
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_transform</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_base_transform</span><span class="p">()</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_lock</span><span class="p">:</span>
+            <span class="n">newrequests</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests</span><span class="p">:</span>
+                <span class="n">promise</span><span class="p">,</span><span class="n">query</span><span class="p">,</span><span class="n">cameras</span><span class="p">,</span><span class="n">results</span> <span class="o">=</span> <span class="n">req</span>
+                <span class="k">if</span> <span class="n">query</span> <span class="o">==</span> <span class="s1">&#39;get_lidar_scan&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">promise</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">query</span> <span class="o">==</span> <span class="s1">&#39;get_lidar_point_cloud&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_lidar_point_cloud</span><span class="p">()</span>
+                        <span class="n">promise</span><span class="o">.</span><span class="n">callback</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                <span class="n">newrequests</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">requests</span> <span class="o">=</span> <span class="n">newrequests</span>
+        
+<div class="viewcode-block" id="SensorModule.get_base_transform"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.get_base_transform">[docs]</a>    <span class="k">def</span> <span class="nf">get_base_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">link</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar</span><span class="o">.</span><span class="n">getSetting</span><span class="p">(</span><span class="s1">&#39;link&#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;Kinematic&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">simrobot</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">link</span><span class="p">)</span><span class="o">.</span><span class="n">getTransform</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">temprobot</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">link</span><span class="p">)</span><span class="o">.</span><span class="n">getTransform</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SensorModule.get_camera_transform"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.get_camera_transform">[docs]</a>    <span class="k">def</span> <span class="nf">get_camera_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">camera_name</span><span class="p">,</span> <span class="nb">format</span><span class="o">=</span><span class="s1">&#39;klampt&#39;</span><span class="p">):</span>
+        <span class="c1">#assume update_lock is called?</span>
+        <span class="n">camera</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera_name</span><span class="p">]</span>
+        <span class="n">link</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temprobot</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">camera</span><span class="o">.</span><span class="n">link</span><span class="p">)</span>
+        <span class="n">T</span> <span class="o">=</span> <span class="n">se3</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">link</span><span class="o">.</span><span class="n">getTransform</span><span class="p">(),</span><span class="n">camera</span><span class="o">.</span><span class="n">local_transform</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s1">&#39;klampt&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">T</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">klampt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">numpy_convert</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">T</span><span class="p">,</span><span class="s1">&#39;RigidTransform&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_update_robot</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">log_health</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># print(self.jarvis.robot.sensedRobotq(),self.jarvis.robot.sensedRightEETransform(),self.jarvis.robot.sensedLeftEETransform())</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRobotq</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SensorModule: error updating robot state&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temprobot</span><span class="o">.</span><span class="n">setConfig</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
+
+            <span class="c1">#check if i need to update any pending requests</span>
+            <span class="n">newrequests</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">req</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requests</span><span class="p">:</span>
+                <span class="n">promise</span><span class="p">,</span><span class="n">query</span><span class="p">,</span><span class="n">cameras</span><span class="p">,</span><span class="n">results</span> <span class="o">=</span> <span class="n">req</span>
+                <span class="k">if</span> <span class="n">cameras</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">cameras</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">query</span> <span class="o">==</span> <span class="s1">&#39;get_rgbd_images&#39;</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">camera</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+                        <span class="n">camera</span><span class="o">.</span><span class="n">want_images</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">camera</span><span class="o">.</span><span class="n">time_want_images</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="k">elif</span> <span class="n">query</span> <span class="o">==</span> <span class="s1">&#39;get_point_clouds&#39;</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">camera</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+                        <span class="n">camera</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">camera</span><span class="o">.</span><span class="n">time_want_point_cloud</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            
+            
+    <span class="k">def</span> <span class="nf">_init_GL</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># GLEW WORKAROUND</span>
+        <span class="n">glutInit</span><span class="p">([])</span>
+        <span class="n">glutInitDisplayMode</span><span class="p">(</span><span class="n">GLUT_RGB</span> <span class="o">|</span> <span class="n">GLUT_DOUBLE</span> <span class="o">|</span>
+                            <span class="n">GLUT_DEPTH</span> <span class="o">|</span> <span class="n">GLUT_MULTISAMPLE</span><span class="p">)</span>
+        <span class="n">glutInitWindowSize</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">glutWindowID</span> <span class="o">=</span> <span class="n">glutCreateWindow</span><span class="p">(</span><span class="s2">&quot;Sensor module hidden GLUT window&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Default background color</span>
+        <span class="n">glClearColor</span><span class="p">(</span><span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># Default light source</span>
+        <span class="n">glLightfv</span><span class="p">(</span><span class="n">GL_LIGHT0</span><span class="p">,</span> <span class="n">GL_POSITION</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">glLightfv</span><span class="p">(</span><span class="n">GL_LIGHT0</span><span class="p">,</span> <span class="n">GL_DIFFUSE</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">glLightfv</span><span class="p">(</span><span class="n">GL_LIGHT0</span><span class="p">,</span> <span class="n">GL_SPECULAR</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">glEnable</span><span class="p">(</span><span class="n">GL_LIGHT0</span><span class="p">)</span>
+
+        <span class="n">glLightfv</span><span class="p">(</span><span class="n">GL_LIGHT1</span><span class="p">,</span> <span class="n">GL_POSITION</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">glLightfv</span><span class="p">(</span><span class="n">GL_LIGHT1</span><span class="p">,</span> <span class="n">GL_DIFFUSE</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">glLightfv</span><span class="p">(</span><span class="n">GL_LIGHT1</span><span class="p">,</span> <span class="n">GL_SPECULAR</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">glEnable</span><span class="p">(</span><span class="n">GL_LIGHT1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span><span class="p">:</span>
+            <span class="n">rospy</span><span class="o">.</span><span class="n">init_node</span><span class="p">(</span><span class="s2">&quot;SensorModule_publisher&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ros_base_scan_subscriber</span> <span class="o">=</span> <span class="n">rospy</span><span class="o">.</span><span class="n">Publisher</span><span class="p">(</span><span class="s2">&quot;base_scan&quot;</span><span class="p">,</span> <span class="n">LaserScan</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_sim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">simrobot</span><span class="o">.</span><span class="n">setConfig</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">temprobot</span><span class="o">.</span><span class="n">getConfig</span><span class="p">())</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="mf">30.0</span> <span class="c1"># this is unused in kinematicSimulate</span>
+        <span class="n">warn_threshold</span> <span class="o">=</span> <span class="mf">0.5</span>
+        <span class="c1">#assume temprobot is updated</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">cam</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">cam</span><span class="o">.</span><span class="n">want_images</span> <span class="ow">and</span> <span class="n">cam</span><span class="o">.</span><span class="n">time_want_images</span> <span class="o">&lt;</span> <span class="n">t0</span> <span class="o">-</span> <span class="n">CAMERA_DEACTIVATION_TIME</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Deactivated image simulation of camera&quot;</span><span class="p">,</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">cam</span><span class="o">.</span><span class="n">want_images</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">cam</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="ow">and</span> <span class="n">cam</span><span class="o">.</span><span class="n">time_want_point_cloud</span> <span class="o">&lt;</span> <span class="n">t0</span> <span class="o">-</span> <span class="n">CAMERA_DEACTIVATION_TIME</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Deactivated point cloud simulation of camera&quot;</span><span class="p">,</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">cam</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">cam</span><span class="o">.</span><span class="n">want_images</span> <span class="ow">or</span> <span class="n">cam</span><span class="o">.</span><span class="n">want_point_cloud</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Simulating camera&quot;</span><span class="p">,</span><span class="n">k</span><span class="p">)</span>
+                <span class="n">cam</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">kinematicSimulate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simworld</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+                <span class="n">images</span> <span class="o">=</span> <span class="n">sensing</span><span class="o">.</span><span class="n">camera_to_images</span><span class="p">(</span><span class="n">cam</span><span class="o">.</span><span class="n">device</span><span class="p">,</span> <span class="n">image_format</span><span class="o">=</span><span class="s1">&#39;numpy&#39;</span><span class="p">,</span> <span class="n">color_format</span><span class="o">=</span><span class="s1">&#39;channels&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">cam</span><span class="o">.</span><span class="n">want_point_cloud</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">cam</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">getSetting</span><span class="p">(</span><span class="s2">&quot;depth&quot;</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SensorModule: Simulated camera&quot;</span><span class="p">,</span><span class="n">k</span><span class="p">,</span><span class="s2">&quot;does not have depth information&quot;</span><span class="p">)</span>
+                        <span class="n">pcd</span> <span class="o">=</span> <span class="s1">&#39;error&#39;</span>
+                        <span class="n">cam</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">rgb</span><span class="p">,</span><span class="n">depth</span> <span class="o">=</span> <span class="n">images</span>
+                        <span class="n">xfov</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cam</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">getSetting</span><span class="p">(</span><span class="s1">&#39;xfov&#39;</span><span class="p">))</span>
+                        <span class="n">yfov</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">cam</span><span class="o">.</span><span class="n">device</span><span class="o">.</span><span class="n">getSetting</span><span class="p">(</span><span class="s1">&#39;yfov&#39;</span><span class="p">))</span>
+                        <span class="n">local_pc</span> <span class="o">=</span> <span class="n">klampt</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">sensing</span><span class="o">.</span><span class="n">image_to_points</span><span class="p">(</span><span class="n">depth</span><span class="p">,</span><span class="n">rgb</span><span class="p">,</span><span class="n">xfov</span><span class="p">,</span><span class="n">yfov</span><span class="p">)</span>
+                        <span class="n">pcd</span> <span class="o">=</span> <span class="n">o3d</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">PointCloud</span><span class="p">()</span>
+                        <span class="n">pcd</span><span class="o">.</span><span class="n">points</span> <span class="o">=</span> <span class="n">o3d</span><span class="o">.</span><span class="n">utility</span><span class="o">.</span><span class="n">Vector3dVector</span><span class="p">(</span><span class="n">local_pc</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">])</span>
+                        <span class="n">pcd</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="n">o3d</span><span class="o">.</span><span class="n">utility</span><span class="o">.</span><span class="n">Vector3dVector</span><span class="p">(</span><span class="n">local_pc</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">:])</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_on_camera_images</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">images</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_on_camera_point_cloud</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">pcd</span><span class="p">)</span>
+                    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">t1</span><span class="o">-</span><span class="n">t0</span> <span class="o">&gt;</span> <span class="n">warn_threshold</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Getting camera point clouds took time&quot;</span><span class="p">,</span><span class="n">t1</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">cam</span><span class="o">.</span><span class="n">want_images</span><span class="p">:</span>
+                    <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">t1</span><span class="o">-</span><span class="n">t0</span> <span class="o">&gt;</span> <span class="n">warn_threshold</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Getting camera images took time&quot;</span><span class="p">,</span><span class="n">t1</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_on_camera_images</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">images</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">lidar</span><span class="o">.</span><span class="n">kinematicSimulate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simworld</span><span class="p">,</span><span class="n">dt</span><span class="p">)</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_on_laser_scan</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar</span><span class="o">.</span><span class="n">getMeasurements</span><span class="p">())</span>
+        <span class="n">t1</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">t1</span><span class="o">-</span><span class="n">t0</span> <span class="o">&gt;</span> <span class="n">warn_threshold</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Getting Lidar data took time&quot;</span><span class="p">,</span><span class="n">t1</span><span class="o">-</span><span class="n">t0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ros_active</span><span class="p">:</span> 
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;BROADCASTING LIDAR TO ROS&quot;</span><span class="p">)</span>
+            <span class="c1">#broadcast to ros so the mapper can run</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">rospy</span><span class="o">.</span><span class="n">Time</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+            <span class="n">ros_msg</span> <span class="o">=</span> <span class="n">klampt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ros</span><span class="o">.</span><span class="n">to_SensorMsg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar</span><span class="p">,</span><span class="n">frame</span><span class="o">=</span><span class="s2">&quot;/base_scan&quot;</span><span class="p">,</span><span class="n">stamp</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ros_base_scan_subscriber</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span><span class="n">ros_msg</span><span class="p">)</span>
+
+            <span class="n">lidar_transform</span> <span class="o">=</span> <span class="p">(</span><span class="n">so3</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar_transform</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">klampt_to_ros_lidar</span><span class="p">),</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar_transform</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">klampt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ros</span><span class="o">.</span><span class="n">broadcast_tf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rosTfBroadcaster</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">base_transform</span><span class="p">,</span><span class="n">frameprefix</span><span class="o">=</span><span class="s2">&quot;base_link&quot;</span><span class="p">,</span><span class="n">root</span><span class="o">=</span><span class="s2">&quot;odom&quot;</span><span class="p">,</span><span class="n">stamp</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+            <span class="n">klampt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">ros</span><span class="o">.</span><span class="n">broadcast_tf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rosTfBroadcaster</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar_transform</span><span class="p">,</span><span class="n">frameprefix</span><span class="o">=</span><span class="s2">&quot;base_scan&quot;</span><span class="p">,</span><span class="n">root</span><span class="o">=</span><span class="s2">&quot;base_link&quot;</span><span class="p">,</span><span class="n">stamp</span><span class="o">=</span><span class="n">t</span><span class="p">)</span>
+            
+        
+<div class="viewcode-block" id="SensorModule.get_rgbd_images"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.get_rgbd_images">[docs]</a>    <span class="k">def</span> <span class="nf">get_rgbd_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cameras</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;API-call. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">cameras</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cameras</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">cameras</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">cameras</span> <span class="o">=</span> <span class="p">[</span><span class="n">cameras</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">cameras</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s1">&#39;Selected cameras must be either a string or a list of strings&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">camera</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">camera</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">want_images</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">time_want_images</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">output</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">images</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+
+<div class="viewcode-block" id="SensorModule.get_point_clouds"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.get_point_clouds">[docs]</a>    <span class="k">def</span> <span class="nf">get_point_clouds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cameras</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        API-call. Returns the point cloud from the referred source in the robot&#39;s</span>
+<span class="sd">        base frame.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cameras ([str]): A string or list of strings containing which cameras</span>
+<span class="sd">            we are using for this process.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            output {camera:point_cloud} : A dictionary containing an open3D point</span>
+<span class="sd">            cloud for each camera string for which a point_cloud is available. </span>
+<span class="sd">            point_cloud is None if the requested camera is not yet producing images.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">cameras</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cameras</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">cameras</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">:</span>
+            <span class="n">cameras</span> <span class="o">=</span> <span class="p">[</span><span class="n">cameras</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">type</span><span class="p">(</span><span class="n">cameras</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">list</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s1">&#39;Selected cameras must be either a string or a list of strings&#39;</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">camera</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">camera</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">:</span>
+                <span class="c1">#raise an error here?</span>
+                <span class="k">continue</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">time_want_point_cloud</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">local_pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">point_cloud</span>
+            <span class="k">if</span> <span class="n">local_pc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_lock</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">world_transform</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="n">world_pc</span> <span class="o">=</span> <span class="n">local_pc</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span><span class="o">.</span><span class="n">world_transform</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">world_pc</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">output</span><span class="p">[</span><span class="n">camera</span><span class="p">]</span> <span class="o">=</span> <span class="n">world_pc</span>
+        <span class="k">return</span> <span class="n">output</span></div>
+
+<div class="viewcode-block" id="SensorModule.get_lidar_scan"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.get_lidar_scan">[docs]</a>    <span class="k">def</span> <span class="nf">get_lidar_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span></div>
+
+<div class="viewcode-block" id="SensorModule.get_lidar_point_cloud"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModule.get_lidar_point_cloud">[docs]</a>    <span class="k">def</span> <span class="nf">get_lidar_point_cloud</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">lidar_transform</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_transform</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">thetamin</span><span class="p">,</span><span class="n">thetamax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lidar_angle_range</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span><span class="p">)</span>
+        <span class="c1">#convert distance readings to evenly spaced points in the space</span>
+        <span class="n">angles</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">thetamin</span><span class="p">,</span><span class="n">thetamax</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar_data</span><span class="p">),</span><span class="n">endpoint</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">angles</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">angles</span><span class="p">))</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">angles</span><span class="p">)</span>
+        <span class="n">pts_cols</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">row_stack</span><span class="p">((</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">)),</span><span class="n">distances</span><span class="p">)</span>
+        <span class="n">Tworld</span> <span class="o">=</span> <span class="n">se3</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_transform</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">lidar_transform</span><span class="p">)</span>
+        <span class="n">R</span> <span class="o">=</span> <span class="n">klampt</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">numpy_convert</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(</span><span class="n">Tworld</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="s1">&#39;Matrix3&#39;</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Tworld</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">R</span><span class="p">,</span><span class="n">pts_cols</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">+</span> <span class="n">t</span></div></div>
+
+<div class="viewcode-block" id="SensorModuleSlow"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModuleSlow">[docs]</a><span class="k">class</span> <span class="nc">SensorModuleSlow</span><span class="p">(</span><span class="n">SensorModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A sensor module that copies images / point clouds to the Redis server.</span>
+<span class="sd">    Slower than SensorModule but interprocess communication works.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">SensorModule</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameraNames&#39;</span><span class="p">],</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cameradict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">cam</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cameradict</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cameradict</span><span class="p">[</span><span class="n">cam</span><span class="p">][</span><span class="s1">&#39;requestImagesTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cameradict</span><span class="p">[</span><span class="n">cam</span><span class="p">][</span><span class="s1">&#39;requestPointCloudTime&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cameradict</span><span class="p">[</span><span class="n">cam</span><span class="p">][</span><span class="s1">&#39;images&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;rgb&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span><span class="s1">&#39;depth&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cameradict</span><span class="p">[</span><span class="n">cam</span><span class="p">][</span><span class="s1">&#39;pointCloud&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">],</span><span class="bp">self</span><span class="o">.</span><span class="n">cameradict</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;lidar&#39;</span><span class="p">],{</span><span class="s1">&#39;scan&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span><span class="s1">&#39;pointCloud&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">checkRequests</span><span class="p">,</span><span class="mf">0.1</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;checkRequests&#39;</span><span class="p">,</span><span class="n">dolock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        
+<div class="viewcode-block" id="SensorModuleSlow.checkRequests"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModuleSlow.checkRequests">[docs]</a>    <span class="k">def</span> <span class="nf">checkRequests</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">aliveTime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">CAMERA_DEACTIVATION_TIME</span>
+        <span class="k">for</span> <span class="n">cam</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">get</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">cam</span><span class="p">,</span><span class="s1">&#39;requestImagesTime&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">aliveTime</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span><span class="o">.</span><span class="n">want_images</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span><span class="o">.</span><span class="n">time_want_images</span> <span class="o">=</span> <span class="n">t</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span><span class="o">.</span><span class="n">want_images</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">get</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">cam</span><span class="p">,</span><span class="s1">&#39;requestPointCloudTime&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="n">aliveTime</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span><span class="o">.</span><span class="n">time_want_point_cloud</span> <span class="o">=</span> <span class="n">t</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">active_cameras</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span><span class="o">.</span><span class="n">want_point_cloud</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="SensorModuleSlow.apiClass"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModuleSlow.apiClass">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">apiClass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SensorAPISlow</span></div>
+
+<div class="viewcode-block" id="SensorModuleSlow.api"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.module.SensorModuleSlow.api">[docs]</a>    <span class="k">def</span> <span class="nf">api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other_module</span><span class="p">,</span><span class="n">other_comms</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SensorAPISlow</span><span class="p">(</span><span class="n">other_module</span><span class="p">,</span><span class="n">other_comms</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_on_camera_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">camera</span><span class="p">,</span><span class="n">images</span><span class="p">):</span>
+        <span class="n">SensorModule</span><span class="o">.</span><span class="n">_on_camera_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">camera</span><span class="p">,</span><span class="n">images</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">images</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1">#rgb and depth</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">camera</span><span class="p">,</span><span class="s1">&#39;images&#39;</span><span class="p">,</span><span class="s1">&#39;rgb&#39;</span><span class="p">],</span><span class="n">images</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">camera</span><span class="p">,</span><span class="s1">&#39;images&#39;</span><span class="p">,</span><span class="s1">&#39;depth&#39;</span><span class="p">],</span><span class="n">images</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">camera</span><span class="p">,</span><span class="s1">&#39;images&#39;</span><span class="p">,</span><span class="s1">&#39;rgb&#39;</span><span class="p">],</span><span class="n">images</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on_camera_point_cloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">camera</span><span class="p">,</span><span class="n">pc</span><span class="p">):</span>
+        <span class="n">SensorModule</span><span class="o">.</span><span class="n">_on_camera_point_cloud</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">camera</span><span class="p">,</span><span class="n">pc</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">camera</span><span class="p">,</span><span class="s1">&#39;pointCloud&#39;</span><span class="p">],</span><span class="n">pc</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_on_laser_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">scan</span><span class="p">):</span>
+        <span class="n">SensorModule</span><span class="o">.</span><span class="n">_on_laser_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">scan</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;lidar&#39;</span><span class="p">,</span><span class="s1">&#39;scan&#39;</span><span class="p">],</span><span class="n">scan</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;lidar&#39;</span><span class="p">,</span><span class="s1">&#39;pointCloud&#39;</span><span class="p">],</span><span class="bp">self</span><span class="o">.</span><span class="n">get_lidar_point_cloud</span><span class="p">())</span></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">SensorModuleSlow</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;Kinematic&#39;</span><span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n\n</span><span class="s1"> running as Main</span><span class="se">\n\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="k">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">SensorModule</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;Kinematic&#39;</span><span class="p">)</span>
+    
+    <span class="n">api</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">api</span><span class="p">(</span><span class="s2">&quot;main_thread&quot;</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Available cameras:&quot;</span><span class="p">,</span><span class="n">api</span><span class="o">.</span><span class="n">camerasAvailable</span><span class="p">())</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">api</span><span class="o">.</span><span class="n">getNextPointClouds</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Result of getNextPointClouds&quot;</span><span class="p">,</span><span class="n">res</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Waiting on Promise...&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Result of wait&quot;</span><span class="p">,</span><span class="n">res</span><span class="o">.</span><span class="n">wait</span><span class="p">())</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Beginning loop...&quot;</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">module</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s1">&#39;terminate&#39;</span><span class="p">:</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">module</span><span class="o">.</span><span class="n">get_rgbd_images</span><span class="p">(</span><span class="s1">&#39;realsense_left&#39;</span><span class="p">)</span>
+    <span class="n">module</span><span class="o">.</span><span class="n">get_point_clouds</span><span class="p">(</span><span class="s1">&#39;realsense_left&#39;</span><span class="p">)</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">cam_image</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">get_rgbd_images</span><span class="p">(</span><span class="s1">&#39;realsense_left&#39;</span><span class="p">)[</span><span class="s1">&#39;realsense_left&#39;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">cam_image</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">cam_image</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+    <span class="n">cam_o3d</span> <span class="o">=</span> <span class="n">module</span><span class="o">.</span><span class="n">get_point_clouds</span><span class="p">(</span><span class="s1">&#39;realsense_left&#39;</span><span class="p">)[</span><span class="s1">&#39;realsense_left&#39;</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">cam_o3d</span><span class="o">.</span><span class="n">colors</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cam_o3d</span><span class="o">.</span><span class="n">points</span><span class="p">))</span>
+    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">module</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+    <span class="c1"># b = []</span>
+    <span class="c1"># for i in range(50):</span>
+    <span class="c1">#     b = module.get_point_clouds()</span>
+    <span class="c1">#     print(b.keys())</span>
+    <span class="c1">#     print(b[b.keys()[0]])</span>
+    <span class="c1">#     time.sleep(0.08)</span>
+    <span class="c1">#     if(int(time.time()) % 2 == 0):</span>
+    <span class="c1">#         plt.close(&#39;all&#39;)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,62 @@
+trina.modules.apps.PointClickNav package
+========================================
+
+Submodules
+----------
+
+trina.modules.apps.PointClickNav.PointClickNavFile module
+---------------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickNav.PointClickNavFile
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickNav.geometry module
+------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickNav.geometry
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickNav.global\_planner module
+-------------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickNav.global_planner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickNav.local\_planner module
+------------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickNav.local_planner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickNav.motion\_primitives module
+----------------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickNav.motion_primitives
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickNav.utils module
+---------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickNav.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.apps.PointClickNav
+   :members:
+   :undoc-members:
+   :show-inheritance:

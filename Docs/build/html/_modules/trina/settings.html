@@ -1,0 +1,492 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.settings &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.settings</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.settings</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;A unified way of accessing TRINA settings.</span>
+
+<span class="sd">The settings are accessed by calling ``trina.settings.get(key1.key2)`` or</span>
+<span class="sd">``trina.settings.settings()[key1][key2]``.</span>
+
+<span class="sd">This will produce a dictionary-like object referencing the JSON-distributed</span>
+<span class="sd">files in the TRINA/Settings folder, starting at TRINA/Settings/root.json.</span>
+
+<span class="sd">The other methods, like :func:`robot_settings`, :func:`robot_codename`,</span>
+<span class="sd">:func:`left_arm_dofs`, etc are all convenience methods.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">weakref</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">NestedJsonAccessor</span>
+<span class="n">base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/TRINA/Settings/&quot;</span><span class="p">)</span>
+<span class="n">_root</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="settings"><a class="viewcode-back" href="../../trina.html#trina.settings.settings">[docs]</a><span class="k">def</span> <span class="nf">settings</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the global settings object.&quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_root</span>
+    <span class="k">if</span> <span class="n">_root</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="s2">&quot;root.json&quot;</span><span class="p">)</span>
+        <span class="n">_root</span> <span class="o">=</span> <span class="n">NestedJsonAccessor</span><span class="p">()</span>
+        <span class="n">_root</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_root</span></div>
+
+<div class="viewcode-block" id="reload"><a class="viewcode-back" href="../../trina.html#trina.settings.reload">[docs]</a><span class="k">def</span> <span class="nf">reload</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Reloads everything from files. &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_root</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="s2">&quot;root.json&quot;</span><span class="p">)</span>
+    <span class="n">_root</span> <span class="o">=</span> <span class="n">NestedJsonAccessor</span><span class="p">()</span>
+    <span class="n">_root</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_root</span></div>
+
+<div class="viewcode-block" id="get"><a class="viewcode-back" href="../../trina.html#trina.settings.get">[docs]</a><span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">decode</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Retrieves a setting from a period-separated string.  If decode=True,</span>
+<span class="sd">    this decodes the NestedJsonAccessor object.&quot;&quot;&quot;</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">settings</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">decode</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="n">NestedJsonAccessor</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">asdict</span><span class="p">()</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">aslist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="set"><a class="viewcode-back" href="../../trina.html#trina.settings.set">[docs]</a><span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="n">value</span><span class="p">,</span><span class="n">dosave</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sets a setting to some value from a period-separated string.</span>
+<span class="sd">    If dosave == True, then the settings are saved&quot;&quot;&quot;</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="s2">&quot;Can&#39;t set an empty string&quot;</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">settings</span><span class="p">()</span>
+    <span class="n">lastAccessor</span> <span class="o">=</span> <span class="n">res</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">items</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="n">NestedJsonAccessor</span><span class="p">):</span>
+            <span class="n">lastAccessor</span> <span class="o">=</span> <span class="n">res</span>
+    <span class="k">if</span> <span class="n">dosave</span><span class="p">:</span>
+        <span class="n">lastAccessor</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="app_settings"><a class="viewcode-back" href="../../trina.html#trina.settings.app_settings">[docs]</a><span class="k">def</span> <span class="nf">app_settings</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the settings for the given app&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="n">name</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="robot_settings"><a class="viewcode-back" href="../../trina.html#trina.settings.robot_settings">[docs]</a><span class="k">def</span> <span class="nf">robot_settings</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns settings specific to the robot rather than the user or the software system&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s1">&#39;robot&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="user_settings"><a class="viewcode-back" href="../../trina.html#trina.settings.user_settings">[docs]</a><span class="k">def</span> <span class="nf">user_settings</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns settings specific to the user rather than the robot or the software system&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="motion_settings"><a class="viewcode-back" href="../../trina.html#trina.settings.motion_settings">[docs]</a><span class="k">def</span> <span class="nf">motion_settings</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns robot-specific parameter settings being used by the Motion server&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s1">&#39;robot&#39;</span><span class="p">][</span><span class="s1">&#39;motion_server_settings&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="model_settings"><a class="viewcode-back" href="../../trina.html#trina.settings.model_settings">[docs]</a><span class="k">def</span> <span class="nf">model_settings</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns robot model settings, e.g., link groups&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s1">&#39;robot&#39;</span><span class="p">][</span><span class="s1">&#39;model_info&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="camera_settings"><a class="viewcode-back" href="../../trina.html#trina.settings.camera_settings">[docs]</a><span class="k">def</span> <span class="nf">camera_settings</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns camera settings, e.g., serial numbers, links, transforms&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;robot&quot;</span><span class="p">][</span><span class="s2">&quot;camera_settings&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">asdict</span><span class="p">()</span></div>
+
+
+
+
+
+
+<div class="viewcode-block" id="robot_codename"><a class="viewcode-back" href="../../trina.html#trina.settings.robot_codename">[docs]</a><span class="k">def</span> <span class="nf">robot_codename</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the codename for the robot. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;robot&quot;</span><span class="p">][</span><span class="s2">&quot;version&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="robot_model"><a class="viewcode-back" href="../../trina.html#trina.settings.robot_model">[docs]</a><span class="k">def</span> <span class="nf">robot_model</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the URDF model for the robot. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;robot&quot;</span><span class="p">][</span><span class="s2">&quot;model&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="robot_home_config"><a class="viewcode-back" href="../../trina.html#trina.settings.robot_home_config">[docs]</a><span class="k">def</span> <span class="nf">robot_home_config</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the robot&#39;s home configuration.&quot;&quot;&quot;</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;robot&quot;</span><span class="p">][</span><span class="s2">&quot;home_config&quot;</span><span class="p">]</span>
+    <span class="kn">from</span> <span class="nn">klampt.io</span> <span class="k">import</span> <span class="n">loader</span>
+    <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;Config&#39;</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="n">fn</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="left_arm_dofs"><a class="viewcode-back" href="../../trina.html#trina.settings.left_arm_dofs">[docs]</a><span class="k">def</span> <span class="nf">left_arm_dofs</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns list of left arm links in model&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_settings</span><span class="p">()[</span><span class="s1">&#39;left_arm_dofs&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="right_arm_dofs"><a class="viewcode-back" href="../../trina.html#trina.settings.right_arm_dofs">[docs]</a><span class="k">def</span> <span class="nf">right_arm_dofs</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns list of right arm links in model&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">model_settings</span><span class="p">()[</span><span class="s1">&#39;right_arm_dofs&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="left_tool_link"><a class="viewcode-back" href="../../trina.html#trina.settings.left_tool_link">[docs]</a><span class="k">def</span> <span class="nf">left_tool_link</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns left arm tool link in model&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">model_settings</span><span class="p">()[</span><span class="s1">&#39;left_tool_link&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="right_tool_link"><a class="viewcode-back" href="../../trina.html#trina.settings.right_tool_link">[docs]</a><span class="k">def</span> <span class="nf">right_tool_link</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns right arm tool link in model&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">model_settings</span><span class="p">()[</span><span class="s1">&#39;right_tool_link&#39;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="motion_server_mode"><a class="viewcode-back" href="../../trina.html#trina.settings.motion_server_mode">[docs]</a><span class="k">def</span> <span class="nf">motion_server_mode</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns assumed motion server mode -- note that the motion server</span>
+<span class="sd">    can actually be started / restarted in a different mode. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;MotionServer&quot;</span><span class="p">][</span><span class="s2">&quot;mode&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="motion_server_ip"><a class="viewcode-back" href="../../trina.html#trina.settings.motion_server_ip">[docs]</a><span class="k">def</span> <span class="nf">motion_server_ip</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the motion server IP address &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;MotionServer&quot;</span><span class="p">][</span><span class="s2">&quot;ip_address&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="motion_server_port"><a class="viewcode-back" href="../../trina.html#trina.settings.motion_server_port">[docs]</a><span class="k">def</span> <span class="nf">motion_server_port</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the motion server port&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;MotionServer&quot;</span><span class="p">][</span><span class="s2">&quot;port&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="motion_server_addr"><a class="viewcode-back" href="../../trina.html#trina.settings.motion_server_addr">[docs]</a><span class="k">def</span> <span class="nf">motion_server_addr</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns formatted address string for the motion server&quot;&quot;&quot;</span>
+    <span class="n">mserver</span> <span class="o">=</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;MotionServer&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s2">&quot;http://</span><span class="si">%s</span><span class="s2">:</span><span class="si">%d</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">mserver</span><span class="p">[</span><span class="s2">&quot;ip_address&quot;</span><span class="p">],</span><span class="n">mserver</span><span class="p">[</span><span class="s2">&quot;port&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="motion_server_components"><a class="viewcode-back" href="../../trina.html#trina.settings.motion_server_components">[docs]</a><span class="k">def</span> <span class="nf">motion_server_components</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the robot components used by the motion server, by default&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;MotionServer&quot;</span><span class="p">][</span><span class="s2">&quot;components&quot;</span><span class="p">])</span></div>
+
+
+
+<div class="viewcode-block" id="redis_server_ip"><a class="viewcode-back" href="../../trina.html#trina.settings.redis_server_ip">[docs]</a><span class="k">def</span> <span class="nf">redis_server_ip</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns the redis server IP address&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;RedisServer&quot;</span><span class="p">][</span><span class="s2">&quot;ip_address&quot;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="simulation_world_file"><a class="viewcode-back" href="../../trina.html#trina.settings.simulation_world_file">[docs]</a><span class="k">def</span> <span class="nf">simulation_world_file</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns a suggested simulation world file&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">settings</span><span class="p">()[</span><span class="s2">&quot;Simulation&quot;</span><span class="p">][</span><span class="s2">&quot;world_file&quot;</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="left_arm_config"><a class="viewcode-back" href="../../trina.html#trina.settings.left_arm_config">[docs]</a><span class="k">def</span> <span class="nf">left_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a named configuration of the robot&#39;s left arm. &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">user_settings</span><span class="p">()[</span><span class="s2">&quot;configs&quot;</span><span class="p">][</span><span class="s1">&#39;left_arm&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="mirror_arm_config"><a class="viewcode-back" href="../../trina.html#trina.settings.mirror_arm_config">[docs]</a><span class="k">def</span> <span class="nf">mirror_arm_config</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mirrors an arm configuration from left to right or vice versa. &quot;&quot;&quot;</span>
+    <span class="n">RConfig</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">+</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+    <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+    <span class="n">RConfig</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="n">config</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">RConfig</span></div>
+
+<div class="viewcode-block" id="right_arm_config"><a class="viewcode-back" href="../../trina.html#trina.settings.right_arm_config">[docs]</a><span class="k">def</span> <span class="nf">right_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a named configuration of the robot&#39;s right arm, or a mirrored</span>
+<span class="sd">    version of the named configuration for the left arm. &quot;&quot;&quot;</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">user_settings</span><span class="p">()[</span><span class="s2">&quot;configs&quot;</span><span class="p">]</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">configs</span><span class="p">[</span><span class="s1">&#39;right_arm&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mirror_arm_config</span><span class="p">(</span><span class="n">left_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">res</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="add_left_arm_config"><a class="viewcode-back" href="../../trina.html#trina.settings.add_left_arm_config">[docs]</a><span class="k">def</span> <span class="nf">add_left_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">value</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Adds a named configuration of the robot&#39;s left arm.  Note: does not</span>
+<span class="sd">    save to disk&quot;&quot;&quot;</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">user_settings</span><span class="p">()[</span><span class="s2">&quot;configs&quot;</span><span class="p">]</span>
+    <span class="n">configs</span><span class="p">[</span><span class="s1">&#39;left_arm&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trina_settings: set left_arm config&quot;</span><span class="p">,</span><span class="n">value</span><span class="p">,</span><span class="s2">&quot;but have not yet saved&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="add_right_arm_config"><a class="viewcode-back" href="../../trina.html#trina.settings.add_right_arm_config">[docs]</a><span class="k">def</span> <span class="nf">add_right_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">value</span><span class="p">,</span><span class="n">verbose</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Adds a named configuration of the robot&#39;s right arm.  Note: does not</span>
+<span class="sd">    save to disk&quot;&quot;&quot;</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">user_settings</span><span class="p">()[</span><span class="s2">&quot;configs&quot;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="s1">&#39;right_arm&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">configs</span><span class="p">:</span>
+        <span class="n">configs</span><span class="p">[</span><span class="s1">&#39;right_arm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="n">configs</span><span class="p">[</span><span class="s1">&#39;right_arm&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trina_settings: set right_arm config&quot;</span><span class="p">,</span><span class="n">value</span><span class="p">,</span><span class="s2">&quot;but have not yet saved&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="save_configs"><a class="viewcode-back" href="../../trina.html#trina.settings.save_configs">[docs]</a><span class="k">def</span> <span class="nf">save_configs</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Saves all the user&#39;s changed configs&quot;&quot;&quot;</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">user_settings</span><span class="p">()[</span><span class="s2">&quot;configs&quot;</span><span class="p">]</span>
+    <span class="n">configs</span><span class="o">.</span><span class="n">save</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="edit_left_arm_config"><a class="viewcode-back" href="../../trina.html#trina.settings.edit_left_arm_config">[docs]</a><span class="k">def</span> <span class="nf">edit_left_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Visually edits a named configuration of the robot&#39;s left arm.  Note: does not</span>
+<span class="sd">    save to disk.&quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">WorldModel</span><span class="p">,</span><span class="n">RobotModel</span>
+    <span class="kn">from</span> <span class="nn">klampt.model.subrobot</span> <span class="k">import</span> <span class="n">SubRobotModel</span>
+    <span class="kn">from</span> <span class="nn">klampt.io</span> <span class="k">import</span> <span class="n">resource</span> 
+    <span class="n">dofs</span> <span class="o">=</span> <span class="n">left_arm_dofs</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">left_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">dofs</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">setup</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">setup</span><span class="o">.</span><span class="n">robot_model_load</span><span class="p">()</span>
+    <span class="n">robot</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">arm_robot</span> <span class="o">=</span> <span class="n">SubRobotModel</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span><span class="n">dofs</span><span class="p">)</span>
+    <span class="n">save</span><span class="p">,</span><span class="n">result</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">edit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">q</span><span class="p">,</span><span class="s1">&#39;Config&#39;</span><span class="p">,</span><span class="n">world</span><span class="o">=</span><span class="n">w</span><span class="p">,</span><span class="n">referenceObject</span><span class="o">=</span><span class="n">arm_robot</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">set_left_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">result</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="edit_right_arm_config"><a class="viewcode-back" href="../../trina.html#trina.settings.edit_right_arm_config">[docs]</a><span class="k">def</span> <span class="nf">edit_right_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Visually edits a named configuration of the robot&#39;s left arm.  Note: does not</span>
+<span class="sd">    save to disk.&quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">WorldModel</span><span class="p">,</span><span class="n">RobotModel</span>
+    <span class="kn">from</span> <span class="nn">klampt.model.subrobot</span> <span class="k">import</span> <span class="n">SubRobotModel</span>
+    <span class="kn">from</span> <span class="nn">klampt.io</span> <span class="k">import</span> <span class="n">resource</span> 
+    <span class="n">dofs</span> <span class="o">=</span> <span class="n">right_arm_dofs</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">right_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">dofs</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">setup</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">setup</span><span class="o">.</span><span class="n">robot_model_load</span><span class="p">()</span>
+    <span class="n">robot</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">arm_robot</span> <span class="o">=</span> <span class="n">SubRobotModel</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span><span class="n">dofs</span><span class="p">)</span>
+    <span class="n">save</span><span class="p">,</span><span class="n">result</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">edit</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">q</span><span class="p">,</span><span class="s1">&#39;Config&#39;</span><span class="p">,</span><span class="n">world</span><span class="o">=</span><span class="n">w</span><span class="p">,</span><span class="n">referenceObject</span><span class="o">=</span><span class="n">arm_robot</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="n">set_right_arm_config</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">result</span><span class="p">)</span></div>
+
+
+
+
+<div class="viewcode-block" id="calibration_configs"><a class="viewcode-back" href="../../trina.html#trina.settings.calibration_configs">[docs]</a><span class="k">def</span> <span class="nf">calibration_configs</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns calibration configurations for the given calibration task. &quot;&quot;&quot;</span>
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">settings</span><span class="p">()[</span><span class="s1">&#39;CalibrationModule&#39;</span><span class="p">][</span><span class="n">task</span><span class="o">+</span><span class="s1">&#39;_calibration_configs&#39;</span><span class="p">]</span>
+    <span class="kn">from</span> <span class="nn">klampt.io</span> <span class="k">import</span> <span class="n">loader</span>
+    <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;Configs&#39;</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="n">fn</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="edit_calibration_configs"><a class="viewcode-back" href="../../trina.html#trina.settings.edit_calibration_configs">[docs]</a><span class="k">def</span> <span class="nf">edit_calibration_configs</span><span class="p">(</span><span class="n">task</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Edits calibration configurations for the given calibration task. Saves</span>
+<span class="sd">    to disk when OK is prssed. &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="n">settings</span><span class="p">()[</span><span class="s1">&#39;CalibrationModule&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="s1">&#39;configs&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Could not read setting CalibrationModule.</span><span class="si">{}</span><span class="s2">.configs&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">limb</span> <span class="o">=</span> <span class="n">settings</span><span class="p">()[</span><span class="s1">&#39;CalibrationModule&#39;</span><span class="p">][</span><span class="n">task</span><span class="p">][</span><span class="s1">&#39;limb&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Could not read setting CalibrationModule.</span><span class="si">{}</span><span class="s2">.limb&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="kn">from</span> <span class="nn">klampt.io</span> <span class="k">import</span> <span class="n">loader</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loading configs from&quot;</span><span class="p">,</span><span class="n">fn</span><span class="p">)</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;Configs&#39;</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="n">fn</span><span class="p">))</span>
+    <span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">WorldModel</span><span class="p">,</span><span class="n">RobotModel</span>
+    <span class="kn">from</span> <span class="nn">klampt.model.subrobot</span> <span class="k">import</span> <span class="n">SubRobotModel</span>
+    <span class="kn">from</span> <span class="nn">klampt.io</span> <span class="k">import</span> <span class="n">resource</span> 
+    <span class="k">if</span> <span class="n">limb</span> <span class="o">==</span> <span class="s1">&#39;left_arm&#39;</span><span class="p">:</span>
+        <span class="n">dofs</span> <span class="o">=</span> <span class="n">left_arm_dofs</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">limb</span> <span class="o">==</span> <span class="s1">&#39;right_arm&#39;</span><span class="p">:</span>
+        <span class="n">dofs</span> <span class="o">=</span> <span class="n">right_arm_dofs</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;TODO: calibration for moving limb&quot;</span><span class="p">,</span><span class="n">limb</span><span class="p">,</span><span class="s1">&#39;?&#39;</span><span class="p">)</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">setup</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">setup</span><span class="o">.</span><span class="n">robot_model_load</span><span class="p">()</span>
+    <span class="n">robot</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">robot</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">arm_robot</span> <span class="o">=</span> <span class="n">SubRobotModel</span><span class="p">(</span><span class="n">robot</span><span class="p">,</span><span class="n">dofs</span><span class="p">)</span>
+    <span class="c1">#save,result = resource.edit(sensor,configs,&#39;Configs&#39;,world=w,referenceObject=arm_robot)</span>
+    <span class="kn">from</span> <span class="nn">klampt.model.trajectory</span> <span class="k">import</span> <span class="n">Trajectory</span>
+    <span class="n">save</span><span class="p">,</span><span class="n">result</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">edit</span><span class="p">(</span><span class="n">task</span><span class="o">+</span><span class="s2">&quot; calibration motion&quot;</span><span class="p">,</span><span class="n">Trajectory</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">configs</span><span class="p">))),</span><span class="n">configs</span><span class="p">),</span><span class="s1">&#39;Trajectory&#39;</span><span class="p">,</span><span class="n">world</span><span class="o">=</span><span class="n">w</span><span class="p">,</span><span class="n">referenceObject</span><span class="o">=</span><span class="n">arm_robot</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">save</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Saving configs to&quot;</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="n">fn</span><span class="p">))</span>
+        <span class="n">loader</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">milestones</span><span class="p">,</span><span class="s1">&#39;Configs&#39;</span><span class="p">,</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">base</span><span class="p">,</span><span class="n">fn</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="c1">#edit_left_arm_config(&#39;untucked&#39;)</span>
+    <span class="n">edit_calibration_configs</span><span class="p">(</span><span class="s1">&#39;realsense_left&#39;</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

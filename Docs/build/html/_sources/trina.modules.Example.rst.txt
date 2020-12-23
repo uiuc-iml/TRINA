@@ -1,0 +1,30 @@
+trina.modules.Example package
+=============================
+
+Submodules
+----------
+
+trina.modules.Example.api module
+--------------------------------
+
+.. automodule:: trina.modules.Example.api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.Example.module module
+-----------------------------------
+
+.. automodule:: trina.modules.Example.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.Example
+   :members:
+   :undoc-members:
+   :show-inheritance:

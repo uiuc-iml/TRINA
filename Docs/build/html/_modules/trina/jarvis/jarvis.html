@@ -1,0 +1,472 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.jarvis.jarvis &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.jarvis.jarvis</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.jarvis.jarvis</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">.api</span> <span class="k">import</span> <span class="n">APILayer</span>
+<span class="kn">import</span> <span class="nn">redis</span>
+
+<div class="viewcode-block" id="Jarvis"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis">[docs]</a><span class="k">class</span> <span class="nc">Jarvis</span><span class="p">(</span><span class="n">APILayer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Currently implemented APIs are command_server (top level APIs), motion, and sensors.</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        jarvis = [Jarvis instance, set up for you by command_server]</span>
+<span class="sd">        components = jarvis.robot.components()</span>
+<span class="sd">        mode = jarvis.robot.mode()</span>
+<span class="sd">        jarvis.ui.getRayClick()</span>
+<span class="sd">        etc...</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">moduleName</span><span class="p">,</span> <span class="n">apis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">server</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">server</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1">#initialize</span>
+            <span class="kn">from</span> <span class="nn">..state_server</span> <span class="k">import</span> <span class="n">StateServer</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="n">StateServer</span><span class="p">()</span>
+            <span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;HEALTH_LOG&#39;</span><span class="p">,</span><span class="n">moduleName</span><span class="p">],[</span><span class="s1">&#39;off&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">server</span><span class="o">.</span><span class="n">set</span><span class="p">([</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">,</span><span class="n">moduleName</span><span class="p">],</span><span class="s1">&#39;active&#39;</span><span class="p">)</span>
+            <span class="c1">#initialize basic APIs available to the module</span>
+        
+        <span class="n">APILayer</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">moduleName</span><span class="p">,</span><span class="n">server</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">server</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moduleName</span> <span class="o">=</span> <span class="n">moduleName</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apis</span> <span class="o">=</span> <span class="n">apis</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">apis</span><span class="p">,(</span><span class="nb">str</span><span class="p">,</span><span class="nb">list</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">apis</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">apis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">apis</span><span class="p">,</span><span class="nb">dict</span><span class="p">),</span><span class="s2">&quot;apis must be a dict mapping api names to handles&quot;</span>
+            <span class="k">for</span> <span class="n">apiname</span><span class="p">,</span><span class="n">apihandle</span> <span class="ow">in</span> <span class="n">apis</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">assert</span> <span class="n">apiname</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">,</span><span class="s2">&quot;Can&#39;t define a module called &quot;</span><span class="o">+</span><span class="n">apiname</span><span class="o">+</span><span class="s2">&quot; because it conflicts with an Jarvis attribute&quot;</span>
+                <span class="k">if</span> <span class="n">apiname</span> <span class="o">!=</span> <span class="n">apihandle</span><span class="o">.</span><span class="n">name</span><span class="p">():</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trina.jarvis.Jarvis: warning, API&quot;</span><span class="p">,</span><span class="n">apihandle</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="s2">&quot;is being stored under different identifier,&quot;</span><span class="p">,</span><span class="n">apiname</span><span class="p">)</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">apiname</span><span class="p">,</span><span class="n">apihandle</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Jarvis.name"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.name">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;jarvis&#39;</span></div>
+
+<div class="viewcode-block" id="Jarvis.require"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.require">[docs]</a>    <span class="k">def</span> <span class="nf">require</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">modules</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Declares that a certain set of APIs are required by this module.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns the list of api names provided by these modules, or None </span>
+<span class="sd">        if the corresponding module could not be found.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">extract</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">modules</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="n">modules</span> <span class="o">=</span> <span class="p">[</span><span class="n">modules</span><span class="p">]</span>
+            <span class="n">extract</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">apimap</span> <span class="o">=</span> <span class="n">get_api_classes</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">mod</span><span class="p">,</span><span class="n">apicls</span> <span class="ow">in</span> <span class="n">apimap</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">apiname</span> <span class="o">=</span> <span class="n">apicls</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">apiname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">apis</span><span class="p">:</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">apiname</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">apicls</span><span class="o">.</span><span class="n">interprocess</span><span class="p">():</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">apis</span><span class="p">[</span><span class="n">apiname</span><span class="p">]</span> <span class="o">=</span> <span class="n">apicls</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">moduleName</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">)</span>
+                    <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">apiname</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">apis</span><span class="p">[</span><span class="n">apiname</span><span class="p">])</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">apiname</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trina.jarvis.Jarvis: warning, API&quot;</span><span class="p">,</span><span class="n">apicls</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="s2">&quot;from module&quot;</span><span class="p">,</span><span class="n">mod</span><span class="p">,</span><span class="s2">&quot;could not be constructed with default arguments, skipping&quot;</span><span class="p">)</span>
+                    <span class="kn">import</span> <span class="nn">traceback</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                    <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;trina.jarvis.Jarvis: warning, requested API&quot;</span><span class="p">,</span><span class="n">apicls</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="s2">&quot;from module&quot;</span><span class="p">,</span><span class="n">mod</span><span class="p">,</span><span class="s2">&quot;does not support interprocess access, skipping&quot;</span><span class="p">)</span>
+                <span class="kn">import</span> <span class="nn">traceback</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extract</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="Jarvis.log_health"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.log_health">[docs]</a>    <span class="k">def</span> <span class="nf">log_health</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add the health log of the module</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redisSet</span><span class="p">([</span><span class="s2">&quot;HEALTH_LOG&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">moduleName</span><span class="p">],[</span><span class="n">status</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()])</span></div>
+
+<div class="viewcode-block" id="Jarvis.enableHealthChecks"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.enableHealthChecks">[docs]</a>    <span class="k">def</span> <span class="nf">enableHealthChecks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;If you are using a dummy module, should disable health checks.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redisSet</span><span class="p">([</span><span class="s2">&quot;HEALTH_LOG&quot;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">moduleName</span><span class="p">],[</span><span class="kc">True</span> <span class="k">if</span> <span class="n">status</span> <span class="k">else</span> <span class="s1">&#39;off&#39;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()])</span></div>
+
+<div class="viewcode-block" id="Jarvis.getActivityStatus"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.getActivityStatus">[docs]</a>    <span class="k">def</span> <span class="nf">getActivityStatus</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the module activity status, as controlled by Command Server.</span>
+<span class="sd">        The module should respect a request to switch to &#39;idle&#39; by stopping </span>
+<span class="sd">        internal processes promptly.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">moduleName</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="Jarvis.switchModuleActivity"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.switchModuleActivity">[docs]</a>    <span class="k">def</span> <span class="nf">switchModuleActivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">to_activate</span><span class="p">,</span> <span class="n">to_deactivate</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;Changes the status of one or more modules</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;switch_module_activity&#39;</span><span class="p">,</span> <span class="n">to_activate</span><span class="p">,</span> <span class="n">to_deactivate</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Jarvis.restartModule"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.restartModule">[docs]</a>    <span class="k">def</span> <span class="nf">restartModule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">otherModule</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;restart_module&#39;</span><span class="p">,</span> <span class="n">otherModule</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Jarvis.activateModule"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.activateModule">[docs]</a>    <span class="k">def</span> <span class="nf">activateModule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">module</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;activate_module&#39;</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Jarvis.deactivateModule"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.deactivateModule">[docs]</a>    <span class="k">def</span> <span class="nf">deactivateModule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">module</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_moduleCommand</span><span class="p">(</span><span class="s1">&#39;deactivate_module&#39;</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Jarvis.getTrinaTime"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.getTrinaTime">[docs]</a>    <span class="k">def</span> <span class="nf">getTrinaTime</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the trina time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;TRINA_TIME&#39;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Jarvis.getUIState"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.getUIState">[docs]</a>    <span class="k">def</span> <span class="nf">getUIState</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return UI state dictionary</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;UI_STATE&quot;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Jarvis.getRobotState"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.getRobotState">[docs]</a>    <span class="k">def</span> <span class="nf">getRobotState</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return robot state dictionary</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Jarvis.getSimulatedWorld"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.Jarvis.getSimulatedWorld">[docs]</a>    <span class="k">def</span> <span class="nf">getSimulatedWorld</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the simulated world</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: The Klampt world of the simulated robot.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s2">&quot;SIM_WORLD&quot;</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div></div>
+
+
+<div class="viewcode-block" id="get_module_classes"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.get_module_classes">[docs]</a><span class="k">def</span> <span class="nf">get_module_classes</span><span class="p">(</span><span class="n">names</span><span class="p">,</span><span class="n">doreload</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a dict mapping module names to Module classes, for the modules</span>
+<span class="sd">    named in names.  If doreload=True, the Python modules will be reloaded to</span>
+<span class="sd">    reflect any changes made since the Python kernel started (default).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+    <span class="kn">from</span> <span class="nn">importlib</span> <span class="k">import</span> <span class="n">import_module</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">importlib</span> <span class="k">import</span> <span class="n">reload</span>
+    <span class="n">module_locations</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;module_locations&#39;</span><span class="p">]</span>
+    <span class="n">app_locations</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;app_locations&#39;</span><span class="p">]</span>
+    <span class="n">mod_class_map</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;module_class_map&#39;</span><span class="p">]</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="n">briefName</span> <span class="o">=</span> <span class="n">name</span>  <span class="c1">#this is the name used by the Python module</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;App_&#39;</span><span class="p">):</span>
+            <span class="n">briefName</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+        <span class="n">modobj</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;App_&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">app_locations</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">modobj</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">location</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">briefName</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">module_locations</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">modobj</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">location</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">briefName</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">modobj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;App_&quot;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid app name </span><span class="si">{}</span><span class="s2">, could not be found/loaded in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">briefName</span><span class="p">,</span><span class="n">app_locations</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid module name </span><span class="si">{}</span><span class="s2">, could not be found/loaded in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">briefName</span><span class="p">,</span><span class="n">module_locations</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">doreload</span><span class="p">:</span>
+            <span class="n">reload</span><span class="p">(</span><span class="n">modobj</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">modobj</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+                    <span class="n">reload</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">modclassname</span> <span class="o">=</span> <span class="n">mod_class_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">modclass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">modobj</span><span class="p">,</span><span class="n">modclassname</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Class </span><span class="si">{}</span><span class="s2"> not found in module </span><span class="si">{}</span><span class="s2">; perhaps you should set the entry point in settings.Jarvis.module_class_map?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modclassname</span><span class="p">,</span><span class="n">modobj</span><span class="o">.</span><span class="vm">__file__</span><span class="p">))</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">modclass</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="get_api_classes"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.get_api_classes">[docs]</a><span class="k">def</span> <span class="nf">get_api_classes</span><span class="p">(</span><span class="n">names</span><span class="p">,</span><span class="n">doreload</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a dict whose keys are modules and values are APILayer classes,</span>
+<span class="sd">    for the modules named in names.  If doreload=True, the Python modules will</span>
+<span class="sd">    be reloaded to reflect any changes made since the Python kernel started</span>
+<span class="sd">    (default).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+    <span class="kn">from</span> <span class="nn">importlib</span> <span class="k">import</span> <span class="n">import_module</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">importlib</span> <span class="k">import</span> <span class="n">reload</span>
+    <span class="n">module_locations</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;module_locations&#39;</span><span class="p">]</span>
+    <span class="n">mod_class_map</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;module_class_map&#39;</span><span class="p">]</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="n">briefName</span> <span class="o">=</span> <span class="n">name</span>  <span class="c1">#this is the name used by the Python module</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;App_&#39;</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;trina.jarvis.get_api_classes: requested an API for an App class?&#39;</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">modobj</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">module_locations</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">modobj</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">location</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">briefName</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">modobj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid module name </span><span class="si">{}</span><span class="s2">, could not be found/loaded in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">briefName</span><span class="p">,</span><span class="n">module_locations</span><span class="p">))</span>
+        <span class="c1">#for safety</span>
+        <span class="k">if</span> <span class="n">doreload</span><span class="p">:</span>
+            <span class="n">reload</span><span class="p">(</span><span class="n">modobj</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">modobj</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+                    <span class="n">reload</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">modclassname</span> <span class="o">=</span> <span class="n">mod_class_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">modclass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">modobj</span><span class="p">,</span><span class="n">modclassname</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Class </span><span class="si">{}</span><span class="s2"> not found in module </span><span class="si">{}</span><span class="s2">; perhaps you should set the entry point in settings.Jarvis.module_class_map?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modclassname</span><span class="p">,</span><span class="n">modobj</span><span class="o">.</span><span class="vm">__file__</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">apiclass</span> <span class="o">=</span> <span class="n">modclass</span><span class="o">.</span><span class="n">apiClass</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;trina.jarvis.get_api_classes: Module </span><span class="si">{}</span><span class="s1">, file </span><span class="si">{}</span><span class="s1"> does not have apiClass method, skipping&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modclassname</span><span class="p">,</span><span class="n">modclass</span><span class="o">.</span><span class="vm">__file__</span><span class="p">))</span>
+            <span class="k">continue</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">apiclass</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="RedisQueue"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.RedisQueue">[docs]</a><span class="k">class</span> <span class="nc">RedisQueue</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Pushes from / reads from a module-specific queue on a Redis server.</span>
+
+<span class="sd">    Thread-safe (redis clients are assumed thread safe).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">,</span> <span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="mi">6379</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">Redis</span><span class="p">(</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">port</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+<div class="viewcode-block" id="RedisQueue.push"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.RedisQueue.push">[docs]</a>    <span class="k">def</span> <span class="nf">push</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">item</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">rpush</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span><span class="n">item</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="RedisQueueReader"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.RedisQueueReader">[docs]</a><span class="k">class</span> <span class="nc">RedisQueueReader</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Write from a queue on a Redis server.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="mi">6379</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">Redis</span><span class="p">(</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">port</span><span class="p">)</span>
+<div class="viewcode-block" id="RedisQueueReader.read"><a class="viewcode-back" href="../../../trina.jarvis.html#trina.jarvis.jarvis.RedisQueueReader.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span> <span class="k">as</span> <span class="n">pipe</span><span class="p">:</span>
+            <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">llen</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">times</span><span class="p">):</span>
+                <span class="n">pipe</span><span class="o">.</span><span class="n">lpop</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">res</span></div></div>
+        
+
+<span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">Jarvis</span><span class="p">(</span><span class="s1">&#39;untitled&#39;</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

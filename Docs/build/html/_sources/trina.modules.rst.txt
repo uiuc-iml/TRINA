@@ -1,0 +1,23 @@
+trina.modules package
+=====================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   trina.modules.Example
+   trina.modules.Logger
+   trina.modules.Motion
+   trina.modules.Sensor
+   trina.modules.UI
+   trina.modules.apps
+
+Module contents
+---------------
+
+.. automodule:: trina.modules
+   :members:
+   :undoc-members:
+   :show-inheritance:

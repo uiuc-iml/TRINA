@@ -1,0 +1,22 @@
+trina.modules.apps.Example package
+==================================
+
+Submodules
+----------
+
+trina.modules.apps.Example.module module
+----------------------------------------
+
+.. automodule:: trina.modules.apps.Example.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.apps.Example
+   :members:
+   :undoc-members:
+   :show-inheritance:

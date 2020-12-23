@@ -1,0 +1,918 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.jarvis package &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="trina.modules package" href="trina.modules.html" />
+    <link rel="prev" title="trina package" href="trina.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="trina.html">trina package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="trina.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">trina.jarvis package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.jarvis.api">trina.jarvis.api module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.jarvis.jarvis">trina.jarvis.jarvis module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.jarvis.module">trina.jarvis.module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.jarvis">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.html">trina.modules package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.sensors.html">trina.sensors package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.utils.html">trina.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.command_server">trina.command_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.settings">trina.settings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.setup">trina.setup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.state_server">trina.state_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="trina.html">trina package</a> &raquo;</li>
+        
+      <li>trina.jarvis package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/trina.jarvis.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="trina-jarvis-package">
+<h1>trina.jarvis package<a class="headerlink" href="#trina-jarvis-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trina.jarvis.api">
+<span id="trina-jarvis-api-module"></span><h2>trina.jarvis.api module<a class="headerlink" href="#module-trina.jarvis.api" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.jarvis.api.APILayer">
+<em class="property">class </em><code class="sig-prename descclassname">trina.jarvis.api.</code><code class="sig-name descname">APILayer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">caller_name</span></em>, <em class="sig-param"><span class="n">state_server</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>An APILayer is an abstract base class that should provide a frontend
+for an APIModule for other modules to use.  These methods may interact
+with the APIModule in various ways, as designed by the implementer of the
+APIModule.</p>
+<p>The communication model is multi-paradigm.  Get/set, RPC, direct object
+access, shared memory, and other implementations are possible.</p>
+<p><strong>For users</strong></p>
+<ul class="simple">
+<li><p>You will need to read the implementer’s documentation of the methods that
+they choose to expose for their API.</p></li>
+<li><p>Be careful if you are using multiprocessing (e.g., startProcess) to check
+that APIs are available across process boundaries using the
+<a class="reference internal" href="#trina.jarvis.api.APILayer.interprocess" title="trina.jarvis.api.APILayer.interprocess"><code class="xref py py-func docutils literal notranslate"><span class="pre">interprocess()</span></code></a> method. (<code class="xref py py-func docutils literal notranslate"><span class="pre">APIModule.startProcess()</span></code> will check
+this for you and eliminate any APIs that do not support inter-process
+communication.)</p></li>
+</ul>
+<p><strong>For API implementers</strong></p>
+<ul class="simple">
+<li><p>Your subclass should implement methods and clear docstrings for each
+available method.</p></li>
+<li><p>In each of your methods, it is recommended that you implement your API
+using <a class="reference internal" href="#trina.jarvis.api.APILayer._redisGet" title="trina.jarvis.api.APILayer._redisGet"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisGet()</span></code></a>, <a class="reference internal" href="#trina.jarvis.api.APILayer._redisSet" title="trina.jarvis.api.APILayer._redisSet"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisSet()</span></code></a>, <a class="reference internal" href="#trina.jarvis.api.APILayer._redisRpc" title="trina.jarvis.api.APILayer._redisRpc"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisRpc()</span></code></a>,
+<a class="reference internal" href="#trina.jarvis.api.APILayer._redisRpcNoReply" title="trina.jarvis.api.APILayer._redisRpcNoReply"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisRpcNoReply()</span></code></a>, or <a class="reference internal" href="#trina.jarvis.api.APILayer._moduleCommand" title="trina.jarvis.api.APILayer._moduleCommand"><code class="xref py py-func docutils literal notranslate"><span class="pre">_moduleCommand()</span></code></a>.</p>
+<ul>
+<li><p><a class="reference internal" href="#trina.jarvis.api.APILayer._redisGet" title="trina.jarvis.api.APILayer._redisGet"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisGet()</span></code></a> retrieves a key from the Redis database.  (In your
+API-module, you will probably set the same key for users to read.)</p></li>
+<li><p><a class="reference internal" href="#trina.jarvis.api.APILayer._redisSet" title="trina.jarvis.api.APILayer._redisSet"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisSet()</span></code></a> sets a key from the Redis database.  (In your API-
+module, you will probably read from this key to see what users have
+set.)</p></li>
+<li><p><a class="reference internal" href="#trina.jarvis.api.APILayer._redisRpc" title="trina.jarvis.api.APILayer._redisRpc"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisRpc()</span></code></a> uses an RPC mechanism to allow other users to call
+functions in your module.  By default, if you implement a method
+<code class="docutils literal notranslate"><span class="pre">foo</span></code> in your module and your API implements <code class="docutils literal notranslate"><span class="pre">foo(self,*args)</span></code>
+using <code class="docutils literal notranslate"><span class="pre">return</span> <span class="pre">self._redisRpc(&quot;foo&quot;,*args)</span></code>, then RPC will call your
+module’s <code class="docutils literal notranslate"><span class="pre">foo</span></code> and return the result to the caller.</p></li>
+<li><p><a class="reference internal" href="#trina.jarvis.api.APILayer._redisRpcNoReply" title="trina.jarvis.api.APILayer._redisRpcNoReply"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisRpcNoReply()</span></code></a> is the same as <a class="reference internal" href="#trina.jarvis.api.APILayer._redisRpc" title="trina.jarvis.api.APILayer._redisRpc"><code class="xref py py-func docutils literal notranslate"><span class="pre">_redisRpc()</span></code></a> but does not
+request a return value.</p></li>
+<li><p><a class="reference internal" href="#trina.jarvis.api.APILayer._moduleCommand" title="trina.jarvis.api.APILayer._moduleCommand"><code class="xref py py-func docutils literal notranslate"><span class="pre">_moduleCommand()</span></code></a> uses a lightweight, one-way RPC similar to
+_redisRpcNoReply. It currently is used to communicate with the Command
+Server and Motion Server, but may be deprecated in the future.</p></li>
+</ul>
+</li>
+<li><p>For performance, you can pass shared objects to your API subclass.
+However, you must be careful with making accesses thread-safe!  You
+should also overload <a class="reference internal" href="#trina.jarvis.api.APILayer.interprocess" title="trina.jarvis.api.APILayer.interprocess"><code class="xref py py-func docutils literal notranslate"><span class="pre">interprocess()</span></code></a> to indicate that the API is not
+available in the new process.</p></li>
+</ul>
+<p>All arguments to these functions should have types compatible with JSON
+(bool, int, float, str, list, and dict).  _redisGet / _redisSet can also
+accept numpy arrays.  If you wish to allow your API to accept / return
+other datatypes, you must do the conversion.</p>
+<p>Note that if you need to respond to sets/gets differently depending on the
+other module making the call, use <code class="docutils literal notranslate"><span class="pre">self._caller_name</span></code> in the path.</p>
+<p>RPC calls typically return a <a class="reference internal" href="#trina.jarvis.api.RpcPromise" title="trina.jarvis.api.RpcPromise"><code class="xref py py-class docutils literal notranslate"><span class="pre">RpcPromise</span></code></a> object, which the caller can
+poll using <a class="reference internal" href="#trina.jarvis.api.RpcPromise.available" title="trina.jarvis.api.RpcPromise.available"><code class="xref py py-func docutils literal notranslate"><span class="pre">RpcPromise.available()</span></code></a> or wait on using
+RpcPromise.wait().  If you really wish to have your API call block
+on an RPC call, your implementation can end with
+<cite>return self._redisRpc(“foo”,*args).wait()</cite>.  Note that this is dangerous
+in case your module hangs or goes down.</p>
+<dl class="py method">
+<dt id="trina.jarvis.api.APILayer._redisVar">
+<code class="sig-name descname">_redisVar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer._redisVar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer._redisVar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an object that you can use as a get-set variable. Typically
+used in __init__ by calling:</p>
+<blockquote>
+<div><p>self.[ITEM_NAME] = self._redisVar([‘PATH’,’TO’,’OBJECT’])</p>
+</div></blockquote>
+<p>and then users can call self.[ITEM_NAME].set(value) and
+self.[ITEM_NAME].get(value).</p>
+<p>Slightly faster than implementing API calls as separate _redisGet /
+_redisSet pairs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APILayer._redisGet">
+<code class="sig-name descname">_redisGet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer._redisGet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer._redisGet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses the Redis server to retrieve a value under one or more keys given
+in path.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APILayer._redisSet">
+<code class="sig-name descname">_redisSet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer._redisSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer._redisSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses the Redis server to set a value from path.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APILayer._redisRpc">
+<code class="sig-name descname">_redisRpc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer._redisRpc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer._redisRpc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses the Redis server to perform an RPC call.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>RpcPromise</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APILayer._redisRpcNoReply">
+<code class="sig-name descname">_redisRpcNoReply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer._redisRpcNoReply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer._redisRpcNoReply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses the Redis server to perform an RPC call with no reply.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APILayer._moduleCommand">
+<code class="sig-name descname">_moduleCommand</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer._moduleCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer._moduleCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calls a function fn implemented in the module, specifically a
+function defined in the result of
+<a class="reference internal" href="#trina.jarvis.api.APIModule.moduleCommandObject" title="trina.jarvis.api.APIModule.moduleCommandObject"><code class="xref py py-func docutils literal notranslate"><span class="pre">APIModule.moduleCommandObject()</span></code></a>. <code class="docutils literal notranslate"><span class="pre">fn(*args)</span></code> is expected to
+have no return value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APILayer.interprocess">
+<em class="property">classmethod </em><code class="sig-name descname">interprocess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer.interprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer.interprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if the API is safe to pass across processes.  Returns
+True by default; implementers that share objects should overload and
+return False.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APILayer.name">
+<em class="property">classmethod </em><code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APILayer.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APILayer.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an identifier that will be used to refer to the API under
+jarvis and the state server.  Subclass may override this, otherwise
+the identifier is lowercase(classname)-‘api’</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.jarvis.api.APIModule">
+<em class="property">class </em><code class="sig-prename descclassname">trina.jarvis.api.</code><code class="sig-name descname">APIModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Jarvis</span></em>, <em class="sig-param"><span class="n">Verbose</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trina.jarvis.module.Module" title="trina.jarvis.module.Module"><code class="xref py py-class docutils literal notranslate"><span class="pre">trina.jarvis.module.Module</span></code></a></p>
+<p>Base class for  modules that implement an API that can be used by
+other modules (apps and API-modules) through the Jarvis handle.</p>
+<p>The API is exposed using the <a class="reference internal" href="#trina.jarvis.api.APIModule.api" title="trina.jarvis.api.APIModule.api"><code class="xref py py-func docutils literal notranslate"><span class="pre">api()</span></code></a> call.  This produces a APILayer
+interface that acts as the “frontend” for your module under other modules’
+jarvis.X objects, where X= the result from <a class="reference internal" href="#trina.jarvis.api.APILayer.name" title="trina.jarvis.api.APILayer.name"><code class="xref py py-func docutils literal notranslate"><span class="pre">APILayer.name()</span></code></a>.</p>
+<p>The API interface must access shared resources in a thread-safe manner.
+The easiest way to do this is to use the Redis server as an intermediary.</p>
+<p><strong>Redis-RPC</strong></p>
+<p>Your API can use the Redis server RPC functionality to safely call
+functions in this module.  A basic RPC server would start a thread to call
+self.processRedisRpcs in the __init__ function, like so:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MathExternalAPI</span><span class="p">(</span><span class="n">Jarvis</span><span class="o">.</span><span class="n">APILayer</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;math&quot;</span>
+
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+        <span class="c1">#add two numbers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redisRpc</span><span class="p">(</span><span class="s2">&quot;add&quot;</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+        <span class="c1">#do something mysterious</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_redisRpc</span><span class="p">(</span><span class="s2">&quot;foo&quot;</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">MathAPIModule</span><span class="p">(</span><span class="n">Jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">jarvis</span><span class="p">):</span>
+        <span class="n">Jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">jarvis</span><span class="p">)</span>
+        <span class="n">rate</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="mf">50.0</span>   <span class="c1">#serve at 50Hz ...</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startMonitorAndRpcThread</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">a</span><span class="o">+</span><span class="n">b</span>
+
+    <span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">a</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="mi">3</span><span class="o">*</span><span class="n">b</span><span class="o">*</span><span class="n">a</span>
+
+    <span class="c1"># One of apiClass or api must be implemented;</span>
+    <span class="c1"># Here are basic implementations for both</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">apiClass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MathExternalAPI</span>
+
+    <span class="k">def</span> <span class="nf">api</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">other_module_name</span><span class="p">,</span><span class="n">other_comm_handles</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MathExternalAPI</span><span class="p">(</span><span class="n">other_module_name</span><span class="p">,</span><span class="n">other_comm_handles</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that it is better practice to set the rate dynamically, something like
+<code class="docutils literal notranslate"><span class="pre">settings.get('MathModule.rate')</span></code>.</p>
+<p><strong>Sharing memory via direct access</strong></p>
+<p>Performance-oriented modules (e.g., sensing, perception) may prefer to
+share objects directly in the API to allow other modules’ threads to read
+directly from them.</p>
+<p>If you choose this route, your API must be carefully designed with locks,
+etc. in order to avoid clashes. The API should <strong>not</strong> use self.jarvis,
+but should instead pass along the argument <code class="docutils literal notranslate"><span class="pre">other_comm_handles</span></code> to the
+APILayer object.</p>
+<p>Also, be aware that only other modules’ threads will be able to access
+your module’s shared objects; <strong>processes will NOT</strong>!  This can be
+confusing because they will receive a copy of the shared module’s objects
+upon fork()-ing, so to the process it will look like they have access
+to these objects, but the access is frozen.</p>
+<p><strong>Sharing memory via SharedMemory objects</strong></p>
+<p>TODO:</p>
+<dl class="py method">
+<dt id="trina.jarvis.api.APIModule.api">
+<code class="sig-name descname">api</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other_module_name</span></em>, <em class="sig-param"><span class="n">other_comm_handles</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule.api"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule.api" title="Permalink to this definition">¶</a></dt>
+<dd><p>To implement an API module, subclass must return a <a class="reference internal" href="#trina.jarvis.api.APILayer" title="trina.jarvis.api.APILayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">APILayer</span></code></a>
+subclass that implements the communication from the other module to
+your module.</p>
+<p>By default, this instantiates the class in <a class="reference internal" href="#trina.jarvis.api.APIModule.apiClass" title="trina.jarvis.api.APIModule.apiClass"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apiClass()</span></code></a>.</p>
+<p>The basic implementation is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="n">MyAPILayer</span><span class="p">(</span><span class="n">other_module_name</span><span class="p">,</span><span class="n">other_comm_handles</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to restrict which modules have access to your module, you
+can raise a NotImplementedError() if the other module should be denied
+access.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APIModule.apiClass">
+<em class="property">classmethod </em><code class="sig-name descname">apiClass</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule.apiClass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule.apiClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the class used to implement the API layer.  Must be
+overridden by subclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APIModule.doRpc">
+<code class="sig-name descname">doRpc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em>, <em class="sig-param"><span class="n">args</span></em>, <em class="sig-param"><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule.doRpc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule.doRpc" title="Permalink to this definition">¶</a></dt>
+<dd><p>To implement an API module that implements RPC calls, subclass may
+override this to process an RPC call.  Default implementation looks for
+<code class="docutils literal notranslate"><span class="pre">fn</span></code> in <code class="docutils literal notranslate"><span class="pre">self</span></code>, and executes the arguments as interpreted as python
+strings.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APIModule.getRedisRpc">
+<code class="sig-name descname">getRedisRpc</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule.getRedisRpc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule.getRedisRpc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manual alternative to <a class="reference internal" href="#trina.jarvis.api.APIModule.processRedisRpcs" title="trina.jarvis.api.APIModule.processRedisRpcs"><code class="xref py py-func docutils literal notranslate"><span class="pre">processRedisRpcs()</span></code></a>: you can periodically
+call this to get individual RPC requests.  This is useful for long-
+running RPC calls where you do not want to block your module.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None if there are no pending RPC requests.
+Otherwise, returns a dict <code class="docutils literal notranslate"><span class="pre">request</span></code> with fields “fn”, “args”,
+“kwargs”, and “id”. It will also have “from” indicating which
+module it’s coming from, but this can be ignored.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>dict or None</p>
+</dd>
+</dl>
+<p>Usage is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getRedisRpc</span><span class="p">()</span>
+<span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doRpc</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s1">&#39;fn&#39;</span><span class="p">],</span><span class="n">request</span><span class="p">[</span><span class="n">args</span><span class="p">],</span><span class="n">request</span><span class="p">[</span><span class="n">kwargs</span><span class="p">])</span>
+<span class="k">if</span> <span class="n">request</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">setRedisRpc</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span><span class="n">res</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Once you handle the request, you must pass the contents of
+<code class="docutils literal notranslate"><span class="pre">request['id']</span></code> back to <code class="xref py py-func docutils literal notranslate"><span class="pre">setRedisRpc()</span></code> as its first argument, if it
+is not None.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APIModule.moduleCommandObject">
+<code class="sig-name descname">moduleCommandObject</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule.moduleCommandObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule.moduleCommandObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the APILayer returned by <a class="reference internal" href="#trina.jarvis.api.APIModule.api" title="trina.jarvis.api.APIModule.api"><code class="xref py py-func docutils literal notranslate"><span class="pre">api()</span></code></a> implements functions using
+<a class="reference internal" href="#trina.jarvis.api.APILayer._moduleCommand" title="trina.jarvis.api.APILayer._moduleCommand"><code class="xref py py-func docutils literal notranslate"><span class="pre">APILayer._moduleCommand()</span></code></a>, return a pair <code class="docutils literal notranslate"><span class="pre">(api_name,object)</span></code>
+object whose methods will be called.</p>
+<p>Note: the object’s methods will be called from an arbitrary non-module
+thread, so make sure the methods are thread-safe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APIModule.processRedisRpcs">
+<code class="sig-name descname">processRedisRpcs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule.processRedisRpcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule.processRedisRpcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>If you are implementing an API module that implements _redisRpc
+calls, your main module must this periodically to process redis-RPC
+calls.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APIModule.setRedisRPC">
+<code class="sig-name descname">setRedisRPC</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">id</span></em>, <em class="sig-param"><span class="n">reply</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule.setRedisRPC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule.setRedisRPC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Manually replies to a previous request from <a class="reference internal" href="#trina.jarvis.api.APIModule.getRedisRpc" title="trina.jarvis.api.APIModule.getRedisRpc"><code class="xref py py-func docutils literal notranslate"><span class="pre">getRedisRpc()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.APIModule.startMonitorAndRpcThread">
+<code class="sig-name descname">startMonitorAndRpcThread</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">0.01</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'monitor+rpc'</span></em>, <em class="sig-param"><span class="n">dolock</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">onLoop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">onActivate</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">onDeactivate</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#APIModule.startMonitorAndRpcThread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.APIModule.startMonitorAndRpcThread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Same functions as the normal monitor thread, but also calls
+<a class="reference internal" href="#trina.jarvis.api.APIModule.processRedisRpcs" title="trina.jarvis.api.APIModule.processRedisRpcs"><code class="xref py py-func docutils literal notranslate"><span class="pre">processRedisRpcs()</span></code></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.jarvis.api.RpcPromise">
+<em class="property">class </em><code class="sig-prename descclassname">trina.jarvis.api.</code><code class="sig-name descname">RpcPromise</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">server_key</span></em>, <em class="sig-param"><span class="n">api</span></em>, <em class="sig-param"><span class="n">fn</span></em>, <em class="sig-param"><span class="n">id</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#RpcPromise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.RpcPromise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A placeholder for an RPC result.  Can wait passively by testing</p>
+<blockquote>
+<div><dl class="simple">
+<dt>if promise:</dt><dd><p>val = promise.value()</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>or blocking until it arrives using:</p>
+<blockquote>
+<div><p>val = promise.wait()</p>
+</div></blockquote>
+<p>If you wish to put a timeout on wait, use <cite>val = promise.wait(timeout)</cite>.</p>
+<p>value() will raise a RuntimeError if the value is not available yet.</p>
+<p>wait(timeout) will raise a RpcPromiseTimeout exception if the
+timeout is reached without a reply.</p>
+<dl class="py method">
+<dt id="trina.jarvis.api.RpcPromise.available">
+<code class="sig-name descname">available</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#RpcPromise.available"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.RpcPromise.available" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.RpcPromise.value">
+<code class="sig-name descname">value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#RpcPromise.value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.RpcPromise.value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.api.RpcPromise.wait">
+<code class="sig-name descname">wait</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">resolution</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#RpcPromise.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.RpcPromise.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocks until the response is available.  If you wish to put a timeout
+on this call, use the timeout argument.  For finer control on the polling
+frequency, change the resolution argument.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="trina.jarvis.api.RpcPromiseTimeout">
+<em class="property">exception </em><code class="sig-prename descclassname">trina.jarvis.api.</code><code class="sig-name descname">RpcPromiseTimeout</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">promise</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/api.html#RpcPromiseTimeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.api.RpcPromiseTimeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.jarvis.jarvis">
+<span id="trina-jarvis-jarvis-module"></span><h2>trina.jarvis.jarvis module<a class="headerlink" href="#module-trina.jarvis.jarvis" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.jarvis.jarvis.Jarvis">
+<em class="property">class </em><code class="sig-prename descclassname">trina.jarvis.jarvis.</code><code class="sig-name descname">Jarvis</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">moduleName</span></em>, <em class="sig-param"><span class="n">apis</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">server</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trina.jarvis.api.APILayer" title="trina.jarvis.api.APILayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">trina.jarvis.api.APILayer</span></code></a></p>
+<p>Currently implemented APIs are command_server (top level APIs), motion, and sensors.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">jarvis</span> <span class="o">=</span> <span class="p">[</span><span class="n">Jarvis</span> <span class="n">instance</span><span class="p">,</span> <span class="nb">set</span> <span class="n">up</span> <span class="k">for</span> <span class="n">you</span> <span class="n">by</span> <span class="n">command_server</span><span class="p">]</span>
+<span class="n">components</span> <span class="o">=</span> <span class="n">jarvis</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">components</span><span class="p">()</span>
+<span class="n">mode</span> <span class="o">=</span> <span class="n">jarvis</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">mode</span><span class="p">()</span>
+<span class="n">jarvis</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">getRayClick</span><span class="p">()</span>
+<span class="n">etc</span><span class="o">...</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.activateModule">
+<code class="sig-name descname">activateModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.activateModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.activateModule" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.deactivateModule">
+<code class="sig-name descname">deactivateModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.deactivateModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.deactivateModule" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.enableHealthChecks">
+<code class="sig-name descname">enableHealthChecks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">status</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.enableHealthChecks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.enableHealthChecks" title="Permalink to this definition">¶</a></dt>
+<dd><p>If you are using a dummy module, should disable health checks.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.getActivityStatus">
+<code class="sig-name descname">getActivityStatus</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.getActivityStatus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.getActivityStatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the module activity status, as controlled by Command Server.
+The module should respect a request to switch to ‘idle’ by stopping
+internal processes promptly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.getRobotState">
+<code class="sig-name descname">getRobotState</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.getRobotState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.getRobotState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return robot state dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.getSimulatedWorld">
+<code class="sig-name descname">getSimulatedWorld</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.getSimulatedWorld"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.getSimulatedWorld" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the simulated world</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The Klampt world of the simulated robot.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.getTrinaTime">
+<code class="sig-name descname">getTrinaTime</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.getTrinaTime"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.getTrinaTime" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the trina time</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.getUIState">
+<code class="sig-name descname">getUIState</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.getUIState"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.getUIState" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return UI state dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.log_health">
+<code class="sig-name descname">log_health</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">status</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.log_health"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.log_health" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the health log of the module</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.name">
+<em class="property">classmethod </em><code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an identifier that will be used to refer to the API under
+jarvis and the state server.  Subclass may override this, otherwise
+the identifier is lowercase(classname)-‘api’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.require">
+<code class="sig-name descname">require</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">modules</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.require"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.require" title="Permalink to this definition">¶</a></dt>
+<dd><p>Declares that a certain set of APIs are required by this module.</p>
+<p>Returns the list of api names provided by these modules, or None
+if the corresponding module could not be found.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.restartModule">
+<code class="sig-name descname">restartModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">otherModule</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.restartModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.restartModule" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.Jarvis.switchModuleActivity">
+<code class="sig-name descname">switchModuleActivity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">to_activate</span></em>, <em class="sig-param"><span class="n">to_deactivate</span><span class="o">=</span><span class="default_value">[]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#Jarvis.switchModuleActivity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.Jarvis.switchModuleActivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changes the status of one or more modules</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.jarvis.jarvis.RedisQueue">
+<em class="property">class </em><code class="sig-prename descclassname">trina.jarvis.jarvis.</code><code class="sig-name descname">RedisQueue</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">host</span><span class="o">=</span><span class="default_value">'localhost'</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">6379</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#RedisQueue"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.RedisQueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Pushes from / reads from a module-specific queue on a Redis server.</p>
+<p>Thread-safe (redis clients are assumed thread safe).</p>
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.RedisQueue.push">
+<code class="sig-name descname">push</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#RedisQueue.push"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.RedisQueue.push" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.jarvis.jarvis.RedisQueueReader">
+<em class="property">class </em><code class="sig-prename descclassname">trina.jarvis.jarvis.</code><code class="sig-name descname">RedisQueueReader</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">host</span><span class="o">=</span><span class="default_value">'localhost'</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">6379</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#RedisQueueReader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.RedisQueueReader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Write from a queue on a Redis server.</p>
+<dl class="py method">
+<dt id="trina.jarvis.jarvis.RedisQueueReader.read">
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#RedisQueueReader.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.RedisQueueReader.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.jarvis.jarvis.get_api_classes">
+<code class="sig-prename descclassname">trina.jarvis.jarvis.</code><code class="sig-name descname">get_api_classes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">names</span></em>, <em class="sig-param"><span class="n">doreload</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#get_api_classes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.get_api_classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dict whose keys are modules and values are APILayer classes,
+for the modules named in names.  If doreload=True, the Python modules will
+be reloaded to reflect any changes made since the Python kernel started
+(default).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.jarvis.jarvis.get_module_classes">
+<code class="sig-prename descclassname">trina.jarvis.jarvis.</code><code class="sig-name descname">get_module_classes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">names</span></em>, <em class="sig-param"><span class="n">doreload</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/jarvis.html#get_module_classes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.jarvis.get_module_classes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a dict mapping module names to Module classes, for the modules
+named in names.  If doreload=True, the Python modules will be reloaded to
+reflect any changes made since the Python kernel started (default).</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.jarvis.module">
+<span id="trina-jarvis-module-module"></span><h2>trina.jarvis.module module<a class="headerlink" href="#module-trina.jarvis.module" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.jarvis.module.Module">
+<em class="property">class </em><code class="sig-prename descclassname">trina.jarvis.module.</code><code class="sig-name descname">Module</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Jarvis</span></em>, <em class="sig-param"><span class="n">Verbose</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for Jarvis modules (APIModules and Apps).  Provides some
+convenient functions for starting threads and processes, and monitoring the
+health of those threads.</p>
+<p>Your app should implement name(), and in __init__ it should start the module
+activity.  We recommend using startSimpleThread() and/or startProcess() to
+create workers that can be managed by the Command Server, since they are
+compatible with its health monitoring functions.</p>
+<p><strong>Runtime responsibilities</strong></p>
+<p>A Module has the following responsibilities:</p>
+<ol class="arabic simple">
+<li><p>In <code class="docutils literal notranslate"><span class="pre">__init__</span></code>, setup common data and then start one or more threads /
+processes to perform the module’s functions.</p></li>
+<li><p>Log its health (heartbeat) by periodically calling
+<code class="docutils literal notranslate"><span class="pre">jarvis.log_health()</span></code>. Or, call <code class="docutils literal notranslate"><span class="pre">jarvis.enableHealthChecks(False)</span></code>
+on startup to disable health monitoring for this module.</p></li>
+<li><p>Respect the requests in <code class="docutils literal notranslate"><span class="pre">jarvis.getActivityStatus()</span></code> to switch the
+module’s activity to ‘idle’ or ‘active’ status.</p></li>
+<li><p>Monitor the health of its threads in the <code class="docutils literal notranslate"><span class="pre">healthy()</span></code> function.</p></li>
+<li><p>Terminate and release resources when <code class="docutils literal notranslate"><span class="pre">terminate()</span></code> is called.</p></li>
+</ol>
+<p>The Module class provides helpers for items 1, 2, and 3, and automatically
+implements items 4 and 5.</p>
+<p><strong>Module activity</strong></p>
+<p>The module activity is controlled by the Command Server, i.e. by UI and
+debugging modules.  To play nice with other modules, a monitoring thread
+should continually check for activity changes using
+<code class="docutils literal notranslate"><span class="pre">jarvis.getActivityStatus()</span></code>.</p>
+<p>If switched to ‘idle’, the module should no longer access jarvis except
+for health logigng and status checking. Your module will have API interfaces
+revoked from jarvis when it is disabled, so be aware that some jarvis.X
+calls may fail during ‘idle’ status.</p>
+<p>On startup, Command server uses <code class="docutils literal notranslate"><span class="pre">self.status</span></code> to determine whether the
+module should start as active or inactive.  By default, Apps are started
+as ‘idle’ while APIModules are started as ‘active’, but you can override
+this.</p>
+<dl class="py attribute">
+<dt id="trina.jarvis.module.Module.jarvis">
+<code class="sig-name descname">jarvis</code><a class="headerlink" href="#trina.jarvis.module.Module.jarvis" title="Permalink to this definition">¶</a></dt>
+<dd><p>the Jarvis handle. If None is provided, a
+default (temp) module is assumed, which has no access to APIs
+that use shared memory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#trina.jarvis.jarvis.Jarvis" title="trina.jarvis.jarvis.Jarvis">jarvis.Jarvis</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="trina.jarvis.module.Module.status">
+<code class="sig-name descname">status</code><a class="headerlink" href="#trina.jarvis.module.Module.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>typically either ‘idle’ or ‘active’.  Upon construction,
+this tells CommandServer whether the module wishes to be
+considered active or idle on startup.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.healthy">
+<code class="sig-name descname">healthy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.healthy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.healthy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by CommandServer to check the health of the module.  Optional override.</p>
+<p>Thread safe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.name">
+<em class="property">classmethod </em><code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the identifier used to refer to this module in Jarvis.
+Default is the class’ name.  Optional override.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.startCustomThread">
+<code class="sig-name descname">startCustomThread</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value"></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.startCustomThread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.startCustomThread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts an unmanaged thread.  You are warned that to properly terminate,
+you will need to overload terminate() and close this thread manually.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.startMonitorThread">
+<code class="sig-name descname">startMonitorThread</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">0.1</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'monitor'</span></em>, <em class="sig-param"><span class="n">dolock</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">onLoop</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">onActivate</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">onDeactivate</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.startMonitorThread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.startMonitorThread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts a thread to update the module’s health and status. This
+handles heartbeats and activity status updates.</p>
+<p>The dt, name, and dolock arguments are the same as in
+<a class="reference internal" href="#trina.jarvis.module.Module.startSimpleThread" title="trina.jarvis.module.Module.startSimpleThread"><code class="xref py py-func docutils literal notranslate"><span class="pre">startSimpleThread()</span></code></a>.</p>
+<p>To add additional calls per loop, provide a function as onLoop.</p>
+<p>To call a funciton when the module is activated / deactivated, provide
+onActivate / onDeactivate.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.startProcess">
+<code class="sig-name descname">startProcess</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value"></span></em>, <em class="sig-param"><span class="n">cleanup</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.startProcess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.startProcess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts a new process with the function <code class="docutils literal notranslate"><span class="pre">target</span></code>, taking arguments
+<code class="docutils literal notranslate"><span class="pre">args</span></code>. It is assumed that the process will run throughout the life
+of this module.</p>
+<p>An optional cleanup function <code class="docutils literal notranslate"><span class="pre">cleanup(*args)</span></code> can be provided.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The target function cannot communicate to the calling thread or any
+other process through the “self” object. Instead, the class
+constructor must use some inter-process communication primitives
+in the <code class="docutils literal notranslate"><span class="pre">multiprocessing</span></code> module.</p>
+</div>
+<p>Thread safe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.startSimpleThread">
+<code class="sig-name descname">startSimpleThread</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">loopfunc</span></em>, <em class="sig-param"><span class="n">dt</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value"></span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">initfunc</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dolock</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.startSimpleThread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.startSimpleThread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts a simple thread that repeatedly calls <code class="docutils literal notranslate"><span class="pre">loopfunc(*args)</span></code>
+every <code class="docutils literal notranslate"><span class="pre">dt</span></code> seconds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>loopfunc</strong> (<em>callable</em>) – the function called every loop</p></li>
+<li><p><strong>dt</strong> (<em>float</em>) – the frequency of the loop.</p></li>
+<li><p><strong>args</strong> (<em>tuple</em><em>, </em><em>optional</em>) – the arguments passed to <code class="docutils literal notranslate"><span class="pre">loopfunc</span></code></p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – an identifier that can be used to refer to
+the thread</p></li>
+<li><p><strong>initfunc</strong> (<em>callable</em><em>, </em><em>optional</em>) – if given, this is called within the
+created thread.</p></li>
+<li><p><strong>dolock</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True (default), this uses a module-wide
+lock (<code class="docutils literal notranslate"><span class="pre">self._lock</span></code>) that allows <code class="docutils literal notranslate"><span class="pre">loopfunc</span></code> to access
+<code class="docutils literal notranslate"><span class="pre">self</span></code> safely.</p></li>
+</ul>
+</dd>
+</dl>
+<p>The default <code class="docutils literal notranslate"><span class="pre">dolock=True</span></code> is the safest option.  However, if
+<code class="docutils literal notranslate"><span class="pre">loopfunc</span></code> blocks or has long-running calls, then you may want to set
+<code class="docutils literal notranslate"><span class="pre">dolock</span> <span class="pre">=</span> <span class="pre">False</span></code> and implement your own locking mechanisms for better
+performance.</p>
+<p>Thread safe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.stopProcess">
+<code class="sig-name descname">stopProcess</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">index</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.stopProcess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.stopProcess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Safely stops a process.</p>
+<p>Thread safe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.stopThread">
+<code class="sig-name descname">stopThread</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">index_or_name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.stopThread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.stopThread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Safely stops a thread.</p>
+<p>Thread safe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.jarvis.module.Module.terminate">
+<code class="sig-name descname">terminate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/jarvis/module.html#Module.terminate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.jarvis.module.Module.terminate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by CommandServer to terminate the module.  Optional override
+to close resources.</p>
+<p>Thread safe.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.jarvis">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trina.jarvis" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="trina.modules.html" class="btn btn-neutral float-right" title="trina.modules package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="trina.html" class="btn btn-neutral float-left" title="trina package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

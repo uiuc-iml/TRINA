@@ -1,0 +1,30 @@
+trina.sensors package
+=====================
+
+Submodules
+----------
+
+trina.sensors.realsense module
+------------------------------
+
+.. automodule:: trina.sensors.realsense
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.sensors.zed module
+------------------------
+
+.. automodule:: trina.sensors.zed
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.sensors
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,22 @@
+trina.modules.apps package
+==========================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   trina.modules.apps.DirectTeleOperation
+   trina.modules.apps.Example
+   trina.modules.apps.MoveTo
+   trina.modules.apps.PointClickGrasp
+   trina.modules.apps.PointClickNav
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.apps
+   :members:
+   :undoc-members:
+   :show-inheritance:
