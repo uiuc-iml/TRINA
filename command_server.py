@@ -45,6 +45,7 @@ else:
 from Jarvis import Jarvis
 import redis
 import traceback
+import logging
 
 robot_ip = 'http://localhost:8080'
 
@@ -339,6 +340,8 @@ class CommandServer:
 		self.interface = RedisInterface(host="localhost")
 		self.interface.initialize()
 		self.server = KeyValueStore(self.interface)
+		self.logger = logging.getLogger('reem')
+		self.logger.setLevel(logging.ERROR)
 		# self.server["ROBOT_STATE"] = 0
 		self.server['ROBOT_COMMAND'] = {}
 		self.server['HEALTH_LOG'] = {}
@@ -930,7 +933,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Kinematic',components =  ['left_limb', 'right_limb'], modules = ['DirectTeleOperation', 'StateLogger'], codename = 'bubonic')
+	server = CommandServer(mode = 'Physical',components =  ['left_limb', 'right_limb'], modules = ['DirectTeleOperation'], codename = 'bubonic')
 	#server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
 	print(server.robot.closeLeftRobotiqGripper())

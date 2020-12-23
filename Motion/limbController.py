@@ -41,7 +41,7 @@ class LimbController:
         #Filter wrench
         self._wrench_offset = [0.0]*6
         #self._set_wrench_offset_flag = False
-        self._filter_flag = True
+        self._filter_flag = False
         if self._filter_flag:
 
             self._filtered_wrench = []
@@ -51,7 +51,7 @@ class LimbController:
             self._history_tx = []
             self._history_ty = []
             self._history_tz = []
-            self._history_length = 10#50
+            self._history_length =50#50
 
             ## filter parameters
             Wn=0.08

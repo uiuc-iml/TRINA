@@ -13,6 +13,7 @@ from klampt.math import vectorops,so3,se3
 # from klampt import vis
 from klampt.model import ik, collide
 import numpy as np
+import scipy as sp
 from klampt import WorldModel,vis
 import os
 
@@ -925,7 +926,12 @@ class Motion:
             limb.state.B = np.sqrt(4.0*np.dot(M,K))
         else:
             limb.state.B = np.copy(B)
-        limb.state.Minv = np.linalg.inv(M)
+        Minv = np.linalg.inv(M)
+        limb.state.Minv = Minv
+        tmp = np.vstack( (np.hstack((np.zeros((6,6)), np.eye(6))), 
+            np.hstack((-Minv @ K, -Minv @ B))) )
+        limb.state.A = np.eye(12) - self.dt*tmp
+        # limb.state.LU = sp.linalg.lu_factor(limb.state.A)
         self._controlLoopLock.release()
         return 0
 
@@ -1754,15 +1760,39 @@ class Motion:
         #limit maximum acceleration
         # a = np.clip(a,[-1,-1,-1,-4,-4,-4],[1,1,1,4,4,4])
         a = np.clip(a,[-0.3]*6,[0.3]*6)
+        # print('external wrench:',wrench)
+        # print('spring wrench:',np.dot(K,e))
+        # print('mass v:',v)
+        # print('damping wrench:',np.dot(B,e_dot))
+        # print('error:',e)
+        # print('simulated accel:',a)
         v = v + a*dt
         #limit maximum velocity
-        v = np.clip(v,[-1,-1,-1,-2,-2,-2],[1,1,1,2,2,2])
+        v = np.clip(v,[-1,-1,-1,-1,-1,-1],[1,1,1,1,1,1])
         dx = v*dt
         # print('dx',dx)
-        # T = se3.mul(T_curr,(so3.from_moment(dx[3:6]),dx[0:3]))
         T = se3.mul((so3.from_moment(dx[3:6]),dx[0:3]),T_curr)
         return T,v.tolist()
 
+    def _simulate(self,wrench,A_mat,m_inv,K,B,T_curr,x_dot_curr,T_g,x_dot_g,dt):
+        e = se3.error(T_g,T_curr)
+        e = np.array(e[3:6] + e[0:3])
+        x_dot_g = np.array(x_dot_g)
+        v = np.array(x_dot_curr)
+        e_dot = x_dot_g - v
+        affine_term = (np.concatenate((e, e_dot)) 
+            + np.concatenate((np.zeros(6), self.dt * m_inv @ wrench)))
+        e_next = np.linalg.solve(A_mat, affine_term)
+        # e_next = A_mat @ np.concatenate((e, e_dot)) + affine_term
+        x_next = se3.mul(T_g, (so3.from_moment(e_next[3:6]), e_next[0:3]))
+        v_next = x_dot_g - e_next[6:]
+        print("error", e)
+        print("e_next", e_next)
+
+        print("v_next", v_next)
+        print("del v", self.dt * m_inv @ wrench)
+        print("------------------------------------------")
+        return x_next, v_next
 
     def _impedance_drive(self, limb):
         """Calculate the next goal for impedance control
@@ -1807,17 +1837,23 @@ class Motion:
                 state.increaseB = True
 
             # print(f"DAMPING STATE: {[state.increaseB,mag]}")
-            if state.increaseB:
-                effective_b *= 20
+            # if state.increaseB:
+            #     effective_b *= 20
 
             for i in range(6):
                 if state.deadband[i] > 0:
                     if math.fabs(wrench[i]) < state.deadband[i]:
                         wrench[i] = 0
-
-            state.T_mass, state.x_dot_mass = self._simulate_2(wrench = wrench,m_inv = state.Minv,\
-                K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
-                T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt) 
+            # start = time.monotonic()
+            N = 20
+            for i in range(N):
+                # state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, A_mat=state.A, m_inv = state.Minv,\
+                #     K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
+                #     T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N) 
+                state.T_mass, state.x_dot_mass = self._simulate_2(wrench = wrench, m_inv = state.Minv,\
+                    K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
+                    T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N) 
+            # print("Time: ", time.monotonic() - start)
             state.counter += 1
 
             state.prev_wrench = np.array(wrench)
@@ -1852,16 +1888,43 @@ class Motion:
         elif len(right_limb):
             return TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb.state.sensedq, right_limb = right_limb)
 
+# def imp_sim(t, x):
+
+
 if __name__=="__main__":
 
     ###Read the current position ###
     robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
     robot.startup()
     time.sleep(0.05)
-    robot.setLeftLimbPositionLinear([-4.02248,0.1441026,1.58109,-0.254,0.9090495,0.46262],30)
+    # robot.setLeftLimbPositionLinear([-4.02248,0.1441026,1.58109,-0.254,0.9090495,0.46262],30)
     # print(robot.getKlamptSensedPosition())
     # with open('tmp.txt', 'a') as f:
     #     f.write(f"\n{str(robot.getKlamptSensedPosition())}")
-    time.sleep(30.1)
+    left_pos = robot.sensedLeftEETransform()
+    K = np.diag([200.0, 200.0, 200.0, 1000, 1000, 1000])
+    # K = np.zeros((6,6))
+    # K[3:6,3:6] = np.eye(3)*1000
+
+    M = 1*np.eye(6)#*5.0
+    M[3,3] = 1.0
+    M[4,4] = 1.0
+    M[5,5] = 1.0
+
+    B = 3.0*np.sqrt(4.0*np.dot(M,K))
+    # B = 30*np.eye(6)
+    # B[3:6,3:6] = 0.1*B[3:6,3:6]
+    # self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
+    # self.M = np.diag((2,2,2,1,1,1))
+    # self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
+    # K = K.tolist()
+    # M = M.tolist()
+    # B = B.tolist()
+    robot.setLeftEETransformImpedance(left_pos, K, M, B)
+    # robot.setLeftEEInertialTransform(left_pos, 0.1)
+    print("Holding position")
+    while True:
+        # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
+        time.sleep(0.01)
     robot.shutdown()
 

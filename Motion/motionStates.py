@@ -231,6 +231,10 @@ class LimbState:
         self.K = []
         self.B = []
         self.Minv = []
+        # I - delta_t A and its LU decomposition to do backward euler
+        # A = [[0, 1], [-Minv K, -Minv B]]
+        self.A = None
+        self.LU = None
         #mass transform and velocity
         self.T_mass = []
         self.x_dot_mass = []

@@ -93,9 +93,9 @@ class MotionClient:
 		"""Return the transform w.r.t. the base frame"""
 		return self.s.sensedLeftEETransform(tool_center)
 
-	def sensedRightEETransform(self):
+	def sensedRightEETransform(self, tool_center=[0,0,0]):
 		"""Return the transform w.r.t. the base frame"""
-		return self.s.sensedRightEETransform()
+		return self.s.sensedRightEETransform(tool_center)
 
 
 	def sensedLeftLimbVelocity(self):
@@ -209,7 +209,7 @@ class MotionClient:
 		# M = M.tolist()
 		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
 
-	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0.0]*3):
 		# K = K.tolist()
 		# B = B.tolist()
 		# M = M.tolist()

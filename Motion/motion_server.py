@@ -191,9 +191,9 @@ def _sensedLeftEETransform(tool_center=[0,0,0]):
 
 @loggedMethod
 @xmlrpcMethod("sensedRightEETransform")
-def _sensedRightEETransform():
+def _sensedRightEETransform(tool_center=[0,0,0]):
 	global robot
-	return robot.sensedRightEETransform()
+	return robot.sensedRightEETransform(tool_center=[0,0,0])
 
 @loggedMethod
 @xmlrpcMethod("sensedLeftLimbVelocity")
@@ -408,12 +408,12 @@ def _setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center):
 
 @loggedMethod
 @xmlrpcMethod("setRightEETransformImpedance")
-def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband):
+def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center):
 	global robot
 	K = np.array(K)
 	B = np.array(B)
 	M = np.array(M)
-	return robot.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
+	return robot.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
 
 @loggedMethod
 @xmlrpcMethod("setLeftLimbPositionImpedance")

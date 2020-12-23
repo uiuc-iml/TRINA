@@ -94,7 +94,7 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
 
-		self.K = np.diag([200.0,200.0,200.0,5.0,5.0,5.0])
+		self.K = np.diag([200.0, 200.0, 200.0, 1000.0, 1000.0, 1000.0])
 
 		self.M = np.eye(6)*5.0
 		self.M[3,3] = 1.0
@@ -102,14 +102,15 @@ class DirectTeleOperation:
 		self.M[5,5] = 1.0
 
 		self.B = 2.0*np.sqrt(4.0*np.dot(self.M,self.K))
-		self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
+		self.B[3:6,3:6] /= 2.0
+		# self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
 		# self.M = np.diag((2,2,2,1,1,1))
 		# self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
 		self.K = self.K.tolist()
 		self.M = self.M.tolist()
 		self.B = self.B.tolist()
 
-		self.tool = np.array([0.15,0.0,0.0], dtype=np.float64)
+		self.tool = np.array([0.0,0.0,0.0], dtype=np.float64)
 		self.sensitivity = 1.0
 		self.last_sens_button_state = False
 		self.sens_state = 0
@@ -306,11 +307,15 @@ class DirectTeleOperation:
 							limb.sensedEETransform(tool_center=self.tool.tolist()),
 							self.K, self.M, [[10*x for x in a] for a in self.B],
 							tool_center=self.tool.tolist())
+						# limb.setEETransformImpedance(
+						# 	limb.sensedEETransform(tool_center=self.tool.tolist()),
+						# 	np.zeros((6,6)).tolist(), self.M, [[100*x for x in a] for a in self.B],
+						# 	tool_center=self.tool.tolist())
 
 			if(self.base_active):
 				self.baseControl()
+			self.control('position')
 
-			self.control('impedance')
 	def baseControl(self):
 		'''controlling base movement'''
 		base_velocity = [0.1*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.1*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
