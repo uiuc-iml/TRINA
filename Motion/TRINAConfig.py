@@ -79,6 +79,8 @@ def get_wrench_R_right(name):
         raise ValueError("Invalid name of robot? "+name)
     return
 
+def get_base_dofs():
+    return [0,1,3]
 
 def get_left_gravity_vector_upright(name):
     if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):

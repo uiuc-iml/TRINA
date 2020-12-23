@@ -63,7 +63,8 @@ class MotionClient:
 		#print("sending startup")
 		return res
 
-	def setPosition(self,q):
+	def setKlamptPosition(self,q,duration):
+		self.s.setKlamptPosition(q,duration)
 		return 0
 
 	def setLeftLimbPosition(self,q):

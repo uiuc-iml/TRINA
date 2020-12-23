@@ -91,6 +91,11 @@ def _startup():
 	global robot
 	return robot.startup()
 
+def _setKlamptPosition(q,duration):
+	global robot
+	robot.setKlamptPosition(q,duration)
+	return 0
+
 def _setLeftLimbPosition(q):
 	global robot
 	robot.setLeftLimbPosition(q)
@@ -345,6 +350,7 @@ def run_server_forever(ip_address,port):
 	server.register_function(_codename,'codename')
 	server.register_function(_robotModel,'robotModel')
 	server.register_function(_startup,'startup')
+	server.register_function(_setKlamptPosition,'setKlamptPosition')
 	server.register_function(_setLeftLimbPosition,'setLeftLimbPosition')
 	server.register_function(_setRightLimbPosition,'setRightLimbPosition')
 	server.register_function(_setLeftLimbPositionLinear,'setLeftLimbPositionLinear')

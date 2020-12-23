@@ -18,14 +18,14 @@ class MotionAPI(jarvis.APILayer):
         """Returns a list of active components as queried by the Motion Server."""
         return self._redisGet(['ROBOT_INFO','Components'])
         
-    def setPosition(self, q):
-        """set the position of the entire robot
+    def setKlamptPosition(self, q, duration):
+        """set the position of the entire robot as the Klamp't model configuration
 
         Args:
             q: a merged list of joint positions, in the order of torso,base,left limb, right limb, left gripper...
+            duration (float): desired time to reach q (s)
         """
-        raise NotImplementedError("TODO")
-        return 0
+        return self._moduleCommand('setKlamptPosition', q, duration)
     
     def mirror_arm_config(self,config):
         """given the Klampt config of the left or right arm, return the other

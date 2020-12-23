@@ -608,19 +608,27 @@ class Motion:
         self._purge_commands()
         print("motion.controlThread: exited")
 
-    #TODO: finish setting the entire robot
-    def setPosition(self,q):
-        """set the position of the entire robot
+    def setKlamptPosition(self,q,duration):
+        """set the position of the entire robot from a Klampt configuration
 
         Parameter:
         ---------------
         q: a merged list of joint positions, in the order of torso,base,left limb, right limb, left gripper...
+        duration: disired time it takes to reach q (s)
         """
-        #assert len(q) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
-        #self.setLeftLimbPosition(q[0:6])
-        #self.setRightLimbPosition(q[6:12])
-        pass
-        return
+        basedofs = TRINAConfig.get_base_dofs()
+        qbase = [q[i] for i in basedofs]
+        leftdofs = TRINAConfig.get_left_active_Dofs(self.codename)
+        qleft = [q[i] for i in leftdofs]
+        rightdofs = TRINAConfig.get_right_active_Dofs(self.codename)
+        qright = [q[i] for i in rightdofs]
+        self.setLeftLimbPositionLinear(qleft,duration)
+        self.setRightLimbPositionLinear(qright,duration)
+        qbase_cur = self.sensedBasePosition()
+        diff = [qbase[0]-qbase_cur[0],qbase[1]-qbase_cur[1],so2.angle_diff(qbase[2],qbase_cur[2])]
+        velocity = vectorops.norm(diff[0:2]) + abs(diff[2])  #TODO: how is velocity related to path following duration?
+        self.setBaseTargetPosition(qbase,velocity)
+
     def setLeftLimbPosition(self,q):
         """Set the left limb joint positions, and the limb moves as fast as possible
 
@@ -729,9 +737,6 @@ class Motion:
             print("motion.setRightLimbPosition():Right limb not enabled")
         return
 
-
-
-
     def sensedLeftLimbPosition(self):
         """The current joint positions of the left limb
 
@@ -759,6 +764,7 @@ class Motion:
             logger.warning('Right limb not enabled')
             print("motion().sensedRightLimbPosition: right limb not enabled")
             return [0]*6
+
     def setVelocity(self,qdot):
         """set the velocity of the entire robot, under development rn
 
