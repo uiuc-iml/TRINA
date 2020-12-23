@@ -1,5 +1,6 @@
 from trina import jarvis
 from trina.utils import Promise
+import time
 
 class SensorAPI(jarvis.APILayer):
     """External API for the sensor module."""
@@ -143,3 +144,99 @@ class SensorAPI(jarvis.APILayer):
             p = Promise("Lidar point cloud request from "+self._caller_name)
             self.sensor_module.requests.append((p,'get_lidar_point_cloud',None,{}))
             return p
+
+
+class SensorAPISlow(jarvis.APILayer):
+    """External API for the sensor module -- slow version that uses the state server to copy images."""
+    @classmethod
+    def name(cls):
+        return "sensors"
+
+    @classmethod
+    def interprocess(cls):
+        return True
+
+    def camerasAvailable(self):
+        """Returns a list of strings describing available cameras"""
+        return self._redisGet(['Sensor','cameraNames'])
+
+    def getRgbdImages(self,cameras=None):
+        """Returns the RGBD cameras from all cameras or a subset of cameras
+        corresponding to the latest images taken.
+
+        Args:
+            cameras: Can be one of the following:
+
+                - None indicates all cameras.
+                - str: indicates one camera.  (Note the return value is still a dict
+                  with one key)
+                - list of str: multiple cameras.
+
+        Returns:
+            dict: keys are cameras and values are (rgb,depth) image pairs.  Each
+            image is a numpy object. (These are shared across threads, so be careful
+            not to modify them.)
+        """
+        if cameras is None:
+            cameras = self._redisGet(['Sensor','cameraNames'])
+        if isinstance(cameras,str):
+            cameras = [cameras]
+        res = dict()
+        for cam in cameras:
+            self._redisSet(['Sensor','cameras',cam,'requestImagesTime'],time.time())
+        for cam in cameras:
+            try:
+                rgb = self._redisGet(['Sensor','cameras',cam,'images','rgb'])
+                depth = self._redisGet(['Sensor','cameras',cam,'images','depth'])
+                if depth is None:
+                    res[cam] = rgb
+                else:
+                    res[cam] = (rgb,depth)
+            except Exception as e:
+                print("Exception getting Sensor.cameras.cam.images.rgb")
+                print(e)
+                import traceback
+                traceback.print_exc()
+                res[cam] = None
+        return res
+
+    def getPointClouds(self,cameras=None):
+        """Returns the point clouds corresponding to the latest image
+        taken.
+
+        Args:
+            cameras: Can be one of the following:
+
+                - None indicates all cameras.
+                - str: indicates one camera.  (Note the return value is still a dict
+                  with one key)
+                - list of str: multiple cameras.
+
+        Returns:
+            dict: where keys are camera snd values are point clouds. Each
+            point cloud is expressed in world coordinates as Open3D PointCloud
+            objects.
+        """
+        if isinstance(cameras,None):
+            cameras = self._redisGet(['Sensor','cameraNames'])
+        if isinstance(cameras,str):
+            cameras = [cameras]
+        res = dict()
+        for cam in cameras:
+            self._redisSet(['Sensor','cameras',cam,'requestPointCloudTime'],time.time())
+        for cam in cameras:
+            try:
+                res[cam] = self._redisGet(['Sensor','cameras',cam,'pointCloud'])
+            except Exception:
+                res[cam] = None
+        return res
+
+    def getLidarScan(self):
+        """Returns the Lidar scan as a list of floats
+        """
+        res[cam] = self._redisGet(['Sensor','lidar','scan'])
+
+    def getLidarPointCloud(self):
+        """Returns the Lidar scan as an N x 3 numpy array of points.
+        """
+        res[cam] = self._redisGet(['Sensor','lidar','pointCloud'])

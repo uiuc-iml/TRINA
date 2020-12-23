@@ -1,3 +1,4 @@
-from .module import SensorModule as Sensor
+from .module import SensorModule
+from .module import SensorModuleSlow
 from .api import SensorAPI 
 
