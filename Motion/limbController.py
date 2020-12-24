@@ -69,6 +69,9 @@ class LimbController:
         self._new_gripper_action = False
         self._gripper_action = 1 #1 close 2 open
 
+        ##Pause/resume
+        self._paused = False
+
     def start(self):
         res = self.ur5.start()
         #wait for controller to initialize so that we can start in a valid config
@@ -87,10 +90,6 @@ class LimbController:
 
     def stop(self):
         self.ur5.stop()
-    ####
-    def stopMotion(self):
-        self.setConfig(self._q_curr)
-        return
 
     def moving(self):
         return vectorops.norm(self._qdot_curr) > 0.0001
@@ -128,55 +127,59 @@ class LimbController:
             self._gravity = g
 
     def setConfig(self, q_in):
-        if self.isFormatted(q_in):
-            if(self.inLimits(q_in, self._min_joints, self._max_joints)):
-                self._command_lock.acquire()
-                self._q_commanded = q_in
-                self._qdot_commanded = []
-                self._command_lock.release()
-            else:
-                print("limbController: Warning, config not set - outside of limits")
+        if not self._paused:
+            if self.isFormatted(q_in):
+                if(self.inLimits(q_in, self._min_joints, self._max_joints)):
+                    self._command_lock.acquire()
+                    self._q_commanded = q_in
+                    self._qdot_commanded = []
+                    self._command_lock.release()
+                else:
+                    print("limbController: Warning, config not set - outside of limits")
 
     def setVelocity(self, dq_in):
-        if self.isFormatted(dq_in):
-            if(self.inLimits(dq_in, self._min_velocities, self._max_velocities)):
-                #do things
-                self._command_lock.acquire()
-                self._q_commanded = []
-                self._qdot_commanded = dq_in
-                self._command_lock.release()
-            else:
-                print("limbController: Warning, velocity not set - outside of limits")
+        if not self._paused:
+            if self.isFormatted(dq_in):
+                if(self.inLimits(dq_in, self._min_velocities, self._max_velocities)):
+                    #do things
+                    self._command_lock.acquire()
+                    self._q_commanded = []
+                    self._qdot_commanded = dq_in
+                    self._command_lock.release()
+                else:
+                    print("limbController: Warning, velocity not set - outside of limits")
 
     def openGripper(self):
         """
         Open the parallel gripper or release the vacuum gripper
         """
-        if self._gripper:
-            self._command_lock.acquire()
-            self._new_gripper_action = True
-            if self._type == 'vacuum':
-                self._gripper_action = 2
+        if not self._paused:
+            if self._gripper:
+                self._command_lock.acquire()
+                self._new_gripper_action = True
+                if self._type == 'vacuum':
+                    self._gripper_action = 2
+                else:
+                    self._gripper_action = 1
+                self._command_lock.release()
             else:
-                self._gripper_action = 1
-            self._command_lock.release()
-        else:
-            print("limbController:gripper not enabled")
+                print("limbController:gripper not enabled")
 
     def closeGripper(self):
         """
         Close the parallel gripper or start the vacuum gripper
         """
-        if self._gripper:
-            self._command_lock.acquire()
-            self._new_gripper_action = True
-            if self._type == 'vacuum':
-                self._gripper_action = 1
+        if not self._paused:
+            if self._gripper:
+                self._command_lock.acquire()
+                self._new_gripper_action = True
+                if self._type == 'vacuum':
+                    self._gripper_action = 1
+                else:
+                    self._gripper_action = 2
+                self._command_lock.release()
             else:
-                self._gripper_action = 2
-            self._command_lock.release()
-        else:
-            print("limbController:gripper not enabled")
+                print("limbController:gripper not enabled")
 
     def _update(self,state):
         self._state_read = False
@@ -337,6 +340,17 @@ class LimbController:
     def newState(self):
         return (not self._state_read)
 
+    def pause(self):
+        self._paused = True
+        self.setConfig(self._q_curr)
+        return
+
+    def resume(self):
+        self._paused = False
+        return
+
+    def isPaused(self):
+        return self._paused
 if __name__ == "__main__":
 
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter

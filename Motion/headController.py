@@ -50,6 +50,9 @@ class HeadController:
         self.positionCommand = [0.0,0.0]
         self._controlLoopLock = RLock()
 
+        #for pause/resume
+        self.paused = False
+        self.paused_command_sent = False
     def start(self):
         # dynamicel init
         # Open port
@@ -79,10 +82,17 @@ class HeadController:
             self._controlLoopLock.acquire()
             self.position = self._getHeadPosition()
             self.newStateFlag = True
-            ##send command if there is a new one
-            if self.newCommand:
-                self._setPosition(self.positionCommand)
-            self.newCommand = False
+
+            if self.paused:
+                if not self.paused_command_sent:
+                    self._setPosition(self.sensedPosition())      
+                    self.paused_command_sent = True
+            else:
+                ##send command if there is a new one
+                if self.newCommand:
+
+                    self._setPosition(self.positionCommand)
+                self.newCommand = False
             self._controlLoopLock.release()
             time.sleep(self.dt)
         print("Head Controller: control loop exited")
@@ -156,7 +166,17 @@ class HeadController:
     def shutdown(self):
         self.exit = True
 
+    def pause(self):
+        self.paused = True
+        self.paused_command_sent = False
 
+    def resume(self):
+        self.paused = False
+        self.paused_command_sent = True
+
+    def isPaused(self):
+        return self.paused
+        
 if __name__ == "__main__":
     a = HeadController()
     a.start()

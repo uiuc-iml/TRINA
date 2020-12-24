@@ -7,7 +7,7 @@ from threading import Thread, Lock, RLock
 import threading
 import numpy as np
 import TRINAConfig #network configs and other configs
-from motionStates import * #state structures
+from motionUtils import * #state structures
 from copy import deepcopy,copy
 from klampt.math import vectorops,so3,se3
 # from klampt import vis
@@ -17,7 +17,6 @@ import scipy as sp
 from klampt import WorldModel,vis
 import os
 
-import sys
 sys.path.append("..")
 import trina_logging
 import logging

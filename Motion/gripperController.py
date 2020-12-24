@@ -5,7 +5,7 @@ import rospy
 import time
 import threading
 import sys
-from copy import deepcopy
+from copy import copy,deepcopy
 
 from std_srvs.srv import Empty
 
@@ -57,7 +57,7 @@ class GripperController:
         self.finger_pressure_set = [None, None, None]
         self.enable = False
         self.exit = False
-        self.stop = False
+        self.paused = False
         self.new_state = False
         self.flag = [False, False, False] # may need to reset every time
         self.logs = []
@@ -96,7 +96,7 @@ class GripperController:
             #     f.write("  ")
             # f.write("\n")
             # f.close()
-            if self.stop:
+            if self.paused:
                 self.pos_pub.publish(PoseCommand(f1 = self.sensed_finger_set[0], f2 = self.sensed_finger_set[1], f3 = self.sensed_finger_set[2], preshape = self.sensed_finger_set[3]))
             else:
                 if self.guarded_move:
@@ -185,7 +185,7 @@ class GripperController:
 
 
 
-
+    ###funcitons for open/close###
     def setPose(self, position):
         """
         commands the fingers go to the position
@@ -361,19 +361,25 @@ class GripperController:
 
 
 
-    def stop_process(self):
+    def pause(self):
         """
         This function stops the stop_process
         """
         self.enable = False
-        self.stop = True
+        self.paused = True
+
+        #set the command to go to current position. Note that this won't get executed (main control loop does something else)
+        #this will act to clear other type of commands 
+
+        self.setPose(copy(self.sensed_finger_set))
+
 
     def resume(self):
         """
         This function resume the process
         """
         self.enable = True
-        self.stop = False
+        self.paused = False
 
     def shutDown(self):
         """

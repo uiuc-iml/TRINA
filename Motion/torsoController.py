@@ -7,6 +7,8 @@ from threading import Thread
 
 """
 Class to interface between a python script and an Arduino microcontroller
+
+TODO: implement pause/resume for torsoController
 """
 class ArduinoBridge:
 
@@ -97,6 +99,14 @@ class TorsoController:
 
     def markRead(self):
         self.stateRead = True
+
+    def pause(self):
+        ##TODO: implement this
+        return
+    
+    def resume(self):
+        ##TODO: implement this
+        return
 
     def _sigintHandler(self, signum, msg):
         assert(signum == signal.SIGINT)
