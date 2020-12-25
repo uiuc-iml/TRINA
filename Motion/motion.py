@@ -1778,17 +1778,19 @@ class Motion:
         return T,v.tolist()
 
     def _simulate(self,wrench,A_mat,m_inv,K,B,T_curr,x_dot_curr,T_g,x_dot_g,dt):
-        K = np.array(K)[:3,:3]
-        B = np.array(B)[:3,:3]
         m_inv = np.array(m_inv)[:3,:3]
         x = np.array(T_curr[1])
         v = np.array(x_dot_curr)
-        affine_term = (np.concatenate((x, v))
+        xg = np.array(T_g[1])
+        vg = np.array(x_dot_g)
+        e_x = x - xg
+        e_v = v - vg
+        affine_term = (np.concatenate((e_x, e_v))
             + np.concatenate((np.zeros(3), self.dt * m_inv @ wrench[3:])))
         tmp = np.linalg.solve(A_mat, affine_term)
         # e_next = A_mat @ np.concatenate((e, e_dot)) + affine_term
-        x_next = tmp[:3]
-        v_next = tmp[3:]
+        x_next = tmp[:3] + xg
+        v_next = tmp[3:] + vg
         return x_next, v_next
 
     def _impedance_drive(self, limb):
