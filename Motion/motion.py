@@ -898,7 +898,7 @@ class Motion:
         self._controlLoopLock.acquire()
 
         formulation = 2
-        #if already in impedance control, then do not reset x_mass and x_dot_mass 
+        #if already in impedance control, then do not reset x_mass and x_dot_mass
         if (not limb.state.impedanceControl) or vectorops.norm(vectorops.sub(limb.state.toolCenter,tool_center)):
             limb.state.set_mode_reset()
             if formulation == 2:
@@ -915,9 +915,9 @@ class Motion:
             limb.state.T_g = copy(Tg)
         elif formulation == 1:
             limb.state.x_g = Tg[1] + so3.moment(Tg[0])
-        
+
         limb.state.impedanceControl = True
-        
+
         limb.state.x_dot_g = copy(x_dot_g)
         limb.state.K = np.copy(K)
         limb.state.counter = 1
@@ -928,9 +928,12 @@ class Motion:
             limb.state.B = np.copy(B)
         Minv = np.linalg.inv(M)
         limb.state.Minv = Minv
-        tmp = np.vstack( (np.hstack((np.zeros((6,6)), np.eye(6))), 
-            np.hstack((-Minv @ K, -Minv @ B))) )
-        limb.state.A = np.eye(12) - self.dt*tmp
+        tMinv = Minv[:3,:3]
+        tK = K[:3,:3]
+        tB = B[:3,:3]
+        tmp = np.vstack( (np.hstack((np.zeros((3,3)), np.eye(3))),
+            np.hstack((-tMinv @ tK, -tMinv @ tB))) )
+        limb.state.A = np.eye(6) - self.dt*tmp
         # limb.state.LU = sp.linalg.lu_factor(limb.state.A)
         self._controlLoopLock.release()
         return 0
@@ -1149,7 +1152,7 @@ class Motion:
         else:
             logger.warning('Head not enabled.')
             print('Head not enabled.')
-            
+
     def sensedBaseVelocity(self):
         """Returns the current base velocity
 
@@ -1726,7 +1729,7 @@ class Motion:
                 limb.state.driveSpeedAdjustment += 0.1
 
         self.robot_model.setConfig(initialConfig)
-        
+
         # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS!
         return 2,target_config.tolist() #2 means success..
 
@@ -1775,23 +1778,17 @@ class Motion:
         return T,v.tolist()
 
     def _simulate(self,wrench,A_mat,m_inv,K,B,T_curr,x_dot_curr,T_g,x_dot_g,dt):
-        e = se3.error(T_g,T_curr)
-        e = np.array(e[3:6] + e[0:3])
-        x_dot_g = np.array(x_dot_g)
+        K = np.array(K)[:3,:3]
+        B = np.array(B)[:3,:3]
+        m_inv = np.array(m_inv)[:3,:3]
+        x = np.array(T_curr[1])
         v = np.array(x_dot_curr)
-        e_dot = x_dot_g - v
-        affine_term = (np.concatenate((e, e_dot)) 
-            + np.concatenate((np.zeros(6), self.dt * m_inv @ wrench)))
-        e_next = np.linalg.solve(A_mat, affine_term)
+        affine_term = (np.concatenate((x, v))
+            + np.concatenate((np.zeros(3), self.dt * m_inv @ wrench[3:])))
+        tmp = np.linalg.solve(A_mat, affine_term)
         # e_next = A_mat @ np.concatenate((e, e_dot)) + affine_term
-        x_next = se3.mul(T_g, (so3.from_moment(e_next[3:6]), e_next[0:3]))
-        v_next = x_dot_g - e_next[6:]
-        print("error", e)
-        print("e_next", e_next)
-
-        print("v_next", v_next)
-        print("del v", self.dt * m_inv @ wrench)
-        print("------------------------------------------")
+        x_next = tmp[:3]
+        v_next = tmp[3:]
         return x_next, v_next
 
     def _impedance_drive(self, limb):
@@ -1845,14 +1842,14 @@ class Motion:
                     if math.fabs(wrench[i]) < state.deadband[i]:
                         wrench[i] = 0
             # start = time.monotonic()
-            N = 20
+            N = 1
             for i in range(N):
-                # state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, A_mat=state.A, m_inv = state.Minv,\
-                #     K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
-                #     T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N) 
-                state.T_mass, state.x_dot_mass = self._simulate_2(wrench = wrench, m_inv = state.Minv,\
+                state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, A_mat=state.A, m_inv = state.Minv,\
                     K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
-                    T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N) 
+                    T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
+                # state.T_mass, state.x_dot_mass = self._simulate_2(wrench = wrench, m_inv = state.Minv,\
+                #     K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
+                #     T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
             # print("Time: ", time.monotonic() - start)
             state.counter += 1
 
@@ -1927,4 +1924,3 @@ if __name__=="__main__":
         # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
         time.sleep(0.01)
     robot.shutdown()
-
