@@ -85,14 +85,7 @@ class KinematicController:
                 if self.base_state.commandType == 1:
                     vx = self.base_state.commandedVel[0]
                     w = self.base_state.commandedVel[1]
-                    if vx > self.base_velocity_limit[0]:
-                        vx = self.base_velocity_limit[0]
-                    if vx < -self.base_velocity_limit[0]:
-                        vx = -self.base_velocity_limit[0]
-                    if w > self.base_velocity_limit[1]:
-                        w = self.base_velocity_limit[1]
-                    if w < -self.base_velocity_limit[1]:
-                        w= -self.base_velocity_limit[1]
+                    vx,w = self._limitBaseVel(vx,w)
 
                 elif self.base_state.commandType == 0:
                     vx = self.base_state.pathFollowingVel
@@ -104,12 +97,26 @@ class KinematicController:
 
                     prev_angle = angle
                     self.base_state.pathFollowingIdx += 1
+                #ramped velocity command type
+                elif self.base_state.commandType == 2:
+                    if self.base_state.v_queue is not None and self.base_state.w_queue is not None and self.base_state.queue_idx < len(self.base_state.v_queue):
+                        self.base_state.queue_idx += 1
+                        vx = self.base_state.v_queue[self.base_state.queue_idx]
+                        w = self.base_state.w_queue[self.base_state.queue_idx]
+                    else:
+                        self.base_state.v_queue = None
+                        self.base_state.w_queue = None
+                        vx = self.base_state.commandedVel[0]
+                        w = self.base_state.commandedVel[1]    
+
+                    vx,w = self._limitBaseVel(vx,w)
+
 
                 dq_global = [vx*math.cos(self.base_state.measuredPos[2])*self.dt,\
                     vx*math.sin(self.base_state.measuredPos[2])*self.dt,w*self.dt]
 
                 base_state_q_to_be_set = vectorops.add(self.base_state.measuredPos,dq_global)
-                self.base_state.measuredVel = deepcopy(self.base_state.commandedVel)
+                self.base_state.measuredVel = [vx,w]
                 self.base_state.measuredPos = deepcopy(base_state_q_to_be_set)
 
                 #left limb
@@ -213,7 +220,36 @@ class KinematicController:
         self.base_state.commandType = 1
         self.base_state.commandedVel = deepcopy(q)
 
-    # def setBaseTargetPosition(self, q, vel):
+    def setBaseVelocityRamped(self,q,v_ramp_time):
+        if self.base_state.commandType !=2:
+            self.base_state.commandType = 2        
+        else:
+            if q == self.base_state.commandedVel:
+                return
+            else:
+                print("resetting ramped velocity...")
+
+        self.base_state.commandedVel = deepcopy(q)
+        target_v, target_w = self.base_state.commandedVel
+        curr_v, curr_w = self.base_state.measuredVel
+        delta_v = target_v - curr_v
+        N = int(abs(delta_v/self.dt * v_ramp_time))
+
+        v_queue = []
+        for i in range(N):
+            delta = float(i)/float(N)*target_v
+            v_queue.append(curr_v + delta)
+        w_queue = []
+        for i in range(N):
+            delta = float(i)/float(N)*target_w
+            w_queue.append(curr_w + delta)
+
+        self.base_state.v_queue = v_queue
+        self.base_state.w_queue = w_queue
+        self.base_state.queue_idx = 0
+
+    def setBaseTargetPosition(self, q, vel):
+        return
     #     assert len(q) == 3
     #     self.base_state.commandedTargetPosition = deepcopy(q)
     #     self.base_state.pathFollowingVel = vel
@@ -283,6 +319,18 @@ class KinematicController:
     #need to implemented this....
     def _limitConfigPosition(self,q):
         return q
+
+    def _limitBaseVel(self,vx,w):
+        if vx > self.base_velocity_limit[0]:
+            vx = self.base_velocity_limit[0]
+        if vx < -self.base_velocity_limit[0]:
+            vx = -self.base_velocity_limit[0]
+        if w > self.base_velocity_limit[1]:
+            w = self.base_velocity_limit[1]
+        if w < -self.base_velocity_limit[1]:
+            w= -self.base_velocity_limit[1]
+
+        return vx,w
 
     def moving(self):
         eps = 1e-5

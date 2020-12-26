@@ -443,7 +443,8 @@ class Motion:
                     elif self.base_state.commandType == 0 and not base_state.commandSent:
                         base_state.commandSent = True
                         self.base.setTargetPosition(self.base_state.commandedVel)
-
+                    elif self.base_state.commandType == 2:
+                        self.simulated_robot.setBaseVelocityRamped(self.base_state.commandedVel,self.base_state.rampDuration)
                     ##gripper
                     self.simulated_robot.setLeftGripperPosition(self.left_gripper_state.command_finger_set)
                     robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb.state.sensedq, right_limb = self.right_limb.state.sensedq)
@@ -1172,6 +1173,24 @@ class Motion:
                 self.base_state.commandType = 1
                 self.base_state.commandedVel = deepcopy(q)
                 self.base_state.commandSent = False
+                self._controlLoopLock.release()
+            else:
+                logger.warning('Base not enabled.')
+                print('Base not enabled.')
+
+    def setBaseVelocityRamped(self,q,time):
+        if self.pause_motion_flag:
+            logger.warning('Motion: paused')
+            print('Motion: paused')
+        else:
+            if self.base_enabled:
+                logger.debug('dimensions : %d', len(q))
+                assert len(q) == 2 ,"motion.setBaseVelocityRamped(): wrong dimensions"
+                self._controlLoopLock.acquire()
+                self.base_state.commandType = 2
+                self.base_state.commandedVel = deepcopy(q)
+                self.base_state.commandSent = False
+                self.base_state.rampDuration = time
                 self._controlLoopLock.release()
             else:
                 logger.warning('Base not enabled.')
@@ -2036,31 +2055,3 @@ if __name__=="__main__":
     #     # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
     #     time.sleep(0.01)
     # robot.shutdown()
-
-    ###Test Pause/resume
-    robot = Motion(mode = 'Kinematic',components = [],codename = "bubonic")
-    robot.startup()
-    time.sleep(0.05)
-    robot.setLeftLimbPositionLinear([1.0]*6,10)
-
-    start_time = time.time()
-    while time.time() - start_time < 1.0:
-        print(robot.sensedLeftLimbPosition())
-        time.sleep(0.1)
-
-    robot.pauseMotion()
-    robot.setLeftLimbPositionLinear([1.0]*6,10)
-    start_time = time.time()
-    while time.time() - start_time < 0.5:
-        print(robot.sensedLeftLimbPosition(),robot.isPaused())
-        time.sleep(0.1)
-
-    robot.resumeMotion()
-    print('----------------------------------')
-    robot.setLeftLimbPositionLinear([1.0]*6,10)
-    start_time = time.time()
-    while time.time() - start_time < 0.5:
-        print(robot.sensedLeftLimbPosition(),robot.isPaused())
-        time.sleep(0.1)
-
-    robot.shutdown()
