@@ -78,6 +78,8 @@ class Motion:
         self.left_gripper_enabled = False
         self.right_gripper_enabled = False
         self.head_enabled = False
+        ##hardware estopped
+        self.estop_enabled = False
 
         left_limb_controller = None
         right_limb_controller = None
@@ -143,6 +145,10 @@ class Motion:
                     self.head = HeadController()
                     self.head_enabled = True
                     logger.debug('head enabled')
+                elif component == "estop":
+                    from estop import Estop
+                    self.estop = Estop()
+                    self.estop_enabled = True
                 else:
                     logger.error('Motion: wrong component name specified')
                     raise RuntimeError('Motion: wrong component name specified')
@@ -175,8 +181,13 @@ class Motion:
         self.dt = 0.002
         #automatic mode for future
         self.automatic_mode = False
-        self.stop_motion_flag = False
-        self.stop_motion_sent = False
+        #pause/resume functionalities
+        self.pause_motion_flag = False
+        self.pause_motion_sent = False
+        #estop
+        self.estopped = False
+
+        #shutdown
         self.shut_down_flag = False
         self.cartesian_drive_failure = False
         self._controlLoopLock = RLock()
@@ -212,10 +223,20 @@ class Motion:
             if self.mode == "Kinematic":
                 self.simulated_robot.start()
             elif self.mode == "Physical":
+                if self.estop_enabled:
+                    res = self.estop.start()
+                    if not res:
+                        logger.error('Motion: estop failed to start')
+                        print('Motion: estop failed to start')
+                        return False
+                    else:
+                        logger.info('Motion: estop started')
+                        print('Motion: estop started')
+
                 if self.torso_enabled:
                     self.torso.start()
                     logger.info('Motion: torso started')
-                    print("Motoin: torso started")
+                    print("Motion: torso started")
                 if self.base_enabled:
                     self.base.start()
                     logger.info('Motion: base started')
@@ -304,50 +325,60 @@ class Motion:
             ###lock the thread
             self._controlLoopLock.acquire()
             if self.mode == "Physical":
-                if self.stop_motion_flag:
-                    if not self.stop_motion_sent: #send only once to avoid drifting... currently this not used
+                #First check estop if enabled (optionally we can also read UR's estop status, currently this update is still in devel branch)
+                if self.estop_enabled:
+                    self.estopped = self.estop.isEstopped()
+                    if self.estopped:
+                        self.shut_down_flag = True
+                        logger.info('Motion: estopped')
+                        print('Motion: Estopped')
+                        break
+                    
+                #Update current state. Only read state if a new one has been posted
+                #still update the state even if robot is paused
+                if self.base_enabled and self.base.newState():
+                    self.base_state.measuredVel = self.base.getMeasuredVelocity()
+                    self.base_state.measuredPos = self.base.getPosition()
+                    self.base.markRead()
+
+                if self.torso_enabled and self.torso.newState():
+                    tilt, height, _, _ = self.torso.getStates()
+                    self.torso_state.measuredTilt = tilt
+                    self.torso_state.measuredHeight = height
+                    self.torso.markRead()
+
+                if self.left_limb.enabled:
+                    self.left_limb.updateState()
+                if self.right_limb.enabled:
+                    self.right_limb.updateState()
+
+                if self.left_gripper_enabled and self.left_gripper.newState():
+                    self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
+                    self.left_gripper.mark_read()
+
+                if self.head_enabled and self.head.newState():
+                    self.head_state.sensedPosition = self.head.sensedPosition()
+                    self.head.markRead()
+
+
+                if self.pause_motion_flag:
+                    if not self.pause_motion_sent: #send only once to avoid drifting... currently this not used
                         if self.left_limb.enabled:
-                            self.left_limb.stopMotion()
+                            self.left_limb.pause()
                         if self.right_limb.enabled:
-                            self.right_limb.stopMotion()
-
+                            self.right_limb.pause()
                         if self.torso_enabled:
-                            self.torso.stopMotion()
+                            self.torso.pause()
                         if self.base_enabled:
-                            self.base.stopMotion()
+                            self.base.pause()
                         if self.left_gripper_enabled:
-                            self.left_gripper.stopMotion()
+                            self.left_gripper.pause()
                         if self.right_gripper_enabled:
-                            self.right_gripper.stopMotion()
+                            self.right_gripper.pause()
                         if self.head_enabled:
-                            pass
-                        self.stop_motion_sent = True #unused
-                else:
-                    #Update current state. Only read state if a new one has been posted
-                    if self.base_enabled and self.base.newState():
-                        self.base_state.measuredVel = self.base.getMeasuredVelocity()
-                        self.base_state.measuredPos = self.base.getPosition()
-                        self.base.markRead()
-
-                    if self.torso_enabled and self.torso.newState():
-                        tilt, height, _, _ = self.torso.getStates()
-                        self.torso_state.measuredTilt = tilt
-                        self.torso_state.measuredHeight = height
-                        self.torso.markRead()
-
-                    if self.left_limb.enabled:
-                        self.left_limb.updateState()
-                    if self.right_limb.enabled:
-                        self.right_limb.updateState()
-
-                    if self.left_gripper_enabled and self.left_gripper.newState():
-                        self.left_gripper_state.sense_finger_set = self.left_gripper.sense_finger_set
-                        self.left_gripper.mark_read()
-
-                    if self.head_enabled and self.head.newState():
-                        self.head_state.sensedPosition = self.head.sensedPosition()
-                        self.head.markRead()
-
+                            self.head.pause()
+                        self.pause_motion_sent = True #unused
+                else:              
                     #Send Commands
                     if self.left_limb.enabled:
                         self.drive_limb(self.left_limb)
@@ -393,16 +424,15 @@ class Motion:
                     self.robot_model.setConfig(robot_model_Q)
 
             elif self.mode == "Kinematic":
-                if self.stop_motion_flag:
-                    self.simulated_robot.stopMotion()
+                if self.simulated_robot.newState():
+                    self.left_limb.updateState()
+                    self.right_limb.updateState()
+                    self.base_state.measuredVel = self.simulated_robot.getBaseVelocity()
+                    self.base_state.measuredPos = self.simulated_robot.getBaseConfig()
+                    #self.left_gripper_state.sense_finger_set = selfprint("motion.controlLoop(): controlLoop started.")
+                if self.pause_motion_flag:
+                    self.simulated_robot.pause()
                 else:
-                    if self.simulated_robot.newState():
-                        self.left_limb.updateState()
-                        self.right_limb.updateState()
-                        self.base_state.measuredVel = self.simulated_robot.getBaseVelocity()
-                        self.base_state.measuredPos = self.simulated_robot.getBaseConfig()
-                        #self.left_gripper_state.sense_finger_set = selfprint("motion.controlLoop(): controlLoop started.")
-
                     self.drive_limb(self.left_limb)
                     self.drive_limb(self.right_limb)
 
@@ -1398,29 +1428,46 @@ class Motion:
         """
         return self.mode
 
-    def stopMotion(self):
+    def pauseMotion(self):
         """Pause the motion of the robot, starting from the next control loop.
 
         This is not shutdown. Just a pause.
         """
-        self.stop_motion_flag = True
-        self.stop_motion_sent = False
+        self._controlLoopLock.acquire()
+        #Flags read in the motion loop
+        self.pause_motion_flag = True
+        self.pause_motion_sent = False
         self._purge_commands()
+        self._controlLoopLock.release()
         return
 
-
-
-    ### ------------------------- ###
-    ###current change up to here#######
     def resumeMotion(self):
         """Unpause the robot.
-
-        After unpausing, the robot is still stationery until some new commands is added
+        After unpausing, the robot is still stationery until a new command is added
         """
-        self.base.startMotion()
-        self.startMotionFlag = False
-        self.left_gripper.resume()
+        if self.left_limb.enabled:
+            self.left_limb.resume()
+        if self.right_limb.enabled:
+            self.right_limb.resume()
+        if self.torso_enabled:
+            self.torso.resume()
+        if self.base_enabled:
+            self.base.resume()
+        if self.left_gripper_enabled:
+            self.left_gripper.resume()
+        if self.head_enabled:
+            self.head.resume()
+        self._controlLoopLock.acquire()
+        self.pause_motion_flag = False
+        self.pause_motion_sent = False
+        self._controlLoopLock.release()
         return
+
+    def isPaused(self):
+        """
+        Return whether the robot is paused
+        """
+        return self.pause_motion_flag
 
     def mirror_arm_config(self,config):
         """given the Klampt config of the left or right arm, return the other
@@ -1519,7 +1566,9 @@ class Motion:
             self.torso_state.commandSent = True
             self.torso_state.leftLeg = 0
             self.torso_state.rightLeg = 0
-
+        if self.head_enabled:
+            self.head_state.commandedPosition = [0.0,0.0]
+            self.head_state.newCommand = False
         self._controlLoopLock.release()
 
     def _check_collision_linear(self,robot,q1,q2,discretization):

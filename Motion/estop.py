@@ -23,9 +23,9 @@ class ArduinoBridge:
         self.port.reset_input_buffer()
         return self.port.read(size = 1)
 
-class SoftEStop:
-    def __init__(self):
-        self.arduino = ArduinoBridge()
+class EStop:
+    def __init__(self,port_addr = "/dev/ttyACM0", baud = 115200):
+        self.arduino = ArduinoBridge(port_addr = port_addr, baud = baud)
         self.shutdown_flag = False
         self.control_thread = Thread(target = self._controlLoop)
         self.control_thread.daemon = True
@@ -61,7 +61,7 @@ class SoftEStop:
                 self.Estopped = True
                 self.fault = True
 
-            time.sleep(0.005)
+            time.sleep(0.002)
 
     def shutdown(self):
         self.shutdown_flag = True
