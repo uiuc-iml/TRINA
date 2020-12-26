@@ -170,6 +170,7 @@ class BaseController:
 
     def pause(self):
         self.setCommandedVelocity([0.0, 0.0])
+        self.curr_path_point = 0
         self.not_paused = False
         
     def resume(self):
@@ -187,11 +188,12 @@ class BaseController:
             return self.commanded_vel[0] > self.EPS or self.commanded_vel[1] > self.EPS
 
     def setCommandedVelocity(self, cmd_vel):
-        if not self.not_paused:
-            return
-        if self.control_mode != BaseControlMode.VELOCITY:
-            self.control_mode = BaseControlMode.VELOCITY
-        self.commanded_vel = deepcopy(cmd_vel)
+        if self.not_paused:
+            if not self.not_paused:
+                return
+            if self.control_mode != BaseControlMode.VELOCITY:
+                self.control_mode = BaseControlMode.VELOCITY
+            self.commanded_vel = deepcopy(cmd_vel)
 
     def setCommandedVelocityRamped(self, cmd_vel, v_ramp_time = 2.0):
         if not self.not_paused:
@@ -226,26 +228,28 @@ class BaseController:
     # target_position = (x, y, theta) - relative to the robot's current position
     # velocity = (float) linear_velocity
     def setTargetPosition(self, target_position, velocity):
-        self.target_path = Path2d([(0, 0, 0), target_position])
-        self.path_velocity = velocity
-        total_path_time = self.target_path.length/self.path_velocity
-        self.num_points = int(total_path_time/self.dt)
-        self.curr_path_point = 0
-        self.prev_angle = None
-        if self.control_mode != BaseControlMode.PATH_FOLLOWING:
-            self.control_mode = BaseControlMode.PATH_FOLLOWING
+        if self.not_paused:
+            self.target_path = Path2d([(0, 0, 0), target_position])
+            self.path_velocity = velocity
+            total_path_time = self.target_path.length/self.path_velocity
+            self.num_points = int(total_path_time/self.dt)
+            self.curr_path_point = 0
+            self.prev_angle = None
+            if self.control_mode != BaseControlMode.PATH_FOLLOWING:
+                self.control_mode = BaseControlMode.PATH_FOLLOWING
 
     # target_path = [] where each element is a 3-tuple (x, y, theta) - relative to the robot's current position
     # velocity = float representing constant linear velocity to drive the path
     def setPath(self, target_path, velocity):
-        self.target_path = Path2d(target_path)
-        self.path_velocity = velocity
-        total_path_time = self.target_path.length/self.path_velocity
-        self.num_points = int(total_path_time/self.dt)
-        self.curr_path_point = 0
-        self.prev_angle = None
-        if self.control_mode != BaseControlMode.PATH_FOLLOWING:
-            self.control_mode = BaseControlMode.PATH_FOLLOWING
+        if self.not_paused:
+            self.target_path = Path2d(target_path)
+            self.path_velocity = velocity
+            total_path_time = self.target_path.length/self.path_velocity
+            self.num_points = int(total_path_time/self.dt)
+            self.curr_path_point = 0
+            self.prev_angle = None
+            if self.control_mode != BaseControlMode.PATH_FOLLOWING:
+                self.control_mode = BaseControlMode.PATH_FOLLOWING
 
     def isPathDone(self):
         return self.curr_path_point == self.num_points

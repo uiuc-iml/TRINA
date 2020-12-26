@@ -200,12 +200,13 @@ class GripperController:
 
 
         """
-        self._regPose(position)
-        self.command_finger_set[0] = position[0]
-        self.command_finger_set[1] = position[1]
-        self.command_finger_set[2] = position[2]
-        self.command_finger_set[3] = position[3]
-        self.command_type = "pose"
+        if not self.paused:
+            self._regPose(position)
+            self.command_finger_set[0] = position[0]
+            self.command_finger_set[1] = position[1]
+            self.command_finger_set[2] = position[2]
+            self.command_finger_set[3] = position[3]
+            self.command_type = "pose"
 
 
     def setVelocity(self, velocity):
@@ -224,31 +225,34 @@ class GripperController:
 
 
         """
-        self._regVelocity(velocity)
-        self.command_finger_set[0] = velocity[0]
-        self.command_finger_set[0] = velocity[1]
-        self.command_finger_set[0] = velocity[2]
-        self.command_finger_set[0] = velocity[3]
-        self.command_type = "velocity"
+        if not self.paused:
+            self._regVelocity(velocity)
+            self.command_finger_set[0] = velocity[0]
+            self.command_finger_set[0] = velocity[1]
+            self.command_finger_set[0] = velocity[2]
+            self.command_finger_set[0] = velocity[3]
+            self.command_type = "velocity"
 
 
     def guarded_close(self):
         """
         it close the finger until the pressure is too high
         """
-        self.guarded_move = True
-        self.command_finger_set = deepcopy(self.sensed_finger_set)
-        self.command_type = "pose"
+        if not self.paused:
+            self.guarded_move = True
+            self.command_finger_set = deepcopy(self.sensed_finger_set)
+            self.command_type = "pose"
 
     def open(self):
         """
         this opens the finger to [0,0,0,0] Position
         """
-        self.command_finger_set[0] = 0.0
-        self.command_finger_set[1] = 0.0
-        self.command_finger_set[2] = 0.0
-        self.command_finger_set[3] = 0.0
-        self.command_type = "pose"
+        if not self.paused:
+            self.command_finger_set[0] = 0.0
+            self.command_finger_set[1] = 0.0
+            self.command_finger_set[2] = 0.0
+            self.command_finger_set[3] = 0.0
+            self.command_type = "pose"
 
 
 
@@ -365,9 +369,10 @@ class GripperController:
         """
         This function stops the stop_process
         """
+
         self.enable = False
         self.paused = True
-
+        self.guarded_move = False
         #set the command to go to current position. Note that this won't get executed (main control loop does something else)
         #this will act to clear other type of commands 
 
