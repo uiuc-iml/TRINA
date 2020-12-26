@@ -351,6 +351,7 @@ class LimbController:
 
     def isPaused(self):
         return self._paused
+        
 if __name__ == "__main__":
 
     from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter

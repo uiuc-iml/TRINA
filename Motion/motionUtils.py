@@ -189,6 +189,12 @@ class Limb:
             print(f"Invalid argument for frame, must be global or local, got {frame}")
             return [0]*6
 
+    def pause(self):
+        self.controller.pause()
+
+    def resume(self):
+        self.controller.resume()
+
 class LimbState:
     def __init__(self):
         

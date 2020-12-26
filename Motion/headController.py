@@ -144,10 +144,11 @@ class HeadController:
         self.dynamixel.write4ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(panAngle/0.08789))
 
     def setPosition(self,position):
-        self._controlLoopLock.acquire()
-        self.positionCommand = copy(position)
-        self.newCommand = True
-        self._controlLoopLock.release()
+        if not self.paused:
+            self._controlLoopLock.acquire()
+            self.positionCommand = copy(position)
+            self.newCommand = True
+            self._controlLoopLock.release()
         return
 
     def sensedPosition(self):

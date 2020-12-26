@@ -12,8 +12,8 @@ import numpy as np
 from threading import Thread, Lock,RLock
 import threading
 from copy import deepcopy
-from motionStates import * #state structures
-from baseController import Path2d
+from motionUtils import * #state structures
+# from baseController import Path2d
 import os
 import TRINAConfig
 def setup():
@@ -58,7 +58,7 @@ class KinematicController:
         self.controlLoopLock = RLock()
 
         #pause/resume
-        self.paused = True
+        self.paused = False
 
     def start(self):
         self.left_limb_state.commandedq = self.left_limb_state.sensedq
@@ -213,15 +213,15 @@ class KinematicController:
         self.base_state.commandType = 1
         self.base_state.commandedVel = deepcopy(q)
 
-    def setBaseTargetPosition(self, q, vel):
-        assert len(q) == 3
-        self.base_state.commandedTargetPosition = deepcopy(q)
-        self.base_state.pathFollowingVel = vel
-        self.base_state.generatedPath = Path2d([(0, 0, 0), q])
-        self.base_state.pathFollowingIdx = 0
-        total_path_time = self.base_state.generatedPath.length/self.base_state.pathFollowingVel
-        self.base_state.pathFollowingNumPoints = int(total_path_time/self.dt)
-        self.base_state.commandType = 0
+    # def setBaseTargetPosition(self, q, vel):
+    #     assert len(q) == 3
+    #     self.base_state.commandedTargetPosition = deepcopy(q)
+    #     self.base_state.pathFollowingVel = vel
+    #     self.base_state.generatedPath = Path2d([(0, 0, 0), q])
+    #     self.base_state.pathFollowingIdx = 0
+    #     total_path_time = self.base_state.generatedPath.length/self.base_state.pathFollowingVel
+    #     self.base_state.pathFollowingNumPoints = int(total_path_time/self.dt)
+    #     self.base_state.commandType = 0
 
     def isBasePathDone(self):
         assert(self.base_state.commandType == 0 or self.base_state.commandType == 2)
@@ -292,8 +292,8 @@ class KinematicController:
     def pause(self):
         self.controlLoopLock.acquire()
         self._paused = True
-        self.setLeftLimbConfig(self.getLeftLimbConfig)
-        self.setRightLimbConfig(self.getRightLimbConfig)
+        self.setLeftLimbConfig(self.getLeftLimbConfig())
+        self.setRightLimbConfig(self.getRightLimbConfig())
         self.setBaseVelocity([0,0])
         self.controlLoopLock.release()
         return
