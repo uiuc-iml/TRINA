@@ -157,11 +157,14 @@ class MotionClient:
 	def mode(self):
 		return self.s.mode()
 
-	def stopMotion(self):
-		self.s.stopMotion()
+	def pauseMotion(self):
+		self.s.pauseMotion()
 
 	def resumeMotion(self):
 		self.s.resumeMotion()
+
+	def isPaused(self):
+		self.s.isPaused()
 
 	def mirror_arm_config(self,config):
 		return self.s.mirror_arm_config(config)

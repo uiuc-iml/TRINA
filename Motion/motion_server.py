@@ -287,6 +287,20 @@ def _shutdown():
 	return 0
 
 @loggedMethod
+@xmlrpcMethod("pauseMotion")
+def _pauseMotion():
+	global robot
+	robot.pauseMotion()
+	return 0
+
+@loggedMethod
+@xmlrpcMethod("resumeMotion")
+def _resumeMotion():
+	global robot
+	robot.resumeMotion()
+	return 0
+
+@loggedMethod
 @xmlrpcMethod("isStarted")
 def _isStarted():
 	global robot
@@ -299,24 +313,16 @@ def _isShutDown():
 	return robot.isShutDown()
 
 @loggedMethod
+@xmlrpcMethod("isPaused")
+def _isPaused():
+	global robot
+	return robot.isPaused()
+
+@loggedMethod
 @xmlrpcMethod("moving")
 def _moving():
 	global robot
 	return robot.moving()
-
-@loggedMethod
-@xmlrpcMethod("stopMotion")
-def _stopMotion():
-	global robot
-	robot.stopMotion()
-	return 0
-
-@loggedMethod
-@xmlrpcMethod("resumeMotion")
-def _resumeMotion():
-	global robot
-	robot.resumeMotion()
-	return 0
 
 @loggedMethod
 @xmlrpcMethod("mirror_arm_config")
