@@ -74,7 +74,7 @@ class EStop:
         return self.Estopped
 
 if __name__ == "__main__":
-    estop = SoftEStop()
+    estop = EStop()
     res = estop.start()
     print('-------------------')
     if res:

@@ -24,7 +24,7 @@ import logging
 from datetime import datetime
 
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d_%m_%Y') + ".log"
-logger = trina_logging.get_logger(__name__,logging.INFO, filename)
+logger = trina_logging.get_logger(__name__,logging.WARNING, filename)
 
 class Motion:
 
@@ -147,8 +147,8 @@ class Motion:
                     self.head_enabled = True
                     logger.debug('head enabled')
                 elif component == "estop":
-                    from estop import Estop
-                    self.estop = Estop()
+                    from estop import EStop
+                    self.estop = EStop()
                     self.estop_enabled = True
                 else:
                     logger.error('Motion: wrong component name specified')
@@ -227,12 +227,12 @@ class Motion:
                 if self.estop_enabled:
                     res = self.estop.start()
                     if not res:
-                        logger.error('Motion: estop failed to start')
-                        print('Motion: estop failed to start')
+                        logger.error('Motion.startup(): estop failed to start')
+                        print('Motion.startup(): estop failed to start')
                         return False
                     else:
-                        logger.info('Motion: estop started')
-                        print('Motion: estop started')
+                        logger.info('Motion.startup(): estop started')
+                        print('Motion.startup(): estop started')
 
                 if self.torso_enabled:
                     self.torso.start()
@@ -330,7 +330,7 @@ class Motion:
                 if self.estop_enabled:
                     self.estopped = self.estop.isEstopped()
                     if self.estopped:
-                        self.shut_down_flag = True
+                        self.shutdown() 
                         logger.info('Motion: estopped')
                         print('Motion: Estopped')
                         break
@@ -875,6 +875,7 @@ class Motion:
                     self._controlLoopLock.release()
                     return status
 
+                (R,t) = limb.sensedEETransform()
                 if not limb.state.cartesianDrive:
                     limb.state.set_mode_position(limb.state.sensedq)
                     self.cartesian_drive_failure = False
@@ -883,7 +884,7 @@ class Motion:
                     limb.state.cartesianDrive = True
                     limb.state.driveTransform = (R,vectorops.add(so3.apply(R,tool),t))
 
-                (R,t) = limb.sensedEETransform()
+                
                 limb.state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
                 limb.state.driveSpeedAdjustment = 1.0
                 limb.state.toolCenter = deepcopy(tool)
@@ -1415,26 +1416,25 @@ class Motion:
         """Shutdown the componets.
 
         """
-        self.shut_down_flag = True
-        if self.mode == "Physical":
-            if self.base_enabled:
-                self.base.shutdown()
-            if self.torso_enabled:
-                self.torso.shutdown()
-            if self.left_limb.enabled:
-                self.left_limb.stop()
-            if self.right_limb.enabled:
-                self.right_limb.stop()
-            #TODO: integrate gripper code
-            if self.left_gripper_enabled:
-                self.left_gripper.shutDown()
-            if self.head_enabled:
-                self.head.shutdown()
+        if not self.shut_down_flag:
+            if self.mode == "Physical":
+                if self.base_enabled:
+                    self.base.shutdown()
+                if self.torso_enabled:
+                    self.torso.shutdown()
+                if self.left_limb.enabled:
+                    self.left_limb.stop()
+                if self.right_limb.enabled:
+                    self.right_limb.stop()
+                #TODO: integrate gripper code
+                if self.left_gripper_enabled:
+                    self.left_gripper.shutDown()
+                if self.head_enabled:
+                    self.head.shutdown()
 
-        elif self.mode == "Kinematic":
-            self.simulated_robot.shutdown()
-
-        self._purge_commands()
+            elif self.mode == "Kinematic":
+                self.simulated_robot.shutdown()
+            self._purge_commands()
         self.shut_down_flag = True
         self.startUp = False
         return 0
