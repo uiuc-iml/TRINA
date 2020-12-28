@@ -2055,3 +2055,4 @@ if __name__=="__main__":
     #     # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
     #     time.sleep(0.01)
     # robot.shutdown()
+    pass
