@@ -189,6 +189,12 @@ class Limb:
             print(f"Invalid argument for frame, must be global or local, got {frame}")
             return [0]*6
 
+    def pause(self):
+        self.controller.pause()
+
+    def resume(self):
+        self.controller.resume()
+
 class LimbState:
     def __init__(self):
         
@@ -336,8 +342,15 @@ class BaseState():
         self.pathFollowingNumPoints = 0
         self.commandedTargetPosition = [] #[x, y, theta]
 
-        self.commandType = 1 # 0 is position, 1 is velocity, 2 is path
+        self.commandType = 1 # 0 is position, 1 is velocity, 2 is ramped velocity
         self.commandSent = True
+        self.rampDuration = 0.0
+
+
+        #used by the kinematic mode
+        self.v_queue = []
+        self.w_queue = []
+        self.queue_idx = 0
 
 class GripperState:
     def __init__(self):

@@ -5,7 +5,7 @@ import rospy
 import time
 import threading
 import sys
-from copy import deepcopy
+from copy import copy,deepcopy
 
 from std_srvs.srv import Empty
 
@@ -57,7 +57,7 @@ class GripperController:
         self.finger_pressure_set = [None, None, None]
         self.enable = False
         self.exit = False
-        self.stop = False
+        self.paused = False
         self.new_state = False
         self.flag = [False, False, False] # may need to reset every time
         self.logs = []
@@ -96,7 +96,7 @@ class GripperController:
             #     f.write("  ")
             # f.write("\n")
             # f.close()
-            if self.stop:
+            if self.paused:
                 self.pos_pub.publish(PoseCommand(f1 = self.sensed_finger_set[0], f2 = self.sensed_finger_set[1], f3 = self.sensed_finger_set[2], preshape = self.sensed_finger_set[3]))
             else:
                 if self.guarded_move:
@@ -185,7 +185,7 @@ class GripperController:
 
 
 
-
+    ###funcitons for open/close###
     def setPose(self, position):
         """
         commands the fingers go to the position
@@ -200,12 +200,13 @@ class GripperController:
 
 
         """
-        self._regPose(position)
-        self.command_finger_set[0] = position[0]
-        self.command_finger_set[1] = position[1]
-        self.command_finger_set[2] = position[2]
-        self.command_finger_set[3] = position[3]
-        self.command_type = "pose"
+        if not self.paused:
+            self._regPose(position)
+            self.command_finger_set[0] = position[0]
+            self.command_finger_set[1] = position[1]
+            self.command_finger_set[2] = position[2]
+            self.command_finger_set[3] = position[3]
+            self.command_type = "pose"
 
 
     def setVelocity(self, velocity):
@@ -224,31 +225,34 @@ class GripperController:
 
 
         """
-        self._regVelocity(velocity)
-        self.command_finger_set[0] = velocity[0]
-        self.command_finger_set[0] = velocity[1]
-        self.command_finger_set[0] = velocity[2]
-        self.command_finger_set[0] = velocity[3]
-        self.command_type = "velocity"
+        if not self.paused:
+            self._regVelocity(velocity)
+            self.command_finger_set[0] = velocity[0]
+            self.command_finger_set[0] = velocity[1]
+            self.command_finger_set[0] = velocity[2]
+            self.command_finger_set[0] = velocity[3]
+            self.command_type = "velocity"
 
 
     def guarded_close(self):
         """
         it close the finger until the pressure is too high
         """
-        self.guarded_move = True
-        self.command_finger_set = deepcopy(self.sensed_finger_set)
-        self.command_type = "pose"
+        if not self.paused:
+            self.guarded_move = True
+            self.command_finger_set = deepcopy(self.sensed_finger_set)
+            self.command_type = "pose"
 
     def open(self):
         """
         this opens the finger to [0,0,0,0] Position
         """
-        self.command_finger_set[0] = 0.0
-        self.command_finger_set[1] = 0.0
-        self.command_finger_set[2] = 0.0
-        self.command_finger_set[3] = 0.0
-        self.command_type = "pose"
+        if not self.paused:
+            self.command_finger_set[0] = 0.0
+            self.command_finger_set[1] = 0.0
+            self.command_finger_set[2] = 0.0
+            self.command_finger_set[3] = 0.0
+            self.command_type = "pose"
 
 
 
@@ -361,19 +365,26 @@ class GripperController:
 
 
 
-    def stop_process(self):
+    def pause(self):
         """
         This function stops the stop_process
         """
+
         self.enable = False
-        self.stop = True
+        self.paused = True
+        self.guarded_move = False
+        #set the command to go to current position. Note that this won't get executed (main control loop does something else)
+        #this will act to clear other type of commands 
+
+        self.setPose(copy(self.sensed_finger_set))
+
 
     def resume(self):
         """
         This function resume the process
         """
         self.enable = True
-        self.stop = False
+        self.paused = False
 
     def shutDown(self):
         """

@@ -105,7 +105,7 @@ class BaseController:
 
     def __init__(self, dt = 1.0/100.0):
         self.control_mode = BaseControlMode.NOTHING
-        self.enabled = False
+        self.not_paused = False
         self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)
         self.odom_sub = rospy.Subscriber("/odom", Odometry, self._odom_callback)
         self.control_thread = Thread(target = self._controlLoop)
@@ -117,30 +117,32 @@ class BaseController:
         self.dt = dt
         self.target_path = None
         self.path_velocity = None
+        self.shutdown_flag = False
 
     def _controlLoop(self):
         rate = rospy.Rate(1.0/self.dt)
-        while not rospy.is_shutdown() and self.enabled:
-            if self.control_mode == BaseControlMode.VELOCITY:
-                self.cmd_pub.publish(create_twist(self.commanded_vel))
-            elif self.control_mode == BaseControlMode.PATH_FOLLOWING:
-                curr_angle = self.target_path.get_pose(float(self.curr_path_point)/self.num_points)[2]
-                if self.prev_angle is None:
-                    w = 0
-                else:
-                    w = (curr_angle - self.prev_angle)/self.dt
-                cmd = create_twist((self.path_velocity, w))
-                self.cmd_pub.publish(cmd)
-                self.prev_angle = curr_angle
-                self.curr_path_point += 1
-            elif self.control_mode == BaseControlMode.VELOCITY_RAMPED:
-                if self.v_queue is not None and self.w_queue is not None and self.queue_idx < len(self.v_queue):
-                    self.cmd_pub.publish(create_twist([self.v_queue[self.queue_idx], self.w_queue[self.queue_idx]]))
-                    self.queue_idx += 1
-                else:
-                    self.v_queue = None
-                    self.w_queue = None
-                    self.setCommandedVelocity(self.commanded_vel)
+        while not rospy.is_shutdown() and not self.shutdown_flag:
+            if self.not_paused:
+                if self.control_mode == BaseControlMode.VELOCITY:
+                    self.cmd_pub.publish(create_twist(self.commanded_vel))
+                elif self.control_mode == BaseControlMode.PATH_FOLLOWING:
+                    curr_angle = self.target_path.get_pose(float(self.curr_path_point)/self.num_points)[2]
+                    if self.prev_angle is None:
+                        w = 0
+                    else:
+                        w = (curr_angle - self.prev_angle)/self.dt
+                    cmd = create_twist((self.path_velocity, w))
+                    self.cmd_pub.publish(cmd)
+                    self.prev_angle = curr_angle
+                    self.curr_path_point += 1
+                elif self.control_mode == BaseControlMode.VELOCITY_RAMPED:
+                    if self.v_queue is not None and self.w_queue is not None and self.queue_idx < len(self.v_queue):
+                        self.cmd_pub.publish(create_twist([self.v_queue[self.queue_idx], self.w_queue[self.queue_idx]]))
+                        self.queue_idx += 1
+                    else:
+                        self.v_queue = None
+                        self.w_queue = None
+                        self.setCommandedVelocity(self.commanded_vel)
 
             rate.sleep()
         print("BaseController:controlloop ended")
@@ -163,32 +165,38 @@ class BaseController:
 
     def start(self):
         rospy.init_node("drive_base")
-        self.enabled = True
+        self.not_paused = True
         self.control_thread.start()
 
-    def stopMotion(self):
-        self.enabled = False
+    def pause(self):
+        self.setCommandedVelocity([0.0, 0.0])
+        self.curr_path_point = 0
+        self.not_paused = False
+        
+    def resume(self):
+        self.not_paused = True
 
     def shutdown(self):
-        self.enabled = False
+        self.not_paused = False
         self.commanded_vel = [0.0, 0.0]
         print("BaseController:shutdown called")
 
     def moving(self):
-        if not self.enabled:
+        if not self.not_paused:
             return False
         else:
             return self.commanded_vel[0] > self.EPS or self.commanded_vel[1] > self.EPS
 
     def setCommandedVelocity(self, cmd_vel):
-        if not self.enabled:
-            return
-        if self.control_mode != BaseControlMode.VELOCITY:
-            self.control_mode = BaseControlMode.VELOCITY
-        self.commanded_vel = deepcopy(cmd_vel)
+        if self.not_paused:
+            if not self.not_paused:
+                return
+            if self.control_mode != BaseControlMode.VELOCITY:
+                self.control_mode = BaseControlMode.VELOCITY
+            self.commanded_vel = deepcopy(cmd_vel)
 
     def setCommandedVelocityRamped(self, cmd_vel, v_ramp_time = 2.0):
-        if not self.enabled:
+        if not self.not_paused:
             return
         if self.control_mode != BaseControlMode.VELOCITY_RAMPED:
             self.control_mode = BaseControlMode.VELOCITY_RAMPED
@@ -220,26 +228,28 @@ class BaseController:
     # target_position = (x, y, theta) - relative to the robot's current position
     # velocity = (float) linear_velocity
     def setTargetPosition(self, target_position, velocity):
-        self.target_path = Path2d([(0, 0, 0), target_position])
-        self.path_velocity = velocity
-        total_path_time = self.target_path.length/self.path_velocity
-        self.num_points = int(total_path_time/self.dt)
-        self.curr_path_point = 0
-        self.prev_angle = None
-        if self.control_mode != BaseControlMode.PATH_FOLLOWING:
-            self.control_mode = BaseControlMode.PATH_FOLLOWING
+        if self.not_paused:
+            self.target_path = Path2d([(0, 0, 0), target_position])
+            self.path_velocity = velocity
+            total_path_time = self.target_path.length/self.path_velocity
+            self.num_points = int(total_path_time/self.dt)
+            self.curr_path_point = 0
+            self.prev_angle = None
+            if self.control_mode != BaseControlMode.PATH_FOLLOWING:
+                self.control_mode = BaseControlMode.PATH_FOLLOWING
 
     # target_path = [] where each element is a 3-tuple (x, y, theta) - relative to the robot's current position
     # velocity = float representing constant linear velocity to drive the path
     def setPath(self, target_path, velocity):
-        self.target_path = Path2d(target_path)
-        self.path_velocity = velocity
-        total_path_time = self.target_path.length/self.path_velocity
-        self.num_points = int(total_path_time/self.dt)
-        self.curr_path_point = 0
-        self.prev_angle = None
-        if self.control_mode != BaseControlMode.PATH_FOLLOWING:
-            self.control_mode = BaseControlMode.PATH_FOLLOWING
+        if self.not_paused:
+            self.target_path = Path2d(target_path)
+            self.path_velocity = velocity
+            total_path_time = self.target_path.length/self.path_velocity
+            self.num_points = int(total_path_time/self.dt)
+            self.curr_path_point = 0
+            self.prev_angle = None
+            if self.control_mode != BaseControlMode.PATH_FOLLOWING:
+                self.control_mode = BaseControlMode.PATH_FOLLOWING
 
     def isPathDone(self):
         return self.curr_path_point == self.num_points
@@ -262,5 +272,5 @@ class BaseController:
     def newState(self):
         return not self.state_read
 
-    def isEnabled(self):
-        return self.enabled
+    def isPaused(self):
+        return not self.not_paused
