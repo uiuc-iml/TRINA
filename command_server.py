@@ -648,6 +648,14 @@ class CommandServer:
 		posEE_right = {}
 		velEE_right = {}
 		while not self.shut_down_flag:
+			# temporary pause 
+			# pause0 = self.server["UI_STATE"]["UIlogicState"]["stop"].read()
+			# pause1 = self.server["UI_STATE"]["UIlogicState"]["stop1"].read()
+			# if pause0 == False and pause1 == False:
+			# 	self.robot.resumeMotion()
+			# else:
+			# 	self.robot.pauseMotion()
+			# self.robot.resumeMotion()
 			loopStartTime = time.time()
 			# print('updating states')
 			try:
