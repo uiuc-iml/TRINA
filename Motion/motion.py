@@ -1005,7 +1005,8 @@ class Motion:
         tB = B[:3,:3]
         tmp = np.vstack( (np.hstack((np.zeros((3,3)), np.eye(3))),
             np.hstack((-tMinv @ tK, -tMinv @ tB))) )
-        limb.state.A = np.eye(6) - self.dt*tmp
+        # limb.state.A = np.eye(6) - self.dt*tmp
+        limb.state.A = self.dt * tmp
         # limb.state.LU = sp.linalg.lu_factor(limb.state.A)
         self._controlLoopLock.release()
         return 0
@@ -1916,24 +1917,28 @@ class Motion:
         v = np.clip(v,[-1,-1,-1,-1,-1,-1],[1,1,1,1,1,1])
         dx = v*dt
         # print('dx',dx)
-        T = se3.mul((so3.from_moment(dx[3:6]),dx[0:3]),T_curr)
+        # T = se3.mul((so3.from_moment(dx[3:6]),dx[0:3]),T_curr)
+        # T = (so3.mul(so3.from_moment(dx[3:6]),T_curr[0]),vectorops.add(T_curr[1], dx[0:3]))
+        t = vectorops.add(T_curr[1], dx[0:3])
+        R = so3.from_moment(vectorops.add(so3.moment(T_curr[0]),dx[3:6]))
+        T = (R,t)
         return T,v.tolist()
 
     def _simulate(self,wrench,A_mat,m_inv,K,B,T_curr,x_dot_curr,T_g,x_dot_g,dt):
         m_inv = np.array(m_inv)[:3,:3]
         x = np.array(T_curr[1])
-        v = np.array(x_dot_curr)
+        v = np.array(x_dot_curr[:3])
         xg = np.array(T_g[1])
-        vg = np.array(x_dot_g)
+        vg = np.array(x_dot_g[:3])
         e_x = x - xg
         e_v = v - vg
         affine_term = (np.concatenate((e_x, e_v))
-            + np.concatenate((np.zeros(3), self.dt * m_inv @ wrench[3:])))
-        tmp = np.linalg.solve(A_mat, affine_term)
-        # e_next = A_mat @ np.concatenate((e, e_dot)) + affine_term
+            + np.concatenate((np.zeros(3), self.dt * m_inv @ wrench[:3])))
+        # tmp = np.linalg.solve(A_mat, affine_term)
+        tmp = A_mat @ np.concatenate((e_x, e_v)) + affine_term
         x_next = tmp[:3] + xg
         v_next = tmp[3:] + vg
-        return x_next, v_next
+        return (T_g[0], x_next.tolist()), v_next
 
     def _impedance_drive(self, limb):
         """Calculate the next goal for impedance control
@@ -1948,6 +1953,8 @@ class Motion:
         """
         state = limb.state
         wrench = limb.sensedEEWrench(frame = 'global')
+        # print(vectorops.norm_L2(wrench[0:3]))
+        print(wrench[3:])
         #if force too big, backup a bit and stop
         stop = False
         if vectorops.norm_L2(wrench[0:3]) > 60:
@@ -1986,22 +1993,22 @@ class Motion:
                     if math.fabs(wrench[i]) < state.deadband[i]:
                         wrench[i] = 0
             # start = time.monotonic()
-            N = 1
+            N = 10
             for i in range(N):
-                state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, A_mat=state.A, m_inv = state.Minv,\
-                    K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
-                    T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
-                # state.T_mass, state.x_dot_mass = self._simulate_2(wrench = wrench, m_inv = state.Minv,\
+                # state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, A_mat=state.A, m_inv = state.Minv,\
                 #     K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
                 #     T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
+                state.T_mass, state.x_dot_mass = self._simulate_2(wrench = wrench, m_inv = state.Minv,\
+                    K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
+                    T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
             # print("Time: ", time.monotonic() - start)
             state.counter += 1
 
             state.prev_wrench = np.array(wrench)
 
             #orthogonalize the rotation matrix
-            # if state.counter % 100 == 0:
-            #     state.T_mass = (so3.from_moment(so3.moment(state.T_mass[0])),state.T_mass[1])
+            if state.counter % 100 == 0:
+                state.T_mass = (so3.from_moment(so3.moment(state.T_mass[0])),state.T_mass[1])
             T = state.T_mass
 
         goal = ik.objective(limb.EE_link,R=T[0],\
@@ -2043,26 +2050,26 @@ if __name__=="__main__":
     # with open('tmp.txt', 'a') as f:
     #     f.write(f"\n{str(robot.getKlamptSensedPosition())}")
     left_pos = robot.sensedLeftEETransform()
-    K = np.diag([200.0, 200.0, 200.0, 1000, 1000, 1000])
+    K = np.diag([200.0, 200.0, 200.0, 0.1, 0.1, 0.1])
     # K = np.zeros((6,6))
     # K[3:6,3:6] = np.eye(3)*1000
 
     M = 1*np.eye(6)#*5.0
-    M[3,3] = 1.0
-    M[4,4] = 1.0
-    M[5,5] = 1.0
+    M[3,3] = 0.05
+    M[4,4] = 0.05
+    M[5,5] = 0.05
 
-    B = 3.0*np.sqrt(4.0*np.dot(M,K))
+    B = 2.0*np.sqrt(4.0*np.dot(M,K))
     # B = 30*np.eye(6)
-    # B[3:6,3:6] = 0.1*B[3:6,3:6]
+    B[3:6,3:6] = B[3:6,3:6]
     # self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
     # self.M = np.diag((2,2,2,1,1,1))
     # self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
     # K = K.tolist()
     # M = M.tolist()
     # B = B.tolist()
-    robot.setLeftEETransformImpedance(left_pos, K, M, B)
-    # robot.setLeftEEInertialTransform(left_pos, 0.1)
+    # robot.setLeftEETransformImpedance(left_pos, K, M, B)
+    robot.setLeftEEInertialTransform(left_pos, 0.1)
     print("Holding position")
     while True:
         # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
