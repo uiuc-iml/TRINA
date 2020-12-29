@@ -94,15 +94,15 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
 
-		self.K = np.diag([200.0, 200.0, 200.0, 1000.0, 1000.0, 1000.0])
+		self.K = np.diag([200.0, 200.0, 200.0, 1.0, 1.0, 1.0])
 
-		self.M = np.eye(6)*5.0
-		self.M[3,3] = 1.0
-		self.M[4,4] = 1.0
-		self.M[5,5] = 1.0
+		self.M = 1*np.eye(6)#*5.0
+		self.M[3,3] = 0.25
+		self.M[4,4] = 0.25
+		self.M[5,5] = 0.25
 
 		self.B = 2.0*np.sqrt(4.0*np.dot(self.M,self.K))
-		self.B[3:6,3:6] /= 2.0
+		self.B[3:6,3:6] = 0.75*self.B[3:6,3:6]
 		# self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
 		# self.M = np.diag((2,2,2,1,1,1))
 		# self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
@@ -314,7 +314,7 @@ class DirectTeleOperation:
 
 			if(self.base_active):
 				self.baseControl()
-			self.control('position')
+			self.control('velocity')
 
 	def baseControl(self):
 		'''controlling base movement'''
