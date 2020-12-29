@@ -84,6 +84,11 @@ class UIStateReciever(WebSocket):
             msg = obj['MSG']
             self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':msg}
 
+        elif title == "phone estop":
+            stop = obj["UIlogicState"]["stop-phone"]
+            self.server["UI_STATE"]["UIlogicState"]["stop1"] = stop
+            
+
 
         
 
@@ -93,6 +98,7 @@ class UIStateReciever(WebSocket):
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
+        self.server["UI_STATE"]["UIlogicState"]["stop1"] = False
 
 
     def handleClose(self): 
