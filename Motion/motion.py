@@ -999,14 +999,6 @@ class Motion:
             limb.state.B = np.copy(B)
         Minv = np.linalg.inv(M)
         limb.state.Minv = Minv
-        tMinv = Minv[:3,:3]
-        tK = K[:3,:3]
-        tB = B[:3,:3]
-        tmp = np.vstack( (np.hstack((np.zeros((3,3)), np.eye(3))),
-            np.hstack((-tMinv @ tK, -tMinv @ tB))) )
-        # limb.state.A = np.eye(6) - self.dt*tmp
-        limb.state.A = self.dt * tmp
-        # limb.state.LU = sp.linalg.lu_factor(limb.state.A)
         self._controlLoopLock.release()
         return 0
 
