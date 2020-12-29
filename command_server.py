@@ -409,6 +409,9 @@ class CommandServer:
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
 		stateRecieverThread.start()		
 		print('\n state receiver started!\n')
+		print('\n starting pause/resume check\n')
+		pauseResumeThread = threading.Thread(target=self.pauseResumeChecker)
+		pauseResumeThread.start()	
 		print('\n starting command receiver \n')
 		commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
 		commandRecieverThread.daemon = True
@@ -632,6 +635,19 @@ class CommandServer:
 	def activate(self,name):
 		while not self.shut_down_flag:
 			time.sleep(0.1)
+	
+	def pauseResumeChecker(self):
+		while not self.shut_down_flag:
+			time.sleep(0.5)
+			try:
+				pause0 = self.server["UI_STATE"]["UIlogicState"]["stop"].read()
+				pause1 = self.server["Phone_Stop"].read()
+				if pause0 == False and pause1 == False:
+					self.robot.resumeMotion()
+				else:
+					self.robot.pauseMotion()
+			except Exception as e:
+				traceback.print_exc()
 
 	def stateReciever(self):
 		pos_left = [0,0,0,0,0,0]
@@ -648,14 +664,6 @@ class CommandServer:
 		posEE_right = {}
 		velEE_right = {}
 		while not self.shut_down_flag:
-			# temporary pause 
-			# pause0 = self.server["UI_STATE"]["UIlogicState"]["stop"].read()
-			# pause1 = self.server["UI_STATE"]["UIlogicState"]["stop1"].read()
-			# if pause0 == False and pause1 == False:
-			# 	self.robot.resumeMotion()
-			# else:
-			# 	self.robot.pauseMotion()
-			# self.robot.resumeMotion()
 			loopStartTime = time.time()
 			# print('updating states')
 			try:
