@@ -969,37 +969,13 @@ class Motion:
                 limb.state.toolCenter = copy(tool_center)
                 limb.state.prev_wrench = np.array([0]*6)
 
-<<<<<<< HEAD
-=======
         formulation = 2
         #if already in impedance control, then do not reset x_mass and x_dot_mass
         if (not limb.state.impedanceControl) or vectorops.norm(vectorops.sub(limb.state.toolCenter,tool_center)):
             limb.state.set_mode_reset()
->>>>>>> 0d07f9272e74889d0172911eeeb15103aa69ed15
             if formulation == 2:
                 limb.state.T_g = copy(Tg)
             elif formulation == 1:
-<<<<<<< HEAD
-                limb.state.x_g = Tg[1] + so3.moment(Tg[0])
-            
-            limb.state.impedanceControl = True
-            
-            limb.state.x_dot_g = copy(x_dot_g)
-            limb.state.K = np.copy(K)
-            limb.state.counter = 1
-            limb.state.deadband = copy(deadband)
-            if np.any(np.isnan(B)):
-                limb.state.B = np.sqrt(4.0*np.dot(M,K))
-            else:
-                limb.state.B = np.copy(B)
-            Minv = np.linalg.inv(M)
-            limb.state.Minv = Minv
-            tmp = np.vstack( (np.hstack((np.zeros((6,6)), np.eye(6))), 
-                np.hstack((-Minv @ K, -Minv @ B))) )
-            limb.state.A = np.eye(12) - self.dt*tmp
-            # limb.state.LU = sp.linalg.lu_factor(limb.state.A)
-            self._controlLoopLock.release()
-=======
                 T = limb.sensedEETransform(tool_center = [0, 0, 0])
                 limb.state.x_mass = T[1] + so3.moment(T[0])
             (v,w) = limb.sensedEEVelocity(tool_center)
@@ -1032,7 +1008,6 @@ class Motion:
         limb.state.A = np.eye(6) - self.dt*tmp
         # limb.state.LU = sp.linalg.lu_factor(limb.state.A)
         self._controlLoopLock.release()
->>>>>>> 0d07f9272e74889d0172911eeeb15103aa69ed15
         return 0
 
     def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0]):
@@ -1268,7 +1243,6 @@ class Motion:
         --------------
         q: a list of 2 doubles. The tilt and pan positions.
         """
-<<<<<<< HEAD
         if not self.pause_motion_flag:
             if self.head_enabled:
                 logger.debug('dimensions : %d', len(q))
@@ -1281,19 +1255,6 @@ class Motion:
                 logger.warning('Head not enabled.')
                 print('Head not enabled.')
             
-=======
-        if self.head_enabled:
-            logger.debug('dimensions : %d', len(q))
-            assert len(q) == 2, "motion.SetHeadTPosition(): wrong dimensions"
-            self._controlLoopLock.acquire()
-            self.head_state.commandedPosition = copy(q)
-            self.head_state.newCommand = True
-            self._controlLoopLock.release()
-        else:
-            logger.warning('Head not enabled.')
-            print('Head not enabled.')
-
->>>>>>> 0d07f9272e74889d0172911eeeb15103aa69ed15
     def sensedBaseVelocity(self):
         """Returns the current base velocity
 
@@ -2074,42 +2035,6 @@ class Motion:
 if __name__=="__main__":
 
     ###Read the current position ###
-<<<<<<< HEAD
-    # robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
-    # robot.startup()
-    # time.sleep(0.05)
-    # # robot.setLeftLimbPositionLinear([-4.02248,0.1441026,1.58109,-0.254,0.9090495,0.46262],30)
-    # # print(robot.getKlamptSensedPosition())
-    # # with open('tmp.txt', 'a') as f:
-    # #     f.write(f"\n{str(robot.getKlamptSensedPosition())}")
-    # left_pos = robot.sensedLeftEETransform()
-    # K = np.diag([200.0, 200.0, 200.0, 1000, 1000, 1000])
-    # # K = np.zeros((6,6))
-    # # K[3:6,3:6] = np.eye(3)*1000
-
-    # M = 1*np.eye(6)#*5.0
-    # M[3,3] = 1.0
-    # M[4,4] = 1.0
-    # M[5,5] = 1.0
-
-    # B = 3.0*np.sqrt(4.0*np.dot(M,K))
-    # # B = 30*np.eye(6)
-    # # B[3:6,3:6] = 0.1*B[3:6,3:6]
-    # # self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
-    # # self.M = np.diag((2,2,2,1,1,1))
-    # # self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
-    # # K = K.tolist()
-    # # M = M.tolist()
-    # # B = B.tolist()
-    # robot.setLeftEETransformImpedance(left_pos, K, M, B)
-    # # robot.setLeftEEInertialTransform(left_pos, 0.1)
-    # print("Holding position")
-    # while True:
-    #     # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
-    #     time.sleep(0.01)
-    # robot.shutdown()
-    pass
-=======
     robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
     robot.startup()
     time.sleep(0.05)
@@ -2143,4 +2068,3 @@ if __name__=="__main__":
         # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
         time.sleep(0.01)
     robot.shutdown()
->>>>>>> 0d07f9272e74889d0172911eeeb15103aa69ed15
