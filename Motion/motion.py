@@ -1095,7 +1095,7 @@ class Motion:
         else:
             logger.warning('Right limb not enabled.')
             print("Right limb not enabled.")
-            return
+            return  "NA"
 
     def sensedRightEEVelocity(self,local_pt = [0,0,0]):
         """Return the EE translational and rotational velocity  w.r.t. the base Frame
