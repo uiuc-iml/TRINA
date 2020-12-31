@@ -2048,9 +2048,9 @@ if __name__=="__main__":
     #     time.sleep(0.01)
     # robot.shutdown()
 
-    robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
+    robot = Motion(mode = 'Physical',components = ['base'],codename = "bubonic")
     robot.startup()
     time.sleep(0.05)
-    robot.openRightRobotiqGripper()
+    robot.setBaseVelocity([0, 0.1])
     time.sleep(2)
     robot.shutdown()
