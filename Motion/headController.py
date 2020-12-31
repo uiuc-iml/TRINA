@@ -153,8 +153,8 @@ if __name__ == "__main__":
     a.start()
     time.sleep(1)
     print(a.sensedPosition())
-    [pos1,pos2] = a.sensedPosition()
-    a.setPosition([pos1+1,pos2+1])
+    # [pos1,pos2] = a.sensedPosition()
+    # a.setPosition([pos1+1,pos2+1])
     time.sleep(0.5)
     
     a.shutdown()

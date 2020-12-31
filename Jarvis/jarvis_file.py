@@ -390,7 +390,7 @@ class Jarvis:
         None
         """
 		command = self.send_command('self.robot.setRightEETransformImpedance',
-		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband))
+		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(tool_center))
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		"""Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.

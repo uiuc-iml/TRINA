@@ -242,14 +242,15 @@ class DirectTeleOperation:
 		# Element wise multiplication.
 		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
 		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
-
+		home_duration = 4
 		if self.left_limb.active:
 			self.left_limb.setEEInertialTransform(
 				[leftUntuckedRotation.tolist(),
-				(leftUntuckedTranslation + self.tool).tolist()], 4)
+				(leftUntuckedTranslation + self.tool).tolist()], home_duration)
 		if self.right_limb.active:
-			pass
-			#self.right_limb.setEETransformImpedance([rightUntuckedRotation.tolist(),rightUntuckedTranslation.tolist()], self.K, self.M, self.B)
+			self.right_limb.setEEInertialTransform(
+				[rightUntuckedRotation.tolist(),
+				(rightUntuckedTranslation + self.tool).tolist()], home_duration)
 
 
 	def UIStateLogic(self):
@@ -290,6 +291,8 @@ class DirectTeleOperation:
 						limb.teleoperationState = 2
 
 			elif self.controller_mode == ControllerMode.CLUTCHING:
+				print("left, right active", self.left_limb.active, self.right_limb.active)
+				print("left, right active", self.left_limb.teleoperationState, self.right_limb.teleoperationState)
 				for limb in (self.left_limb, self.right_limb):
 					if self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][1] > 0.5:
 						if limb.teleoperationState == 3 or limb.teleoperationState == 1:
@@ -322,7 +325,7 @@ class DirectTeleOperation:
 
 			if(self.base_active):
 				self.baseControl()
-			self.control('velocity')
+			self.control('impedance')
 
 			if(self.head_active):
 				self.headControl()			
@@ -382,7 +385,7 @@ class DirectTeleOperation:
 			self.controlArm(self.left_limb, mode)
 			self.temp_robot_telemetry['leftArm'] = self.robot.sensedLeftLimbPosition()
 		if self.right_limb.active and self.right_limb.teleoperationState == 2:
-			self.controlArm(self.left_limb, mode)
+			self.controlArm(self.right_limb, mode)
 			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
 
 		if (self.mode == 'Physical') and self.left_limb.gripper_active: # and self.left_limb.teleoperationState == 2:

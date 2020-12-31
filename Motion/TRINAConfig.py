@@ -15,12 +15,12 @@ left_limb_payload = 1.025
 left_limb_cog = [0.0,0.0,0.08] 
 
 #estimated for the pusher, need to run the calibrater
-right_limb_payload = 0.0 #0.4
+right_limb_payload = 0.86125 #0.4
 right_limb_cog = [0.0,0.0,0.06]
 left_Robotiq = True
-right_Robotiq = False
+right_Robotiq = True
 left_Robotiq_type = 'parallel'
-right_Robotiq_type = 'parallel'
+right_Robotiq_type = 'vacuum'
 ur5e_control_rate = 0.004 #250 Hz
 
 

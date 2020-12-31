@@ -819,7 +819,8 @@ class Motion:
                 self._controlLoopLock.release()
                 start_time = time.time()
                 # array convert for index-by-list.
-                self.setLimbPositionLinear(limb, np.array(target_config)[self.left_active_Dofs],duration)
+                print("target position: ", limb.name, np.array(target_config)[limb.active_dofs])
+                self.setLimbPositionLinear(limb, np.array(target_config)[limb.active_dofs],duration)
                 # print("setting linear position takes", time.time() - start_time)
             else:
                 status = f'{limb.name} limb not enabled'
@@ -1514,43 +1515,45 @@ class Motion:
         """Unpause the robot.
         After unpausing, the robot is still stationery until a new command is added
         """
-        if self.mode == "Physical":
+
+        if self.pause_motion_flag:
+            if self.mode == "Physical":
+                if self.left_limb.enabled:
+                    self.left_limb.resume()
+                if self.right_limb.enabled:
+                    self.right_limb.resume()
+                if self.torso_enabled:
+                    self.torso.resume()
+                if self.base_enabled:
+                    self.base.resume()
+                if self.left_gripper_enabled:
+                    self.left_gripper.resume()
+                if self.head_enabled:
+                    self.head.resume()
+            else:
+                self.simulated_robot.resume()
+
+            self._controlLoopLock.acquire()
+            self.pause_motion_flag = False
+            self.pause_motion_sent = False
+            self._purge_commands() #extra safety
+            #During purge, some commands are cleared to None, set all components to go to current position
             if self.left_limb.enabled:
-                self.left_limb.resume()
+                self.setLeftLimbPosition(self.sensedLeftLimbPosition())
             if self.right_limb.enabled:
-                self.right_limb.resume()
+                self.setRightLimbPosition(self.sensedRightLimbPosition())
             if self.torso_enabled:
-                self.torso.resume()
+                self.setTorsoTargetPosition(self.sensedTorsoPosition())
             if self.base_enabled:
-                self.base.resume()
+                self.setBaseVelocity([0.0,0.0])
             if self.left_gripper_enabled:
-                self.left_gripper.resume()
+                self.setLeftGripperPosition(self.sensedLeftGripperPosition())
             if self.head_enabled:
-                self.head.resume()
-        else:
-            self.simulated_robot.resume()
+                self.setHeadPosition(self.sensedHeadPosition())
 
-        self._controlLoopLock.acquire()
-        self.pause_motion_flag = False
-        self.pause_motion_sent = False
-        self._purge_commands() #extra safety
-        #During purge, some commands are cleared to None, set all components to go to current position
-        if self.left_limb.enabled:
-            self.setLeftLimbPosition(self.sensedLeftLimbPosition())
-        if self.right_limb.enabled:
-            self.setRightLimbPosition(self.sensedRightLimbPosition())
-        if self.torso_enabled:
-            self.setTorsoTargetPosition(self.sensedTorsoPosition())
-        if self.base_enabled:
-            self.setBaseVelocity([0.0,0.0])
-        if self.left_gripper_enabled:
-            self.setLeftGripperPosition(self.sensedLeftGripperPosition())
-        if self.head_enabled:
-            self.setHeadPosition(self.sensedHeadPosition())
-
-        
-        self._controlLoopLock.release()
-        return
+            
+            self._controlLoopLock.release()
+        return 0
 
     def isPaused(self):
         """
@@ -2011,36 +2014,78 @@ class Motion:
 if __name__=="__main__":
 
     ###Read the current position ###
+    # robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
+    # robot.startup()
+    # time.sleep(0.05)
+    # # robot.setLeftLimbPositionLinear([-4.02248,0.1441026,1.58109,-0.254,0.9090495,0.46262],30)
+    # # print(robot.getKlamptSensedPosition())
+    # # with open('tmp.txt', 'a') as f:
+    # #     f.write(f"\n{str(robot.getKlamptSensedPosition())}")
+    # left_pos = robot.sensedLeftEETransform(tool_center=[0.17,0,0])
+    # K = np.diag([200.0, 200.0, 200.0, 1.0, 1.0, 1.0])
+    # # K = np.zeros((6,6))
+    # # K[3:6,3:6] = np.eye(3)*1000
+
+    # M = 1*np.eye(6)#*5.0
+    # M[3,3] = 0.25
+    # M[4,4] = 0.25
+    # M[5,5] = 0.25
+
+    # B = 2.0*np.sqrt(4.0*np.dot(M,K))
+    # # B = 30*np.eye(6)
+    # B[3:6,3:6] = 0.75*B[3:6,3:6]
+    # # self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
+    # # self.M = np.diag((2,2,2,1,1,1))
+    # # self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
+    # # K = K.tolist()
+    # # M = M.tolist()
+    # # B = B.tolist()
+    # robot.setLeftEETransformImpedance(left_pos, K, M, B,tool_center=[0.17,0,0])
+    # # robot.setLeftEEInertialTransform(left_pos, 0.1)
+    # print("Holding position")
+    # while True:
+    #     # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
+    #     time.sleep(0.01)
+    # robot.shutdown()
+
     robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
     robot.startup()
     time.sleep(0.05)
-    # robot.setLeftLimbPositionLinear([-4.02248,0.1441026,1.58109,-0.254,0.9090495,0.46262],30)
-    # print(robot.getKlamptSensedPosition())
-    # with open('tmp.txt', 'a') as f:
-    #     f.write(f"\n{str(robot.getKlamptSensedPosition())}")
-    left_pos = robot.sensedLeftEETransform(tool_center=[0.17,0,0])
-    K = np.diag([200.0, 200.0, 200.0, 1.0, 1.0, 1.0])
-    # K = np.zeros((6,6))
-    # K[3:6,3:6] = np.eye(3)*1000
-
-    M = 1*np.eye(6)#*5.0
-    M[3,3] = 0.25
-    M[4,4] = 0.25
-    M[5,5] = 0.25
-
-    B = 2.0*np.sqrt(4.0*np.dot(M,K))
-    # B = 30*np.eye(6)
-    B[3:6,3:6] = 0.75*B[3:6,3:6]
-    # self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
-    # self.M = np.diag((2,2,2,1,1,1))
-    # self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
-    # K = K.tolist()
-    # M = M.tolist()
-    # B = B.tolist()
-    robot.setLeftEETransformImpedance(left_pos, K, M, B,tool_center=[0.17,0,0])
-    # robot.setLeftEEInertialTransform(left_pos, 0.1)
-    print("Holding position")
-    while True:
-        # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
-        time.sleep(0.01)
+    print(robot.sensedRightLimbPosition())
+    rightUntuckedRotation = np.array([
+        0, 0, -1,
+        0, -1, 0,
+        -1, 0, 0
+    ])
+    rotzm90 = np.array([
+        [0, 1, 0],
+        [-1, 0, 0],
+        [0, 0, 1],
+    ])
+    oort = 1/np.sqrt(2)
+    rotxm45 = np.array([
+        [1,0, 0],
+        [0,oort,oort],
+        [0,-oort,oort]
+    ])
+    rightUntuckedTranslation = np.array([0.34,
+        -0.296298410887376, 1.0540173127153597])
+    # Looks like the y axis is the left-right axis.
+    # Mirroring along y axis.
+    mirror_reflect_R = np.array([
+                            1, -1,  1,
+                        -1,  1, -1,
+                            1, -1,  1,
+                    ])
+    mirror_reflect_T = np.array([1, -1, 1])
+    # Element wise multiplication.
+    leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
+    leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
+    home_duration = 20
+    print("Right Untucked Rotation: ", rightUntuckedRotation)
+    print("Right Untucked Translation: ", rightUntuckedTranslation)
+    robot.setRightEEInertialTransform(
+        [rightUntuckedRotation.tolist(),
+        (rightUntuckedTranslation).tolist()], home_duration)
+    time.sleep(5)
     robot.shutdown()
