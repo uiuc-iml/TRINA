@@ -2051,41 +2051,6 @@ if __name__=="__main__":
     robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
     robot.startup()
     time.sleep(0.05)
-    print(robot.sensedRightLimbPosition())
-    rightUntuckedRotation = np.array([
-        0, 0, -1,
-        0, -1, 0,
-        -1, 0, 0
-    ])
-    rotzm90 = np.array([
-        [0, 1, 0],
-        [-1, 0, 0],
-        [0, 0, 1],
-    ])
-    oort = 1/np.sqrt(2)
-    rotxm45 = np.array([
-        [1,0, 0],
-        [0,oort,oort],
-        [0,-oort,oort]
-    ])
-    rightUntuckedTranslation = np.array([0.34,
-        -0.296298410887376, 1.0540173127153597])
-    # Looks like the y axis is the left-right axis.
-    # Mirroring along y axis.
-    mirror_reflect_R = np.array([
-                            1, -1,  1,
-                        -1,  1, -1,
-                            1, -1,  1,
-                    ])
-    mirror_reflect_T = np.array([1, -1, 1])
-    # Element wise multiplication.
-    leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
-    leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
-    home_duration = 20
-    print("Right Untucked Rotation: ", rightUntuckedRotation)
-    print("Right Untucked Translation: ", rightUntuckedTranslation)
-    robot.setRightEEInertialTransform(
-        [rightUntuckedRotation.tolist(),
-        (rightUntuckedTranslation).tolist()], home_duration)
-    time.sleep(5)
+    robot.openRightRobotiqGripper()
+    time.sleep(2)
     robot.shutdown()

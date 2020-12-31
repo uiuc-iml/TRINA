@@ -50,7 +50,8 @@ mode="Physical" # UNUSED FOR ANYTHING
 
 class TeleopArmState:
 	def __init__(self, side, active, gripper_active, transform_sensor, transform_setter,
-						proportional_controller, impedance_controller):
+						proportional_controller, impedance_controller,
+						open_robotiq_gripper, close_robotiq_gripper):
 		self.side = side
 		self.joystick = side + "Controller"
 		self.active = active
@@ -61,6 +62,8 @@ class TeleopArmState:
 		self.setEEInertialTransform = transform_setter
 		self.setEEVelocity = proportional_controller
 		self.setEETransformImpedance = impedance_controller
+		self.openRobotiqGripper = open_robotiq_gripper
+		self.closeRobotiqGripper = close_robotiq_gripper
 
 		self.teleoperationState = 0
 
@@ -78,19 +81,27 @@ class DirectTeleOperation:
 		self.infoLoop_rate = 0.05
 		self.max_arm_speed = 0.5
 		self.robot = Jarvis
-		self.components =  ['head','base','left_limb','right_limb', 'left_gripper']
+		self.components =  ['head','base','left_limb','right_limb', 'left_gripper', 'right_gripper']
 		#self.robot.getComponents()
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
-		self.left_limb = TeleopArmState("left", left_limb_active, left_gripper_active,
-										self.robot.sensedLeftEETransform, self.robot.setLeftEEInertialTransform,
-										self.robot.setLeftEEVelocity, self.robot.setLeftEETransformImpedance)
+		self.left_limb = TeleopArmState("left", left_limb_active, 
+			left_gripper_active, self.robot.sensedLeftEETransform, 
+			self.robot.setLeftEEInertialTransform,
+			self.robot.setLeftEEVelocity, 
+			self.robot.setLeftEETransformImpedance,
+			self.robot.openLeftRobotiqGripper,
+			self.robot.closeLeftRobotiqGripper)
 
 		right_limb_active = ('right_limb' in self.components)
 		right_gripper_active = ('right_gripper' in self.components)
-		self.right_limb = TeleopArmState("right", right_limb_active, right_gripper_active,
-										self.robot.sensedRightEETransform, self.robot.setRightEEInertialTransform,
-										self.robot.setRightEEVelocity, self.robot.setRightEETransformImpedance)
+		self.right_limb = TeleopArmState("right", right_limb_active, 
+			right_gripper_active, self.robot.sensedRightEETransform, 
+			self.robot.setRightEEInertialTransform,
+			self.robot.setRightEEVelocity, 
+			self.robot.setRightEETransformImpedance,
+			self.robot.openRightRobotiqGripper,
+			self.robot.closeRightRobotiqGripper)
 
 		self.base_active = ('base' in self.components)
 		self.torso_active = ('torso' in self.components)
@@ -140,7 +151,7 @@ class DirectTeleOperation:
 		controller_thread = Process(target = controller_listen.listen, daemon=True)
 		stateRecieverThread.start()
 		main_thread.start()
-		# controller_thread.start()
+		controller_thread.start()
 		# time.sleep(5)
 
 	def sigint_handler(self, signum, frame):
@@ -291,8 +302,6 @@ class DirectTeleOperation:
 						limb.teleoperationState = 2
 
 			elif self.controller_mode == ControllerMode.CLUTCHING:
-				print("left, right active", self.left_limb.active, self.right_limb.active)
-				print("left, right active", self.left_limb.teleoperationState, self.right_limb.teleoperationState)
 				for limb in (self.left_limb, self.right_limb):
 					if self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][1] > 0.5:
 						if limb.teleoperationState == 3 or limb.teleoperationState == 1:
@@ -325,7 +334,7 @@ class DirectTeleOperation:
 
 			if(self.base_active):
 				self.baseControl()
-			self.control('impedance')
+			self.control('velocity')
 
 			if(self.head_active):
 				self.headControl()			
@@ -388,12 +397,18 @@ class DirectTeleOperation:
 			self.controlArm(self.right_limb, mode)
 			self.temp_robot_telemetry['rightArm'] = self.robot.sensedRightLimbPosition()
 
-		if (self.mode == 'Physical') and self.left_limb.gripper_active: # and self.left_limb.teleoperationState == 2:
-			closed_value = self.UI_state["controllerButtonState"]["leftController"]["squeeze"][0]
-			if(closed_value > 0):
-				self.robot.closeLeftRobotiqGripper()
-			else:
-				self.robot.openLeftRobotiqGripper()
+		if (self.mode == 'Physical'):
+			for limb in [self.left_limb, self.right_limb]:
+				if limb.side == "right":
+					print("Right limb")
+					print("Right gripper active: ", limb.gripper_active)
+					print(self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][0])
+				if limb.gripper_active:
+					closed_value = self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][0]
+					if(closed_value > 0):
+						limb.closeRobotiqGripper()
+					else:
+						limb.openRobotiqGripper()
 
 		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
 

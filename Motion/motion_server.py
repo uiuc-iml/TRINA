@@ -388,7 +388,6 @@ def _openLeftRobotiqGripper():
 @xmlrpcMethod("closeLeftRobotiqGripper")
 def _closeLeftRobotiqGripper():
 	global robot
-	print('left gripper called')
 	return robot.closeLeftRobotiqGripper()
 
 @loggedMethod
