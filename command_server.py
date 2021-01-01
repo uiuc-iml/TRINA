@@ -409,6 +409,9 @@ class CommandServer:
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
 		stateRecieverThread.start()		
 		print('\n state receiver started!\n')
+		print('\n starting pause/resume check\n')
+		pauseResumeThread = threading.Thread(target=self.pauseResumeChecker)
+		pauseResumeThread.start()	
 		print('\n starting command receiver \n')
 		commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
 		commandRecieverThread.daemon = True
@@ -632,6 +635,19 @@ class CommandServer:
 	def activate(self,name):
 		while not self.shut_down_flag:
 			time.sleep(0.1)
+	
+	def pauseResumeChecker(self):
+		while not self.shut_down_flag:
+			time.sleep(0.5)
+			try:
+				pause0 = self.server["UI_STATE"]["UIlogicState"]["stop"].read()
+				pause1 = self.server["Phone_Stop"].read()
+				if pause0 == False and pause1 == False:
+					self.robot.resumeMotion()
+				else:
+					self.robot.pauseMotion()
+			except Exception as e:
+				traceback.print_exc()
 
 	def stateReciever(self):
 		pos_left = [0,0,0,0,0,0]
@@ -925,8 +941,9 @@ class CommandLogger(object):
 	def log_command(self,command,time):
 		self.length = self.r.llen(self.key)
 		if(self.length >= self.max_length):
-			print('QUEUE OVERFLOW!!!! SOMETHING WRONG WITH THE LOGGER?')
+			# print('QUEUE OVERFLOW!!!! SOMETHING WRONG WITH THE LOGGER?')
 			#print('\n\n\n\n\nQUEUE OVERFLOW!!!! \n\n\n\n\n SOMETHING WRONG WITH THE LOGGER?')
+			pass
 		else:
 			self.r.rpush(self.key,str([command,time]))
 
@@ -936,8 +953,8 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb', 'right_limb'], modules = ['DirectTeleOperation'], codename = 'bubonic')
-	#server = CommandServer(mode = 'Kinematic',components =  ['base','left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
+	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'bubonic')
+	# server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
 	print(server.robot.closeLeftRobotiqGripper())
 	print(server.robot.sensedLeftEETransform())

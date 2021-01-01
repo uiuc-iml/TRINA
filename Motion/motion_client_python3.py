@@ -216,7 +216,7 @@ class MotionClient:
 		# K = K.tolist()
 		# B = B.tolist()
 		# M = M.tolist()
-		self.s.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
+		self.s.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		K = K.tolist()
