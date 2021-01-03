@@ -2048,9 +2048,11 @@ if __name__=="__main__":
     #     time.sleep(0.01)
     # robot.shutdown()
 
-    robot = Motion(mode = 'Physical',components = ['base'],codename = "bubonic")
+    robot = Motion(mode = 'Physical',components = ['left_limb'],codename = "bubonic")
     robot.startup()
     time.sleep(0.05)
-    robot.setBaseVelocity([0, 0.1])
+    for i in range(50):
+        print(robot.sensedLeftEEWrench())
+        time.sleep(0.05)
     time.sleep(2)
     robot.shutdown()

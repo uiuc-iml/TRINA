@@ -11,12 +11,12 @@ right_limb_address = '10.1.1.20'
 ##These are for the Righthand gripper
 # left_limb_payload = 0.86125
 # left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
-left_limb_payload = 1.025 
-left_limb_cog = [0.0,0.0,0.08] 
+left_limb_payload = 0.0 #1.025 
+left_limb_cog = [0.0,0.0,0.0] 
 
 #estimated for the pusher, need to run the calibrater
-right_limb_payload = 0.86125 #0.4
-right_limb_cog = [0.0,0.0,0.06]
+right_limb_payload = 0.0 #0.86125 #0.4
+right_limb_cog = [0.0,0.0,0.0]
 left_Robotiq = True
 right_Robotiq = True
 left_Robotiq_type = 'parallel'
