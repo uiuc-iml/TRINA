@@ -1,7 +1,5 @@
 import time,math
-# from klampt import vis
-# from klampt import WorldModel
-# from klampt.model.trajectory import Trajectory
+import klampt
 import threading
 # from Motion.motion_client_python3 import MotionClient
 import json
@@ -17,6 +15,7 @@ import csv
 from threading import Thread
 import sys
 import json
+import klampt.plan as kp
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
@@ -30,8 +29,8 @@ from enum import Enum
 DEGREE_2_RADIAN = 2.0*math.pi/180.0
 
 class ControllerMode(Enum):
-    ABSOLUTE=0
-    CLUTCHING=1
+	ABSOLUTE=0
+	CLUTCHING=1
 
 robot_ip = 'http://localhost:8080'
 
@@ -86,20 +85,20 @@ class DirectTeleOperation:
 		#self.robot.getComponents()
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
-		self.left_limb = TeleopArmState("left", left_limb_active, 
-			left_gripper_active, self.robot.sensedLeftEETransform, 
+		self.left_limb = TeleopArmState("left", left_limb_active,
+			left_gripper_active, self.robot.sensedLeftEETransform,
 			self.robot.setLeftEEInertialTransform,
-			self.robot.setLeftEEVelocity, 
+			self.robot.setLeftEEVelocity,
 			self.robot.setLeftEETransformImpedance,
 			self.robot.openLeftRobotiqGripper,
 			self.robot.closeLeftRobotiqGripper)
 
 		right_limb_active = ('right_limb' in self.components)
 		right_gripper_active = ('right_gripper' in self.components)
-		self.right_limb = TeleopArmState("right", right_limb_active, 
-			right_gripper_active, self.robot.sensedRightEETransform, 
+		self.right_limb = TeleopArmState("right", right_limb_active,
+			right_gripper_active, self.robot.sensedRightEETransform,
 			self.robot.setRightEEInertialTransform,
-			self.robot.setRightEEVelocity, 
+			self.robot.setRightEEVelocity,
 			self.robot.setRightEETransformImpedance,
 			self.robot.openRightRobotiqGripper,
 			self.robot.closeRightRobotiqGripper)
@@ -146,6 +145,17 @@ class DirectTeleOperation:
 		self.tiltLimits = {"center": 180, "min":130, "max":230} #head limits
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
+		self.left_limb.openRobotiqGripper()
+		self.right_limb.openRobotiqGripper()
+
+		# Super temporary fix to load the robot model, after refactor this
+		# should be loaded from settings
+		print("DirectTeleOperation::CHECK THAT ROBOT IS LOADED "
+			+ "FROM CORRECT FILE")
+		self.robot_file = "../../Motion/data/robots/Bubonic.urdf"
+		self.robot_model = klampt.RobotModel()
+		self.robot_model.loadFile(self.robot_file)
+		self.cspace = kp.robotcspace.RobotCSpace(self.robot_model)
 
 		stateRecieverThread = threading.Thread(target=self._serveStateReceiver)
 		main_thread = threading.Thread(target = self._infoLoop)
@@ -153,8 +163,6 @@ class DirectTeleOperation:
 		stateRecieverThread.start()
 		main_thread.start()
 		controller_thread.start()
-		self.left_limb.openRobotiqGripper()
-		self.right_limb.openRobotiqGripper()
 		# time.sleep(5)
 
 	def sigint_handler(self, signum, frame):
@@ -256,6 +264,17 @@ class DirectTeleOperation:
 		# Element wise multiplication.
 		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
 		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
+		kp.cspace.MotionPlan.setOptions('shortcut'=1)
+		planner = kp.cspace.MotionPlan(self.cspace, type='rrt')
+		planner.setEndpoints(self.robot.getKlamptSensedPosition(),
+			self.check_ee_target(
+				(leftUntuckedRotation.tolist(),
+					leftUntuckedTranslation.tolist()),
+				(rightUntuckedRotation.tolist(),
+					rightUntuckedTranslation.tolist())
+			))
+		plan = planner.getPath()
+		print(plan)
 		home_duration = 4
 		if self.left_limb.active:
 			self.left_limb.setEEInertialTransform(
@@ -299,7 +318,7 @@ class DirectTeleOperation:
 					self.init_UI_state = self.UI_state
 					self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 					self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
-					
+
 					for limb in (self.left_limb, self.right_limb):
 						limb.init_pos = limb.sensedEETransform()
 						limb.teleoperationState = 2
@@ -315,7 +334,7 @@ class DirectTeleOperation:
 
 							self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 							self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
-							
+
 							limb.init_pos = limb.sensedEETransform(self.tool.tolist())
 
 							# print("BEGIN CLUTCHING, ZERO!")
@@ -340,8 +359,8 @@ class DirectTeleOperation:
 			self.control('impedance')
 
 			if(self.head_active):
-				self.headControl()			
-	
+				self.headControl()
+
 	def headControl(self):
 		return
 		def mod180(x):
@@ -372,7 +391,7 @@ class DirectTeleOperation:
 		init_orientation = to_rotvec(self.init_headset_rotation)
 		panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - init_orientation["y"])), self.panLimits["min"], self.panLimits["max"])
 		tiltAngle = limitTo((self.tiltLimits["center"] - mod180(orientation["x"] - init_orientation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
-		
+
 		try:
 			self.robot.setHeadPosition([panAngle*DEGREE_2_RADIAN, tiltAngle*DEGREE_2_RADIAN])
 		except Exception as err:
@@ -543,7 +562,20 @@ class DirectTeleOperation:
 		# return so3.matrix(rotation_final)
 		return rotation_final
 
-
+	def check_ee_target(self, left_ee_target, right_ee_target):
+		def target_tester(q):
+			initConfig = self.robot_model.getConfig()
+			self.robot_model.setConfig(q)
+			base_t = self.robot_model.link("base_link").getTransform()
+			# Get the ee link transform
+			left_t = self.robot_model.link("left_EE_link").getTransform()
+			left_tool_local = ((se3.rotation(left_t)), self.tool.tolist())
+			left_tool_global = se3.mul(left_t, left_tool_local)
+			left_tool_in_base = se3.mul(se3.inv(base_t), left_tool_global)
+			dist = se3.distance(left_tool_in_base, left_ee_target)
+			self.robot_model.setConfig(initConfig)
+			return dist < 1e-3
+		return target_tester
 
 if __name__ == "__main__" :
 	my_controller = DirectTeleOperation()
