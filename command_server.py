@@ -309,7 +309,6 @@ class testingWorldBuilder():
 
 class CommandServer:
 
-	#def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = [],codename = 'anthrax_lowpoly'):
 	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic'):
 		# we first check if redis is up and running:
 		try:
@@ -423,6 +422,8 @@ class CommandServer:
 		print('\n module monitor started\n')
 
 		atexit.register(self.shutdown_all)
+		if mode == "Kinematic":
+			self.setRobotToDefault()
 		
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
@@ -806,7 +807,8 @@ class CommandServer:
 			tb = traceback.format_exc()
 			print('there was an error executing your command!',tb)
 		finally:
-			print("command recieved was " + str(command))
+			pass
+			# print("command recieved was " + str(command))
 
 
 	#0 -> dead
@@ -953,7 +955,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'bubonic')
+	server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'bubonic')
 	# server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
 	print(server.robot.closeLeftRobotiqGripper())

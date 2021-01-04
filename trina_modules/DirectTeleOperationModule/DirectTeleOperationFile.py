@@ -56,6 +56,7 @@ class TeleopArmState:
 		self.joystick = side + "Controller"
 		self.active = active
 		self.gripper_active = gripper_active
+		self.gripper_open = True
 		self.init_pos = None
 		self.cur_pos = None
 		self.sensedEETransform = transform_sensor
@@ -152,6 +153,8 @@ class DirectTeleOperation:
 		stateRecieverThread.start()
 		main_thread.start()
 		controller_thread.start()
+		self.left_limb.openRobotiqGripper()
+		self.right_limb.openRobotiqGripper()
 		# time.sleep(5)
 
 	def sigint_handler(self, signum, frame):
@@ -315,7 +318,7 @@ class DirectTeleOperation:
 							
 							limb.init_pos = limb.sensedEETransform(self.tool.tolist())
 
-							print("BEGIN CLUTCHING, ZERO!")
+							# print("BEGIN CLUTCHING, ZERO!")
 
 							limb.teleoperationState = 2
 
@@ -334,7 +337,7 @@ class DirectTeleOperation:
 
 			if(self.base_active):
 				self.baseControl()
-			self.control('velocity')
+			self.control('impedance')
 
 			if(self.head_active):
 				self.headControl()			
@@ -399,15 +402,13 @@ class DirectTeleOperation:
 
 		if (self.mode == 'Physical'):
 			for limb in [self.left_limb, self.right_limb]:
-				if limb.side == "right":
-					print("Right limb")
-					print("Right gripper active: ", limb.gripper_active)
-					print(self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][0])
 				if limb.gripper_active:
 					closed_value = self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][0]
-					if(closed_value > 0):
+					if(closed_value > 0 and limb.gripper_open):
 						limb.closeRobotiqGripper()
-					else:
+						limb.gripper_open = False
+					elif(closed_value <= 0 and not limb.gripper_open):
+						limb.gripper_open = True
 						limb.openRobotiqGripper()
 
 		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
@@ -421,21 +422,7 @@ class DirectTeleOperation:
 	def controlArm(self, limb, mode):
 		assert (mode in ['position', 'velocity', 'impedance']), "Invalid mode"
 		if self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][1] > 0.5:
-			print("DRIVE LIMB " + limb.side)
-
 			RR_final, RT_final, curr_transform = self.getTargetEETransform(limb)
-			print("TARGET TRANSFORM:")
-			print(RR_final)
-			print(RT_final)
-			print("CURRENT TRANSFORM:")
-			print(curr_transform)
-			print("RAW: ")
-			print(np.array(self.UI_state["controllerPositionState"]
-				[limb.joystick]["controllerPosition"]))
-			print("HOMED:")
-			print(np.array(self.init_UI_state["controllerPositionState"]
-				[limb.joystick]["controllerPosition"]))
-
 			target_transform = (RR_final, RT_final)
 			actual_dt = 1 * self.dt
 			gain = 2.0
@@ -496,9 +483,6 @@ class DirectTeleOperation:
 			+ (np.matmul(
 			np.matmul(self.init_headset_orientation.as_dcm(),R_cw_rw)
 			,(RT_cw_cc - RT_cw_ch).T)) ).tolist()
-		print('\n\n Translation Transforms \n')
-		print(RT_final,RT_rw_rh)
-		print('\n\n')
 		RR_rw_rh = R.from_dcm((np.array(RR_rw_rh).reshape((3,3))))
 
 		init_quat = np.array(
@@ -545,9 +529,6 @@ class DirectTeleOperation:
 		rpy = partial_rotation.as_euler('ZYX')
 		# we then ignore its roll and pitch in unity
 		rotation_final = R.from_euler('ZYX',[rpy[0],0,0])
-
-		print('Treated initial matrix - here is the transform')
-		print(rotation_final.as_dcm())
 
 		#so3 version:
 		# partial_rotation = so3.from_rotation_vector((right_handed_rotvec[:3]*right_handed_rotvec[3]).tolist())
