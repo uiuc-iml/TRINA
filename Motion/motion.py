@@ -24,7 +24,7 @@ import logging
 from datetime import datetime
 
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d_%m_%Y') + ".log"
-logger = trina_logging.get_logger(__name__,logging.WARNING, filename)
+logger = trina_logging.get_logger(__name__,logging.INFO, filename)
 
 class Motion:
 
@@ -1818,9 +1818,7 @@ class Motion:
                 world = vectorops.sub(target_transform[1],so3.apply(target_transform[0],limb.state.toolCenter)))
 
         initialConfig = self.robot_model.getConfig()
-        # PATRICK - Change this back
-        # res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = limb.active_dofs,tol=0.000001)
-        res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = limb.active_dofs,tol=0.001, numRestarts=10)
+        res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = limb.active_dofs,tol=0.000001)
 
         failFlag = False
         if res:
@@ -1841,19 +1839,31 @@ class Motion:
                 logger.error('CartesianDrive IK has failed completely,exited..')
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
 
-                jacobian = np.array(limb.EE_link.getJacobian([0,0,0]))
-                del_theta = np.linalg.lstsq(jacobian, np.array(se3.error(target_transform, current_transform)))[0]
-                del_theta = 0.1 * del_theta / np.linalg.norm(del_theta)
-                target_config = initialConfig[:]
-                for i, ind in enumerate(limb.active_dofs):
-                    # NOTE: What if target config is out of bounds?
-                    target_config[ind] += del_theta[ind]
-
-                return 2, target_config # 2 means success, maybe this should have a different return signal.
+                # jacobian = np.array(limb.EE_link.getJacobian([0,0,0]))
+                # del_theta = np.linalg.lstsq(jacobian, np.array(se3.error(target_transform, current_transform)))[0]
+                # if np.sum(np.isnan(del_theta)) > 0:
+                #     print("Found nans")
+                #     self.robot_model.setConfig(initialConfig)
+                #     return 0, np.array(initialConfig[:])[limb.active_dofs].tolist()
+                # else:
+                #     print("No nans")
+                # if np.linalg.norm(del_theta) <= 1e-8:
+                #     del_theta = np.random.rand(len(initialConfig)) * 1e-4
+                # else:
+                #     del_theta = 0.1 * del_theta / np.linalg.norm(del_theta)
+                # target_config = np.array(initialConfig[:])
+                # for i, ind in enumerate(limb.active_dofs):
+                #     # NOTE: What if target config is out of bounds?
+                #     target_config[ind] += del_theta[ind]
+                # self.robot_model.setConfig(initialConfig)
+                # return 2, target_config[limb.active_dofs].tolist() # 2 means success, maybe this should have a different return signal.
+                self.robot_model.setConfig(initialConfig)
+                return 0, np.array(initialConfig[:])[limb.active_dofs].tolist()
             else:
                 logger.warning('CartesianDrive IK has failed partially')
                 #print("motion.controlLoop():CartesianDrive IK has failed, next trying: ",\
                 #   limb.state.driveSpeedAdjustment)
+                self.robot_model.setConfig(initialConfig)
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
             #print('success!')
@@ -1968,7 +1978,7 @@ class Motion:
                     if math.fabs(wrench[i]) < state.deadband[i]:
                         wrench[i] = 0
             # start = time.monotonic()
-            N = 10
+            N = 2
             for i in range(N):
                 state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, m_inv = state.Minv,\
                     K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\

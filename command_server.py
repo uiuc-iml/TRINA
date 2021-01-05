@@ -309,7 +309,6 @@ class testingWorldBuilder():
 
 class CommandServer:
 
-	#def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_anthrax_PointClick.xml',modules = [],codename = 'anthrax_lowpoly'):
 	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic'):
 		# we first check if redis is up and running:
 		try:
@@ -388,7 +387,7 @@ class CommandServer:
 
 			time.sleep(3)
 		if(self.mode == 'Physical'):
-			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
+			self.sensor_module = None #Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
 			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
 			time.sleep(5)
 
@@ -423,6 +422,8 @@ class CommandServer:
 		print('\n module monitor started\n')
 
 		atexit.register(self.shutdown_all)
+		if mode == "Kinematic":
+			self.setRobotToDefault()
 		
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
@@ -806,7 +807,8 @@ class CommandServer:
 			tb = traceback.format_exc()
 			print('there was an error executing your command!',tb)
 		finally:
-			print("command recieved was " + str(command))
+			pass
+			# print("command recieved was " + str(command))
 
 
 	#0 -> dead

@@ -655,7 +655,7 @@ class Jarvis:
 		final_string = (final_string + ')')
 		final_string = final_string.format(*args)
 		self.trina_queue.push(final_string)
-		print('sending ',final_string)
+		# print('sending ',final_string)
 
 	def log_health(self, status=True):
 		"""Add the health log of the module
