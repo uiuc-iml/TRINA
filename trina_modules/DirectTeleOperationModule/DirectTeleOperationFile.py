@@ -152,10 +152,13 @@ class DirectTeleOperation:
 		# should be loaded from settings
 		print("DirectTeleOperation::CHECK THAT ROBOT IS LOADED "
 			+ "FROM CORRECT FILE")
-		self.robot_file = "../../Motion/data/robots/Bubonic.urdf"
-		self.robot_model = klampt.RobotModel()
-		self.robot_model.loadFile(self.robot_file)
+		self.world_file = "./Motion/data/TRINA_world_bubonic_2.xml"
+		self.world = klampt.WorldModel()
+		self.world.readFile(self.world_file)
+		self.robot_model = self.world.robot(0)
 		self.cspace = kp.robotcspace.RobotCSpace(self.robot_model)
+		print("Example config: ", self.cspace.sample())
+		self.homed = False
 
 		stateRecieverThread = threading.Thread(target=self._serveStateReceiver)
 		main_thread = threading.Thread(target = self._infoLoop)
@@ -223,6 +226,9 @@ class DirectTeleOperation:
 				# print("_serveStateReceiver: idling")
 				pass
 			elif self.state == 'active':
+				if not self.homed:
+					self.homed = True
+					self.setRobotToDefault()
 				# print('_serveStateReceiver:active')
 				self.last_time = time.time()
 				if(self.left_limb.active):
@@ -264,17 +270,43 @@ class DirectTeleOperation:
 		# Element wise multiplication.
 		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
 		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
-		kp.cspace.MotionPlan.setOptions('shortcut'=1)
-		planner = kp.cspace.MotionPlan(self.cspace, type='rrt')
-		planner.setEndpoints(self.robot.getKlamptSensedPosition(),
+		# kp.cspace.MotionPlan.setOptions(shortcut=1)
+		# planner = kp.cspace.MotionPlan(self.cspace, type='rrt')
+		planner, psettings = kp.cspace.configurePlanner(self.cspace, 
+			self.robot.getKlamptSensedPosition(),
 			self.check_ee_target(
 				(leftUntuckedRotation.tolist(),
 					leftUntuckedTranslation.tolist()),
 				(rightUntuckedRotation.tolist(),
 					rightUntuckedTranslation.tolist())
 			))
+		print(psettings)
+		# planner.setEndpoints(self.robot.getKlamptSensedPosition(),
+		# 	self.check_ee_target(
+		# 		(leftUntuckedRotation.tolist(),
+		# 			leftUntuckedTranslation.tolist()),
+		# 		(rightUntuckedRotation.tolist(),
+		# 			rightUntuckedTranslation.tolist())
+		# 	))
 		plan = planner.getPath()
-		print(plan)
+		iteration = 0
+		while plan is None:
+			planner.planMore(100)
+			plan = planner.getPath()
+			iteration += 1
+			print("Iteration: ", iteration)
+		left_ee_target = [leftUntuckedRotation.tolist(),
+				(leftUntuckedTranslation + self.tool).tolist()]
+		self.robot_model.setConfig(self.robot.getKlamptSensedPosition())
+		base_t = self.robot_model.link("base_link").getTransform()
+		# Get the ee link transform
+		left_t = self.robot_model.link("left_EE_link").getTransform()
+		left_tool_local = (so3.identity(), self.tool.tolist())
+		left_tool_global = se3.mul(left_t, left_tool_local)
+		left_tool_in_base = se3.mul(se3.inv(base_t), left_tool_global)
+		dist = se3.distance(left_tool_global, left_ee_target)
+		print("Dist: ", dist)
+		print("Found plan: ", plan)
 		home_duration = 4
 		if self.left_limb.active:
 			self.left_limb.setEEInertialTransform(
@@ -432,13 +464,12 @@ class DirectTeleOperation:
 
 		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
 
-	"""
-	Control an arm based on UI state and other jazz. Might lock it.
-
-	limb: Arm object.
-	mode: One of position, velocity, or impedance.
-	"""
 	def controlArm(self, limb, mode):
+		"""Control an arm based on UI state and other jazz. Might lock it.
+
+		limb: Arm object.
+		mode: One of position, velocity, or impedance.
+		"""
 		assert (mode in ['position', 'velocity', 'impedance']), "Invalid mode"
 		if self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][1] > 0.5:
 			RR_final, RT_final, curr_transform = self.getTargetEETransform(limb)
@@ -569,12 +600,13 @@ class DirectTeleOperation:
 			base_t = self.robot_model.link("base_link").getTransform()
 			# Get the ee link transform
 			left_t = self.robot_model.link("left_EE_link").getTransform()
-			left_tool_local = ((se3.rotation(left_t)), self.tool.tolist())
+			left_tool_local = (so3.identity(), self.tool.tolist())
 			left_tool_global = se3.mul(left_t, left_tool_local)
 			left_tool_in_base = se3.mul(se3.inv(base_t), left_tool_global)
 			dist = se3.distance(left_tool_in_base, left_ee_target)
+			print(dist)
 			self.robot_model.setConfig(initConfig)
-			return dist < 1e-3
+			return dist < 1
 		return target_tester
 
 if __name__ == "__main__" :

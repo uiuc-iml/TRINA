@@ -630,7 +630,7 @@ class UI_end_1:
         if "--testing" in args:
             self.jarvis.changeActivityStatus(["testing"])
         if not "--trigger" in args:
-            file_dir = "../../Motion/data/TRINA_world_anthrax_PointClick.xml"
+            file_dir = "../../Motion/data/TRINA_world_bubonic.xml"
             world = klampt.WorldModel()
             res = world.readFile(file_dir)
             builder = testingWorldBuilder(30,30,world = world)
