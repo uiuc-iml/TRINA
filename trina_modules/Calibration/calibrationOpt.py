@@ -112,6 +112,62 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_
     return (so3.from_moment(x_l[3:6]),x_l[0:3]),(so3.from_moment(x_l[9:12]),x_l[6:9]),\
         (so3.from_moment(x_r[3:6]),x_r[0:3]),(so3.from_moment(x_r[9:12]),x_r[6:9])
 
+def StaticCalibration(T_0,qs,cameras,T_marker_0,world_path,link):
+
+    """
+    Optimize for the transforms of the SLAM cameras (realsense torso, zed torso)
+    """
+   
+    #first load the initial guess for the arm transforms
+    world = WorldModel()
+    res = world.readFile(world_path)
+    if not res:
+        raise RuntimeError("unable to load model")
+
+    robot_model = world.robot(0)
+    link_base_l = robot_model.link(link)
+    N_of_cameras = len(cameras)
+    p_marker = T_marker_0[1]
+
+    def func(x):
+        """
+        x: [0:6] pos + moment of marker in link local frame
+        [6:12] first camera transform ..
+        """
+        x = x.tolist()
+        T_base = (so3.from_moment(x[3:6]),x[0:3])
+        T_c_EE = (so3.from_moment(x[9:12]),x[6:9])
+        counter = 0
+        trans_error = 0.
+        angle_error = 0.
+        for T_m_c,q in zip(Tl,ql):
+            #transform Tl..
+            T_EE = getLeftLinkTransform(robot_model,q,links[0])
+            T_EE_base = se3.mul(se3.inv(T_l_0),T_EE) #EE in arm base
+            T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
+
+            error_vec = se3.error(T_marker_1,T_m_predicted)
+            trans_error += vectorops.normSquared(error_vec[0:3]) 
+            angle_error += vectorops.normSquared(error_vec[3:6])
+        expr = math.sqrt(trans_error/len(Tl)) + 0.001*math.sqrt(angle_error/len(Tl))
+        # print("Local solve: func(left arm)=%f"%expr)
+        print('pos error:',math.sqrt(trans_error/(54)),'angle error', math.sqrt(angle_error/(54)))
+        return expr
+
+
+
+    import scipy.optimize as sopt
+
+    bnds = ((-0.015, 0.025), (0.13, 0.23),(1.2,1.8),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
+    res = sopt.minimize(funcl,np.array(x_l_0),bounds = bnds,method='L-BFGS-B')
+    x_l = res.x
+
+
+    #left shoulder, left camera, right shoulder, right camera
+    return (so3.from_moment(x_l[3:6]),x_l[0:3]),(so3.from_moment(x_l[9:12]),x_l[6:9])
+
+
+
 
 
 ##Zherong's optimization code 
