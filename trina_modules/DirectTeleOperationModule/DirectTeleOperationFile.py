@@ -109,7 +109,9 @@ class DirectTeleOperation:
 		self.head_active = ('head' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
 
-		self.K = np.diag([200.0, 200.0, 200.0, 1.0, 1.0, 1.0])
+		self.max_disp = 0.125 # To tune
+
+		self.K = np.diag([200.0, 200.0, 200.0, 10.0, 10.0, 10.0])
 
 		self.M = 1*np.eye(6)#*5.0
 		self.M[3,3] = 0.25
@@ -218,7 +220,7 @@ class DirectTeleOperation:
 				# print('_serveStateReceiver:active')
 				self.last_time = time.time()
 				if(self.left_limb.active):
-					self.left_limb.cur_pos = self.right_limb.sensedEETransform()
+					self.left_limb.cur_pos = self.left_limb.sensedEETransform()
 				if(self.right_limb.active):
 					self.right_limb.cur_pos = self.right_limb.sensedEETransform()
 				self.UI_state = self.robot.getUIState()
@@ -512,8 +514,13 @@ class DirectTeleOperation:
 			* self.init_headset_orientation.inv())
 
 		RR_final = (RR_rw_rh*RR_ch_cc).as_dcm().flatten().tolist()
-		t_final = se3.interpolate(limb.init_pos, (RR_final, RT_final),
-			self.sensitivity)
+		t_final = list(se3.interpolate(limb.init_pos, (RR_final, RT_final),
+			self.sensitivity))
+		dist = se3.distance(t_final, curr_transform, Rweight=0.0)
+		if dist > self.max_disp:
+			w = self.max_disp / dist
+			t_final[1] = ((1 - w) * np.array(curr_transform[1]) 
+				+ w * np.array(t_final[1])).tolist()
 		return t_final[0], t_final[1], curr_transform
 
 	def treat_headset_orientation(self,headset_orientation):

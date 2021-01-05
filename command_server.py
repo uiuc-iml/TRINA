@@ -387,7 +387,7 @@ class CommandServer:
 
 			time.sleep(3)
 		if(self.mode == 'Physical'):
-			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
+			self.sensor_module = None #Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
 			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
 			time.sleep(5)
 
@@ -955,7 +955,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'bubonic')
+	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'bubonic')
 	# server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
 	print(server.robot.closeLeftRobotiqGripper())
