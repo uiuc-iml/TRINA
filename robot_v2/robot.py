@@ -8,7 +8,6 @@ import json
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 from unidecode import unidecode
-import time
 roomname = "The Lobby"
 zonename = "BasicExamples"
 userId = 0
@@ -26,7 +25,7 @@ def on_message(ws, message):
     if type(message) != str:
         message = unidecode(message)
     mjson = json_loads_byteified(message)
-
+    # print(mjson)
     if mjson["a"] == 0:
         a = {"a": 1, "c": 0, "p": {"zn": zonename, "un": "", "pw": ""}}
         b = json.dumps(a).encode('utf-8')
@@ -73,6 +72,7 @@ def on_message(ws, message):
             # print(mjson["p"]["p"]["controllerButtonState"]["leftController"])
             #saving the UI_STATE to reem
             server["UI_STATE"] = mjson["p"]["p"]
+
             try:
                 robot_telemetry = server['robotTelemetry'].read()
 
@@ -118,9 +118,10 @@ def on_open(ws):
         b = json.dumps(a).encode('utf-8')
         # print(b)
         ws.send(b)
-
+        print('this is running')
         while is_closed == 0:
             time.sleep(1)
+            print('sleeping')
         time.sleep(1)
         ws.close()
         print("Thread terminating...")

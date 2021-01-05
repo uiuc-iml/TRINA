@@ -85,15 +85,18 @@ class Camera_Robot:
                                     'zed_torso': 24560, 
                                     'zed_back': 24545,
                                     'zed_overhead':23966915,
-                                    'realsense_overhead':"620201003873"}
+                                    'realsense_overhead':"620201003873",
+                                    'realsense_slam':"f0233155"}
         self.config_files_dict = {'realsense_right': os.path.join(trina_dir,'Sensors/realsense_right_config.npy'),
                                     'realsense_left': os.path.join(trina_dir,'Sensors/realsense_left_config.npy'),
                                     'zed_torso': os.path.join(trina_dir,'Sensors/zed_torso_config.npy'),
                                     'zed_back': os.path.join(trina_dir,'Sensors/zed_back_config.npy'),
                                     'zed_overhead':os.path.join(trina_dir,'Sensors/zed_overhead_config.npy'),
-                                    'realsense_overhead':os.path.join(trina_dir,'Sensors/realsense_overhead_config.npy')}
+                                    'realsense_overhead':os.path.join(trina_dir,'Sensors/realsense_overhead_config.npy'),
+                                    'realsense_slam':os.path.join(trina_dir,'Sensors/realsense_slam_config.npy'),
+}
         self.valid_cameras = ['realsense_right',
-                              'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead']
+                              'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead','realsense_slam']
         # we first check if the parameters are valid:
         # checking if cameras make sense:
         self.cameras = cameras
@@ -667,7 +670,7 @@ class Camera_Sensors:
                 elif(camera_name.endswith('left')):
                     self.camera = RealSenseCamera(
                         serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='left')
-                elif(camera_name.endswith('overhead')):
+                else:
                     self.camera = RealSenseCamera(
                         serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='right')
 
@@ -696,14 +699,15 @@ if __name__ == '__main__':
     from tqdm import tqdm
     print('\n\n\n\n\n running as Main\n\n\n\n\n')
     from matplotlib import pyplot as plt
-    a = Camera_Robot(robot = [],world = [], cameras =['realsense_left','realsense_right'],ros_active = False, use_jarvis = False, mode = 'Physical')
+    testing_cameras = ['realsense_slam']
+    a = Camera_Robot(robot = [],world = [], cameras =testing_cameras,ros_active = False, use_jarvis = False, mode = 'Physical')
     time.sleep(1)
     print('Testing Camera images')
     for i in tqdm(range(100)):    
-        zed_overhead = a.get_rgbd_images()['realsense_left']
+        zed_overhead = a.get_rgbd_images()[testing_cameras[0]]
         # plt.imshow(zed_overhead[1])
         # plt.show()
-        zed_o3d = a.get_point_clouds()['realsense_left']
+        zed_o3d = a.get_point_clouds()[testing_cameras[0]]
     print(zed_o3d.colors)
     print(np.asarray(zed_o3d.points))
     time.sleep(1)
