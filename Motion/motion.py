@@ -416,11 +416,8 @@ class Motion:
                             self.head.setPosition(self.head_state.commandedPosition)
                             self.head_state.newCommand = False
 
-                    #TODO: update this for head
-
                     #update internal robot model, does not use the base's position and orientation
-                    #basically assumes that the world frame is the frame centered at the base local frame, on the floor.
-                    robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb.state.sensedq, right_limb = self.right_limb.state.sensedq)
+                    robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb.state.sensedq, right_limb = self.right_limb.state.sensedq,head = self.head_state.sensedPosition)
                     #robot_model_Q = [0]*3 + [0]*7 +self.left_limb.state.sensedq+[0]*4+self.right_limb_state.sensedq+[0]*2
                     self.robot_model.setConfig(robot_model_Q)
 
@@ -430,6 +427,8 @@ class Motion:
                     self.right_limb.updateState()
                     self.base_state.measuredVel = self.simulated_robot.getBaseVelocity()
                     self.base_state.measuredPos = self.simulated_robot.getBaseConfig()
+                    if self.codename == 'cholera':
+                        self.head_state.sensedPosition = self.simulated_robot.getHeadPosition()
                     #self.left_gripper_state.sense_finger_set = selfprint("motion.controlLoop(): controlLoop started.")
                 if self.pause_motion_flag:
                     self.simulated_robot.pause()
@@ -445,6 +444,8 @@ class Motion:
                         self.base.setTargetPosition(self.base_state.commandedVel)
                     elif self.base_state.commandType == 2:
                         self.simulated_robot.setBaseVelocityRamped(self.base_state.commandedVel,self.base_state.rampDuration)
+
+                    self.simulated_robot.setHeadPosition(self.head_state.commandedPosition)
                     ##gripper
                     self.simulated_robot.setLeftGripperPosition(self.left_gripper_state.command_finger_set)
                     robot_model_Q = TRINAConfig.get_klampt_model_q(self.codename,left_limb = self.left_limb.state.sensedq, right_limb = self.right_limb.state.sensedq)
@@ -556,9 +557,12 @@ class Motion:
             assert len(q) == 6 #, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"('controlThread exited.')
             if self.left_limb.enabled:
                 self._controlLoopLock.acquire()
-                # TODO ????? (Jing-Chen)
-                self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
-                self.left_limb.state.set_mode_position(q)
+                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
+                if res:
+                    logger.warning('Collision midway')
+                    print("motion.setLeftLimbPosition():collision midway")
+                else:
+                    self.left_limb.state.set_mode_position(q)
                 self._controlLoopLock.release()
             else:
                 logger.warning('Left limb not enabled')
@@ -582,9 +586,12 @@ class Motion:
             assert len(q) == 6, "motion.setLeftLimbPosition(): Wrong number of joint positions sent"
             if self.right_limb.enabled:
                 self._controlLoopLock.acquire()
-                # TODO ????? (Jing-Chen)
-                self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
-                self.right_limb.state.set_mode_position(q)
+                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
+                if res:
+                    logger.warning('Collision midway')
+                    print("motion.setLeftLimbPosition():collision midway")
+                else:
+                    self.right_limb.state.set_mode_position(q)
                 self._controlLoopLock.release()
             else:
                 logger.warning('Right limb not enabled')
@@ -634,8 +641,7 @@ class Motion:
             #TODO:Also collision checks
             if self.left_limb.enabled:
                 self._controlLoopLock.acquire()
-                # NOTE: Why are we running collision checks and tossing the results? WHY? (Jing-Chen)
-                self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
+                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
                 #planningTime = 0.0 + TRINAConfig.ur5e_control_rate
                 #positionQueue = []
                 #currentq = self.left_limb.state.sensedq
@@ -644,9 +650,13 @@ class Motion:
                 #    positionQueue.append(vectorops.add(currentq,vectorops.mul(difference,planningTime/duration)))
                 #    planningTime = planningTime + self.dt #TRINAConfig.ur5e_control_rate
                 #positionQueue.append(q)
-                difference = vectorops.sub(q,self.left_limb.state.sensedq)
-                start = self.left_limb.state.sensedq
-                self.left_limb.state.set_mode_commandqueue(difference, start, duration)
+                if res:
+                    logger.warning('Collision midway')
+                    print("motion.setLeftLimbPosition():collision midway")
+                else:
+                    difference = vectorops.sub(q,self.left_limb.state.sensedq)
+                    start = self.left_limb.state.sensedq
+                    self.left_limb.state.set_mode_commandqueue(difference, start, duration)
                 self._controlLoopLock.release()
             else:
                 logger.warning('Left limb not enabled')
@@ -673,11 +683,14 @@ class Motion:
             #Also collision checks
             if self.right_limb.enabled:
                 self._controlLoopLock.acquire()
-                # NOTE: Why are we running collision checks and tossing the results? WHY? (Jing-Chen)
-                self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
-                difference = vectorops.sub(q,self.right_limb.state.sensedq)
-                start = self.right_limb.state.sensedq
-                self.right_limb.state.set_mode_commandqueue(difference, start, duration)
+                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
+                if res:
+                    logger.warning('Collision midway')
+                    print("motion.setRightLimbPosition():collision midway")
+                else:
+                    difference = vectorops.sub(q,self.right_limb.state.sensedq)
+                    start = self.right_limb.state.sensedq
+                    self.right_limb.state.set_mode_commandqueue(difference, start, duration)
                 self._controlLoopLock.release()
             else:
                 logger.warning('Right limb not enabled')
@@ -1869,7 +1882,15 @@ class Motion:
             #print('success!')
             logger.info('CartesianDrive IK has succeeded')
             # Converting to numpy array to use slice-by-list.
+
+            col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
+            if col_res:
+                logger.error('Collision Midway')
+                print('Collision midway')
+                return 0,np.array(self.robot_model.getConfig())[limb.active_dofs]
+
             target_config = np.array(self.robot_model.getConfig())[limb.active_dofs]
+
             limb.state.driveTransform = target_transform
             # NOTE: This is bug-prone and can lead to overshoot due to numerical error!
             if limb.state.driveSpeedAdjustment < 1:
@@ -1996,7 +2017,7 @@ class Motion:
         goal = ik.objective(limb.EE_link,R=T[0],\
             t = vectorops.sub(T[1],so3.apply(T[0],state.toolCenter)))
 
-        initialConfig = self.robot_model.getConfig()
+        initial_config = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = limb.active_dofs,tol=0.0001)
         if not res:
             logger.error('ImpedanceDrive IK has failed y,exited..')
@@ -2004,7 +2025,14 @@ class Motion:
             return 0,0
         else:
             target_config = np.array(self.robot_model.getConfig())[limb.active_dofs]
-        self.robot_model.setConfig(initialConfig)
+
+        col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
+        if col_res:
+            stop = True
+            logger.error('ImpedanceDrive collision detected,exited..')
+            print("collision detected,exited..")
+
+        self.robot_model.setConfig(initial_config)
 
         if stop:
             # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS
@@ -2058,9 +2086,11 @@ if __name__=="__main__":
     #     time.sleep(0.01)
     # robot.shutdown()
 
-    robot = Motion(mode = 'Physical',components = ['base'],codename = "bubonic")
+    robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "cholera")
     robot.startup()
-    time.sleep(0.05)
-    robot.setBaseVelocity([0, 0.1])
-    time.sleep(2)
+    time.sleep(0.2)
+    T = robot.sensedLeftEETransform()
+    print(T)
+    robot.setLeftEEInertialTransform(T,5)
+    time.sleep(5)
     robot.shutdown()

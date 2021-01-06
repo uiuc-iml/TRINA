@@ -373,5 +373,6 @@ class TorsoState:
 class HeadState:
     def __init__(self):
         self.sensedPosition = [0.0,0.0]
+        self.sensedVelocity = [0]*2
         self.commandedPosition = [0.0,0.0]
         self.newCommand = False
