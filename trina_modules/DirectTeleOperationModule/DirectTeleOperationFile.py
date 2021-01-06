@@ -22,6 +22,8 @@ import traceback
 import signal
 from klampt.math import so3, so2, se3, vectorops
 
+from Motion import TRINAConfig
+
 from robot_v2 import robot as controller_listen
 
 from enum import Enum
@@ -48,9 +50,10 @@ is_closed=0
 mode="Physical" # UNUSED FOR ANYTHING
 
 class TeleopArmState:
-	def __init__(self, side, active, gripper_active, transform_sensor, transform_setter,
-						proportional_controller, impedance_controller,
-						open_robotiq_gripper, close_robotiq_gripper):
+	def __init__(self, side, active, gripper_active, set_limb_position_linear, 
+			transform_sensor, transform_setter,
+			proportional_controller, impedance_controller,
+			open_robotiq_gripper, close_robotiq_gripper):
 		self.side = side
 		self.joystick = side + "Controller"
 		self.active = active
@@ -58,6 +61,7 @@ class TeleopArmState:
 		self.gripper_open = True
 		self.init_pos = None
 		self.cur_pos = None
+		self.setLimbPositionLinear = set_limb_position_linear
 		self.sensedEETransform = transform_sensor
 		self.setEEInertialTransform = transform_setter
 		self.setEEVelocity = proportional_controller
@@ -86,7 +90,9 @@ class DirectTeleOperation:
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
 		self.left_limb = TeleopArmState("left", left_limb_active,
-			left_gripper_active, self.robot.sensedLeftEETransform,
+			left_gripper_active, 
+			self.robot.setLeftLimbPositionLinear,
+			self.robot.sensedLeftEETransform,
 			self.robot.setLeftEEInertialTransform,
 			self.robot.setLeftEEVelocity,
 			self.robot.setLeftEETransformImpedance,
@@ -96,7 +102,9 @@ class DirectTeleOperation:
 		right_limb_active = ('right_limb' in self.components)
 		right_gripper_active = ('right_gripper' in self.components)
 		self.right_limb = TeleopArmState("right", right_limb_active,
-			right_gripper_active, self.robot.sensedRightEETransform,
+			right_gripper_active, 
+			self.robot.setRightLimbPositionLinear,
+			self.robot.sensedRightEETransform,
 			self.robot.setRightEEInertialTransform,
 			self.robot.setRightEEVelocity,
 			self.robot.setRightEETransformImpedance,
@@ -152,13 +160,12 @@ class DirectTeleOperation:
 		# should be loaded from settings
 		print("DirectTeleOperation::CHECK THAT ROBOT IS LOADED "
 			+ "FROM CORRECT FILE")
-		self.world_file = "./Motion/data/TRINA_world_bubonic_2.xml"
+		self.world_file = "./Motion/data/TRINA_world_anthrax.xml"
+		self.codename = 'anthrax'
 		self.world = klampt.WorldModel()
 		self.world.readFile(self.world_file)
 		self.robot_model = self.world.robot(0)
 		self.cspace = kp.robotcspace.RobotCSpace(self.robot_model)
-		print("Example config: ", self.cspace.sample())
-		self.homed = False
 
 		stateRecieverThread = threading.Thread(target=self._serveStateReceiver)
 		main_thread = threading.Thread(target = self._infoLoop)
@@ -226,9 +233,6 @@ class DirectTeleOperation:
 				# print("_serveStateReceiver: idling")
 				pass
 			elif self.state == 'active':
-				if not self.homed:
-					self.homed = True
-					self.setRobotToDefault()
 				# print('_serveStateReceiver:active')
 				self.last_time = time.time()
 				if(self.left_limb.active):
@@ -241,82 +245,51 @@ class DirectTeleOperation:
 
 
 	def setRobotToDefault(self):
-		rightUntuckedRotation = np.array([
-			0, 0, -1,
-			0, -1, 0,
-			-1, 0, 0
-		])
-		rotzm90 = np.array([
-			[0, 1, 0],
-			[-1, 0, 0],
-			[0, 0, 1],
-		])
-		oort = 1/np.sqrt(2)
-		rotxm45 = np.array([
-			[1,0, 0],
-			[0,oort,oort],
-			[0,-oort,oort]
-		])
-		rightUntuckedTranslation = np.array([0.34,
-			-0.296298410887376, 1.0540173127153597])
-		# Looks like the y axis is the left-right axis.
-		# Mirroring along y axis.
-		mirror_reflect_R = np.array([
-							 1, -1,  1,
-							-1,  1, -1,
-							 1, -1,  1,
-						])
-		mirror_reflect_T = np.array([1, -1, 1])
-		# Element wise multiplication.
-		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
-		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
-		# kp.cspace.MotionPlan.setOptions(shortcut=1)
-		# planner = kp.cspace.MotionPlan(self.cspace, type='rrt')
+		init_config = self.robot.getKlamptSensedPosition()
+		target_config = init_config[:]
+		left_config = TRINAConfig.left_untucked_config
+		right_config = TRINAConfig.right_untucked_config
+		for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(self.codename)):
+			target_config[ind] = left_config[i]
+		for i, ind in enumerate(TRINAConfig.get_right_active_Dofs(self.codename)):
+			target_config[ind] = right_config[i]
 		planner, psettings = kp.cspace.configurePlanner(self.cspace, 
-			self.robot.getKlamptSensedPosition(),
-			self.check_ee_target(
-				(leftUntuckedRotation.tolist(),
-					leftUntuckedTranslation.tolist()),
-				(rightUntuckedRotation.tolist(),
-					rightUntuckedTranslation.tolist())
-			))
+			self.robot.getKlamptSensedPosition(), target_config)
 		print(psettings)
-		# planner.setEndpoints(self.robot.getKlamptSensedPosition(),
-		# 	self.check_ee_target(
-		# 		(leftUntuckedRotation.tolist(),
-		# 			leftUntuckedTranslation.tolist()),
-		# 		(rightUntuckedRotation.tolist(),
-		# 			rightUntuckedTranslation.tolist())
-		# 	))
 		plan = planner.getPath()
 		iteration = 0
+		inner_steps = 10
 		while plan is None:
-			planner.planMore(100)
-			plan = planner.getPath()
 			iteration += 1
 			print("Iteration: ", iteration)
-		left_ee_target = [leftUntuckedRotation.tolist(),
-				(leftUntuckedTranslation + self.tool).tolist()]
-		self.robot_model.setConfig(self.robot.getKlamptSensedPosition())
-		base_t = self.robot_model.link("base_link").getTransform()
-		# Get the ee link transform
-		left_t = self.robot_model.link("left_EE_link").getTransform()
-		left_tool_local = (so3.identity(), self.tool.tolist())
-		left_tool_global = se3.mul(left_t, left_tool_local)
-		left_tool_in_base = se3.mul(se3.inv(base_t), left_tool_global)
-		dist = se3.distance(left_tool_global, left_ee_target)
-		print("Dist: ", dist)
+			print(f"Planning for {inner_steps} steps")
+			planner.planMore(inner_steps)
+			plan = planner.getPath()
+		self.robot_model.setConfig(init_config)
 		print("Found plan: ", plan)
-		home_duration = 4
-		if self.left_limb.active:
-			self.left_limb.setEEInertialTransform(
-				[leftUntuckedRotation.tolist(),
-				(leftUntuckedTranslation + self.tool).tolist()], home_duration)
-		if self.right_limb.active:
-			self.right_limb.setEEInertialTransform(
-				[rightUntuckedRotation.tolist(),
-				(rightUntuckedTranslation + self.tool).tolist()], home_duration)
-
+		home_gain = 1.5
+		for c in plan:
+			current_pos = self.robot.getKlamptSensedPosition()
+			dist = vectorops.distance(current_pos, c)
+			if dist < 0.1:
+				home_duration = 1
+			else:
+				home_duration = home_gain * dist
+			if self.left_limb.active:
+				left_arm_config = []
+				for ind in TRINAConfig.get_left_active_Dofs(self.codename):
+					left_arm_config.append(c[ind])
+				self.left_limb.setLimbPositionLinear(left_arm_config, 
+					home_duration)
+			if self.right_limb.active:
+				right_arm_config = []
+				for ind in TRINAConfig.get_right_active_Dofs(self.codename):
+					right_arm_config.append(c[ind])
+				self.right_limb.setLimbPositionLinear(right_arm_config, 
+					home_duration)
+			if self.left_limb.active or self.right_limb.active:
+				time.sleep(home_duration)
+		planner.close()
 
 	def UIStateLogic(self):
 		if(type(self.UI_state)!= int):
@@ -593,21 +566,6 @@ class DirectTeleOperation:
 		# return so3.matrix(rotation_final)
 		return rotation_final
 
-	def check_ee_target(self, left_ee_target, right_ee_target):
-		def target_tester(q):
-			initConfig = self.robot_model.getConfig()
-			self.robot_model.setConfig(q)
-			base_t = self.robot_model.link("base_link").getTransform()
-			# Get the ee link transform
-			left_t = self.robot_model.link("left_EE_link").getTransform()
-			left_tool_local = (so3.identity(), self.tool.tolist())
-			left_tool_global = se3.mul(left_t, left_tool_local)
-			left_tool_in_base = se3.mul(se3.inv(base_t), left_tool_global)
-			dist = se3.distance(left_tool_in_base, left_ee_target)
-			print(dist)
-			self.robot_model.setConfig(initConfig)
-			return dist < 1
-		return target_tester
 
 if __name__ == "__main__" :
 	my_controller = DirectTeleOperation()

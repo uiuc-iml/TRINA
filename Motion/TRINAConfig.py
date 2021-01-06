@@ -23,7 +23,6 @@ left_Robotiq_type = 'parallel'
 right_Robotiq_type = 'vacuum'
 ur5e_control_rate = 0.004 #250 Hz
 
-
 # left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector
 # right_limb_gravity_upright = [4.91,-4.91,-6.93672]
 
@@ -54,6 +53,10 @@ def mirror_arm_config(config):
     return RConfig
 
 right_untucked_config = mirror_arm_config(left_untucked_config)
+# Bubonic
+# left_untucked_config = [2.525717355599908, 2.0460428045669827, -3.920560436831199, -0.4358181444600667, -0.7994447765249488, 0.23715545920590908]
+# right_untucked_config = mirror_arm_config(left_untucked_config)
+
 left_tabletop_config = [-1.2396209875689905, -2.6281658611693324, -1.0119028091430664, 5.456587779312887, -2.3149259726153772, 0.15132474899291992]
 right_tabletop_config = mirror_arm_config(left_tabletop_config)
 

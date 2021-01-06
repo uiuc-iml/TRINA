@@ -422,8 +422,6 @@ class CommandServer:
 		print('\n module monitor started\n')
 
 		atexit.register(self.shutdown_all)
-		if mode == "Kinematic":
-			self.setRobotToDefault()
 		
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
@@ -857,35 +855,10 @@ class CommandServer:
 		return 0
 
 	def setRobotToDefault(self):
-		rightUntuckedRotation = np.array([
-			0, 0, -1,
-			0, -1, 0,
-			-1, 0, 0
-		])
-		rightUntuckedTranslation = np.array([0.34,
-			-0.296298410887376, 1.0540173127153597])
-		# Looks like the y axis is the left-right axis.
-		# Mirroring along y axis.
-		mirror_reflect_R = np.array([
-							 1, -1,  1,
-							-1,  1, -1,
-							 1, -1,  1,
-						])
-		mirror_reflect_T = np.array([1, -1, 1])
-		# Element wise multiplication.
-		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
-		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
-
-		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
 		if('left_limb' in self.components):
-			self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
-			time.sleep(2)
-			self.robot.setLeftEEInertialTransform((leftUntuckedRotation.tolist(), leftUntuckedTranslation.tolist()), 2.0)
+			self.robot.setLeftLimbPositionLinear(left_untucked_config, 2)
 		if('right_limb' in self.components):
-			self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
-			time.sleep(2)
-			self.robot.setRightEEInertialTransform((rightUntuckedRotation.tolist(), rightUntuckedTranslation.tolist()), 2.0)
+			self.robot.setRightLimbPositionLinear(right_untucked_config, 2)
 
 	def start_redis(self):
 		print('starting redis')
