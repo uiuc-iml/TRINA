@@ -1174,4 +1174,80 @@
     <axis
       xyz="0 0 0" />
   </joint>
+
+  <link
+    name="sucker_link">
+    <inertial>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+        <!-- mass not correct here -->
+      <mass
+        value="2.5E-05" />
+      <inertia
+        ixx="1.0417E-10"
+        ixy="1.6257E-25"
+        ixz="1.8956E-25"
+        iyy="5.4167E-11"
+        iyz="7.8619E-25"
+        izz="5.4167E-11" />
+    </inertial>
+    <visual>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="other/Epick_assembly.STL" />
+      </geometry>
+      <material
+        name="">
+        <color
+          rgba="0.79216 0.81961 0.93333 1" />
+      </material>
+    </visual>
+    <collision>
+      <origin
+        xyz="0 0 0"
+        rpy="0 0 0" />
+      <geometry>
+        <mesh
+          filename="other/Epick_assembly.STL" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint
+    name="sucker_joint"
+    type="fixed">
+    <origin
+      xyz="0 0 0"
+      rpy="0 1.5708 0" />
+    <parent
+      link="right_tool_link" />
+    <child
+      link="sucker_link" />
+    <axis
+      xyz="0 0 0" />
+  </joint>
+
+<klampt>
+    <mount link = 'left_tool_link' file = "robotiq_140.rob" transform = "0 0 1 0 1 0 -1 0 0  0 0 0" as="left_gripper"/>
+    <noselfcollision pairs="left_base_link right_base_link"/>
+    <noselfcollision pairs="left_base_link left_shoulder_link"/>
+    <noselfcollision pairs="left_shoulder_link left_upperarm_link"/>
+    <noselfcollision pairs="left_upperarm_link left_forearm_link"/>
+    <noselfcollision pairs="left_tool_link left_EE_link"/>
+    <noselfcollision pairs="right_base_link right_shoulder_link"/>
+    <noselfcollision pairs="right_shoulder_link right_upperarm_link"/>
+    <noselfcollision pairs="right_upperarm_link right_forearm_link"/>
+    <noselfcollision pairs="right_tool_link right_EE_link"/>
+    <noselfcollision pairs="left_tool_link right_tool_link"/>
+    <noselfcollision group1="left_tool_link right_tool_link" group2="base_link left_base_link left_shoulder_link left_upperarm_link left_forearm_link left_wrist1_link right_base_link right_shoulder_link right_upperarm_link right_forearm_link right_wrist1_link right_wrist2_link left_EE_link right_EE_link"/>
+    <noselfcollision pairs="left_base_link right_base_link"/>
+    <noselfcollision group1="gripper_base_link " group2="left_EE_link left_tool_link"/>
+
+</klampt>
+
 </robot>
+
