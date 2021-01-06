@@ -1830,7 +1830,7 @@ class Motion:
             goal = ik.objective(limb.EE_link,local = [0,0,0], \
                 world = vectorops.sub(target_transform[1],so3.apply(target_transform[0],limb.state.toolCenter)))
 
-        initialConfig = self.robot_model.getConfig()
+        initial_config = self.robot_model.getConfig()
         res = ik.solve_nearby(goal,maxDeviation=0.5,activeDofs = limb.active_dofs,tol=0.000001)
 
         failFlag = False
@@ -1870,13 +1870,13 @@ class Motion:
                 #     target_config[ind] += del_theta[ind]
                 # self.robot_model.setConfig(initialConfig)
                 # return 2, target_config[limb.active_dofs].tolist() # 2 means success, maybe this should have a different return signal.
-                self.robot_model.setConfig(initialConfig)
-                return 0, np.array(initialConfig[:])[limb.active_dofs].tolist()
+                self.robot_model.setConfig(initial_config)
+                return 0, np.array(initial_config[:])[limb.active_dofs].tolist()
             else:
                 logger.warning('CartesianDrive IK has failed partially')
                 #print("motion.controlLoop():CartesianDrive IK has failed, next trying: ",\
                 #   limb.state.driveSpeedAdjustment)
-                self.robot_model.setConfig(initialConfig)
+                self.robot_model.setConfig(initial_config)
                 return 1,0 # 1 means the IK has failed partially and we should do this again
         else:
             #print('success!')
@@ -1896,7 +1896,7 @@ class Motion:
             if limb.state.driveSpeedAdjustment < 1:
                 limb.state.driveSpeedAdjustment += 0.1
 
-        self.robot_model.setConfig(initialConfig)
+        self.robot_model.setConfig(initial_config)
 
         # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS!
         return 2,target_config.tolist() #2 means success..
@@ -2086,11 +2086,21 @@ if __name__=="__main__":
     #     time.sleep(0.01)
     # robot.shutdown()
 
-    robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "cholera")
+    
+
+
+    robot = Motion(mode = 'Kinematic',components = ['right_limb'],codename = "cholera")
+    world = robot.world
+    vis.add("world",world)
+    vis.show()
     robot.startup()
-    time.sleep(0.2)
-    T = robot.sensedLeftEETransform()
-    print(T)
-    robot.setLeftEEInertialTransform(T,5)
+    robot.setRightLimbPosition(TRINAConfig.right_untucked_config)
     time.sleep(5)
+    # robot.setRightEEVelocity([0,0,0,0,0,0.05])
+    while true:
+        vis.lock()
+        vis.unlock()
+        time.sleep(0.02)
+
+    vis.exit()
     robot.shutdown()

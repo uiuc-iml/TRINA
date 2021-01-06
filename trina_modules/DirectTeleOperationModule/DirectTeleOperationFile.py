@@ -161,9 +161,7 @@ class DirectTeleOperation:
 		controller_thread = Process(target = controller_listen.listen, daemon=True)
 		stateRecieverThread.start()
 		main_thread.start()
-		# controller_thread.start()
-		self.left_limb.openRobotiqGripper()
-		self.right_limb.openRobotiqGripper()
+		controller_thread.start()
 		# time.sleep(5)
 
 	def sigint_handler(self, signum, frame):
