@@ -22,6 +22,7 @@ from reem.datatypes import KeyValueStore
 import traceback
 import signal
 from klampt.math import so3, so2, se3, vectorops
+from Motion import TRINAConfig
 
 from robot_v2 import robot as controller_listen
 
@@ -49,9 +50,10 @@ is_closed=0
 mode="Physical" # UNUSED FOR ANYTHING
 
 class TeleopArmState:
-	def __init__(self, side, active, gripper_active, transform_sensor, transform_setter,
-						proportional_controller, impedance_controller,
-						open_robotiq_gripper, close_robotiq_gripper):
+	def __init__(self, side, active, gripper_active, set_limb_position_linear, 
+			transform_sensor, transform_setter,
+			proportional_controller, impedance_controller,
+			open_robotiq_gripper, close_robotiq_gripper):
 		self.side = side
 		self.joystick = side + "Controller"
 		self.active = active
@@ -59,6 +61,7 @@ class TeleopArmState:
 		self.gripper_open = True
 		self.init_pos = None
 		self.cur_pos = None
+		self.setLimbPositionLinear = set_limb_position_linear
 		self.sensedEETransform = transform_sensor
 		self.setEEInertialTransform = transform_setter
 		self.setEEVelocity = proportional_controller
@@ -87,7 +90,9 @@ class DirectTeleOperation:
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
 		self.left_limb = TeleopArmState("left", left_limb_active, 
-			left_gripper_active, self.robot.sensedLeftEETransform, 
+			left_gripper_active, 
+			self.robot.setLeftLimbPositionLinear,
+			self.robot.sensedLeftEETransform, 
 			self.robot.setLeftEEInertialTransform,
 			self.robot.setLeftEEVelocity, 
 			self.robot.setLeftEETransformImpedance,
@@ -97,7 +102,9 @@ class DirectTeleOperation:
 		right_limb_active = ('right_limb' in self.components)
 		right_gripper_active = ('right_gripper' in self.components)
 		self.right_limb = TeleopArmState("right", right_limb_active, 
-			right_gripper_active, self.robot.sensedRightEETransform, 
+			right_gripper_active, 
+			self.robot.setRightLimbPositionLinear,
+			self.robot.sensedRightEETransform, 
 			self.robot.setRightEEInertialTransform,
 			self.robot.setRightEEVelocity, 
 			self.robot.setRightEETransformImpedance,
@@ -154,7 +161,7 @@ class DirectTeleOperation:
 		controller_thread = Process(target = controller_listen.listen, daemon=True)
 		stateRecieverThread.start()
 		main_thread.start()
-		controller_thread.start()
+		# controller_thread.start()
 		self.left_limb.openRobotiqGripper()
 		self.right_limb.openRobotiqGripper()
 		# time.sleep(5)
@@ -229,44 +236,11 @@ class DirectTeleOperation:
 
 
 	def setRobotToDefault(self):
-		rightUntuckedRotation = np.array([
-			0, 0, -1,
-			0, -1, 0,
-			-1, 0, 0
-		])
-		rotzm90 = np.array([
-			[0, 1, 0],
-			[-1, 0, 0],
-			[0, 0, 1],
-		])
-		oort = 1/np.sqrt(2)
-		rotxm45 = np.array([
-			[1,0, 0],
-			[0,oort,oort],
-			[0,-oort,oort]
-		])
-		rightUntuckedTranslation = np.array([0.34,
-			-0.296298410887376, 1.0540173127153597])
-		# Looks like the y axis is the left-right axis.
-		# Mirroring along y axis.
-		mirror_reflect_R = np.array([
-							 1, -1,  1,
-							-1,  1, -1,
-							 1, -1,  1,
-						])
-		mirror_reflect_T = np.array([1, -1, 1])
-		# Element wise multiplication.
-		leftUntuckedRotation = rightUntuckedRotation * mirror_reflect_R
-		leftUntuckedTranslation = rightUntuckedTranslation * mirror_reflect_T
 		home_duration = 4
 		if self.left_limb.active:
-			self.left_limb.setEEInertialTransform(
-				[leftUntuckedRotation.tolist(),
-				(leftUntuckedTranslation + self.tool).tolist()], home_duration)
+			self.left_limb.setLimbPositionLinear(TRINAConfig.left_untucked_config, home_duration)
 		if self.right_limb.active:
-			self.right_limb.setEEInertialTransform(
-				[rightUntuckedRotation.tolist(),
-				(rightUntuckedTranslation + self.tool).tolist()], home_duration)
+			self.right_limb.setLimbPositionLinear(TRINAConfig.right_untucked_config, home_duration)
 
 
 	def UIStateLogic(self):
