@@ -25,7 +25,6 @@ def on_message(ws, message):
     if type(message) != str:
         message = unidecode(message)
     mjson = json_loads_byteified(message)
-    # print(mjson)
     if mjson["a"] == 0:
         a = {"a": 1, "c": 0, "p": {"zn": zonename, "un": "", "pw": ""}}
         b = json.dumps(a).encode('utf-8')
@@ -118,10 +117,10 @@ def on_open(ws):
         b = json.dumps(a).encode('utf-8')
         # print(b)
         ws.send(b)
-        print('this is running')
+        # print('this is running')
         while is_closed == 0:
             time.sleep(1)
-            print('sleeping')
+            # print('sleeping')
         time.sleep(1)
         ws.close()
         print("Thread terminating...")
