@@ -3,6 +3,7 @@ import os
 import klampt
 from klampt import vis
 from klampt import io
+from klampt.io import open3d_convert
 from klampt.robotsim import setRandomSeed
 from klampt.vis.glcommon import GLWidgetPlugin
 from klampt import RobotPoser, Geometry3D
@@ -13,6 +14,8 @@ import json
 import time
 import math
 import threading
+import open3d as o3d
+import logging
 from threading import Thread
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
@@ -34,6 +37,9 @@ import redis
 
 model_path = '../../Resources/shared_data/objects/'
 mesh_model_path = '../../Resources/grasping/models/'
+
+logger = logging.getLogger('reem')
+logger.setLevel(logging.ERROR)
 
 # outer box
 class MyQtMainWindow(QMainWindow):
@@ -658,6 +664,13 @@ class UI_end_1:
         vis.add("world",world)
         vis.setWindowTitle("UI END 1")
         vis.customUI(makefunc)
+        
+        pcd = o3d.io.read_point_cloud("/home/motion/item_set/item1-68.pcd")
+        pcd = pcd.uniform_down_sample(8)
+        klampt_pcd = open3d_convert.from_open3d(pcd)
+        klampt_pcd.transform(so3.from_rpy([-3.14/2 - 0.3,-0.1,-3.14/2]), [0.5, 0 ,1.08])
+        vis.add("object_pcd", klampt_pcd)
+
         # init plugin for getting input
         plugin = MyGLPlugin(world, self.global_state,self.server,self.jarvis, self.UIState,self.screenElement)
         vis.pushPlugin(plugin)   #put the plugin on top of the standard visualization functionality.

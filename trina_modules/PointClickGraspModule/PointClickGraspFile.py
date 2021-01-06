@@ -142,13 +142,13 @@ class PointClickGrasp:
                         print(os.getcwd())
                         
                         if self.mode == "Kinematic":
-                            leftUntuckedConfig = [-0.2028, -2.1063, -1.610, 3.7165, -0.9622, 0.0974]
+                            leftUntuckedConfig = [-1.2028, -2.1063, -1.610, 3.7165, -1.2622, 0.4974]
                             rightUntuckedConfig = self.jarvis.mirror_arm_config(leftUntuckedConfig)
                             self.jarvis.setLeftLimbPositionLinear(leftUntuckedConfig, 2)
                             self.jarvis.setRightLimbPositionLinear(rightUntuckedConfig, 2)
                             
-                            self.jarvis.setBaseVelocity([0.1, 0])
-                            time.sleep(2)
+                            #self.jarvis.setBaseVelocity([0.1, 0])
+                            #time.sleep(2)
                             self.jarvis.setBaseVelocity([0, 0])
                             
                 elif (status == 'idle'):
@@ -211,22 +211,25 @@ class PointClickGrasp:
                 self.rgbdimage = self.jarvis.get_rgbd_images()
                 depth_left = self.rgbdimage['realsense_left'][1]
                 color_left = self.rgbdimage['realsense_left'][0]
+                depth_right = self.rgbdimage['realsense_right'][1]
+                color_right = self.rgbdimage['realsense_right'][0]
                 color_left = np.array(color_left)[:,:,:]
+                color_right = np.array(color_right)[:,:,:]
                 
                 #cv2.imshow("image", np.array(depth_left))
                 #cv2.waitKey(0)
                 #im = seg.segmentation.blur_frame(np.array(color_left))
-                imgray = rgb2gray(color_left)
+                imgray = rgb2gray(color_right)
                 imscaled = (imgray*256).astype("uint16")
                 segmented, _ = seg.mixture_model(imscaled, debug=True)
                 #labels = seg.watershed(imgray, segmented)
                 #print(labels)
                 mask_overlay = label2rgb(segmented,np.array(color_left),colors=[(255,0,0),(0,0,255), (0, 255,0), (255,255,0),(0,255,255), (255, 0,255)],alpha=0.01, bg_label=0, bg_color=None)
-                cv2.imshow("image", np.array(mask_overlay))
+                cv2.imshow("image", color_right)
                 cv2.waitKey(0)
                 
-                color = o3d.geometry.Image(np.array(color_left))
-                depth = o3d.geometry.Image(np.array(depth_left)[:,:])
+                color = o3d.geometry.Image(np.array(color_right))
+                depth = o3d.geometry.Image(np.array(depth_right)[:,:])
                 
                 rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(color, depth); 
                 pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
