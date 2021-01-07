@@ -6,13 +6,13 @@ import pickle
 sys.path.append("/home/motion/TRINA")
 from Motion import MotionClient
 from Motion import TRINAConfig
-from klampt.io.loader import load 
+from klampt.io.loader import load
 from klampt.model.trajectory import RobotTrajectory
 
 
 def main():
 	parser = argparse.ArgumentParser('collect inertia calibration data')
-	parser.add_argument('--outfile', type=str, 
+	parser.add_argument('--outfile', type=str,
 		default='inertia_record.p', help='output file name')
 	args = parser.parse_args()
 	mc = MotionClient()
@@ -63,10 +63,12 @@ def main():
 def collect_data(collection, mc):
 	p = mc.sensedLeftLimbPosition()
 	v = mc.sensedLeftLimbVelocity()
+	w = mc.sensedLeftEEWrench()
 	collection.append({
 		'time': time.time(),
 		'position': p,
-		'velocity': v
+		'velocity': v,
+		'wrench': w
 	})
 
 
