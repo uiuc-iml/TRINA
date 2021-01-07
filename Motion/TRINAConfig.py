@@ -31,8 +31,7 @@ ur5e_control_rate = 0.004 #250 Hz
 # R_local_global_upright_right = [-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,-sqrt(0.5),-sqrt(0.5)]
 # R_local_global_upright_left = [sqrt(0.5),sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),sqrt(0.25),0,-sqrt(0.5),sqrt(0.5)] ## this is used when dealing with gravity vector
 # R_local_global_upright_right = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),sqrt(0.5),sqrt(0.25),sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
-
-
+collision_margin = 0.0025
 simulated_robot_control_rate = 0.004 #250Hz
 limb_velocity_limits = [2.0,2.0,2.0,2.0,2.0,2.0]
 limb_EE_velocity_limits = [1.0,1.0,1.0,1.0,1.0,1.0]
@@ -225,7 +224,7 @@ def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3,he
     elif(name == 'half_anthrax'):
         return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
     elif(name == 'cholera'):
-        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]
+        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]*18
     else:
         print("wrong model name used.")
         return None

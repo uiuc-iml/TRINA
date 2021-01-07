@@ -69,6 +69,12 @@ class Motion:
         #Initialize collision detection
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
+        for this_linknum in range(self.robot_model.numLinks()):
+            this_link = self.robot_model.link(this_linknum)
+            this_link.geometry().setCollisionMargin(TRINAConfig.collision_margin)
+            # if(this_link.getName() in ['base_link','head_neck2_link']):
+            #     print('setting collision margin for link: {} '.format(this_link.getName()))
+            #     this_link.geometry().setCollisionMargin(TRINAConfig.collision_margin)
         #UR5 arms need correct gravity vector
         self.currentGravityVector = [0,0,-9.81]
 
@@ -2089,15 +2095,18 @@ if __name__=="__main__":
     
 
 
-    robot = Motion(mode = 'Kinematic',components = ['right_limb'],codename = "cholera")
+    robot = Motion(mode = 'Kinematic',components = ['left_limb', 'right_limb'],codename = "cholera")
     world = robot.world
     vis.add("world",world)
     vis.show()
     robot.startup()
-    robot.setRightLimbPosition(TRINAConfig.right_untucked_config)
+    robot.setRightLimbPositionLinear(TRINAConfig.right_untucked_config, 5)
+    robot.setLeftLimbPositionLinear(TRINAConfig.left_untucked_config, 5)
     time.sleep(5)
-    # robot.setRightEEVelocity([0,0,0,0,0,0.05])
-    while true:
+
+    robot.setRightEEVelocity([0,0.1,0,0,0,0])
+    robot.setLeftEEVelocity([0,-0.1,0,0,0,0])
+    while True:
         vis.lock()
         vis.unlock()
         time.sleep(0.02)
