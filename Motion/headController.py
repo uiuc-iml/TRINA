@@ -47,13 +47,13 @@ class HeadController:
         self.exit = False
         self.position = [0.0,0.0]
         self.positionCommand = [0.0,0.0]
-        self.panLimits = {"center": 180, "min":90, "max":270} #head limits
-        self.tiltLimits = {"center": 180, "min":130, "max":230} #head limits
+        self.panLimits = {"center": 180, "min":120, "max":240} #head limits
+        self.tiltLimits = {"center": 180, "min":150, "max":230} #head limits
         self._controlLoopLock = RLock()
 
     def start(self):
         # dynamicel init
-        # Open port
+        # Open ports
         if self.portHandler.openPort():
             print("Headcontroller: Succeeded to open the port")
         else:
@@ -71,8 +71,8 @@ class HeadController:
         time.sleep(0.5)
 
         # init position
-        self.dynamixel.write4ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(self.tiltLimits["center"]/0.08789))
-        self.dynamixel.write4ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(self.panLimits["center"]/0.08789))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(self.tiltLimits["center"]/0.08789))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(self.panLimits["center"]/0.08789))
         time.sleep(0.5)
 
         controlThread = threading.Thread(target = self._controlLoop)

@@ -234,10 +234,11 @@ class MotionClient:
 
 if __name__=="__main__":
 	motion = MotionClient()
-	motion.startServer(mode = "Physical", components = ['right_limb','left_limb'], codename="bubonic")
+	motion.startServer(mode = "Physical", components = ['head'], codename="cholera")
 	motion.startup()
 	time.sleep(0.05)
-	print(motion.sensedLeftEETransform())
-	
+	import math
+	DEGREE_2_RADIAN = 2.0*math.pi/180.0
+	motion.setHeadPosition([150*DEGREE_2_RADIAN,150*DEGREE_2_RADIAN])
 	time.sleep(0.05)
 	motion.shutdown()

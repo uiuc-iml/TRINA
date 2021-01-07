@@ -308,16 +308,18 @@ class DirectTeleOperation:
 						# 	limb.sensedEETransform(tool_center=self.tool.tolist()),
 						# 	np.zeros((6,6)).tolist(), self.M, [[100*x for x in a] for a in self.B],
 						# 	tool_center=self.tool.tolist())
-
+			print("UI state Logic")
 			if(self.base_active):
 				self.baseControl()
+			
+			if(self.head_active):
+				self.headControl()	
+
 			self.control('impedance')
 
-			if(self.head_active):
-				self.headControl()			
+		
 	
 	def headControl(self):
-		return
 		def mod180(x):
 			while x >= 180:
 				x = x - 360
