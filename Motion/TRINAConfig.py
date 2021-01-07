@@ -31,8 +31,7 @@ ur5e_control_rate = 0.004 #250 Hz
 # R_local_global_upright_right = [-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,-sqrt(0.5),-sqrt(0.5)]
 # R_local_global_upright_left = [sqrt(0.5),sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),sqrt(0.25),0,-sqrt(0.5),sqrt(0.5)] ## this is used when dealing with gravity vector
 # R_local_global_upright_right = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),sqrt(0.5),sqrt(0.25),sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
-
-
+collision_margin = 0.0025
 simulated_robot_control_rate = 0.004 #250Hz
 limb_velocity_limits = [2.0,2.0,2.0,2.0,2.0,2.0]
 limb_EE_velocity_limits = [1.0,1.0,1.0,1.0,1.0,1.0]
@@ -150,7 +149,7 @@ fixed_calibration_configs = [[3.663269519805908, -2.873592515985006, -0.94661998
 ###
 #local in global R
 def get_wrench_R_left(name):
-    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):
+    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')|(name == 'cholera')):
         return [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
     elif (name == "bubonic"):
         return [0.7071067811865476, 0.49999999999999994, -0.5, -0.7071067811865476, 0.49999999999999994, -0.5, 0.0, 0.7071067811865476, 0.7071067811865476]
@@ -158,7 +157,7 @@ def get_wrench_R_left(name):
     return
 
 def get_wrench_R_right(name):
-    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):
+    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')|(name == 'cholera')):
         return [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
     elif (name == "bubonic"):
         return [-0.7071067811865476, 0.49999999999999994, 0.5, -0.7071067811865476, -0.49999999999999994, -0.5, 0.0, -0.7071067811865476, 0.7071067811865476]  
@@ -167,13 +166,13 @@ def get_wrench_R_right(name):
 
 
 def get_left_gravity_vector_upright(name):
-    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):
+    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')|(name == 'cholera')):
         return [-4.91,-4.91,-6.93672]
     elif (name == "bubonic"):
         return [-4.91,-4.91,6.93672]
 
 def get_right_gravity_vector_upright(name):
-    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')):
+    if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')|(name == 'cholera')):
         return [4.91,-4.91,-6.93672]
     elif (name == "bubonic"):
         return [4.91,-4.91,6.93672]    
@@ -183,23 +182,32 @@ def get_left_tool_link_N(name):
         return 13
     elif((name == "seed")|(name == "half_anthrax")):
         return 16
+    elif((name == "cholera")):
+        return 17
 
 def get_right_tool_link_N(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")|(name == "bubonic")):
         return 21
     elif((name == "seed")|(name == "half_anthrax")):
         return 41
+    elif((name == "cholera")):
+        return 25
+
 def get_left_active_Dofs(name):
     if( (name == "anthrax")|(name == "anthrax_lowpoly")|(name == "bubonic")):
         return [7,8,9,10,11,12]
     elif((name == "seed")|(name == "half_anthrax")):
         return [10,11,12,13,14,15]
+    elif((name == "cholera")):
+        return [11,12,13,14,15,16]
 
 def get_right_active_Dofs(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")|(name == "bubonic")):
         return [15,16,17,18,19,20]
     elif((name == "seed")|(name == "half_anthrax")):
         return [35,36,37,38,39,40]
+    elif((name == "cholera")):
+        return [19,20,21,22,23,24]
 
 #TRINA_left_tool_link_N = 16
 #TRINA_right_tool_link_N = 41 #seed
@@ -208,13 +216,15 @@ def get_right_active_Dofs(name):
 # TRINA_right_active_Dofs = [35,36,37,38,39,40] #seed
 #TRINA_right_active_Dofs = [20,21,22,23,24,25] #anthrax
 
-def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3):
+def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3,head = [0]*2):
     if((name == 'anthrax')|(name=="anthrax_lowpoly")|(name == "bubonic")):
         return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(left_limb) + [0]*2 + list(right_limb) + [0]
     elif(name == 'seed'):
         return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + list(right_limb) + [0]*18
     elif(name == 'half_anthrax'):
         return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
+    elif(name == 'cholera'):
+        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]*18
     else:
         print("wrong model name used.")
         return None

@@ -40,8 +40,10 @@ class KinematicController:
         self.right_limb_state = LimbState()
         self.base_state = BaseState()
         self.left_gripper_state = GripperState()
+        self.head_state = HeadState()
         self.limb_velocity_limit = 2.0
         self.finger_velocity_limit = 1.0
+        self.head_velocity_limit = 1.5
         self.base_velocity_limit = [1.5,1.5]
         self.dt = 0.004
         self.model_path = model_path
@@ -183,6 +185,23 @@ class KinematicController:
                 if flag:
                     print("KinematicController: limbs at position limits")
 
+                #head
+                head_to_be_set = []
+                for i in range(2):
+                    command = self.head_state.commandedPosition[i]
+                    old = self.head_state.sensedPosition[i]
+                    if (command-old) > self.head_velocity_limit*self.dt:
+                        qi = self.head_velocity_limit*self.dt + old
+                    elif (command-old) <  -self.head_velocity_limit*self.dt:
+                        qi = old-self.head_velocity_limit*self.dt
+                    else:
+                        qi = command
+                    head_to_be_set.append(qi)
+                # head_to_be_set,flag = self._limitHeadPosition(left_limb_to_be_set)
+                self.head_state.sensedPosition = deepcopy(head_to_be_set)
+                self.head_state.sensedVelocity = vectorops.div(vectorops.sub(head_to_be_set,self.head_state.sensedPosition),self.dt)
+
+
                 #left gripper
                 affineDrive = 1.0
                 left_gripper_to_be_set = [0]*17
@@ -198,7 +217,7 @@ class KinematicController:
                 self.left_gripper_state.sense_finger_set = deepcopy(self.left_gripper_state.command_finger_set)
                 #set klampt robot config
 
-                self.robot.setConfig(TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb_to_be_set, right_limb = right_limb_to_be_set,base = base_state_q_to_be_set))
+                self.robot.setConfig(TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb_to_be_set, right_limb = right_limb_to_be_set,base = base_state_q_to_be_set,head = head_to_be_set))
                 self.new_state = True
 
             self.controlLoopLock.release()
@@ -268,6 +287,10 @@ class KinematicController:
         self.left_gripper_state.command_finger_set = deepcopy(q)
         #print(self.left_gripper_state.command_finger_set)
         return
+
+    def setHeadPosition(self,q):
+        self.head_state.commandedPosition = q[:]
+
     def getLeftGripperPosition(self):
         return self.left_gripper_state.sense_finger_set
     def getLeftLimbConfig(self):
@@ -284,6 +307,10 @@ class KinematicController:
 
     def getBaseConfig(self):
         return self.base_state.measuredPos
+
+    def getHeadPosition(self):
+        return self.head_state.sensedPosition
+
     def newState(self):
         return self.new_state
 

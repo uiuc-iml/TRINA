@@ -85,15 +85,20 @@ class Camera_Robot:
                                     'zed_torso': 24560, 
                                     'zed_back': 24545,
                                     'zed_overhead':23966915,
-                                    'realsense_overhead':"620201003873"}
+                                    'zed_slam':24560,
+                                    'realsense_overhead':"620201003873",
+                                    'realsense_slam_l515':"f0233155"}
         self.config_files_dict = {'realsense_right': os.path.join(trina_dir,'Sensors/realsense_right_config.npy'),
                                     'realsense_left': os.path.join(trina_dir,'Sensors/realsense_left_config.npy'),
                                     'zed_torso': os.path.join(trina_dir,'Sensors/zed_torso_config.npy'),
                                     'zed_back': os.path.join(trina_dir,'Sensors/zed_back_config.npy'),
                                     'zed_overhead':os.path.join(trina_dir,'Sensors/zed_overhead_config.npy'),
-                                    'realsense_overhead':os.path.join(trina_dir,'Sensors/realsense_overhead_config.npy')}
+                                    'realsense_overhead':os.path.join(trina_dir,'Sensors/realsense_overhead_config.npy'),
+                                    'realsense_slam_l515':os.path.join(trina_dir,'Sensors/realsense_slam_l515_config.npy'),
+                                    'zed_slam':os.path.join(trina_dir,'Sensors/zed_slam_config.npy')
+}
         self.valid_cameras = ['realsense_right',
-                              'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead']
+                              'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead','realsense_slam_l515','zed_slam']
         # we first check if the parameters are valid:
         # checking if cameras make sense:
         self.cameras = cameras
@@ -462,22 +467,34 @@ class Camera_Robot:
 
 
 class RealSenseCamera:
-    def __init__(self, serial_num, config_file, robot, end_effector='right'):
+    def __init__(self, serial_num, config_file, robot, name='right'):
 
         try:
+            self.end_effector = name.split('_')[-1]
+            self.name = name
             self.serial_num = serial_num
             self.config_file = config_file
             self.pipeline = rs.pipeline()
             self.config = rs.config()
+            self.started_pipeline = False
             self.config.enable_device(serial_num.encode('utf-8'))
-            self.config.enable_stream(
+            if(self.name.endswith('l515')):
+                self.config.enable_stream(
                 rs.stream.depth, 640, 480, rs.format.z16, 30)
-            self.config.enable_stream(
-                rs.stream.color, 640, 480, rs.format.rgb8, 30)
+                self.config.enable_stream(
+                rs.stream.color, 1280, 720, rs.format.rgb8, 30)
+                self.numpix  = 1280*720
+            else:
+                self.config.enable_stream(
+                    rs.stream.depth, 640, 480, rs.format.z16, 30)
+                self.config.enable_stream(
+                    rs.stream.color, 640, 480, rs.format.rgb8, 30)
+                self.numpix = 1280*720
             self.align_to = rs.stream.color
             self.align = rs.align(self.align_to)
             # Start streaming
             self.pipeline.start(self.config)
+            self.started_pipeline = True
             # we sleep for 3 seconds to stabilize the color image - no idea why, but if we query it soon after starting, color image is distorted.
             self.pc = rs.pointcloud()
 
@@ -486,7 +503,7 @@ class RealSenseCamera:
             #    open(self.config_file, 'rb'))
             self.realsense_transform = np.eye(4) 
             self.robot = robot
-            self.end_effector = end_effector
+            self.end_effector = self.end_effector
             # fs = self.pipeline.wait_for_frames()
             # df = fs.get_depth_frame()
             # prof = df.get_profile()
@@ -494,8 +511,10 @@ class RealSenseCamera:
             # intr = video_prof.get_intrinsics()
             # print(intr)
         except Exception as e:
-            print(e, 'Invalid Camera Serial Number')
-            self.pipeline.stop()
+            print('\n\n\n could not start the camera {} because of error {}\n\n\n'.format(self.name,e))
+            if(self.started_pipeline):
+                self.pipeline.stop()
+
         # atexit.register(self.safely_close)
 
     def get_point_cloud(self):
@@ -521,11 +540,11 @@ class RealSenseCamera:
         # Generate the pointcloud and texture mappings
         points = self.pc.calculate(depth_frame)
         vtx = np.asarray(points.get_vertices())
-        pure_point_cloud = np.zeros((640*480, 3))
+        pure_point_cloud = np.zeros((self.numpix, 3))
         pure_point_cloud[:, 0] = -vtx['f0']
         pure_point_cloud[:, 1] = -vtx['f1']
         pure_point_cloud[:, 2] = -vtx['f2']
-        color_t = np.asarray(color_frame.get_data()).reshape(640*480, 3)/255
+        color_t = np.asarray(color_frame.get_data()).reshape(self.numpix, 3)/255
         point_cloud = o3d.geometry.PointCloud()
         point_cloud.points = o3d.utility.Vector3dVector(pure_point_cloud)
         point_cloud.colors = o3d.utility.Vector3dVector(color_t)
@@ -661,15 +680,17 @@ class Camera_Sensors:
     def __init__(self, camera_name, serial_numbers_dict, config_files_dict, robot, end_effector='right'):
         try:
             if(camera_name.startswith('realsense')):
-                if(camera_name.endswith('right')):
-                    self.camera = RealSenseCamera(
-                        serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='right')
-                elif(camera_name.endswith('left')):
-                    self.camera = RealSenseCamera(
-                        serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='left')
-                elif(camera_name.endswith('overhead')):
-                    self.camera = RealSenseCamera(
-                        serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='right')
+                self.camera = RealSenseCamera(
+                    serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, name=camera_name)
+                # if(camera_name.endswith('right')):
+                #     self.camera = RealSenseCamera(
+                #         serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, name=camera_name)
+                # elif(camera_name.endswith('left')):
+                #     self.camera = RealSenseCamera(
+                #         serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='left')
+                # else:
+                #     self.camera = RealSenseCamera(
+                #         serial_numbers_dict[camera_name], config_files_dict[camera_name], robot, end_effector='right')
 
             elif(camera_name.startswith('zed')):
                 self.camera = ZedCamera(
@@ -696,14 +717,17 @@ if __name__ == '__main__':
     from tqdm import tqdm
     print('\n\n\n\n\n running as Main\n\n\n\n\n')
     from matplotlib import pyplot as plt
-    a = Camera_Robot(robot = [],world = [], cameras =['realsense_left','realsense_right'],ros_active = False, use_jarvis = False, mode = 'Physical')
+    testing_cameras = ['zed_slam','realsense_slam_l515']
+    testing = 0
+    a = Camera_Robot(robot = [],world = [], cameras =testing_cameras,ros_active = False, use_jarvis = False, mode = 'Physical')
     time.sleep(1)
     print('Testing Camera images')
     for i in tqdm(range(100)):    
-        zed_overhead = a.get_rgbd_images()['realsense_left']
-        # plt.imshow(zed_overhead[1])
+        zed_overhead = a.get_rgbd_images()[testing_cameras[testing]]
+        # plt.imshow(zed_overhead[testing])
         # plt.show()
-        zed_o3d = a.get_point_clouds()['realsense_left']
+        print(zed_overhead[1][:100])
+        zed_o3d = a.get_point_clouds()[testing_cameras[testing]]
     print(zed_o3d.colors)
     print(np.asarray(zed_o3d.points))
     time.sleep(1)

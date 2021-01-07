@@ -8,7 +8,6 @@ import json
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 from unidecode import unidecode
-import time
 roomname = "The Lobby"
 zonename = "BasicExamples"
 userId = 0
@@ -26,7 +25,7 @@ def on_message(ws, message):
     if type(message) != str:
         message = unidecode(message)
     mjson = json_loads_byteified(message)
-
+    # print(mjson)
     if mjson["a"] == 0:
         a = {"a": 1, "c": 0, "p": {"zn": zonename, "un": "", "pw": ""}}
         b = json.dumps(a).encode('utf-8')
@@ -45,34 +44,24 @@ def on_message(ws, message):
             roomId = mjson["p"]["r"]
             # print("Room id :::: '%s'" % roomId)
 
-            robotrec = {"title": "Robot Telemetry Data", "status": {"healthy": "True", "eStop": "False", "softwareEStop": "False"}, "currentConfig": {"leftArm": [-0.20578666666666667, -2.1202733333333335, -1.6030666666666669, 3.7186333333333335, -0.96508, 0.0974], "rightArm": [0.2028, -1.035932653589793, 1.6057333333333335, -0.5738406797435401, 0.9622, -0.0974], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "currentVelocity": {"leftArm": [0, 0, 0, 0, 0, 0], "rightArm": [
-                0, 0, 0, 0, 0, 0], "baseWheels": [1.1, 0.2], "base": [-0.5, 0.5, 0]}, "targetConfig": {"leftArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "rightArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "controller": {"collisionWarning": {"leftArm": "True", "rightArm": "False"}, "unreachableWarning": {"leftArm": "True", "rightArm": "False"}}, "perception": {"miniMap": {"width": 2, "height": 1, "matrix": [[0], [0]]}, "hapticFeedback": [0, 1, 2]}}
-
-            # sending public messages
-            a = {"a": 7, "c": 0, "p": {"t": 0, "r": roomId,
-                                       "u": userId, "m": "robot_telemetry", "p": robotrec}}
-
-            b = json.dumps(a).encode('utf-8')
-            ws.send(b)
-
-    if mjson["a"] == 7:  # Retrieve public message
-        if mjson["p"]["m"] == "controllers" and mjson["p"]["r"] == roomId:
-
-            # print("==================")
-            # print("Controller Sent   ")
-            # print("==================")
-            robotrec = {"title": "Robot Telemetry Data", "status": {"healthy": "True", "eStop": "False", "softwareEStop": "False"}, "currentConfig": {"leftArm": [-0.20578666666666667, -2.1202733333333335, -1.6030666666666669, 3.7186333333333335, -0.96508, 0.0974], "rightArm": [0.2028, -1.035932653589793, 1.6057333333333335, -0.5738406797435401, 0.9622, -0.0974], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "currentVelocity": {"leftArm": [0, 0, 0, 0, 0, 0], "rightArm": [
-                0, 0, 0, 0, 0, 0], "baseWheels": [1.1, 0.2], "base": [-0.5, 0.5, 0]}, "targetConfig": {"leftArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "rightArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "controller": {"collisionWarning": {"leftArm": "True", "rightArm": "False"}, "unreachableWarning": {"leftArm": "True", "rightArm": "False"}}, "perception": {"miniMap": {"width": 2, "height": 1, "matrix": [[0], [0]]}, "hapticFeedback": [0, 1, 2]}}
+            # robotrec = {"title": "Robot Telemetry Data", "status": {"healthy": "True", "eStop": "False", "softwareEStop": "False"}, "currentConfig": {"leftArm": [-0.20578666666666667, -2.1202733333333335, -1.6030666666666669, 3.7186333333333335, -0.96508, 0.0974], "rightArm": [0.2028, -1.035932653589793, 1.6057333333333335, -0.5738406797435401, 0.9622, -0.0974], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "currentVelocity": {"leftArm": [0, 0, 0, 0, 0, 0], "rightArm": [
+            #     0, 0, 0, 0, 0, 0], "baseWheels": [1.1, 0.2], "base": [-0.5, 0.5, 0]}, "targetConfig": {"leftArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "rightArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "controller": {"collisionWarning": {"leftArm": "True", "rightArm": "False"}, "unreachableWarning": {"leftArm": "True", "rightArm": "False"}}, "perception": {"miniMap": {"width": 2, "height": 1, "matrix": [[0], [0]]}, "hapticFeedback": [0, 1, 2]}}
 
             # # sending public messages
             # a = {"a": 7, "c": 0, "p": {"t": 0, "r": roomId,
             #                            "u": userId, "m": "robot_telemetry", "p": robotrec}}
+
             # b = json.dumps(a).encode('utf-8')
             # ws.send(b)
-            # print('This is MJSON \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
-            # print(mjson["p"]["p"]["controllerButtonState"]["leftController"])
-            #saving the UI_STATE to reem
+
+    if mjson["a"] == 7:  # Retrieve public message
+        if mjson["p"]["m"] == "controllers" and mjson["p"]["r"] == roomId:
+            robotrec = {"title": "Robot Telemetry Data", "status": {"healthy": "True", "eStop": "False", "softwareEStop": "False"}, "currentConfig": {"leftArm": [-0.20578666666666667, -2.1202733333333335, -1.6030666666666669, 3.7186333333333335, -0.96508, 0.0974], "rightArm": [0.2028, -1.035932653589793, 1.6057333333333335, -0.5738406797435401, 0.9622, -0.0974], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "currentVelocity": {"leftArm": [0, 0, 0, 0, 0, 0], "rightArm": [
+                0, 0, 0, 0, 0, 0], "baseWheels": [1.1, 0.2], "base": [-0.5, 0.5, 0]}, "targetConfig": {"leftArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "rightArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "controller": {"collisionWarning": {"leftArm": "True", "rightArm": "False"}, "unreachableWarning": {"leftArm": "True", "rightArm": "False"}}, "perception": {"miniMap": {"width": 2, "height": 1, "matrix": [[0], [0]]}, "hapticFeedback": [0, 1, 2]}}
+
             server["UI_STATE"] = mjson["p"]["p"]
+            return
+
             try:
                 robot_telemetry = server['robotTelemetry'].read()
 
@@ -94,13 +83,6 @@ def on_message(ws, message):
                 print('could not read robotTelemetry',e)
 
 
-
-            # print(mjson['p']['p']["controllerButtonState"]["leftController"])
-            # print("===================")
-            # print("leftController press ",
-            #       mjson["p"]["p"]["controllerButtonState"]["leftController"]["press"])
-
-
 def on_error(ws, error):
     print(error)
 
@@ -118,9 +100,10 @@ def on_open(ws):
         b = json.dumps(a).encode('utf-8')
         # print(b)
         ws.send(b)
-
+        # print('this is running')
         while is_closed == 0:
             time.sleep(1)
+            # print('sleeping')
         time.sleep(1)
         ws.close()
         print("Thread terminating...")
