@@ -5,14 +5,14 @@ import os
 from klampt.io import loader
 from klampt import WorldModel
 import sys
-sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+# sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 import cv2
 import cv2.aruco as aruco
-sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
+# sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 from klampt.math import vectorops as vo
 import trimesh
 import numpy as np
-from calibrationOpt import URDFCalibration
+# from calibrationOpt import URDFCalibration
 import pickle
 
 
@@ -494,27 +494,27 @@ if __name__=="__main__":
 
     traj_path = 'URDF_calibration.path'
     pic_path = './data/3/'
-    world_path = '../../Motion/data/TRINA_world_bubonic_calibration.xml'
+    world_path = '../../Motion/data/TRINA_world_cholera.xml'
     rob_save_folder = '../../Motion/data/robots/'
-    cameras =['realsense_left'] #['realsense_left','realsense_right']
+    cameras =['realsense_left','realsense_right']
 
     ##Take pictures
     from calibrationLogger import CalibrationLogger
-    takePictures(traj_path,pic_path,cameras = ['realsense_left','realsense_right'],'http://localhost:8080','bubonic')
+    takePictures(traj_path,pic_path,cameras,'http://localhost:8080','cholera')
     ##Calibrate
-    mainCalibrationURDF(pic_path = pic_path, world_path = world_path,URDF_save_folder = rob_save_folder,\
-        cameras = cameras,links = [11,19])
+    # mainCalibrationURDF(pic_path = pic_path, world_path = world_path,URDF_save_folder = rob_save_folder,\
+    #     cameras = cameras,links = [11,19])
 
     #############################
     # static camera calibration #
     #############################
 
-    ### Static camera calibration
-    traj_path = 'static_calibration.path'
-    pic_path = './data/4/'
-    world_path = '../../Motion/data/TRINA_world_b'
-    cameras = ['realsense_left','realsense_right'] #['realsense_torso','zed_torso'] 
-    ##Take pictures
-    from calibrationLogger import CalibrationLogger
-    takePictures(traj_path,pic_path,cameras = cameras,'http://localhost:8080','cholera')
-    # mainCalibrationStatic(traj_path = traj_path,pic_path = pic_path, world_path = world_path,cameras = cameras,link = 11)
+    # ### Static camera calibration
+    # traj_path = 'static_calibration.path'
+    # pic_path = './data/5/'
+    # world_path = '../../Motion/data/TRINA_world_cholera.xml'
+    # cameras = ['realsense_left','realsense_right'] #['realsense_torso','zed_torso'] 
+    # ##Take pictures
+    # from calibrationLogger import CalibrationLogger
+    # takePictures(traj_path,pic_path,cameras = cameras,motion_address = 'http://localhost:8080',codename = 'cholera')
+    # # mainCalibrationStatic(traj_path = traj_path,pic_path = pic_path, world_path = world_path,cameras = cameras,link = 11)

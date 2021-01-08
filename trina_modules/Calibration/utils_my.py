@@ -27,8 +27,11 @@ def getRightLinkTransform(robot,q,link_num):
     robot.setConfig(initial_config)
     return T
 
-def extractLimbPositions(q):
+def extractLimbPositions(q,model):
     """
     Given TRINA robot configuration, return the left and right limb positions
     """
-    return q[7:13],q[15:21]
+    if model == 'bubonic':
+        return q[7:13],q[15:21]
+    elif model == 'cholera':
+        return q[11:17],q[19:25]

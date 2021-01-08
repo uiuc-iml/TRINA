@@ -31,7 +31,7 @@ class CalibrationLogger:
 
     def collect(self,ref_traj,save_path):
         #move the arm to trajectory initial configuration
-        left_q,right_q = extractLimbPositions(ref_traj.eval(0.0))
+        left_q,right_q = extractLimbPositions(ref_traj.eval(0.0),'cholera')
         self.robot.setLeftLimbPositionLinear(left_q,self.init_move_time)
         self.robot.setRightLimbPositionLinear(right_q,self.init_move_time)
         self.save_path = save_path
@@ -44,7 +44,7 @@ class CalibrationLogger:
         end_time = ref_traj.endTime()
         current_time = 0.0
         while current_time < end_time:
-            left_q,right_q = extractLimbPositions(ref_traj.eval(current_time))
+            left_q,right_q = extractLimbPositions(ref_traj.eval(current_time),'cholera')
             self.robot.setLeftLimbPosition(left_q)
             self.robot.setRightLimbPosition(right_q)
             time.sleep(self.dt)
@@ -70,7 +70,7 @@ class CalibrationLogger:
         while not self.shutdown_flag:
             loop_start_time = time.time()
             self._lock.acquire()
-
+            t = time.time() - self.system_start_time
             if counter >= 0:
                 fc.write(str(t) + '\n')
 
@@ -94,11 +94,9 @@ class CalibrationLogger:
             self.res = self.camera.get_rgbd_images()
             res2 = self.camera.get_point_clouds()
             self._lock.release()
-            t = time.time() - self.system_start_time
             for cn in self.cameras:
                 color_frame = self.res[cn][0]
                 pcd = res2[cn]
-                pcd.transform([[-1,0,0,0],[0,-1,0,0],[0,0,-1,0],[0,0,0,1]])
                 p = np.asarray(pcd.points) 
                 if cn[0:4] == 'real': #realsense camera color channels need to be adjusted
                     color = cv2.cvtColor(np.asarray(color_frame), cv2.COLOR_RGB2BGR)
