@@ -58,44 +58,68 @@ def save_image_array(array,directory,number):
         buf = StringIO()
                         
         if(array.dtype == np.uint8):
-            name = directory + '/{}.png'.format(number)
-            Image.fromarray(array).save(name,"PNG")
+            # print('using simple save')
+
+            name = directory + '/{}.jpg'.format(number)
+            cv2.imwrite(name,array)
         
         elif(array.dtype == np.float32):
+            # print('converting first')
+
             name = directory + '/{}.png'.format(number)
             array =(1000*array).astype(np.uint16)
             cv2.imwrite(name,array)
 
-#                 img = Image.fromarray(array)
-#                 img.save(name,"PNG")
-        else:
+                # img = Image.fromarray(array)
+                # img.save(name,"PNG")
+        elif(array.dtype == np.uint16):
+            # print('No need to convert')
+
             name = directory + '/{}.png'.format(number)
             array =(1000*array).astype(np.uint16)
             cv2.imwrite(name,array)
+        else:
+            print('invalid dtype!')
     
 def dump_dataset_to_memory(datasets,copy_images,copy_image_times):
-
-    print('\n\n\n\n\n\n adding new pictures to log \n\n\n\n\n\n\n')
-    start_time = time.time()
-    print(copy_images)
-    for key in copy_images.keys():
-        dset_file = datasets[key]
-        images = copy_images[key]
-        times = copy_image_times[key]
-        save_arrays_as_images(images,dset_file,times)
+    import pandas as pd
+    # print('\n\n\n\n\n\n adding new pictures to log \n\n\n\n\n\n\n')
+    # start_time = time.time()
+    # print(copy_images.keys())
+    try:
+        for key in copy_images.keys():
+            # print(key)
+            dset_file = datasets[key]
+            images = copy_images[key]
+            times = copy_image_times[key]
+            # print('started saving images')
+            save_arrays_as_images(images,dset_file,times)
+    except Exception as e:
+        print(e)
+        
 #         print('\n\n\n\n preparation of the dataset takes {} seconds'.format(time.time()-start_time))
     # print(f)
 
     return 0
 def save_arrays_as_images(arrays,directory,times):
     total = np.max(len(glob(directory+'/*'))-1,0)
+    # print(total)
     final = total + len(arrays)
     this_range = range(total,final)
-    times_df = pd.DataFrame({'trina_time':times,'image':this_range})
-    times_df.to_csv(directory+'times.csv',sep='|',
-                            mode='a', header=False, index=False)
+    # print('times df')
+    # print(directory)
+    # times_df = pd.DataFrame({'trina_time':times})
+    # times_df.to_csv(directory+'_times.csv',sep='|',
+    #                         mode='a', header=False, index=False)
+    if(total == 0):
+        with open(directory+'_times.csv','a') as f:
+            f.write('times')
+    with open(directory+'_times.csv','a') as f:
+        f.write('\r\n'+str(times)[1:-1].replace(',','\r\n'))
     # we then save the images to file:
+    # print('makes it past times df')
     for i,image in enumerate(arrays):
+        # print(i)
         number = total + i
         save_image_array(image,directory,number)
 
@@ -103,7 +127,7 @@ def save_arrays_as_images(arrays,directory,times):
 
 
 class StateLogger(object):
-    def __init__(self, jarvis, frequency=60, image_frequency=10):
+    def __init__(self, jarvis, frequency=60, image_frequency=7):
 
         print('\n\n\n starting logger \n\n\n')
 
@@ -133,7 +157,7 @@ class StateLogger(object):
         self.jarvis.server['LOGGER_STATUS'] = self.logger_status
         self.logger_items = {'UIState':True,'RobotState':True,'Commands':True,'Video':True}
         self.jarvis.server['LOGGER_ITEMS'] = self.logger_items
-        
+        # self.sensors = self.jarvis.sensor_module
         self.stateThread = Thread(target=self.update_states)
         self.commandThread = Thread(target=self.update_command_logs)
         self.saveStateLogThread = Thread(
@@ -143,22 +167,22 @@ class StateLogger(object):
         
         
         self.saveImageLog = Thread(target=self.save_images_to_disk)
-        self.stateThread.daemon = True
-        self.commandThread.daemon = True
-        self.saveStateLogThread.daemon = True
-        self.updateImageThread.daemon = True
-        self.saveImageLog.daemon = True
-        self.operational_conditions_thread.daemon = True
-        
+        # self.stateThread.daemon = True
+        # self.commandThread.daemon = True
+        # self.saveStateLogThread.daemon = True
+        # self.updateImageThread.daemon = True
+        # self.saveImageLog.daemon = True
+        # self.operational_conditions_thread.daemon = True
+        self.updateImageThread.start()
+
         self.operational_conditions_thread.start()
         self.stateThread.start()
         self.commandThread.start()
-        self.updateImageThread.start()
         # time.sleep(3)
         self.saveStateLogThread.start()
         self.saveImageLog.start()
 
-        self.stateThread.join()            
+        # self.stateThread.join()            
     
     def start_all_logger_variables(self):
         with self.states_lock:
@@ -177,7 +201,9 @@ class StateLogger(object):
                     self.ui_times = []
                     self.robot_state_times = []
                     self.dataset_dirs = {}
+                    print('first jarvis call for images')
                     tmp = self.jarvis.get_rgbd_images()
+
                     # tmp = self.jarvis.get_rgbd_images()
                     keys = tmp.keys()
                     print('got keys: {}'.format(keys))
@@ -306,12 +332,18 @@ class StateLogger(object):
         commands = []
         command_times = []
         for i in copy_command_list:
-            exec('tmp = {}'.format(i))
-            print(tmp)
-            for j in tmp:
-                exec('tmp2 = {}'.format(j))
-                commands.append(tmp2[0])
-                command_times.append(tmp2[1])
+            if(i):
+                print('this is i : {}'.format(str(i)))
+                try:    
+                    exec('tmp = {}'.format(str(i)))
+                    tmp
+                    for j in tmp:
+                        exec('tmp2 = {}'.format(j))
+                        print('got to tmp2: {}'.format(tmp2))
+                        commands.append(tmp2[0])
+                        command_times.append(tmp2[1])
+                except Exception as e:
+                    print(e)
 
         if(commands):
             with self.operational_lock:
@@ -363,12 +395,14 @@ class StateLogger(object):
             start = time.time()
             with self.images_lock:
                 try:
-                    tmp = self.jarvis.get_rgbd_images()
+                    tmp = deepcopy(self.jarvis.get_rgbd_images())
                     for key in tmp.keys():
                         self.images[key+'_color'].append(tmp[key][0])
                         self.images[key+'_depth'].append(tmp[key][1])
                         self.image_times[key+'_color'].append(tmp[key][2])
                         self.image_times[key+'_depth'].append(tmp[key][2])
+                    del tmp
+                        
                 except Exception as e:
                     print(e)
                     pass
@@ -409,6 +443,7 @@ class StateLogger(object):
 
     def save_images_to_disk(self):
         while(True):
+            # print('save images to disk running')
             start_time = time.time()
             with self.images_lock:
                 copy_images = copy(self.images)
@@ -416,17 +451,22 @@ class StateLogger(object):
                 for key in self.images.keys():
                     self.images.update({key: []})
                     self.image_times.update({key:[]})
+            # print('passed images lock')
             with self.operational_lock:
                 if(self.logger_items['Video']):
                     dumping_process = Process(target = dump_dataset_to_memory, args = (self.dataset_dirs,copy_images,copy_image_times))
                     dumping_process.start()
+                    # print('waiting to join')
                     dumping_process.join()
+                    
                     elapsed = time.time()-start_time
                     # print('\n\n\n done adding figures to disk in {} seconds'.format(elapsed))
                 else:
                     print('\n\n not logging video! \n\n')
+            # print('passed operational lock')
             elapsed = time.time()-start_time
-            # print('\n\n\n done adding figures to disk in {} seconds'.format(elapsed))        
+            # print('elapsed = {} '.format(elapsed))
+            print('\n\n\n done adding figures to disk in {} seconds'.format(elapsed))        
             if(elapsed < self.intermediate_wait):
                 time.sleep(self.intermediate_wait-elapsed)
             if(self.close_all):

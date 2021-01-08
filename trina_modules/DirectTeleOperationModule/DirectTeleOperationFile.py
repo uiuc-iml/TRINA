@@ -85,7 +85,8 @@ class DirectTeleOperation:
 		self.infoLoop_rate = 0.05
 		self.max_arm_speed = 0.5
 		self.robot = Jarvis
-		self.components =  ['head','left_limb','right_limb', 'left_gripper', 'right_gripper','base']
+		# self.components =  ['head','left_limb','right_limb', 'left_gripper', 'right_gripper','base']
+		self.components = ['left_limb', 'left_gripper','right_limb', 'right_gripper']
 		#self.robot.getComponents()
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
@@ -308,7 +309,7 @@ class DirectTeleOperation:
 						# 	limb.sensedEETransform(tool_center=self.tool.tolist()),
 						# 	np.zeros((6,6)).tolist(), self.M, [[100*x for x in a] for a in self.B],
 						# 	tool_center=self.tool.tolist())
-			print("UI state Logic")
+			# print("UI state Logic")
 			if(self.base_active):
 				self.baseControl()
 			

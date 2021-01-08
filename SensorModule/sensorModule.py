@@ -579,7 +579,7 @@ class RealSenseCamera:
         return transformed_pc
     
     def get_rgbd_images(self):
-        frames = self.pipeline.wait_for_frames()
+        frames = self.pipeline.wait_for_frames(100)
         # Fetch color and depth frames and align them
         aligned_frames = self.align.process(frames)
         depth_frame = aligned_frames.get_depth_frame()
@@ -616,8 +616,8 @@ class ZedCamera:
         # Create a InitParameters object and set configuration parameters
         init_params = sl.InitParameters()
         init_params.sdk_verbose = False
-        # init_params.camera_resolution = sl.RESOLUTION.HD1080
-        init_params.camera_resolution = sl.RESOLUTION.HD2K
+        init_params.camera_resolution = sl.RESOLUTION.HD1080
+        # init_params.camera_resolution = sl.RESOLUTION.HD2K
         init_params.depth_mode = sl.DEPTH_MODE.PERFORMANCE
         init_params.coordinate_units = sl.UNIT.METER
         init_params.set_from_serial_number(serial_num)

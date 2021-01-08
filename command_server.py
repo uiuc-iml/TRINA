@@ -416,10 +416,10 @@ class CommandServer:
 		commandRecieverThread.daemon = True
 		commandRecieverThread.start()
 		print('\n command receiver started!\n')
-		print('\n starting module monitor \n')
-		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
-		moduleMonitorThread.start()
-		print('\n module monitor started\n')
+		# print('\n starting module monitor \n')
+		# moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
+		# moduleMonitorThread.start()
+		# print('\n module monitor started\n')
 
 		atexit.register(self.shutdown_all)
 		if mode == "Kinematic":
@@ -956,8 +956,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb','head','base'], modules = ['DirectTeleOperation'], codename = 'cholera')
-	# server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
+	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb'], modules = ['DirectTeleOperation','StateLogger'], codename = 'cholera',cameras = ['zed_slam','zed_overhead','realsense_left'])
 	
 	# print(server.robot.closeLeftRobotiqGripper())
 	# print(server.robot.sensedLeftEETransform())

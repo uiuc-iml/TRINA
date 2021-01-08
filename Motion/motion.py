@@ -1998,8 +1998,8 @@ class Motion:
                 state.increaseB = True
 
             # print(f"DAMPING STATE: {[state.increaseB,mag]}")
-            # if state.increaseB:
-            #     effective_b *= 20
+            if state.increaseB:
+                effective_b *= 20
 
             for i in range(6):
                 if state.deadband[i] > 0:
