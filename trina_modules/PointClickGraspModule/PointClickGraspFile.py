@@ -12,11 +12,9 @@ from klampt.math import vectorops, so3
 from klampt.model import ik, collide
 from klampt import WorldModel, vis
 from TRINAConfig import *
-import rospy
 import sensor_msgs
-# import pbd
 from datetime import datetime
-from motion import Motion
+
 # python files
 from .global_planner import *
 from .local_planner import *
@@ -24,7 +22,6 @@ from .motion_primitives import *
 from motion_profile import *
 from .utils import *
 from .geometry import *
-from matplotlib import pyplot as plt
 
 from sensor_msgs.msg import LaserScan
 
@@ -37,288 +34,16 @@ import random
 import numpy as np
 import math
 import cv2
-
-model_path = '../Resources/shared_data/objects/'
-mesh_model_path = '../Resources/grasping/models/'
-
-
-def convertMsg(klampt_sensor, frame, stamp="now"):
-    measurements = klampt_sensor.getMeasurements()
-    res = LaserScan()
-    if stamp == 'now':
-        stamp = rospy.Time.now()
-    elif isinstance(stamp, (int, float)):
-        stamp = rospy.Time(stamp)
-    res.header.frame_id = frame
-    res.header.stamp = stamp
-    res.angle_max = float(klampt_sensor.getSetting("xSweepMagnitude"))
-    res.angle_min = -1.0 * res.angle_max
-    measurement_count = float(klampt_sensor.getSetting("measurementCount"))
-    res.angle_increment = (res.angle_max - res.angle_min) / measurement_count
-    res.time_increment = float(klampt_sensor.getSetting("xSweepPeriod"))
-    res.range_min = float(klampt_sensor.getSetting("depthMinimum"))
-    res.range_max = float(klampt_sensor.getSetting("depthMaximum"))
-    res.ranges = measurements
-    res.intensities = []
-    return res
-
-
-class testingWorldBuilder():
-    def __init__(self, floor_length=20, floor_width=20, world=[]):
-        if (world == []):
-            self.w = WorldModel()
-        else:
-            self.w = world
-        self.floor = Geometry3D()
-        self.floor.loadFile(model_path + "cube.off")
-        self.floor.transform([floor_length, 0, 0, 0, floor_width, 0, 0, 0, 0.01],
-                             [-floor_length / 2.0, -floor_width / 2.0, -0.01])
-        floor_terrain = self.w.makeTerrain("floor")
-        floor_terrain.geometry().set(self.floor)
-        floor_terrain.appearance().setColor(0.4, 0.3, 0.2, 1.0)
-
-        ###colors
-        self.light_blue = [3.0 / 255.0, 140.0 / 255.0, 252.0 / 255.0, 1.0]
-        self.wall_green = [50.0 / 255.0, 168.0 / 255.0, 143.0 / 255.0, 1.0]
-        ###sizes
-        self.table_length = 1.2
-        self.table_width = 0.8
-        self.table_top_thickness = 0.03
-        self.table_height = 0.8
-        self.leg_width = 0.05
-        self.cube_width = 0.05
-
-    def getWorld(self):
-        return self.w
-
-    def addTableTopScenario(self, x=0, y=0):
-        """
-        add a table with objects on top, the center of table can be set
-        Parameters:
-        --------------
-        x,y: floats, the position of the table center
-        """
-
-        self.addTable(x, y)
-        # add some cubes
-        self.addCube((so3.from_axis_angle(([0, 0, 1], 0.5)), [x, y - 0.7, self.table_height]), self.cube_width,
-                     [1.0, 0, 0, 1], 1)
-        # add one mesh
-        random.seed(30)
-        self.addRandomMesh([0 + x, -1.0 + y, self.table_height], 1)
-        self.addRandomMesh([0 + x, -1.2 + y, self.table_height], 2)
-        self.addRandomMesh([0.2 + x, -1.0 + y, self.table_height], 3)
-        self.addRandomMesh([-0.2 + x, -1.2 + y, self.table_height], 4)
-
-    def addIndoorNavScenario(self):
-        """
-        Add 4 rooms and a table
-        """
-
-        wall_thickness = 0.2
-        room_size = [8.0, 6.0, 4.0]
-        self.addRoom(room_size, wall_thickness, T=([1, 0, 0, 0, 1, 0, 0, 0, 1], [-6, -6, 0]), ID=1)
-        self.addRoom(room_size, wall_thickness, T=([1, 0, 0, 0, 1, 0, 0, 0, 1], [6, -6, 0]), ID=2)
-        self.addRoom(room_size, wall_thickness, T=(so3.from_axis_angle(([0, 0, 1], math.pi / 1.0)), [6, 6, 0]), ID=3)
-        self.addRoom(room_size, wall_thickness, T=(so3.from_axis_angle(([0, 0, 1], math.pi / 1.0)), [-6, 6, 0]), ID=4)
-        self.addTable(-6, -6)
-        return
-
-    def addRoom(self, room_size=[10.0, 8.0, 4.0], wall_thickness=0.2, T=([1, 0, 0, 0, 1, 0, 0, 0, 1], [0, 0, 0]), ID=1):
-        """
-        Add a room to the world
-        Parameters:
-        -------------------
-        room_size = list of 3 floats, the width,depth, and height of the room
-        wall_thickess = float
-        T:rigid transform of the room
-        ID: ID of the room
-        """
-
-        # left wall
-        self._addTerrain(model_path + "cube.off",
-                         se3.mul(T, ([wall_thickness, 0, 0, 0, room_size[1] - wall_thickness, 0, 0, 0, room_size[2]], \
-                                     [-room_size[0] / 2.0, -room_size[1] / 2.0, 0])), self.wall_green,
-                         "wall1_" + str(ID))
-        # wall with window
-        self._addTerrain(model_path + "cube.off", se3.mul(T, ([room_size[0], 0, 0, 0, wall_thickness, 0, 0, 0, 1], \
-                                                              [-room_size[0] / 2.0, -room_size[1] / 2.0, 0])),
-                         self.wall_green, "wall2_" + str(ID))
-        self._addTerrain(model_path + "cube.off", se3.mul(T, ([room_size[0], 0, 0, 0, wall_thickness, 0, 0, 0, 2], \
-                                                              [-room_size[0] / 2.0, -room_size[1] / 2.0, 2])),
-                         self.wall_green, "wall3_" + str(ID))
-        self._addTerrain(model_path + "cube.off",
-                         se3.mul(T, ([room_size[0] / 2.0 - 0.5, 0, 0, 0, wall_thickness, 0, 0, 0, 1], \
-                                     [-room_size[0] / 2.0, -room_size[1] / 2.0, 1])), self.wall_green,
-                         "wall4_" + str(ID))
-        self._addTerrain(model_path + "cube.off",
-                         se3.mul(T, ([room_size[0] / 2.0 - 0.5, 0, 0, 0, wall_thickness, 0, 0, 0, 1], \
-                                     [0.5, -room_size[1] / 2.0, 1])), self.wall_green, "wall5_" + str(ID))
-
-        # right wall
-        self._addTerrain(model_path + "cube.off",
-                         se3.mul(T, ([wall_thickness, 0, 0, 0, room_size[1] - wall_thickness, 0, 0, 0, room_size[2]], \
-                                     [room_size[0] / 2.0 - wall_thickness, -room_size[1] / 2.0, 0])), self.wall_green,
-                         "wall6_" + str(ID))
-
-        # the wall with door
-        self._addTerrain(model_path + "cube.off",
-                         se3.mul(T, ([room_size[0] - 2.5, 0, 0, 0, wall_thickness, 0, 0, 0, room_size[2]], \
-                                     [-room_size[0] / 2.0, room_size[1] / 2.0 - wall_thickness, 0])), self.wall_green,
-                         "wall7_" + str(ID))
-        self._addTerrain(model_path + "cube.off", se3.mul(T, ([1, 0, 0, 0, wall_thickness, 0, 0, 0, room_size[2]], \
-                                                              [-room_size[0] / 2.0 + (room_size[0] - 1),
-                                                               room_size[1] / 2.0 - wall_thickness, 0])),
-                         self.wall_green, "wall8_" + str(ID))
-        self._addTerrain(model_path + "cube.off", se3.mul(T, ([1.5, 0, 0, 0, wall_thickness, 0, 0, 0, 1], \
-                                                              [-room_size[0] / 2.0 + (room_size[0] - 1 - 1.5),
-                                                               room_size[1] / 2.0 - wall_thickness, 3])),
-                         self.wall_green, "wall9_" + str(ID))
-
-    ##Functions below add individual objects
-    def addCube(self, T, side_length, color, ID, object_mass=0.1):
-        """
-        Add a cube to the world.
-        Parameters:
-        --------------
-        T:world transform of the cube
-        side_length: float, size of the cube
-        color: RGBA values, (0-1)
-        ID: int, cannot duplicate
-        mass:object mass added at the object geometric center
-        """
-
-        self._addRigidObject(model_path + "cube.off",
-                             ([side_length, 0, 0, 0, side_length, 0, 0, 0, side_length, ], [0, 0, 0]), T, \
-                             color, object_mass, [side_length / 2.0, side_length / 2.0, side_length / 2.0],
-                             "cube" + str(ID))
-
-    def addMesh(self, path, T, color, mass, ID):
-        """
-        Add a mesh to the world.
-        Parameters:
-        --------------
-        path: path to the mesh file
-        T:world transform of the mesh
-        color: RGBA values, (0-1)
-        mass:object mass added at the object geometric center
-        ID: int, cannot duplicate
-        """
-        mesh = trimesh.load(path)
-        mesh_center = mesh.centroid.tolist()
-
-        # load the rigid object in the world
-        self._addRigidObject(path, ([1, 0, 0, 0, 1, 0, 0, 0, 1], [0] * 3), T, \
-                             color, mass, mesh_center, "item" + str(ID))
-
-    def addRandomMesh(self, t, ID=1):
-        """
-        Add a household item to the world, randonmly selected from the library.
-        Color is also determined randomly. Mass set to 1kg arbitrarily
-        Parameters:
-        --------------
-        t:world position of the mesh
-        ID: int, cannot duplicate
-        """
-        meshpaths = []
-        for file in os.listdir(mesh_model_path):
-            if file.endswith(".ply"):
-                meshpaths.append(os.path.join(mesh_model_path, file))
-
-        meshpath = random.choice(meshpaths)
-        mesh = trimesh.load(meshpath)
-        mesh_center = mesh.centroid.tolist()
-        # Z_min = np.min(mesh.vertices[:,2])
-
-        # t[2] = t[2]+mesh_center[2]-Z_min
-        # load the rigid object in the world
-        self._addRigidObject(meshpath, ([1, 0, 0, 0, 1, 0, 0, 0, 1], [0] * 3), ([1, 0, 0, 0, 1, 0, 0, 0, 1], t), \
-                             (random.random(), random.random(), random.random(), 1.0), 0.1, mesh_center,
-                             "item" + str(ID))
-
-    def addTable(self, x=0, y=0):
-        """
-        Add a table to the world
-        Parameters:
-        --------------
-        x,y: floats, the x,y position of the center of the table
-        """
-        table_top = Geometry3D()
-        table_leg_1 = Geometry3D()
-        table_leg_2 = Geometry3D()
-        table_leg_3 = Geometry3D()
-        table_leg_4 = Geometry3D()
-
-        table_top.loadFile(model_path + "cube.off")
-        table_leg_1.loadFile(model_path + "cube.off")
-        table_leg_2.loadFile(model_path + "cube.off")
-        table_leg_3.loadFile(model_path + "cube.off")
-        table_leg_4.loadFile(model_path + "cube.off")
-
-        table_top.transform([self.table_length, 0, 0, 0, self.table_width, 0, 0, 0, \
-                             self.table_top_thickness], [0, 0, self.table_height - self.table_top_thickness])
-        table_leg_1.transform([self.leg_width, 0, 0, 0, self.leg_width, 0, 0, 0, self.table_height \
-                               - self.table_top_thickness], [0, 0, 0])
-        table_leg_2.transform([self.leg_width, 0, 0, 0, self.leg_width, 0, 0, 0, self.table_height - \
-                               self.table_top_thickness], [self.table_length - self.leg_width, 0, 0])
-        table_leg_3.transform([self.leg_width, 0, 0, 0, self.leg_width, 0, 0, 0, self.table_height -
-                               self.table_top_thickness],
-                              [self.table_length - self.leg_width, self.table_width - self.leg_width, 0])
-        table_leg_4.transform([self.leg_width, 0, 0, 0, self.leg_width, 0, 0, 0, self.table_height -
-                               self.table_top_thickness], [0, self.table_width - self.leg_width, 0])
-
-        table_geom = Geometry3D()
-        table_geom.setGroup()
-        for i, elem in enumerate([table_top, table_leg_1, table_leg_2, table_leg_3, table_leg_4]):
-            g = Geometry3D(elem)
-            table_geom.setElement(i, g)
-        table_geom.transform([0, -1, 0, 1, 0, 0, 0, 0, 1], [x - self.table_length / 2.0, y - self.table_width / 2.0, 0])
-        table = self.w.makeTerrain("table")
-        table.geometry().set(table_geom)
-        table.appearance().setColor(self.light_blue[0], self.light_blue[1], self.light_blue[2], self.light_blue[3])
-
-    def addRobot(self, path, T):
-        """
-        Add a robot to the world. You can directly use Klampt functions to add to the world as well
-        Parameters:
-        ------------
-        path: path to the robot model
-        T: transform of the base of the robot
-        """
-
-        world.loadElement(path)
-        item = world.rigidObject(0)
-        item.setTransform([1, 0, 0, 0, 1, 0, 0, 0, 1],
-                          [ee_pos[0] - mesh_center[0], ee_pos[1] - mesh_center[1], -Zmin + 0.02])
-
-    def _addRigidObject(self, path, T_g, T_p, color, object_mass, Com, name):
-        item_1_geom = Geometry3D()
-        item_1_geom.loadFile(path)
-        item_1_geom.transform(T_g[0], T_g[1])
-        item_1 = self.w.makeRigidObject(name)
-        item_1.geometry().set(item_1_geom)
-        item_1.appearance().setColor(color[0], color[1], color[2], color[3])
-        bmass = item_1.getMass()
-        bmass.setMass(object_mass)
-        bmass.setCom(Com)
-        item_1.setMass(bmass)
-        item_1.setTransform(T_p[0], T_p[1])
-        return item_1
-
-    def _addTerrain(self, path, T, color, name):
-        item_1_geom = Geometry3D()
-        item_1_geom.loadFile(path)
-        item_1_geom.transform(T[0], T[1])
-        item_1 = self.w.makeTerrain(name)
-        item_1.geometry().set(item_1_geom)
-        item_1.appearance().setColor(color[0], color[1], color[2], color[3])
-        return item_1
-
+import segmentation as seg
+import open3d as o3d
+from skimage.color import rgb2gray, label2rgb
+from skimage import color
 
 class PointClickGrasp:
     def __init__(self, Jarvis=None, debugging=False, mode='Kinematic'):
-        # if true, run a test locally, otherwise, communicate with Jarvis to get state
         print("PointCLickGrasp starting")
+        self.system_start_time = time.time()
+        self.jarvis = Jarvis
         self.debugging = debugging
         self.last_timestamp = 0.0
         self.state = 'idle'  # states are used internally, there are idle, active, planning etc
@@ -328,42 +53,13 @@ class PointClickGrasp:
         self.exit_flag = False
         self.mode = mode
         self.visualization = False
-        print(mode, debugging)
+        
         time.sleep(10)
         if self.debugging:
-
-            self.simulated_robot = Motion(mode='Kinematic',
-                                          codename="anthrax")  # the world file has been modified to add a
-            # laser sensor
-            self.simulated_robot.startup()
-            self.world = self.simulated_robot.getWorld()
-            # add some obstacles
-            builder = testingWorldBuilder(30, 30, world=self.world)
-            self.world = builder.getWorld()
-
-            # self.world.saveFile('data/TRINA_world_anthrax_pointClick.xml')
-
-            exit()
-            vis.add("world", self.world)
-            self.curr_pose = self.simulated_robot.sensedBasePosition()
-            self.sim = klampt.Simulator(self.world)
-            self.lidar = self.sim.controller(0).sensor("lidar")
-            self.system_start_time = time.time()
-            vis.add("lidar", self.lidar)
-            if self.visualization:
-                vis.show()
+            pass
         else:
-            self.jarvis = Jarvis
             base_q = self.jarvis.sensedBasePosition()
             self.curr_pose = base_q
-
-            if self.visualization:
-                # start visualizer
-                self.vis_world = WorldModel()
-                self.vis_world.readFile('data/TRINA_world_anthrax_PointClick.xml')
-                self.vis_robot = self.vis_world.robot(0)
-                self.vis_robot.setConfig(get_klampt_model_q('anthrax', base=base_q))
-                vis.add("world", self.vis_world)
 
             if self.mode == 'Kinematic':
                 if self.visualization:
@@ -371,46 +67,15 @@ class PointClickGrasp:
                     vis.show()
             elif self.mode == 'Physical':
                 pass
-            # TODO
 
-            self.system_start_time = time.time()
+            
         # goal for navigation from user
         self.terminate_command = False  # flag for if user commanded a termination
         self.ray1 = ([], [])  # source and direction
         self.ray2 = ([], [])
 
-        # start the parent ros node
-        rospy.init_node("sensing_test_parent")
-        # get the first grid
-        self.grid = None
-
-        # Debugging.,.
-        # while self.grid == None:
-        # 	#grid and the gridmap info
-        # 	self.grid = get_occupancy_grid("dynamic_map")
-        # 	print("\n\n\n It seems that we cannot get a grid from gmapping, it there something wrong? - Changing for Yifan\n\n\n\n")
-        # 	time.sleep(0.5)
-        self.grid = get_occupancy_grid("dynamic_map")
-
-        self.res = self.grid.info.resolution
-        self.radius = 0.5588 / 2 / self.res * 2.0  # radius in terms of grids
-        self.gridmap = build_2d_map(self.grid).T
-        self.preprocessed_gridmap = preprocess(self.gridmap, self.radius)
-
-        # current start and end
-        # transforms world coordinates into the grid (indeces)
-        self.start = intify(transform_coordinates((self.curr_pose[0], self.curr_pose[1]), self.grid))
-        # wait for user to give goal
-        self.end = []
         self._sharedLock = RLock()
         signal.signal(signal.SIGINT, self.sigint_handler)  # catch SIGINT (ctrl-c)
-
-        # global path computation processes
-        # this only start the process but need to be activated to start computing global path
-        self.global_path_parent_conn, self.global_path_child_conn = Pipe()
-        self.global_path_proc = Process(target=self._computeGlobalPath,
-                                        args=(self.global_path_child_conn, self.end, self.radius, False))
-        self.global_path_proc.start()
 
         main_thread = threading.Thread(target=self._mainLoop)
         state_thread = threading.Thread(target=self._infoLoop)
@@ -423,22 +88,15 @@ class PointClickGrasp:
 
         """
         assert (signum == signal.SIGINT)
-        # logger.warning('SIGINT caught...shutting down the api!')
         print("SIGINT caught...shutting down the api!")
-        vis.kill()
-        self.global_path_parent_conn.send([[], [], [], True, True])
-
-    # self.ros_parent_conn.send([[],[],True])
 
     def return_threads(self):
         return [self._infoLoop, self._mainLoop]
 
     def return_processes(self):
-        return [self.global_path_proc]
+        return []
 
     def _infoLoop(self):
-        if self.debugging:
-            send_ray_once = False
         while not self.exit_flag:
             self.jarvis.log_health()
             loop_start_time = time.time()
@@ -478,16 +136,21 @@ class PointClickGrasp:
 
                 if (status == 'active'):
                     if (self.status == 'idle'):
-                        print('\n\n\n\n starting up Autonomous Navigation Module! \n\n\n\n\n')
+                        print('\n\n\n\n starting up Point Click Grasp Module! \n\n\n\n\n')
                         self.activate()
-                        leftUntuckedConfig = [-0.2028, -2.1063, -1.610, 3.7165, -0.9622, 0.0974]
-                        rightUntuckedConfig = self.jarvis.mirror_arm_config(leftUntuckedConfig)
-                        self.jarvis.setLeftLimbPositionLinear(leftUntuckedConfig, 2)
-                        self.jarvis.setRightLimbPositionLinear(rightUntuckedConfig, 2)
                         print("entering main loop")
-                        self.jarvis.setBaseVelocity([0.1, 0])
-                        time.sleep(2)
-                        self.jarvis.setBaseVelocity([0, 0])
+                        print(os.getcwd())
+                        
+                        if self.mode == "Kinematic":
+                            leftUntuckedConfig = [-0.2028, -2.1063, -1.610, 3.7165, -0.9622, 0.0974]
+                            rightUntuckedConfig = self.jarvis.mirror_arm_config(leftUntuckedConfig)
+                            self.jarvis.setLeftLimbPositionLinear(leftUntuckedConfig, 2)
+                            self.jarvis.setRightLimbPositionLinear(rightUntuckedConfig, 2)
+                            
+                            self.jarvis.setBaseVelocity([0.1, 0])
+                            time.sleep(2)
+                            self.jarvis.setBaseVelocity([0, 0])
+                            
                 elif (status == 'idle'):
                     if self.status == 'active':
                         self.deactivate()
@@ -500,11 +163,11 @@ class PointClickGrasp:
                 self._sharedLock.release()
             if self.state == "active":
                 self.rgbdimage = self.jarvis.get_rgbd_images()
-                depth_right = self.rgbdimage['realsense_right'][1]
-                #plt.imshow(depth_right)
-                #plt.show()
-                #plt.imshow(self.rgbdimage['realsense_right'][0])
-                #plt.show()
+                #print("Printing rgbd image")
+                #print(np.array(self.rgbdimage['realsense_right'][0]))
+                #depth_right = self.rgbdimage['realsense_right'][0]
+                #cv2.imshow("image", np.array(depth_right))
+                #cv2.waitKey(0)
 
             elapsed_time = time.time() - loop_start_time
             if elapsed_time < self.infoLoop_rate:
@@ -512,7 +175,7 @@ class PointClickGrasp:
             else:
                 time.sleep(0.001)  # sleep a small amount of time to avoid occupying the lock
         print('----------')
-        print('PointClickNav: state thread exited')
+        print('PointClickGrasp: state thread exited')
 
     def _mainLoop(self):
         self.global_path = None
@@ -546,13 +209,36 @@ class PointClickGrasp:
                 # ask for a ray
                 self.ray = self.jarvis.sendAndGetRayClickUI()
                 self.rgbdimage = self.jarvis.get_rgbd_images()
-                depth_right = self.rgbdimage['realsense_right'][1]
-                print(self.rgbdimage['realsense_right'][0])
-                plt.imshow(self.rgbdimage['realsense_right'][0])
+                depth_left = self.rgbdimage['realsense_left'][1]
+                color_left = self.rgbdimage['realsense_left'][0]
+                color_left = np.array(color_left)[:,:,:]
+                
+                #cv2.imshow("image", np.array(depth_left))
                 #cv2.waitKey(0)
-                plt.show()
-                #plt.imshow(self.rgbdimage['realsense_right'][0])
-                #plt.show()
+                #im = seg.segmentation.blur_frame(np.array(color_left))
+                imgray = rgb2gray(color_left)
+                imscaled = (imgray*256).astype("uint16")
+                segmented, _ = seg.mixture_model(imscaled, debug=True)
+                #labels = seg.watershed(imgray, segmented)
+                #print(labels)
+                mask_overlay = label2rgb(segmented,np.array(color_left),colors=[(255,0,0),(0,0,255), (0, 255,0), (255,255,0),(0,255,255), (255, 0,255)],alpha=0.01, bg_label=0, bg_color=None)
+                cv2.imshow("image", np.array(mask_overlay))
+                cv2.waitKey(0)
+                
+                color = o3d.geometry.Image(np.array(color_left))
+                depth = o3d.geometry.Image(np.array(depth_left)[:,:])
+                
+                rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(color, depth); 
+                pcd = o3d.geometry.PointCloud.create_from_rgbd_image(
+                    rgbd_image, o3d.camera.PinholeCameraIntrinsic(o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault)
+                )
+                # Flip it, otherwise the pointcloud will be upside down
+                pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+                
+                o3d.io.write_point_cloud("test_grasping.pcd", pcd)
+                
+                
+                
                 self._sharedLock.acquire()
                 self.state = 'planning'
                 planning_request_sent = False
@@ -664,8 +350,8 @@ class PointClickGrasp:
                         print('at end')
                     else:
                         # self.jarvis.sendConfirmationUI('info','Path has finished')
-                        self.jarvis.setBaseVelocity([0, 0])
-                        self.jarvis.changeActivityStatus(['UI'], ['PointClickNav'])
+                        #self.jarvis.setBaseVelocity([0, 0])
+                        #self.jarvis.changeActivityStatus(['UI'], ['PointClickNav'])
                         print('execution has completed')
                     self.state = 'idle'
                     self.global_path = None
@@ -704,7 +390,7 @@ class PointClickGrasp:
                 if closest is None:
                     if self.debugging:
                         print("No prim!!!")
-                        self.simualted_robot.setBaseVelocity([0.0, 0.4])
+                        #self.simualted_robot.setBaseVelocity([0.0, 0.4])
                         new_pose = self.curr_pose
                         new_pose = transform_coordinates(new_pose, self.grid)
 
@@ -713,7 +399,7 @@ class PointClickGrasp:
                         continue
                     else:
                         print("No prim!!!")
-                        self.jarvis.setBaseVelocity([0.0, 0.4])
+                        #self.jarvis.setBaseVelocity([0.0, 0.4])
                         time.sleep(0.1)
                         self._sharedLock.acquire()
                         new_pose = self.curr_pose
@@ -745,14 +431,14 @@ class PointClickGrasp:
                 for i in range(N):
                     # check current status
                     if self.state == 'idle':
-                        self.jarvis.setBaseVelocity([0, 0])
+                        #self.jarvis.setBaseVelocity([0, 0])
                         break
 
                     start = time.time()
                     if self.terminate_command:
                         self._sharedLock.acquire()
                         self.state = 'idle'
-                        self.jarvis.setBaseVelocity([0, 0])
+                        #self.jarvis.setBaseVelocity([0, 0])
                         self.global_path = None
                         self.end = None
                         self.start = None
@@ -785,10 +471,6 @@ class PointClickGrasp:
                     if self.visualization:
                         vis.add("klocaltraj", ktraj)
                         vis.setColor("klocaltraj", 0, 0, 255)
-                    if self.debugging:
-                        self.simulated_robot.setBaseVelocity(vel)
-                    else:
-                        self.jarvis.setBaseVelocity(vel)
 
                     new_pose = deepcopy(self.curr_pose)
                     new_pose = transform_coordinates(new_pose, self.grid)
@@ -797,7 +479,7 @@ class PointClickGrasp:
                     elapsed_time = time.time() - iteration_start
                     remaining_time = max(0.01 - elapsed_time, 0.0)
                     time.sleep(remaining_time)
-                    print('\n\n loop execution frequency PointClickNav', 1 / (time.time() - start), '\n\n')
+                    print('\n\n loop execution frequency PointClickGrasp', 1 / (time.time() - start), '\n\n')
                 # after the primitive is completed, update its posit
                 # In the next iteration, a new primitive will be generated given current pose..
                 self._sharedLock.acquire()
@@ -809,7 +491,7 @@ class PointClickGrasp:
 
                 # check status
                 if self.state == 'idle':
-                    self.jarvis.setBaseVelocity([0, 0])
+                    #self.jarvis.setBaseVelocity([0, 0])
                     continue
 
                 ##### receive new map and replan global path
@@ -839,7 +521,7 @@ class PointClickGrasp:
                         print("new global path is empty")
                         self.jarvis.sendConfirmationUI('Error',
                                                        'A global path does not seem to be possible....Returning to idle')
-                        self.jarvis.setBaseVelocity([0, 0])
+                        #self.jarvis.setBaseVelocity([0, 0])
                         self.state = 'idle'
                         continue
                     self.can_send_gridmap = True
@@ -851,37 +533,6 @@ class PointClickGrasp:
                 time.sleep(0.001)  # sleep a small amount of time to avoid occupying all the computation resource
         print('----------')
         print('PointClickNav: main thread exited')
-
-    def _computeGlobalPath(self, conn, end, radius, active):
-        gridmap = None
-        exit = False
-        while not exit:
-            if conn.poll():
-                gridmap, start, end, active, exit = conn.recv()
-                if exit:
-                    break
-                # makes more sense that you only compute path when a request is sent
-                if active:
-                    if gridmap is not None:
-                        preprocessed_gridmap = preprocess(gridmap, radius)
-                        dists, parents = navigation_function(preprocessed_gridmap, end, radius)
-                        global_path = get_path(parents, start, end)
-                        conn.send(global_path)
-                        gridmap = None
-                    time.sleep(0.001)
-                else:
-                    time.sleep(0.01)
-        print('----------')
-        print('PointClickNav: compute global path exited')
-
-    def _publishTf(self, curr_pose):
-        x, y, theta = curr_pose
-        theta = theta % (math.pi * 2)
-        br = tf.TransformBroadcaster()
-        br.sendTransform([x, y, 0], tf.transformations.quaternion_from_euler(0, 0, theta), rospy.Time.now(),
-                         "base_link", "odom")
-        br.sendTransform([0.2, 0, 0.2], tf.transformations.quaternion_from_euler(0, 0, 0), rospy.Time.now(),
-                         "base_scan", "base_link")
 
     def _shutdown(self):
         self._sharedLock.acquire()
@@ -912,19 +563,16 @@ class PointClickGrasp:
         self._sharedLock.acquire()
         self.state = 'idle'
         self.status = 'idle'
-        self.jarvis.setBaseVelocity([0, 0])
+        #self.jarvis.setBaseVelocity([0, 0])
         self.confirm_request_sent = False
         self.global_path = None
         self.end = None
         self.start = None
         self.end_theta = None
         self.terminate_command = False  # flag for if user commanded a termination
-        self.global_path_parent_conn.send(([], [], [], False, False))
         self._sharedLock.release()
 
 
 if __name__ == "__main__":
     demo = PointClickGrasp(debugging=False)
-# time.sleep(10)
-# print('\n\n\n\n\n\n calling shutdown, boys! \n\n\n\n\n\n\n')
-# demo._shutdown()
+

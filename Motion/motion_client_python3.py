@@ -10,7 +10,7 @@ dirname = os.path.dirname(__file__)
 model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")
 
 class MotionClient:
-	def __init__(self, address = 'http://127.0.0.1:8000'):
+	def __init__(self, address = 'http://127.0.0.1:8080'):
 		self.s = ServerProxy(address)
 		self.dt = 0.2
 		self.shut_down = False
@@ -89,13 +89,13 @@ class MotionClient:
 			tool = [0,0,0]
 		self.s.setRightEEVelocity(v,tool)
 
-	def sensedLeftEETransform(self):
+	def sensedLeftEETransform(self, tool_center=[0,0,0]):
 		"""Return the transform w.r.t. the base frame"""
-		return self.s.sensedLeftEETransform()
+		return self.s.sensedLeftEETransform(tool_center)
 
-	def sensedRightEETransform(self):
+	def sensedRightEETransform(self, tool_center=[0,0,0]):
 		"""Return the transform w.r.t. the base frame"""
-		return self.s.sensedRightEETransform()
+		return self.s.sensedRightEETransform(tool_center)
 
 
 	def sensedLeftLimbVelocity(self):
@@ -157,11 +157,14 @@ class MotionClient:
 	def mode(self):
 		return self.s.mode()
 
-	def stopMotion(self):
-		self.s.stopMotion()
+	def pauseMotion(self):
+		self.s.pauseMotion()
 
 	def resumeMotion(self):
 		self.s.resumeMotion()
+
+	def isPaused(self):
+		self.s.isPaused()
 
 	def mirror_arm_config(self,config):
 		return self.s.mirror_arm_config(config)
@@ -173,14 +176,14 @@ class MotionClient:
 		return self.s.cartesianDriveFail()
 
 	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedLeftEEVelcocity(local_pt)
+		return self.s.sensedLeftEEVelocity(local_pt)
 
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedRightEEVelcocity(local_pt)
+		return self.s.sensedRightEEVelocity(local_pt)
 
 
-	def sensedLeftEEWrench(self,frame = 'global'):
-		return self.s.sensedLeftEEWrench(frame)
+	def sensedLeftEEWrench(self,frame = 'global',tool_center = [0,0,0]):
+		return self.s.sensedLeftEEWrench(frame,tool_center)
 
 	def sensedRightEEWrench(self,frame = 'global'):
 		return self.s.sensedRightEEWrench(frame)
@@ -203,29 +206,29 @@ class MotionClient:
 	def closeRightRobotiqGripper(self):
 		self.s.closeRightRobotiqGripper()	
 
-	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6):
-		K = K.tolist()
-		B = B.tolist()
-		M = M.tolist()
-		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
+	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0.0]*3):
+		# K = K.tolist()
+		# B = B.tolist()
+		# M = M.tolist()
+		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
 
-	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		K = K.tolist()
-		B = B.tolist()
-		M = M.tolist()
-		self.s.setRightEETransformImpedance(Tg,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0.0]*3):
+		# K = K.tolist()
+		# B = B.tolist()
+		# M = M.tolist()
+		self.s.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		K = K.tolist()
 		B = B.tolist()
 		M = M.tolist()
-		self.s.setLeftLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+		self.s.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		K = K.tolist()
 		B = B.tolist()
 		M = M.tolist()
-		self.s.setRightLimbPositionImpedance(q,K,M,B = B,x_dot_g = x_dot_g,deadband = deadband)
+		self.s.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 	def sensedHeadPosition(self):
 		return self.s.sensedHeadPosition()
@@ -235,12 +238,10 @@ class MotionClient:
 		
 if __name__=="__main__":
 	motion = MotionClient('http://localhost:8080')
-	motion.startServer(mode = "Physical", components = ['left_limb'], codename = 'anthrax')
+	motion.startServer(mode = "Physical", components = ['right_limb','left_limb'], codename = 'cholera')
 	motion.startup()
 	time.sleep(0.05)
-	try:
-		print(motion.sensedLeftEETransform())
-		time.sleep(0.05)
-	except Exception as err:
-		print("Error: {0}".format(err))
+	T = motion.sensedRightEETransform()
+	motion.setRightEEInertialTransform(T, 1)
+	time.sleep(1)
 	motion.shutdown()

@@ -1,17 +1,22 @@
-import xmlrpclib
+from xmlrpc.client import ServerProxy
 from threading import Thread, Lock
 import threading
 import time
 from klampt import WorldModel
 import os
 import numpy as np
+
+from xmlrpc.client import Marshaller
+Marshaller.dispatch[np.float64] = Marshaller.dump_double
+Marshaller.dispatch[np.ndarray] = Marshaller.dump_array
+
 dirname = os.path.dirname(__file__)
 #getting absolute model name
 model_name = os.path.join(dirname, "data/TRINA_world_seed.xml")
 
 class MotionClient:
-	def __init__(self, address = 'http://localhost:8000'):
-		self.s = xmlrpclib.ServerProxy(address)
+	def __init__(self, address = 'http://localhost:8080'):
+		self.s = ServerProxy(address)
 		self.dt = 0.2
 		self.shut_down = False
 		#self.world = WorldModel()
@@ -178,10 +183,10 @@ class MotionClient:
 		return self.s.cartesianDriveFail()
 
 	def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedLeftEEVelcocity(local_pt)
+		return self.s.sensedLeftEEVelocity(local_pt)
 
 	def sensedRightEEVelocity(self,local_pt = [0,0,0]):
-		return self.s.sensedRightEEVelcocity(local_pt)
+		return self.s.sensedRightEEVelocity(local_pt)
 
 	def sensedLeftEEWrench(self,frame= 'global'):
 		return self.s.sensedLeftEEWrench(frame)
@@ -201,22 +206,22 @@ class MotionClient:
 		self.s.openLeftRobotiqGripper()
 
 	def closeLeftRobotiqGripper(self):
-		self.s.closeLeftRobotiqGripper()		
+		self.s.closeLeftRobotiqGripper()
 
 	def openRightRobotiqGripper(self):
 		self.s.openRightRobotiqGripper()
 
 	def closeRightRobotiqGripper(self):
-		self.s.closeRightRobotiqGripper()	
+		self.s.closeRightRobotiqGripper()
 
 	def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setLeftEETransformImpedance()
+		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setRightEETransformImpedance()
+		self.s.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband)
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
-		self.s.setLeftLimbPositionImpedance()
+		self.s.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
 
 	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		self.s.setRightLimbPositionImpedance()
@@ -229,12 +234,17 @@ class MotionClient:
 
 if __name__=="__main__":
 	motion = MotionClient()
-	motion.startServer(mode = "Physical", components = ['head'])
+	motion.startServer(mode = "Physical", components = ['left_limb','right_limb'], codename="cholera")
 	motion.startup()
 	time.sleep(0.05)
-	try:
-		print(motion.sensedHeadPosition)
-		time.sleep(0.05)
-	except:
-		print("except")
+	import math
+	DEGREE_2_RADIAN = 2.0*math.pi/180.0
+	# motion.setHeadPosition([150*DEGREE_2_RADIAN,150*DEGREE_2_RADIAN])
+	start_time = time.time()
+	while True:
+		t = time.time() - start_time
+		motion.setLeftEEVelocity([0,0,0.04*math.sin(t),0,0,0],tool = [0]*3)
+		motion.setRightEEVelocity([0,0,0.04*math.sin(t),0,0,0],tool = [0]*3)
+		time.sleep(0.02)
+	time.sleep(0.05)
 	motion.shutdown()

@@ -22,19 +22,20 @@ class C1:
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.start_time = time.time()
-        self.sleep_time = 10
+        self.sleep_time = 0
         for i in self.processes:
             i.start()
         # while(True):
         #     print('hahahaha you can see this? ')
     def idle(self):
         a = threading.Thread(target = self.shout)
-        time.sleep(1)
+        # time.sleep(1)
         a.start()
         start_time = time.time()
         while(True):
             now = time.time()
             a = self.jarvis.get_point_clouds()
+            print('got point clouds')
             time.sleep(self.sleep_time)
             # print('got Images! 1',a['realsense_right'])
             # o3d.visualization.draw_geometries([a['realsense_right']])

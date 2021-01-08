@@ -30,7 +30,7 @@ def rtde_control_loop():
     #Tear the FT sensor
     zero_ftsensor()
     # constants
-    SETPOINT_TIMEOUT  = 30
+    SETPOINT_TIMEOUT  = 125
     SETPOINT_HALT     = 0
     SETPOINT_POSITION = 1
     SETPOINT_VELOCITY = 2
@@ -303,6 +303,7 @@ class UR5Controller(object):
 
         while not self._quit:
             # receive the current update_state
+            # start_time = time.time()
 
             state = self._conn.receive()
             if state is None:
@@ -376,6 +377,12 @@ class UR5Controller(object):
                 self._conn.send(gripper_action)
                 
                 # print('gripper action:',gripper_action)
+
+            # elapsed_time = time.time() - start_time
+            # freq = 1.0/elapsed_time
+            # if freq < 100:
+            #     print('arm controller Hz:',freq)
+
         self._quit = True
         print("ending control loop")
         #if this loop exits, disconnect

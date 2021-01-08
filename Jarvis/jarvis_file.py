@@ -18,6 +18,7 @@ import threading
 import sys
 import time
 import redis
+from Motion import MotionClient
 
 # from Modules import *
 # import command_server
@@ -37,6 +38,9 @@ class Jarvis:
 		self.server['ACTIVITY_STATUS'][self.name] = str('idle')
 		self.sensor_module = sensor_module
 		self.server['ROBOT_COMMAND'][self.name] = []
+		# HOTFIX
+		robot_ip = 'http://localhost:8080'
+		self.robot = MotionClient(address = robot_ip)
 		
 	def setPosition(self, q):
 		"""set the position of the entire robot
@@ -346,7 +350,7 @@ class Jarvis:
         """
 		command = self.send_command('self.robot.closeRightRobotiqGripper')
 
-	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6):
+	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g=[0]*6,deadband=[0]*6, tool_center=[0,0,0]):
 		"""Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -365,9 +369,9 @@ class Jarvis:
         None
         """
 		command = self.send_command('self.robot.setLeftEETransformImpedance',
-		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband))
+		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(tool_center))
 
-	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6, tool_center=[0,0,0]):
 		"""Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -386,7 +390,7 @@ class Jarvis:
         None
         """
 		command = self.send_command('self.robot.setRightEETransformImpedance',
-		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband))
+		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(tool_center))
 
 	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
 		"""Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -429,6 +433,10 @@ class Jarvis:
         """
 		command = self.send_command('self.robot.setRightLimbPositionImpedance',
 				str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband))		
+
+	def setHeadPosition(self,q):
+		command = self.send_command('self.robot.setHeadPosition',
+				str(q))		
 
 	def getWorld(self):
 		""" Return the simulated robot
@@ -564,23 +572,25 @@ class Jarvis:
         """
 		return self.server["ROBOT_STATE"]["Position"]["Torso"].read()
 
-	def sensedLeftEETransform(self):
+	def sensedLeftEETransform(self, tool_center=[0,0,0]):
 		"""Return the transform w.r.t. the base frame
 
         Return:
         -------------
         (R,t)
         """
-		return self.server["ROBOT_STATE"]["PositionEE"]["LeftArm"].read()
+		#return self.server["ROBOT_STATE"]["PositionEE"]["LeftArm"].read()
+		return self.robot.sensedLeftEETransform(tool_center=tool_center)
 
-	def sensedRightEETransform(self):
+	def sensedRightEETransform(self, tool_center=[0,0,0]):
 		"""Return the transform w.r.t. the base frame
 
         Return:
         -------------
         (R,t)
         """
-		return self.server["ROBOT_STATE"]["PositionEE"]["RightArm"].read()
+		# return self.server["ROBOT_STATE"]["PositionEE"]["RightArm"].read()
+		return self.robot.sensedRightEETransform(tool_center=tool_center)
 
 	def sensedLeftGripperPosition(self):
 		"""Return the current positions of the fingers.
@@ -649,7 +659,7 @@ class Jarvis:
 		final_string = (final_string + ')')
 		final_string = final_string.format(*args)
 		self.trina_queue.push(final_string)
-		print('sending ',final_string)
+		# print('sending ',final_string)
 
 	def log_health(self, status=True):
 		"""Add the health log of the module

@@ -46,11 +46,11 @@ key presses and headsets orientations.
         return self.processes
 
 
-class UIStateReciever(WebSocket) : 
+class UIStateReciever(WebSocket): 
     """the websocket server implementation for recieving UI JSON state from the UI 
         
     """
-    def handleMessage(self) : 
+    def handleMessage(self): 
         try:
             self.commandQueue = self.server["UI_END_COMMAND"].read()
             if  self.commandQueue:
@@ -84,18 +84,25 @@ class UIStateReciever(WebSocket) :
             msg = obj['MSG']
             self.server['UI_FEEDBACK'][str(id)] = {'REPLIED':True, 'MSG':msg}
 
+        elif title == "Phone Estop":
+            stop = obj["UIlogicState"]["stop"]
+            self.server["Phone_Stop"] = stop
+            
+            
+
 
         
 
-    def handleConnected(self) : 
+    def handleConnected(self): 
         print(self.address, 'connected')
         self.mode = "PointClickNav"
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
+        self.server["Phone_Stop"] = False
 
 
-    def handleClose(self) : 
+    def handleClose(self): 
         print(self.address, 'closed')
 
 

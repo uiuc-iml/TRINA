@@ -20,7 +20,10 @@ from klampt.vis import glinit
 glinit.init()
 sys.path.append(os.path.abspath('../../'))
 import random
-import trimesh
+if not "--trigger" in sys.argv:
+    # This import is really slow. Kinda jank but I want things to go fastfast.
+    import trimesh
+
 from Jarvis import Jarvis
 if glinit.available("PyQt"):
     if glinit.available("PyQt5"):
@@ -369,9 +372,9 @@ class testingWorldBuilder():
         self.floor.loadFile(model_path + "cube.off")
         self.floor.transform([floor_length, 0, 0, 0, floor_width, 0, 0, 0, 0.01],
                              [-floor_length / 2.0, -floor_width / 2.0, -0.01])
-        floor_terrain = self.w.makeTerrain("floor")
-        floor_terrain.geometry().set(self.floor)
-        floor_terrain.appearance().setColor(0.4, 0.3, 0.2, 1.0)
+        #floor_terrain = self.w.makeTerrain("floor")
+        #floor_terrain.geometry().set(self.floor)
+        #floor_terrain.appearance().setColor(0.4, 0.3, 0.2, 1.0)
 
         ###colors
         self.light_blue = [3.0 / 255.0, 140.0 / 255.0, 252.0 / 255.0, 1.0]
@@ -610,20 +613,9 @@ class testingWorldBuilder():
         return item_1
 
 class UI_end_1:
-    def __init__(self,placeholder):
-        # file_dir = "../../data/TRINA_world.xml"
-        file_dir = "../../Motion/data/TRINA_world_anthrax_PointClick.xml"
-        world = klampt.WorldModel()
-        res = world.readFile(file_dir)
-        builder = testingWorldBuilder(30,30,world = world)
-        builder.addTableTopScenario(x = 1.5,y = 1.0)
-        world = builder.getWorld()
-        self.world = world
-        self.world = world
+    def __init__(self, placeholder, args):
         self.dt = 0.05
         self.UIState = {'controllerPositionState': {'leftController': {'controllerOrientation': [0.07739845663309097, -0.19212138652801514, 0.3228720426559448, 0.9235001802444458], 'controllerPosition': [-0.021801471710205078, -0.4208446145057678, 0.5902314186096191]}, 'rightController': {'controllerOrientation': [0.052883781492710114, 0.20788685977458954, -0.30593231320381165, 0.927573025226593], 'controllerPosition': [0.15437912940979004, -0.4229428172111511, 0.5827353000640869]}}, 'headSetPositionState': {'deviceRotation': [-0.027466144412755966, 0.7671623826026917, 0.003965826239436865, 0.6408524513244629]}, 'controllerButtonState': {'leftController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}, 'rightController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}}, 'UIlogicState': {'stop': False, 'autonomousMode': False, 'teleoperationMode': False}, 'title': 'UI Outputs'}
-        if not res:
-            raise RuntimeError("Unable to load model "+file_dir)
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
@@ -633,7 +625,21 @@ class UI_end_1:
         self.global_state = {'collectRaySignal':[False,False],'feedbackId':{'getRayClick':''}}
         self.jarvis = Jarvis(str("UI"),trina_queue = TrinaQueue(str("UI")))
         self.screenElement = set([])
-        self._serveVis()
+        if "--teleop" in args:
+            self.jarvis.changeActivityStatus(["DirectTeleOperation"])
+        if "--testing" in args:
+            self.jarvis.changeActivityStatus(["testing"])
+        if not "--trigger" in args:
+            file_dir = "../../Motion/data/TRINA_world_anthrax_PointClick.xml"
+            world = klampt.WorldModel()
+            res = world.readFile(file_dir)
+            builder = testingWorldBuilder(30,30,world = world)
+            builder.addTableTopScenario(x = 1.5,y = 1.0)
+            world = builder.getWorld()
+            self.world = world
+            if not res:
+                raise RuntimeError("Unable to load model "+file_dir)
+            self._serveVis()
 
 
     def _serveVis(self):
@@ -693,5 +699,9 @@ class TrinaQueue(object):
 if __name__ == "__main__":
     print ("""================================================================================
     UI_end_1.py: powered by klampt vis
+    
+    Options:
+        --trigger: Don't start the UI.
+        --teleop: Send a command to start teleop mode. Use with --trigger for testing.
     """)
-    UI_end_1("name")
+    UI_end_1("name", sys.argv)
