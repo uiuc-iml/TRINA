@@ -9,6 +9,8 @@ from Motion import TRINAConfig
 from klampt.io.loader import load
 from klampt.model.trajectory import RobotTrajectory
 
+CODENAME = 'cholera'
+
 
 def main():
 	parser = argparse.ArgumentParser('collect inertia calibration data')
@@ -16,16 +18,16 @@ def main():
 		default='inertia_record.p', help='output file name')
 	args = parser.parse_args()
 	mc = MotionClient()
-	mc.startServer(mode = "Physical", components = ['right_limb','left_limb'], codename = 'bubonic')
+	mc.startServer(mode = "Physical", components = ['left_limb'], codename = CODENAME)
 	mc.startup()
 	time.sleep(0.05)
-	traj = load('auto', 'inertia.path')
+	traj = load('auto', 'cholera.path')
 	interval = 5
 	interpolation_points = 10
 	init_time = 10
 	q_i = []
 	data = []
-	for t in TRINAConfig.get_left_active_Dofs('bubonic'):
+	for t in TRINAConfig.get_left_active_Dofs(CODENAME):
 		q_i.append(traj.milestones[0][t])
 	mc.setLeftLimbPositionLinear(q_i, init_time)
 	time.sleep(init_time)
@@ -40,7 +42,7 @@ def main():
 		if i < len(traj.milestones) - 1:
 			q_l = np.array(mc.sensedLeftLimbPosition())
 			q_l_n = []
-			for t in TRINAConfig.get_left_active_Dofs('bubonic'):
+			for t in TRINAConfig.get_left_active_Dofs(CODENAME):
 				q_l_n.append(traj.milestones[i+1][t])
 			q_l_n = np.array(q_l_n)
 			for j in range(interpolation_points):
