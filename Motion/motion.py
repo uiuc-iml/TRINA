@@ -2097,21 +2097,8 @@ if __name__=="__main__":
     
 
 
-    robot = Motion(mode = 'Kinematic',components = ['left_limb', 'right_limb'],codename = "cholera")
-    world = robot.world
-    vis.add("world",world)
-    vis.show()
+    robot = Motion(mode = 'Physical',components = ['left_limb', 'right_limb'],codename = "cholera")
     robot.startup()
-    robot.setRightLimbPositionLinear(TRINAConfig.right_untucked_config, 5)
-    robot.setLeftLimbPositionLinear(TRINAConfig.left_untucked_config, 5)
-    time.sleep(5)
-
-    robot.setRightEEVelocity([0,0.1,0,0,0,0])
-    robot.setLeftEEVelocity([0,-0.1,0,0,0,0])
-    while True:
-        vis.lock()
-        vis.unlock()
-        time.sleep(0.02)
-
-    vis.exit()
+    time.sleep(0.2)
+    print(robot.getKlamptSensedPosition())
     robot.shutdown()
