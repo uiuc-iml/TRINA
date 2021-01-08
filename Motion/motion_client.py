@@ -234,11 +234,17 @@ class MotionClient:
 
 if __name__=="__main__":
 	motion = MotionClient()
-	motion.startServer(mode = "Physical", components = ['head'], codename="cholera")
+	motion.startServer(mode = "Physical", components = ['left_limb','right_limb'], codename="cholera")
 	motion.startup()
 	time.sleep(0.05)
 	import math
 	DEGREE_2_RADIAN = 2.0*math.pi/180.0
-	motion.setHeadPosition([150*DEGREE_2_RADIAN,150*DEGREE_2_RADIAN])
+	# motion.setHeadPosition([150*DEGREE_2_RADIAN,150*DEGREE_2_RADIAN])
+	start_time = time.time()
+	while True:
+		t = time.time() - start_time
+		motion.setLeftEEVelocity([0,0,0.04*math.sin(t),0,0,0],tool = [0]*3)
+		motion.setRightEEVelocity([0,0,0.04*math.sin(t),0,0,0],tool = [0]*3)
+		time.sleep(0.02)
 	time.sleep(0.05)
 	motion.shutdown()

@@ -41,7 +41,7 @@ class HeadController:
         self.portHandler = PortHandler(DEVICENAME)
         self.dynamixel = PacketHandler(PROTOCOL_VERSION)
         self.active = False    
-        self.dt = 0.02 #50 Hz
+        self.dt = 0.05 #20 Hz
         self.newStateFlag = False
         self.newCommand = False
         self.exit = False

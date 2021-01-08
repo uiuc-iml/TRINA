@@ -17,6 +17,8 @@ import cv2
 
 if(sys.version_info[0] < 3):
     from StringIO import StringIO 
+else:
+    from io import StringIO
 
 class TrinaQueueReader(object):
     def __init__(self, host='localhost', port=6379):
@@ -30,6 +32,72 @@ class TrinaQueueReader(object):
             res = pipe.execute()
         return res
 
+
+def save_image_array(array,directory,number):
+    if(sys.version_info[0] < 3):
+        buf = StringIO()
+                        
+        if(array.dtype == np.uint8):
+            name = directory + '/{}.png'.format(number)
+            Image.fromarray(array).save(name,"PNG")
+        
+        elif(array.dtype == np.float32):
+            name = directory + '/{}.png'.format(number)
+            array =(1000*array).astype(np.uint16)
+            cv2.imwrite(name,array)
+
+#                 img = Image.fromarray(array)
+#                 img.save(name,"PNG")
+        else:
+            name = directory + '/{}.png'.format(number)
+            array =(1000*array).astype(np.uint16)
+            cv2.imwrite(name,array)
+#                 img = Image.fromarray(array)
+#                 img.save(name,'PNG')
+    else:
+        buf = StringIO()
+                        
+        if(array.dtype == np.uint8):
+            name = directory + '/{}.png'.format(number)
+            Image.fromarray(array).save(name,"PNG")
+        
+        elif(array.dtype == np.float32):
+            name = directory + '/{}.png'.format(number)
+            array =(1000*array).astype(np.uint16)
+            cv2.imwrite(name,array)
+
+#                 img = Image.fromarray(array)
+#                 img.save(name,"PNG")
+        else:
+            name = directory + '/{}.png'.format(number)
+            array =(1000*array).astype(np.uint16)
+            cv2.imwrite(name,array)
+    
+def dump_dataset_to_memory(datasets,copy_images,copy_image_times):
+
+    print('\n\n\n\n\n\n adding new pictures to log \n\n\n\n\n\n\n')
+    start_time = time.time()
+    print(copy_images)
+    for key in copy_images.keys():
+        dset_file = datasets[key]
+        images = copy_images[key]
+        times = copy_image_times[key]
+        save_arrays_as_images(images,dset_file,times)
+#         print('\n\n\n\n preparation of the dataset takes {} seconds'.format(time.time()-start_time))
+    # print(f)
+
+    return 0
+def save_arrays_as_images(arrays,directory,times):
+    total = np.max(len(glob(directory+'/*'))-1,0)
+    final = total + len(arrays)
+    this_range = range(total,final)
+    times_df = pd.DataFrame({'trina_time':times,'image':this_range})
+    times_df.to_csv(directory+'times.csv',sep='|',
+                            mode='a', header=False, index=False)
+    # we then save the images to file:
+    for i,image in enumerate(arrays):
+        number = total + i
+        save_image_array(image,directory,number)
 
 
 
@@ -63,7 +131,7 @@ class StateLogger(object):
         self.label = ''
         self.logger_status = {'Stop':False,'Pause':False,'Start':True}
         self.jarvis.server['LOGGER_STATUS'] = self.logger_status
-        self.logger_items = {'UIState':True,'RobotState':True,'Commands':True,'Video':False}
+        self.logger_items = {'UIState':True,'RobotState':True,'Commands':True,'Video':True}
         self.jarvis.server['LOGGER_ITEMS'] = self.logger_items
         
         self.stateThread = Thread(target=self.update_states)
@@ -75,21 +143,22 @@ class StateLogger(object):
         
         
         self.saveImageLog = Thread(target=self.save_images_to_disk)
-        self.stateThread.daemon = False
-        self.commandThread.daemon = False
-        self.saveStateLogThread.daemon = False
-        self.updateImageThread.daemon = False
-        self.saveImageLog.daemon = False
-        self.operational_conditions_thread.daemon = False
+        self.stateThread.daemon = True
+        self.commandThread.daemon = True
+        self.saveStateLogThread.daemon = True
+        self.updateImageThread.daemon = True
+        self.saveImageLog.daemon = True
+        self.operational_conditions_thread.daemon = True
         
         self.operational_conditions_thread.start()
         self.stateThread.start()
         self.commandThread.start()
         self.updateImageThread.start()
-        time.sleep(3)
+        # time.sleep(3)
         self.saveStateLogThread.start()
         self.saveImageLog.start()
-        
+
+        self.stateThread.join()            
     
     def start_all_logger_variables(self):
         with self.states_lock:
@@ -109,8 +178,10 @@ class StateLogger(object):
                     self.robot_state_times = []
                     self.dataset_dirs = {}
                     tmp = self.jarvis.get_rgbd_images()
-                    tmp = self.jarvis.get_rgbd_images()
+                    # tmp = self.jarvis.get_rgbd_images()
                     keys = tmp.keys()
+                    print('got keys: {}'.format(keys))
+
                     self.close_all = False
                     # we start the key dictionaries
                     for key in keys:
@@ -144,6 +215,7 @@ class StateLogger(object):
                         times_df = pd.DataFrame({'trina_time':[],'image':[]})
                         times_df.to_csv(this_dir+'/times.csv',sep='|',
                                 mode='w',index=False)
+                print('\n\n Started all the log variables!\n\n')
                     
     def update_states(self):
         while(True):
@@ -290,12 +362,17 @@ class StateLogger(object):
         while(True):
             start = time.time()
             with self.images_lock:
-                tmp = self.jarvis.get_rgbd_images()
-                for key in tmp.keys():
-                    self.images[key+'_color'].append(tmp[key][0])
-                    self.images[key+'_depth'].append(tmp[key][1])
-                    self.image_times[key+'_color'].append(tmp[key][2])
-                    self.image_times[key+'_depth'].append(tmp[key][2])
+                try:
+                    tmp = self.jarvis.get_rgbd_images()
+                    for key in tmp.keys():
+                        self.images[key+'_color'].append(tmp[key][0])
+                        self.images[key+'_depth'].append(tmp[key][1])
+                        self.image_times[key+'_color'].append(tmp[key][2])
+                        self.image_times[key+'_depth'].append(tmp[key][2])
+                except Exception as e:
+                    print(e)
+                    pass
+
             elapsed = time.time()-start
             if(elapsed < self.images_dt):
                 time.sleep(self.images_dt-elapsed)
@@ -341,7 +418,7 @@ class StateLogger(object):
                     self.image_times.update({key:[]})
             with self.operational_lock:
                 if(self.logger_items['Video']):
-                    dumping_process = Process(target = self.dump_dataset_to_memory, args = (self.dataset_dirs,copy_images,copy_image_times))
+                    dumping_process = Process(target = dump_dataset_to_memory, args = (self.dataset_dirs,copy_images,copy_image_times))
                     dumping_process.start()
                     dumping_process.join()
                     elapsed = time.time()-start_time
@@ -366,54 +443,7 @@ class StateLogger(object):
     def return_processes(self):
         return []
                            
-    def save_image_array(self,array,directory,number):
-        if(sys.version_info[0] < 3):
-            buf = StringIO()
-                           
-            if(array.dtype == np.uint8):
-                name = directory + '/{}.png'.format(number)
-                Image.fromarray(array).save(name,"PNG")
-            
-            elif(array.dtype == np.float32):
-                name = directory + '/{}.png'.format(number)
-                array =(1000*array).astype(np.uint16)
-                cv2.imwrite(name,array)
 
-#                 img = Image.fromarray(array)
-#                 img.save(name,"PNG")
-            else:
-                name = directory + '/{}.png'.format(number)
-                array =(1000*array).astype(np.uint16)
-                cv2.imwrite(name,array)
-#                 img = Image.fromarray(array)
-#                 img.save(name,'PNG')
-        else:
-            pass
-        
-    def dump_dataset_to_memory(self,datasets,copy_images,copy_image_times):
-
-        #print('\n\n\n\n\n\n adding new pictures to log \n\n\n\n\n\n\n')
-        start_time = time.time()
-        for key in copy_images.keys():
-            dset_file = datasets[key]
-            images = copy_images[key]
-            times = copy_image_times[key]
-            self.save_arrays_as_images(images,dset_file,times)
-#         print('\n\n\n\n preparation of the dataset takes {} seconds'.format(time.time()-start_time))
-        # print(f)
-
-        return 0
-    def save_arrays_as_images(self,arrays,directory,times):
-        total = np.max(len(glob(directory+'/*'))-1,0)
-        final = total + len(arrays)
-        this_range = range(total,final)
-        times_df = pd.DataFrame({'trina_time':times,'image':this_range})
-        times_df.to_csv(directory+'times.csv',sep='|',
-                                mode='a', header=False, index=False)
-        # we then save the images to file:
-        for i,image in enumerate(arrays):
-            number = total + i
-            self.save_image_array(image,directory,number)
         
         
         

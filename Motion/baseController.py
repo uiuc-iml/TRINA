@@ -103,7 +103,7 @@ class BaseControlMode(Enum):
 
 class BaseController:
 
-    def __init__(self, dt = 1.0/100.0):
+    def __init__(self, dt = 1.0/20.0):
         self.control_mode = BaseControlMode.NOTHING
         self.not_paused = False
         self.cmd_pub = rospy.Publisher("/cmd_vel", Twist, queue_size=10)

@@ -123,7 +123,7 @@ class Camera_Robot:
                                 camera, self.serial_numbers_dict, self.config_files_dict, self.robot)})
                             # atexit.register(
                             #     self.active_cameras[camera].safely_close)
-                            print('sucessfully initialized the camera! ')
+                            print('sucessfully initialized the camera : {}! '.format(camera))
                         except Exception as e:
                             print('This camera ', camera,
                                 ' is currently unavailable. Verify that it is connected and try again \n\n')
@@ -289,9 +289,13 @@ class Camera_Robot:
                 'Selected cameras must be either a string or a list of strings')
         if(self.mode == 'Physical'):
             for camera in cameras:
-                if(camera in self.valid_cameras):
-                    output.update(
-                        {camera: self.active_cameras[camera].get_rgbd_images()})
+                try:
+                    if(camera in self.valid_cameras):
+                        output.update(
+                            {camera: self.active_cameras[camera].get_rgbd_images()})
+                except Exception as e:
+                    print('failed to capture image of camera {} because of {}'.format(camera,e))
+                    continue
             return output
         else:
             # try:
@@ -489,7 +493,7 @@ class RealSenseCamera:
                     rs.stream.depth, 640, 480, rs.format.z16, 30)
                 self.config.enable_stream(
                     rs.stream.color, 640, 480, rs.format.rgb8, 30)
-                self.numpix = 1280*720
+                self.numpix = 640*480
             self.align_to = rs.stream.color
             self.align = rs.align(self.align_to)
             # Start streaming
@@ -584,7 +588,7 @@ class RealSenseCamera:
             print("Data Not Available at the moment")
             return None
         else:
-            return [color_frame.get_data(),depth_frame.get_data(),time.time()]
+            return [np.asanyarray(color_frame.get_data()),np.asanyarray(depth_frame.get_data()),time.time()]
 
     def safely_close(self):
         print('safely closing Realsense camera', self.serial_num)
@@ -717,8 +721,8 @@ if __name__ == '__main__':
     from tqdm import tqdm
     print('\n\n\n\n\n running as Main\n\n\n\n\n')
     from matplotlib import pyplot as plt
-    testing_cameras = ['zed_slam','realsense_slam_l515']
-    testing = 0
+    testing_cameras = ['zed_slam','realsense_left','realsense_right']
+    testing = 1
     a = Camera_Robot(robot = [],world = [], cameras =testing_cameras,ros_active = False, use_jarvis = False, mode = 'Physical')
     time.sleep(1)
     print('Testing Camera images')

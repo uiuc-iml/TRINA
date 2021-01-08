@@ -309,7 +309,7 @@ class testingWorldBuilder():
 
 class CommandServer:
 
-	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic'):
+	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic',cameras = ['zed_slam','realsense_right','realsense_left']):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")
@@ -387,7 +387,7 @@ class CommandServer:
 
 			time.sleep(3)
 		if(self.mode == 'Physical'):
-			self.sensor_module = None #Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
+			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=cameras)
 			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
 			time.sleep(5)
 
@@ -956,11 +956,11 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['head'], modules = ['DirectTeleOperation'], codename = 'cholera')
+	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb','head','base'], modules = ['DirectTeleOperation'], codename = 'cholera')
 	# server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
-	print(server.robot.closeLeftRobotiqGripper())
-	print(server.robot.sensedLeftEETransform())
+	# print(server.robot.closeLeftRobotiqGripper())
+	# print(server.robot.sensedLeftEETransform())
 	while(True):
 		time.sleep(100)
 		pass

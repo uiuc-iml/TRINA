@@ -85,7 +85,7 @@ class DirectTeleOperation:
 		self.infoLoop_rate = 0.05
 		self.max_arm_speed = 0.5
 		self.robot = Jarvis
-		self.components =  ['head','base','left_limb','right_limb', 'left_gripper', 'right_gripper']
+		self.components =  ['head','left_limb','right_limb', 'left_gripper', 'right_gripper','base']
 		#self.robot.getComponents()
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)

@@ -24,7 +24,7 @@ import logging
 from datetime import datetime
 
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d_%m_%Y') + ".log"
-logger = trina_logging.get_logger(__name__,logging.INFO, filename)
+logger = trina_logging.get_logger(__name__,logging.WARNING, filename)
 
 class Motion:
 
@@ -499,8 +499,6 @@ class Motion:
             res,target_config = self._impedance_drive(limb)
             #res = 0 means IK has failed completely, 1 success, 2 means force overload
             if res == 0:
-                # TODO: Why is this cartesian_drive_failure?
-                self.cartesian_drive_failure = True
                 limb.state.set_mode_position(limb.state.sensedq)
             elif res == 1:
                 limb.setConfig(target_config)
@@ -898,7 +896,7 @@ class Motion:
                 if not limb.state.cartesianDrive:
                     limb.state.set_mode_position(limb.state.sensedq)
                     self.cartesian_drive_failure = False
-
+                    limb.state.counter = 0
                     ##cartesian velocity drive
                     limb.state.cartesianDrive = True
                     limb.state.driveTransform = (R,vectorops.add(so3.apply(R,tool),t))
@@ -1084,7 +1082,7 @@ class Motion:
         else:
             logger.warning('Left limb not enabled.')
             print("Left limb not enabled.")
-            return
+            return "NA"
 
     def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
         """Return the EE translational and rotational velocity  w.r.t. the base Frame
@@ -1266,6 +1264,8 @@ class Motion:
             else:
                 logger.warning('Head not enabled.')
                 print('Head not enabled.')
+        
+        return "NA"
             
     def sensedBaseVelocity(self):
         """Returns the current base velocity
@@ -1889,12 +1889,13 @@ class Motion:
             logger.info('CartesianDrive IK has succeeded')
             # Converting to numpy array to use slice-by-list.
 
-            col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
-            if col_res:
-                logger.error('Collision Midway')
-                print('Collision midway')
-                return 0,np.array(self.robot_model.getConfig())[limb.active_dofs]
-
+            if limb.state.counter % 20 == 0:
+                col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
+                if col_res:
+                    logger.error('Collision Midway')
+                    print('Collision midway')
+                    return 0,np.array(self.robot_model.getConfig())[limb.active_dofs]
+            limb.state.counter += 1
             target_config = np.array(self.robot_model.getConfig())[limb.active_dofs]
 
             limb.state.driveTransform = target_transform
@@ -2032,11 +2033,12 @@ class Motion:
         else:
             target_config = np.array(self.robot_model.getConfig())[limb.active_dofs]
 
-        col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
-        if col_res:
-            stop = True
-            logger.error('ImpedanceDrive collision detected,exited..')
-            print("collision detected,exited..")
+        if state.counter % 20 == 0:
+            col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
+            if col_res:
+                stop = True
+                logger.error('ImpedanceDrive collision detected,exited..')
+                print("collision detected,exited..")
 
         self.robot_model.setConfig(initial_config)
 
