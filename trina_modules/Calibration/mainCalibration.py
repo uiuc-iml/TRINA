@@ -513,8 +513,8 @@ if __name__=="__main__":
     traj_path = 'static_calibration.path'
     pic_path = './data/4/'
     world_path = '../../Motion/data/TRINA_world_b'
-    cameras = ['realsense_torso','zed_torso'] #['realsense_left','realsense_right']
+    cameras = ['realsense_left','realsense_right'] #['realsense_torso','zed_torso'] 
     ##Take pictures
     from calibrationLogger import CalibrationLogger
-    takePictures(traj_path,pic_path,cameras = cameras,'http://localhost:8080','bubonic')
-    mainCalibrationStatic(traj_path = traj_path,pic_path = pic_path, world_path = world_path,cameras = cameras,link = 11)
+    takePictures(traj_path,pic_path,cameras = cameras,'http://localhost:8080','cholera')
+    # mainCalibrationStatic(traj_path = traj_path,pic_path = pic_path, world_path = world_path,cameras = cameras,link = 11)

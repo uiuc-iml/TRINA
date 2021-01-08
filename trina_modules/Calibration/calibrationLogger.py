@@ -70,6 +70,27 @@ class CalibrationLogger:
         while not self.shutdown_flag:
             loop_start_time = time.time()
             self._lock.acquire()
+
+            if counter >= 0:
+                fc.write(str(t) + '\n')
+
+                #now log the robot state
+                fr.write(str(t)+' ')
+                q = info_robot.sensedLeftLimbPosition()
+                for ele in q:
+                    fr.write(str(ele)+' ')
+                q = info_robot.sensedRightLimbPosition()
+                for ele in q:
+                    fr.write(str(ele)+' ')
+                # wrench = info_robot.sensedLeftEEWrench()
+                # for ele in wrench:
+                #     fr.write(str(ele)+' ')
+                # wrench = info_robot.sensedRightEEWrench()
+                # for ele in wrench:
+                #     fr.write(str(ele)+' ')
+                fr.write('\n')
+
+
             self.res = self.camera.get_rgbd_images()
             res2 = self.camera.get_point_clouds()
             self._lock.release()
@@ -95,24 +116,7 @@ class CalibrationLogger:
                             data.write(str(p[y*dimy+x,0])+' '+str(p[y*dimy+x,1])+' '+str(p[y*dimy+x,2])+'\n')
                     data.close()
 
-            if counter >= 0:
-                fc.write(str(t) + '\n')
-
-                #now log the robot state
-                fr.write(str(t)+' ')
-                q = info_robot.sensedLeftLimbPosition()
-                for ele in q:
-                    fr.write(str(ele)+' ')
-                q = info_robot.sensedRightLimbPosition()
-                for ele in q:
-                    fr.write(str(ele)+' ')
-                # wrench = info_robot.sensedLeftEEWrench()
-                # for ele in wrench:
-                #     fr.write(str(ele)+' ')
-                # wrench = info_robot.sensedRightEEWrench()
-                # for ele in wrench:
-                #     fr.write(str(ele)+' ')
-                fr.write('\n')
+            
 
             elapsed_time = time.time() - loop_start_time
             if elapsed_time < self.camera_dt:
