@@ -1,5 +1,6 @@
 import pickle
 import autosklearn.regression
+import sklearn.metrics
 import argparse
 import numpy as np
 import logging
