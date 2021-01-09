@@ -801,7 +801,7 @@ class CommandServer:
 				time.sleep(1e-6)
 	
 	def run(self,command):
-		print(command)
+		# print(command)
 		try:
 			exec(command)
 		except Exception as e:
@@ -956,7 +956,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb'], modules = ['DirectTeleOperation','StateLogger'], codename = 'cholera',cameras = ['zed_slam','zed_overhead','realsense_left'])
+	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb'], modules = ['DirectTeleOperation','StateLogger'], codename = 'cholera',cameras = ['realsense_left','realsense_right'])
 	
 	# print(server.robot.closeLeftRobotiqGripper())
 	# print(server.robot.sensedLeftEETransform())
