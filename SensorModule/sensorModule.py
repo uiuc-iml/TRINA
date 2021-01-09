@@ -630,7 +630,7 @@ class ZedCamera:
         err = self.zed.open(init_params)
         if err != sl.ERROR_CODE.SUCCESS:
             print(
-                'There was an error while trying to access the zed camera, please revie and try again.')
+                'There was an error while trying to access the zed camera, please review your setup and try again.')
        
     def get_point_cloud(self):
         self.zed.grab(self.runtime_parameters)
