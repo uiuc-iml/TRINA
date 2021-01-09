@@ -14,11 +14,14 @@ from PIL import Image
 import sys
 from glob import glob
 import cv2
+from joblib import Parallel,delayed
 
 if(sys.version_info[0] < 3):
     from StringIO import StringIO 
 else:
     from io import StringIO
+
+import pdb
 
 class TrinaQueueReader(object):
     def __init__(self, host='localhost', port=6379):
@@ -87,13 +90,14 @@ def dump_dataset_to_memory(datasets,copy_images,copy_image_times):
     # start_time = time.time()
     # print(copy_images.keys())
     try:
-        for key in copy_images.keys():
-            # print(key)
-            dset_file = datasets[key]
-            images = copy_images[key]
-            times = copy_image_times[key]
-            # print('started saving images')
-            save_arrays_as_images(images,dset_file,times)
+        # for key in copy_images.keys():
+        #     # print(key)
+        #     dset_file = datasets[key]
+        #     images = copy_images[key]
+        #     times = copy_image_times[key]
+        #     # print('started saving images')
+        #     save_arrays_as_images(images,dset_file,times)
+        Parallel(n_jobs = 4,backend = 'threading')(delayed(save_arrays_as_images)(copy_images[key],datasets[key],copy_image_times[key]) for key in copy_images.keys())
     except Exception as e:
         print(e)
         
@@ -102,6 +106,7 @@ def dump_dataset_to_memory(datasets,copy_images,copy_image_times):
 
     return 0
 def save_arrays_as_images(arrays,directory,times):
+    # print(directory)
     total = np.max(len(glob(directory+'/*'))-1,0)
     # print(total)
     final = total + len(arrays)
@@ -127,7 +132,7 @@ def save_arrays_as_images(arrays,directory,times):
 
 
 class StateLogger(object):
-    def __init__(self, jarvis, frequency=60, image_frequency=7):
+    def __init__(self, jarvis, frequency=60, image_frequency=15):
 
         print('\n\n\n starting logger \n\n\n')
 
@@ -189,9 +194,10 @@ class StateLogger(object):
             with self.commands_lock:
                 with self.images_lock:
                     print('\n\n\n starting log with name {} \n\n\n'.format(self.name))
+                    # print('\n\n\n {} \n\n\n this'.format(self.name))
                     self.status_filename = "./logs/"+self.name + ".gz"
                     self.images_dir = "./logs/"+self.name+'/'
-                    if(~os.path.exists(self.images_dir)):
+                    if(not os.path.exists(self.images_dir)):
                         os.mkdir(self.images_dir)
                     self.images = {}
                     self.image_times = {}
@@ -225,7 +231,7 @@ class StateLogger(object):
                     
                     for dataset_name in tmp.keys():
                         this_dir = self.images_dir+'{}_color'.format(dataset_name)
-                        if(~os.path.exists(this_dir)):
+                        if(not os.path.exists(this_dir)):
                             os.mkdir(this_dir)
                         self.dataset_dirs.update({dataset_name+'_color':this_dir})
                         times_df = pd.DataFrame({'trina_time':[],'image':[]})
@@ -235,7 +241,7 @@ class StateLogger(object):
                     #then for depth
                     for dataset_name in tmp.keys():
                         this_dir = self.images_dir+'{}_depth'.format(dataset_name)
-                        if(~os.path.exists(this_dir)):
+                        if(not os.path.exists(this_dir)):
                             os.mkdir(this_dir)
                         self.dataset_dirs.update({dataset_name+'_depth':this_dir})
                         times_df = pd.DataFrame({'trina_time':[],'image':[]})
@@ -247,9 +253,10 @@ class StateLogger(object):
         while(True):
             start = time.time()
             new_name = self.jarvis.server['LOGGER_NAME'].read()
-            if(new_name != self.name):
-                self.name = new_name
-                self.start_all_logger_variables()
+            if(new_name):
+                if(new_name != self.name):
+                    self.name = new_name
+                    self.start_all_logger_variables()
             with self.states_lock:
                 self.ui_state.append(str(self.jarvis.getUIState()))
                 self.ui_times.append(str(self.jarvis.getTrinaTime()))
@@ -331,15 +338,18 @@ class StateLogger(object):
 
         commands = []
         command_times = []
+        # print('\n\n\ncommand list is : {}\n\n\n\n'.format(copy_command_list))
         for i in copy_command_list:
             if(i):
-                print('this is i : {}'.format(str(i)))
-                try:    
-                    exec('tmp = {}'.format(str(i)))
-                    tmp
-                    for j in tmp:
-                        exec('tmp2 = {}'.format(j))
-                        print('got to tmp2: {}'.format(tmp2))
+                # print('this is i : {}'.format(i))
+                try:
+                    # tmp = eval(i)
+                    # # exec('tmp = {}'.format(str(i)))
+                    # # print(tmp)
+                    for j in i:
+                        # print('\n\nthis is j = {}\n\n'.format(j))
+                        tmp2 = eval(j)
+                        # print('got to tmp2: {}'.format(tmp2))
                         commands.append(tmp2[0])
                         command_times.append(tmp2[1])
                 except Exception as e:
@@ -347,7 +357,7 @@ class StateLogger(object):
 
         if(commands):
             with self.operational_lock:
-                if(self.logger_status['Commands']):
+                if(self.logger_items['Commands']):
                     print('\n\n adding commands!')
                     commands_df = pd.DataFrame(
                         {'log': commands, 'trina_time': command_times})
