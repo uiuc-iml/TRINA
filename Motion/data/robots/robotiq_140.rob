@@ -24,7 +24,7 @@ qmin	0 0 0 0 0 0 0 0 0 0 0
 
 qmax	0 0.8757 0.7 0 0.8757 0 0.8757 0.725 0 0.8757 0 
 
-geometry	"base_link.off" "left_inner_knuckle.off" "left_outer_knuckle.off" "left_outer_finger.off" "left_inner_finger.off" "left_inner_finger_pad.off" "right_inner_knuckle.off" "right_outer_knuckle.off" "right_outer_finger.off" "right_inner_finger.off" "right_inner_finger_pad.off" 
+geometry	"robotiq140/base_link.off" "robotiq140/left_inner_knuckle.off" "robotiq140/left_outer_knuckle.off" "robotiq140/left_outer_finger.off" "robotiq140/left_inner_finger.off" "robotiq140/left_inner_finger_pad.off" "robotiq140/right_inner_knuckle.off" "robotiq140/right_outer_knuckle.off" "robotiq140/right_outer_finger.off" "robotiq140/right_inner_finger.off" "robotiq140/right_inner_finger_pad.off" 
 
 mass	0.86247164 0.0271177 0.00853198 0.0226142 0.0104003 0.01 0.0271177 0.00853198 0.0226142 0.0104003 0.01 
 
