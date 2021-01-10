@@ -155,28 +155,25 @@ class StateServerVar:
             assert isinstance(path,(list,tuple))
             assert len(path) > 0
         self.path = path
-        self.key = path[-1]
-        if len(path) == 1:
-            self.parentnode = server
-        else:
-            res = server[path[0]]
-            for p in path[1:-1]:
+        res = server
+        for p in path:
+            prev = res
+            res = res[p]
+            try:
+                res.type()
+            except Exception:
+                if isinstance(p,int):
+                    raise KeyError("Invalid index into array {}".format(path))
+                #key doesn't exist
+                prev.write(dict())
                 res = res[p]
-            self.parentnode = res
-        self.node = self.parentnode[self.key]
+        self.node = res[self.key]
     def get(self):
         """Reads the value at the given key from the state server"""
         return self.node.read()
     def set(self,value):
         """Sets the value at the given key into the state server"""
-        try:
-            self.parentnode[self.key] = value
-        except redis.exceptions.ResponseError:
-            node,subval = self.server.set_new(self.path,value)
-            res = server[self.path[0]]
-            for p in self.path[1:-1]:
-                res = res[p]
-            self.parentnode = res
+        return self.node.write(value)
 
 
 if __name__ == '__main__':
