@@ -45,7 +45,8 @@ class MyQtMainWindow(QMainWindow):
         """
         QMainWindow.__init__(self)
         self.module = module
-        self.mode = 'Manual'
+        self.currentApp = 'Manual'
+        self.apps = ["Manual","DirectTeleOperation","PointClickNav","PointClickGrasp"]
         self.moveToPushButton = None
         self._initScreenLayout(klamptGLWindow)
         self._initMenuBar()
@@ -125,7 +126,7 @@ class MyQtMainWindow(QMainWindow):
         self.module.server['UI_STATE'][name] = True
         self.buttons[name].pressed.connect(lambda: self._handleButtonPress(name))
         self.buttons[name].released.connect(lambda: self._handleButtonRelease(name))
-        self.leftLayout.addWidget(self.buttons[name])
+        self.appButtons.addWidget(self.buttons[name])
         return False
 
     def _handleButtonPress(self,id):
@@ -139,12 +140,12 @@ class MyQtMainWindow(QMainWindow):
         
     def _initMenuBar(self):
         bar = self.menuBar()
-        mode = bar.addMenu("Mode Switch")
+        mode = bar.addMenu("App Switch")
         mode.addAction("Manual")
         mode.addAction("PointClickNav")
         mode.addAction("PointClickGrasp")
         mode.addAction("DirectTeleOperation")
-        mode.triggered[QAction].connect(self._processModeTrigger)
+        mode.triggered[QAction].connect(self._processAppTrigger)
 
         action = bar.addMenu("Quick Action")
         action.addAction("Robot Stop")
@@ -161,34 +162,36 @@ class MyQtMainWindow(QMainWindow):
             play_icon = QIcon.fromTheme('media-playback-start')
             self.moveToPushButton.setIcon(play_icon)
             self.moveToPushButton.pressed.connect(self._handleMoveToPress)
-            self.leftLayout.addWidget(self.moveToPushButton)
+            self.debugLayout.addWidget(self.moveToPushButton)
         else:
-            self.leftLayout.addWidget(self.moveToPushButton)
+            self.debugLayout.addWidget(self.moveToPushButton)
 
     def disableManualMode(self):
         vis.remove('ghost')
         self.moveToPushButton.setParent(None)
 
-    def _processModeTrigger(self,q):
+    def _processAppTrigger(self,q):
         print (q.text()+" is triggered")
-        if self.mode != q.text():
-            self.modeText.setText("Mode: " +  q.text())
-            if q.text() == 'Manual':
-                self.module.jarvis.deactivateModule("App_"+str(self.mode))
-                self.enableManualMode()
-            else:
-                if self.mode == 'Manual':
-                    self.disableManualMode()
-                self.mode = q.text()
-                try:
-                    self.module.jarvis.switchModuleActivity(["App_"+str(self.mode)])
-                except Exception as err:
-                    print("Error: {0}".format(err))
-                    import traceback
-                    traceback.print_exc()
-            for element in self.module.screenElement:
-                vis.remove(element)
-            self.module.screenElement.clear()
+        if self.currentApp == q.text():
+            return
+        print("Switching from",self.currentApp,"to",q.text())
+        if q.text() == 'Manual':
+            self.module.jarvis.deactivateModule("App_"+str(self.currentApp))
+            self.currentApp = q.text()
+            self.enableManualMode()
+        else:
+            if self.currentApp == 'Ma`nual':
+                self.disableManualMode()
+            self.currentApp = q.text()
+            try:
+                self.module.jarvis.switchModuleActivity(["App_"+str(self.currentApp)])
+            except Exception as err:
+                print("Error: {0}".format(err))
+                import traceback
+                traceback.print_exc()
+        for element in self.module.screenElement:
+            vis.remove(element)
+        self.module.screenElement.clear()
 
     def _processActionTrigger(self,q):
         print (q.text()+" is triggered")
@@ -198,13 +201,29 @@ class MyQtMainWindow(QMainWindow):
             self.module.terminate()
             self.close()
 
+    def _onTabModeChanged(self,mode):
+        if mode == 0:
+            print("Switch to Debug mode")
+            self.module.set_emulating(None)
+        else:
+            print("Switch to VR emulator mode")
+            self.module.global_state['camera'] = 'fixed'
+            self.module.set_emulating('vr')
+
     def _initScreenLayout(self,klamptGLWindow):
         self.setFixedSize(1580, 720)
         self.splitter = QSplitter()
-        self.left = QFrame()
+        self.left = QTabWidget()
+        self.debugFrame = QFrame()
+        self.vrFrame = QFrame()
+        self.left.addTab(self.debugFrame,"Debug")
+        self.left.addTab(self.vrFrame,"VR emulator")
         self.left.setFixedSize(300,720)
-        self.leftLayout = QVBoxLayout()
-        self.left.setLayout(self.leftLayout)
+        self.left.currentChanged.connect(self._onTabModeChanged)
+        self.debugLayout = QVBoxLayout()
+        self.debugFrame.setLayout(self.debugLayout)
+        self.vrLayout = QVBoxLayout()
+        self.vrFrame.setLayout(self.vrLayout)
         self.right = QFrame()
         self.right.setFixedSize(1280,720)
         self.rightLayout = QVBoxLayout()
@@ -214,15 +233,21 @@ class MyQtMainWindow(QMainWindow):
         self.glwidget.do_reshape(1280,720)
         self.glwidget.setParent(self.right)
         self.rightLayout.addWidget(self.glwidget)
-    
+
         self.buttons = {}
-        self.welcomeText = QLabel("Welcome to TRINA UI! \n\n\nPlease Refer To Menu Bar Actions For Selecting Operation Mode.")
-        self.modeText = QLabel("")
-        self.modeText.setWordWrap(True)
-        self.welcomeText.setWordWrap(True)
+        self.appSelector = QListWidget()
+        for i,appname in enumerate(self.apps):
+            self.appSelector.addItem(appname)
+        self.appSelector.setCurrentRow(0)
+        self.appSelector.currentItemChanged.connect(self._processAppTrigger)
         
-        self.leftLayout.addWidget(self.welcomeText)
-        self.leftLayout.addWidget(self.modeText)
+        self.debugLayout.addWidget(QLabel("Select mode/app:"))
+        self.debugLayout.addWidget(self.appSelector)
+    
+        self.appButtons = QGroupBox("App buttons")
+        self.appButtons2 = QGroupBox("App buttons")
+        self.debugLayout.addWidget(self.appButtons)
+        self.vrLayout.addWidget(self.appButtons2)
 
         #determine which camera sensors are available
         all_cams = ['fixed']
@@ -241,13 +266,14 @@ class MyQtMainWindow(QMainWindow):
         def onSelectCamera(index):
             self.module.global_state["camera"] = self.all_cams[index]
         self.cameraSelector.activated.connect(onSelectCamera)
-        self.leftLayout.addWidget(self.cameraSelector)
+        self.debugLayout.addWidget(QLabel("Camera:"))
+        self.debugLayout.addWidget(self.cameraSelector)
 
         #testing
         stop_icon = QIcon.fromTheme("process-stop")
         button = QPushButton(" Emergency Stop")
         button.setIcon(stop_icon)
-        self.leftLayout.addWidget(button)
+        self.debugLayout.addWidget(button)
 
         self.enableManualMode()
 
@@ -284,35 +310,59 @@ class MyGLPlugin(vis.GLPluginInterface):
 
     def keyboardfunc(self,c,x,y):
         print ("Pressed",c)
-        rightJoystickMock = self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"]
         if c == 'w':
-            rightJoystickMock[1] = 1.0
+            self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"][1] = 1.0
         elif c == 's':
-            rightJoystickMock[1] = -1.0
+            self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"][1] = -1.0
         elif c == 'a':
-            rightJoystickMock[0] = -1.0
+            self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"][0] = -1.0
         elif c == 'd':
-            rightJoystickMock[0] = 1.0
+            self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"][0] = 1.0
+        elif c == 'up':
+            self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"][1] = 1.0
+        elif c == 'down':
+            self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"][1] = -1.0
+        elif c == 'left':
+            self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"][0] = -1.0
+        elif c == 'right':
+            self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"][0] = 1.0
         elif c == ' ':
             self.module.moveToPoser()
-
-        self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"] = rightJoystickMock 
+        else:
+            return False
         self.module.server["UI_STATE"] = self.module.UIState 
         time.sleep(0.0001)
-        return False
+        return True
 
     def keyboardupfunc(self,c,x,y):
         print ("Released",c)
+        leftJoystickMock = self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"]
         rightJoystickMock = self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"]
-        if c == 'w' and rightJoystickMock[1] == 1.0:
+        if c == 'w' and leftJoystickMock[1] == 1.0:
+            leftJoystickMock[1] = 0.0
+            self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"] = leftJoystickMock 
+        if c == 's' and leftJoystickMock[1] == -1.0:
+            leftJoystickMock[1] = 0.0
+            self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"] = leftJoystickMock 
+        if c == 'a' and leftJoystickMock[0] == -1.0: 
+            leftJoystickMock[0] = 0.0
+            self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"] = leftJoystickMock 
+        if c == 'd' and leftJoystickMock[0] == 1.0:
+            leftJoystickMock[0] = 0.0
+            self.module.UIState["controllerButtonState"]["leftController"]["thumbstickMovement"] = leftJoystickMock 
+        if c == 'up' and rightJoystickMock[1] == 1.0:
             rightJoystickMock[1] = 0.0
-        if c == 's' and rightJoystickMock[1] == -1.0:
+            self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"] = rightJoystickMock 
+        if c == 'down' and rightJoystickMock[1] == -1.0:
             rightJoystickMock[1] = 0.0
-        if c == 'a' and rightJoystickMock[0] == -1.0: 
+            self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"] = rightJoystickMock 
+        if c == 'left' and rightJoystickMock[0] == -1.0: 
             rightJoystickMock[0] = 0.0
-        if c == 'd' and rightJoystickMock[0] == 1.0:
+            self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"] = rightJoystickMock 
+        if c == 'right' and rightJoystickMock[0] == 1.0:
             rightJoystickMock[0] = 0.0
-        self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"] = rightJoystickMock 
+            self.module.UIState["controllerButtonState"]["rightController"]["thumbstickMovement"] = rightJoystickMock 
+        
         self.module.server["UI_STATE"] = self.module.UIState
         time.sleep(0.0001)
         return False
@@ -333,7 +383,6 @@ class MyGLPlugin(vis.GLPluginInterface):
                 dist = vectorops.dot(vectorops.sub(pt,s),d)
                 collided.append((dist,g[0],pt))
 
-       
         return [g[1] for g in sorted(collided)]
 
     
@@ -390,7 +439,42 @@ class LocalUI(jarvis.APIModule):
         self.verbose = 1
         self.sim = Simulator(self.world) #used for viewport simulation
         self.dt = 0.05
-        self.UIState = {'controllerPositionState': {'leftController': {'controllerOrientation': [0.07739845663309097, -0.19212138652801514, 0.3228720426559448, 0.9235001802444458], 'controllerPosition': [-0.021801471710205078, -0.4208446145057678, 0.5902314186096191]}, 'rightController': {'controllerOrientation': [0.052883781492710114, 0.20788685977458954, -0.30593231320381165, 0.927573025226593], 'controllerPosition': [0.15437912940979004, -0.4229428172111511, 0.5827353000640869]}}, 'headSetPositionState': {'deviceRotation': [-0.027466144412755966, 0.7671623826026917, 0.003965826239436865, 0.6408524513244629]}, 'controllerButtonState': {'leftController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}, 'rightController': {'nearTouch': [False, False], 'press': [False, False, False, False], 'thumbstickMovement': [0.0, 0.0], 'touch': [False, False, False, False, False, False, False, False], 'squeeze': [0.0, 0.0]}}, 'UIlogicState': {'stop': False, 'autonomousMode': False, 'teleoperationMode': False}, 'title': 'UI Outputs'}
+        self.UIState = {'controllerPositionState': {
+                            'leftController': {
+                                'controllerOrientation': [0.07739845663309097, -0.19212138652801514, 0.3228720426559448, 0.9235001802444458],
+                                'controllerPosition': [-0.021801471710205078, -0.4208446145057678, 0.5902314186096191]
+                            },
+                            'rightController': {
+                                'controllerOrientation': [0.052883781492710114, 0.20788685977458954, -0.30593231320381165, 0.927573025226593],
+                                'controllerPosition': [0.15437912940979004, -0.4229428172111511, 0.5827353000640869]
+                            }
+                        }, 
+                        'headSetPositionState': {
+                            'deviceRotation': [-0.027466144412755966, 0.7671623826026917, 0.003965826239436865, 0.6408524513244629]
+                        },
+                        'controllerButtonState': {
+                            'leftController': {
+                                'nearTouch': [False, False],
+                                'press': [False, False, False, False],
+                                'thumbstickMovement': [0.0, 0.0],
+                                'touch': [False, False, False, False, False, False, False, False],
+                                'squeeze': [0.0, 0.0]
+                            },
+                            'rightController': {
+                                'nearTouch': [False, False],
+                                'press': [False, False, False, False],
+                                'thumbstickMovement': [0.0, 0.0],
+                                'touch': [False, False, False, False, False, False, False, False],
+                                'squeeze': [0.0, 0.0]
+                            }
+                        },
+                        'UIlogicState': {
+                            'stop': False,
+                            'autonomousMode': False,
+                            'teleoperationMode': False
+                        },
+                        'title': 'UI Outputs'
+                    }
         self.server = self.jarvis._state_server
         self.server["UI_STATE"] = self.UIState
         self.server["UI_END_COMMAND"] = []
@@ -403,9 +487,8 @@ class LocalUI(jarvis.APIModule):
             }
         self.last_cam = 'fixed'
         self.screenElement = set([])
-        self.num_frames = 0
-        self.camera_update_freq = 10
-
+        self.emulating = None    #can be VR, tablet etc
+        
         self._visInit()
         self.startSimpleThread(loopfunc = self._visLoop, dt = self.dt, name = "vis thread")
 
@@ -416,6 +499,43 @@ class LocalUI(jarvis.APIModule):
     @classmethod
     def apiClass(self):
         return UIAPI
+
+    def set_emulating(self,emulating):
+        if self.emulating == emulating:
+            return
+        if self.emulating == None:
+            if emulating == 'vr':
+                try:
+                    vis.remove('ghost')
+                except Exception:
+                    pass
+                #z backward, x right, y up.  Rotate that to the frame of x forward, y left, z up
+                #oculus_to_view = [[0,0,-1],
+                #                  [-1,0,0],
+                #                  [0,1,0]]
+                #TODO: need to figure out how to convert rotations
+                oculus_to_view = so3.matrix(so3.identity())
+                Rheadset = so3.from_quaternion(self.UIState['headSetPositionState']['deviceRotation'])
+                Rleft = so3.from_quaternion(self.UIState['controllerPositionState']['leftController']['controllerOrientation'])
+                tleft = self.UIState['controllerPositionState']['leftController']['controllerPosition']
+                Rright = so3.from_quaternion(self.UIState['controllerPositionState']['rightController']['controllerOrientation'])
+                tright = self.UIState['controllerPositionState']['rightController']['controllerPosition']
+                vis.add('vr_pose',(so3.mul(Rheadset,so3.from_matrix(oculus_to_view)),[0,0,2]))
+                vis.add('vr_controller_left',(Rleft,tleft))
+                vis.add('vr_controller_right',(Rright,tright))
+                vis.edit('vr_pose')
+                vis.edit('vr_controller_left')
+                vis.edit('vr_controller_right')
+                vis.hide('vr_pose',False)
+                vis.hide('vr_controller_left',False)
+                vis.hide('vr_controller_right',False)
+        else:
+            vis.remove('vr_pose')
+            vis.remove('vr_controller_left')
+            vis.remove('vr_controller_right')
+            #TODO: re-enable app / manual mode
+
+        self.emulating = emulating
 
     def _visInit(self):
         if not glinit.available("PyQt5"):
@@ -455,51 +575,104 @@ class LocalUI(jarvis.APIModule):
     def _visLoop(self):
         if not vis.shown():
             self.stopThread("vis thread")
-        self.num_frames += 1
         self.jarvis.log_health()
+
         world = self.world
         robot = world.robot(0)
         sensed_position = self.jarvis.robot.sensedRobotq()
-        vis.setItemConfig("robot_sensed",sensed_position)
-        vis.lock()
-        robot.setConfig(sensed_position)
-        vis.unlock()
-        cam = self.global_state['camera']
-        if cam != 'fixed':
-            if self.last_cam == 'fixed':
-                self.fixed_vp = vis.getViewport()
-            #render from the camera's POV
-            rgb = None
-            if self.sensors_enabled:
-                res = self.jarvis.sensors.getRgbdImages(cam)[cam]
-                if res is not None:
-                    if len(res)==2:
-                        rgb = res[0]
-                    else:
-                        rgb = res
-                    #print("Got a scene image with dimensions",rgb.shape,"dtype",rgb.dtype)
-                    #print(" RGB range",rgb[:,:,0].min(),rgb[:,:,0].max(),rgb[:,:,1].min(),rgb[:,:,1].max(),rgb[:,:,2].min(),rgb[:,:,2].max())
-        
-            s = self.sim.controller(0).sensor(cam)
+
+        if self.emulating == None:
+            vis.setItemConfig("robot_sensed",sensed_position)
             vis.lock()
-            svp = sensing.camera_to_viewport(s,robot)
-            vp = vis.getViewport()
-            svp.x = vp.x
-            svp.y = vp.y
-            svp.w = vp.w
-            svp.h = vp.h
-            svp.clippingplanes = vp.clippingplanes
-            vis.setViewport(svp)
-            if rgb is not None:
-                vis.scene().setBackgroundImage(rgb)
+            robot.setConfig(sensed_position)
             vis.unlock()
-        else:
-            if self.last_cam != 'fixed':
+            cam = self.global_state['camera']
+            if cam != 'fixed':
+                if self.last_cam == 'fixed':
+                    self.fixed_vp = vis.getViewport()
+                #render from the camera's POV
+                rgb = None
+                if self.sensors_enabled:
+                    res = self.jarvis.sensors.getRgbdImages(cam)[cam]
+                    if res is not None:
+                        if len(res)==2:
+                            rgb = res[0]
+                        else:
+                            rgb = res
+                        #print("Got a scene image with dimensions",rgb.shape,"dtype",rgb.dtype)
+                        #print(" RGB range",rgb[:,:,0].min(),rgb[:,:,0].max(),rgb[:,:,1].min(),rgb[:,:,1].max(),rgb[:,:,2].min(),rgb[:,:,2].max())
+            
+                s = self.sim.controller(0).sensor(cam)
                 vis.lock()
-                vis.scene().setBackgroundImage(None)
-                vis.setViewport(self.fixed_vp)
+                svp = sensing.camera_to_viewport(s,robot)
+                vp = vis.getViewport()
+                svp.x = vp.x
+                svp.y = vp.y
+                svp.w = vp.w
+                svp.h = vp.h
+                svp.clippingplanes = vp.clippingplanes
+                vis.setViewport(svp)
+                if rgb is not None:
+                    vis.scene().setBackgroundImage(rgb)
                 vis.unlock()
-        self.last_cam = cam
+            else:
+                if self.last_cam != 'fixed':
+                    vis.lock()
+                    vis.scene().setBackgroundImage(None)
+                    vis.setViewport(self.fixed_vp)
+                    vis.unlock()
+            self.last_cam = cam
+        else:
+            vis.setItemConfig("robot_sensed",sensed_position)
+            vis.lock()
+            robot.setConfig(sensed_position)
+            vis.unlock()
+            cam = self.global_state['camera']
+            if cam != 'fixed':
+                if self.last_cam == 'fixed':
+                    self.fixed_vp = vis.getViewport()
+                    vis.hide('vr_pose')
+                    vis.hide('vr_controller_left')
+                    vis.hide('vr_controller_right')
+                #render from the camera's POV
+                rgb = None
+                if self.sensors_enabled:
+                    res = self.jarvis.sensors.getRgbdImages(cam)[cam]
+                    if res is not None:
+                        if len(res)==2:
+                            rgb = res[0]
+                        else:
+                            rgb = res
+                        #print("Got a scene image with dimensions",rgb.shape,"dtype",rgb.dtype)
+                        #print(" RGB range",rgb[:,:,0].min(),rgb[:,:,0].max(),rgb[:,:,1].min(),rgb[:,:,1].max(),rgb[:,:,2].min(),rgb[:,:,2].max())
+            
+                s = self.sim.controller(0).sensor(cam)
+                vis.lock()
+                svp = sensing.camera_to_viewport(s,robot)
+                vp = vis.getViewport()
+                svp.x = vp.x
+                svp.y = vp.y
+                svp.w = vp.w
+                svp.h = vp.h
+                svp.clippingplanes = vp.clippingplanes
+                vis.setViewport(svp)
+                if rgb is not None:
+                    vis.scene().setBackgroundImage(rgb)
+                vis.unlock()
+            else:
+                if self.last_cam != 'fixed':
+                    vis.hide('vr_pose',False)
+                    vis.hide('vr_controller_left',False)
+                    vis.hide('vr_controller_right',False)
+                    vis.lock()
+                    vis.scene().setBackgroundImage(None)
+                    vis.setViewport(self.fixed_vp)
+                    vis.unlock()
+                headset_pose = vis.getItemConfig('vr_pose')
+                left_controller_pose = vis.getItemConfig('vr_controller_left')
+                right_controller_pose = vis.getItemConfig('vr_controller_right')
+
+
 
         #process RPC calls
         for i in range(10):
