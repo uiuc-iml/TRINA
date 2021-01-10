@@ -956,7 +956,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb'], modules = ['DirectTeleOperation','StateLogger'], codename = 'cholera',cameras = ['realsense_left','realsense_right'])
+	server = CommandServer(mode = 'Physical',components =  ['head'], modules = ['DirectTeleOperation'], codename = 'cholera')
 	
 	# print(server.robot.closeLeftRobotiqGripper())
 	# print(server.robot.sensedLeftEETransform())

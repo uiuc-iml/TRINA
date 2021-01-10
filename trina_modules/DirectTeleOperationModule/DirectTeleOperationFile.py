@@ -85,8 +85,8 @@ class DirectTeleOperation:
 		self.infoLoop_rate = 0.05
 		self.max_arm_speed = 0.5
 		self.robot = Jarvis
-		# self.components =  ['head','left_limb','right_limb', 'left_gripper', 'right_gripper','base']
-		self.components = ['left_limb', 'left_gripper','right_limb', 'right_gripper']
+		self.components =  ['head','left_limb','right_limb', 'left_gripper', 'right_gripper','base']
+		# self.components = ['left_limb', 'left_gripper','right_limb', 'right_gripper']
 		#self.robot.getComponents()
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
@@ -152,8 +152,8 @@ class DirectTeleOperation:
 		self.UI_state = {}
 		self.init_headset_orientation = {}
 		self.init_headset_rotation = {} #x,y position
-		self.panLimits = {"center": 180, "min":90, "max":270} #head limits
-		self.tiltLimits = {"center": 180, "min":130, "max":230} #head limits
+		self.panLimits = {"center": 180, "min":70, "max":290} #head limits
+		self.tiltLimits = {"center": 180, "min":90, "max":230} #head limits
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
@@ -240,6 +240,15 @@ class DirectTeleOperation:
 			self.left_limb.setLimbPositionLinear(TRINAConfig.left_untucked_config, home_duration)
 		if self.right_limb.active:
 			self.right_limb.setLimbPositionLinear(TRINAConfig.right_untucked_config, home_duration)
+		if self.head_active:
+			self.init_headset_rotation = self.UI_state['headSetPositionState']['deviceRotation']
+			self.head_active = False
+			self.robot.setHeadPosition([180*DEGREE_2_RADIAN, 180*DEGREE_2_RADIAN])
+			time.sleep(home_duration)
+			self.head_active = True
+
+
+
 
 
 	def UIStateLogic(self):
@@ -342,14 +351,18 @@ class DirectTeleOperation:
 			partial_rotation = R.from_rotvec(right_handed_rotvec[:3]*right_handed_rotvec[3])
 			# we then get its equivalent row, pitch and yaw
 			rpy = partial_rotation.as_euler('ZYX',degrees=True)
-			rpy2 = partial_rotation.as_euler('YZX',degrees=True)
+			rpy2 = partial_rotation.as_euler('YXZ',degrees=True)
 			return {"y":rpy[0],"x":rpy2[0]}
+		
 
 		orientation = to_rotvec(self.UI_state['headSetPositionState']['deviceRotation'])
 		init_orientation = to_rotvec(self.init_headset_rotation)
 		panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - init_orientation["y"])), self.panLimits["min"], self.panLimits["max"])
 		tiltAngle = limitTo((self.tiltLimits["center"] - mod180(orientation["x"] - init_orientation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
 		
+		# print("init y: ",int(init_orientation['y']),"init x: ",int(init_orientation['x']),
+		# "ori y: ", int(orientation["y"]) , "ori x: ", int(orientation["x"]) ,
+		# "pan: ",int(panAngle),"tilt: ",int(tiltAngle))
 		try:
 			self.robot.setHeadPosition([panAngle*DEGREE_2_RADIAN, tiltAngle*DEGREE_2_RADIAN])
 		except Exception as err:

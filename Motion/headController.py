@@ -47,8 +47,8 @@ class HeadController:
         self.exit = False
         self.position = [0.0,0.0]
         self.positionCommand = [0.0,0.0]
-        self.panLimits = {"center": 180, "min":120, "max":240} #head limits
-        self.tiltLimits = {"center": 180, "min":150, "max":230} #head limits
+        self.panLimits = {"center": 180, "min":105, "max":255} #head limits
+        self.tiltLimits = {"center": 180, "min":90, "max":230} #head limits
         self._controlLoopLock = RLock()
 
     def start(self):
@@ -65,9 +65,13 @@ class HeadController:
         else:
             print("Headcontroller: Failed to change the baudrate")
 
+        # Enable Torque 
+        self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_TORQUE_ENABLE, TORQUE_ENABLE)
+        self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_TORQUE_ENABLE, TORQUE_ENABLE)
+        
         #SPEED
-        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(50))
-        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_MOVING_SPEED, (int)(50))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(60))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_MOVING_SPEED, (int)(60))
         time.sleep(0.5)
 
         # init position
@@ -146,7 +150,12 @@ class HeadController:
 
     def shutdown(self):
         self.exit = True
-
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(self.panLimits["center"]/0.08789))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(self.tiltLimits["max"]/0.08789))
+        time.sleep(2)
+        # Disable Dynamixel Torque
+        self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_TORQUE_ENABLE, TORQUE_DISABLE)
+        self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_TORQUE_ENABLE, TORQUE_DISABLE)
 
 if __name__ == "__main__":
     a = HeadController()
