@@ -1,5 +1,6 @@
 import klampt
 from klampt.math import vectorops,so3,se3
+from klampt.io import loader
 import numpy as np
 from klampt import WorldModel,vis
 from utils_my import *
@@ -19,7 +20,7 @@ def se3_error(T1,T2): ##somehow klampt se3.error gives issues when converting fr
 
 
 
-def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_path,links):
+def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
     """
     Optimize for the transforms of thea arms and the wrist-mounted cameras
 
@@ -28,16 +29,12 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_
    
     #first load the initial guess for the arm transforms
     world = WorldModel()
-    res = world.readFile(world_path)
-    if not res:
-        raise RuntimeError("unable to load model")
-
+    res = world.loadElement(robot_path)
     robot_model = world.robot(0)
-    link_base_l = robot_model.link(6)
-    link_base_r = robot_model.link(14)
+    link_base_l = robot_model.link(10)
+    link_base_r = robot_model.link(18)
     T_l_0 = link_base_l.getTransform()
     T_r_0 = link_base_r.getTransform()
-    T_l_0[1][2] = 1.5
     x_l_0 = T_l_0[1] + so3.moment(T_l_0[0]) + T_c_l_0[1] + so3.moment(T_c_l_0[0])
     x_r_0 = T_r_0[1] + so3.moment(T_r_0[0]) + T_c_r_0[1] + so3.moment(T_c_r_0[0])
 
@@ -48,21 +45,25 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_
         x = x.tolist()
         T_base = (so3.from_moment(x[3:6]),x[0:3])
         T_c_EE = (so3.from_moment(x[9:12]),x[6:9])
-        counter = 0
         trans_error = 0.
         angle_error = 0.
         for T_m_c,q in zip(Tl,ql):
+            
             #transform Tl..
-            T_EE = getLeftLinkTransform(robot_model,q,links[0])
+            T_EE = getLeftLinkTransform(robot_model,q,links[0],model = 'cholera')
             T_EE_base = se3.mul(se3.inv(T_l_0),T_EE) #EE in arm base
             T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
-
-            error_vec = se3.error(T_marker_1,T_m_predicted)
-            trans_error += vectorops.normSquared(error_vec[0:3]) 
-            angle_error += vectorops.normSquared(error_vec[3:6])
-        expr = math.sqrt(trans_error/len(Tl)) + 0.001*math.sqrt(angle_error/len(Tl))
-        # print("Local solve: func(left arm)=%f"%expr)
-        print('pos error:',math.sqrt(trans_error/(54)),'angle error', math.sqrt(angle_error/(54)))
+            #only use position
+            error_vec = vectorops.sub(T_marker_1[1],T_m_predicted[1])
+            trans_error += vectorops.normSquared(error_vec)
+            #use entire transform
+            # error_vec = se3.error(T_marker_1,T_m_predicted)
+            # trans_error += vectorops.normSquared(error_vec[0:3]) 
+            # angle_error += vectorops.normSquared(error_vec[3:6])
+        expr = math.sqrt(trans_error/len(Tl))
+        print("Local solve: func(left arm)=%f"%expr)
+        print('pos error:',math.sqrt(trans_error/(len(Tl))),'angle error', math.sqrt(angle_error/(len(Tl))))
+        
         return expr
 
     def funcr(x):
@@ -75,24 +76,29 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_
         trans_error = 0.
         angle_error = 0.
         for T_m_c,q in zip(Tr,qr):
-            T_EE = getRightLinkTransform(robot_model,q,links[1])
+            T_EE = getRightLinkTransform(robot_model,q,links[1],model = 'cholera')
             T_EE_base = se3.mul(se3.inv(T_r_0),T_EE) #EE in arm base
             T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
-            error_vec = se3.error(T_marker_1,T_m_predicted)
-            trans_error += vectorops.normSquared(error_vec[0:3]) 
-            angle_error += vectorops.normSquared(error_vec[3:6])
-        expr = math.sqrt(trans_error/len(Tr))) + 0.001*math.sqrt(angle_error/len(Tr))
-        print('pos error:',math.sqrt(trans_error/(54)),'angle error', math.sqrt(angle_error/(54)))
+            #only use position
+            error_vec = vectorops.sub(T_marker_1[1],T_m_predicted[1])
+            trans_error += vectorops.normSquared(error_vec)
+            #use entire transform
+            # error_vec = se3.error(T_marker_1,T_m_predicted)
+            # trans_error += vectorops.normSquared(error_vec[0:3]) 
+            # angle_error += vectorops.normSquared(error_vec[3:6])
+        expr = math.sqrt(trans_error/len(Tr)) + 0.001*math.sqrt(angle_error/len(Tr))
+        print('pos error:',math.sqrt(trans_error/len(Tr)),'angle error', math.sqrt(angle_error/len(Tr)))
         return expr
 
 
 
     import scipy.optimize as sopt
 
-    bnds = ((-0.015, 0.025), (0.13, 0.23),(1.2,1.8),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
+    bnds = ((-0.03, 0.03), (0.13, 0.23),(1.0,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
     res = sopt.minimize(funcl,np.array(x_l_0),bounds = bnds,method='L-BFGS-B')
     x_l = res.x
-    res = sopt.minimize(funcr,np.array(x_r_0),method='L-BFGS-B')
+    bnds = ((-0.03, 0.03), (-0.23, -0.13),(1.0,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
+    res = sopt.minimize(funcr,np.array(x_r_0),bounds = bnds,method='L-BFGS-B')
     x_r = res.x
 
     print("Left Arm Local solve: func(left arm)=%f"%funcl(x_l))
@@ -102,15 +108,15 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,world_path,URDF_save_
     print('final camera transform:',(so3.from_moment(x_l[9:12]),x_l[6:9]))
 
     print("Right Arm Local solve: func(left arm)=%f"%funcr(x_r))
-    print('initial left shoulder transform:',T_r_0)
-    print('final left shoulder transform:',(so3.from_moment(x_r[3:6]),x_r[0:3]))
+    print('initial Right shoulder transform:',T_r_0)
+    print('final right shoulder transform:',(so3.from_moment(x_r[3:6]),x_r[0:3]))
     print('initial camera transform:',T_c_r_0)
     print('final camera transform:',(so3.from_moment(x_r[9:12]),x_r[6:9]))
 
 
     #left shoulder, left camera, right shoulder, right camera
-    return (so3.from_moment(x_l[3:6]),x_l[0:3]),(so3.from_moment(x_l[9:12]),x_l[6:9]),\
-        (so3.from_moment(x_r[3:6]),x_r[0:3]),(so3.from_moment(x_r[9:12]),x_r[6:9])
+    return (so3.from_moment(x_l[3:6]),x_l[0:3].tolist()),(so3.from_moment(x_l[9:12]),x_l[6:9].tolist()),\
+        (so3.from_moment(x_r[3:6]),x_r[0:3].tolist()),(so3.from_moment(x_r[9:12]),x_r[6:9].tolist())
 
 def StaticCalibration(T_0,qs,cameras,T_marker_0,world_path,link):
 
@@ -142,7 +148,7 @@ def StaticCalibration(T_0,qs,cameras,T_marker_0,world_path,link):
         angle_error = 0.
         for T_m_c,q in zip(Tl,ql):
             #transform Tl..
-            T_EE = getLeftLinkTransform(robot_model,q,links[0])
+            T_EE = getLeftLinkTransform(robot_model,q,links[0],model='cholera')
             T_EE_base = se3.mul(se3.inv(T_l_0),T_EE) #EE in arm base
             T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
 

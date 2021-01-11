@@ -1,27 +1,33 @@
 from copy import copy
 
-def getLeftLinkTransform(robot,q,link_num):
+def getLeftLinkTransform(robot,q,link_num,model):
     """
     Given TRINA robot configurtion, return the left EE transform
     """
 
     initial_config = robot.getConfig()
     target_config = copy(initial_config)
-    target_config[7:13] = q
+    if model == 'bubonic':
+        target_config[7:13] = q
+    elif model == 'cholera':
+        target_config[11:17] = q
     robot.setConfig(target_config)
     T = robot.link(link_num).getTransform()
     robot.setConfig(initial_config)
 
     return T
 
-def getRightLinkTransform(robot,q,link_num):
+def getRightLinkTransform(robot,q,link_num,model):
     """
     Given TRINA robot configurtion, return the left EE transform
     """
 
     initial_config = robot.getConfig()
     target_config = copy(initial_config)
-    target_config[15:21] = q
+    if model == 'bubonic':
+        target_config[15:21] = q
+    elif model == 'cholera':
+        target_config[19:25] = q
     robot.setConfig(target_config)
     T = robot.link(link_num).getTransform()
     robot.setConfig(initial_config)
