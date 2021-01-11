@@ -545,9 +545,9 @@ class RealSenseCamera:
         points = self.pc.calculate(depth_frame)
         vtx = np.asarray(points.get_vertices())
         pure_point_cloud = np.zeros((self.numpix, 3))
-        pure_point_cloud[:, 0] = -vtx['f0']
-        pure_point_cloud[:, 1] = -vtx['f1']
-        pure_point_cloud[:, 2] = -vtx['f2']
+        pure_point_cloud[:, 0] = vtx['f0']
+        pure_point_cloud[:, 1] = vtx['f1']
+        pure_point_cloud[:, 2] = vtx['f2']
         color_t = np.asarray(color_frame.get_data()).reshape(self.numpix, 3)/255
         point_cloud = o3d.geometry.PointCloud()
         point_cloud.points = o3d.utility.Vector3dVector(pure_point_cloud)
