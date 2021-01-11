@@ -60,7 +60,7 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
             # error_vec = se3.error(T_marker_1,T_m_predicted)
             # trans_error += vectorops.normSquared(error_vec[0:3]) 
             # angle_error += vectorops.normSquared(error_vec[3:6])
-        expr = math.sqrt(trans_error/len(Tl))
+        expr = math.sqrt(trans_error/len(Tl))+ 1.0*math.sqrt(angle_error/len(Tl))
         print("Local solve: func(left arm)=%f"%expr)
         print('pos error:',math.sqrt(trans_error/(len(Tl))),'angle error', math.sqrt(angle_error/(len(Tl))))
         
@@ -80,13 +80,13 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
             T_EE_base = se3.mul(se3.inv(T_r_0),T_EE) #EE in arm base
             T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
             #only use position
-            error_vec = vectorops.sub(T_marker_1[1],T_m_predicted[1])
-            trans_error += vectorops.normSquared(error_vec)
+            # error_vec = vectorops.sub(T_marker_1[1],T_m_predicted[1])
+            # trans_error += vectorops.normSquared(error_vec)
             #use entire transform
-            # error_vec = se3.error(T_marker_1,T_m_predicted)
-            # trans_error += vectorops.normSquared(error_vec[0:3]) 
-            # angle_error += vectorops.normSquared(error_vec[3:6])
-        expr = math.sqrt(trans_error/len(Tr)) + 0.001*math.sqrt(angle_error/len(Tr))
+            error_vec = se3.error(T_marker_1,T_m_predicted)
+            trans_error += vectorops.normSquared(error_vec[0:3]) 
+            angle_error += vectorops.normSquared(error_vec[3:6])
+        expr = math.sqrt(trans_error/len(Tr)) + 1*math.sqrt(angle_error/len(Tr))
         print('pos error:',math.sqrt(trans_error/len(Tr)),'angle error', math.sqrt(angle_error/len(Tr)))
         return expr
 
@@ -94,10 +94,10 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
 
     import scipy.optimize as sopt
 
-    bnds = ((-0.03, 0.03), (0.13, 0.23),(1.0,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
+    bnds = ((-0.03, 0.03), (0.13, 0.23),(1.23,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
     res = sopt.minimize(funcl,np.array(x_l_0),bounds = bnds,method='L-BFGS-B')
     x_l = res.x
-    bnds = ((-0.03, 0.03), (-0.23, -0.13),(1.0,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
+    bnds = ((-0.03, 0.03), (-0.23, -0.13),(1.23,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.05,0),(-0.2,0.2),(None,None),(None,None),(None,None))
     res = sopt.minimize(funcr,np.array(x_r_0),bounds = bnds,method='L-BFGS-B')
     x_r = res.x
 

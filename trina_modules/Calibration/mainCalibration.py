@@ -348,26 +348,24 @@ def mainCalibrationURDF(pic_path,robot_path,URDF_save_folder,cameras,links):
     T_c_r_0 = ([1,0,0,0,0,-1,0,1,0],[0.0,-0.05,0.1])
     T_marker_1 = ([1,0,0,0,1,0,0,0,1],[0.15,0.0,0.363]) #This is exact
     T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links)
+    print('camera transforms:',np.array(T_c_l[0]+T_c_l[1]),np.array(T_c_r[0]+T_c_r[1]))
 
+    from klampt.math import so3
+    print(T_base_l[1],so3.rpy(T_base_l[0]))s
+    print(T_base_r[1],so3.rpy(T_base_r[0]))
     # #now modify the URDF 
     # Hardcode these for now. Set these in the setting file in the future
     world = WorldModel()
     res = world.loadElement(robot_path)
     robot = world.robot(0)
 
-    from klampt.math import so3
-    #Calibrated shoulder:
-    print('left:')
-    print('xyz:',T_base_l[1])
-    print('rpy:',so3.rpy(T_base_l[0]))
-    print('right:')
-    print('xyz:',T_base_r[1])
-    print('rpy:',so3.rpy(T_base_r[0]))    
-
-
+    # zl = robot.link(10).getParentTransform()[1][2]
+    # zr = robot.link(18).getParentTransform()[1][2]
+    # yl = robot.link(10).getParentTransform()[1][1]
+    # yr = robot.link(18).getParentTransform()[1][1]
     # print(robot.link(10).getParentTransform())
-    # robot.link(10).setParentTransform(T_base_l[0],T_base_l[1])
-    # robot.link(18).setParentTransform(T_base_r[0],T_base_r[1])
+    robot.link(10).setParentTransform(T_base_l[0],T_base_l[1])
+    robot.link(18).setParentTransform(T_base_r[0],T_base_r[1])
     # print(robot.link(10).getParentTransform())
     # loader.save(robot,'auto',URDF_save_folder + 'Cholera_calibrated.rob') #klampt loader only saves a robot to .rob. In addition, it does not save the meshes, and will keep
     
@@ -388,6 +386,17 @@ def mainCalibrationURDF(pic_path,robot_path,URDF_save_folder,cameras,links):
     l_link5_new.export('~/TRINA/Motion/data/robots/Cholera_calibrated/left_wrist2_link.STL')
     r_link5_new.export('~/TRINA/Motion/data/robots/Cholera_calibrated/right_wrist2_link.STL')
 
+
+    # lower/raise the base link
+    # TODO: break the base link into 2 links to accomodate calibration
+    base_link = trimesh.load_mesh('~/TRINA/Motion/data/robots/Cholera/base_link.STL')
+    # print(zl,zr,T_base_l[1][2],T_base_r[1][2])
+    # print([0,0,(zl+zr-T_base_l[1][2]-T_base_r[1][2])/2])
+    # print(yl,yr,T_base_l[1][1],T_base_r[1][1])
+    base_link.apply_transform(klampt_to_np(([1,0,0,0,1,0,0,0,1],[0,0,(-zl-zr+T_base_l[1][2]+T_base_r[1][2])/2])))
+    base_link.export('~/TRINA/Motion/data/robots/Cholera_calibrated/base_link.STL')
+
+    
     # ####Final step
     # ##need to change the mesh name in the generated new .rob file to the correct mesh files
     # ##new to edit the sensors.xml files to the right link and transforms
