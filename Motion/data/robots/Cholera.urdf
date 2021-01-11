@@ -1232,7 +1232,18 @@
   </joint>
 
 <klampt>
-    <mount link = 'left_tool_link' file = "robotiq_140.rob" transform = "0 0 1 0 1 0 -1 0 0  0 0 0" as="left_gripper"/>
+    <!-- left gripper Robotiq140 -->
+    <mount link = 'left_tool_link' file = "robotiq_140.rob" transform = "0 0 1 0 1 0 -1 0 0  0 0 0" prefix="left_gripper"/>
+    <noselfcollision group1="left_gripper:base_link left_gripper:right_inner_knuckle left_gripper:right_outer_knuckle left_gripper:right_outer_finger left_gripper:left_inner_knuckle left_gripper:left_outer_knuckle  left_gripper:left_outer_finger" group2="left_EE_link left_tool_link left_wrist2_link"/>
+    
+    <!-- right gripper Robotiq140 -->
+    <!--
+    <mount link = 'right_tool_link' file = "robotiq_140.rob" transform = "0 0 1 0 1 0 -1 0 0  0 0 0" prefix="right_gripper"/>
+    <noselfcollision group1="right_gripper:base_link right_gripper:right_inner_knuckle right_gripper:right_outer_knuckle right_gripper:right_outer_finger right_gripper:left_inner_knuckle right_gripper:left_outer_knuckle  right_gripper:left_outer_finger" group2="right_EE_link right_tool_link right_wrist2_link"/>
+    -->
+    <!-- right gripper vacuum -->
+    <noselfcollision group1="sucker_link" group2="right_EE_link right_tool_link"/>
+
     <noselfcollision pairs="left_base_link right_base_link"/>
     <noselfcollision pairs="left_base_link left_shoulder_link"/>
     <noselfcollision pairs="left_shoulder_link left_upperarm_link"/>
@@ -1251,8 +1262,6 @@
     <noselfcollision pairs="left_tool_link right_tool_link"/>
     <noselfcollision group1="left_tool_link right_tool_link" group2="base_link left_base_link left_shoulder_link left_upperarm_link left_forearm_link left_wrist1_link right_base_link right_shoulder_link right_upperarm_link right_forearm_link right_wrist1_link right_wrist2_link left_EE_link right_EE_link"/>
     <noselfcollision pairs="left_base_link right_base_link"/>
-    <noselfcollision group1="gripper_base_link right_outer_finger left_outer_finger" group2="left_EE_link left_tool_link"/>
-    <noselfcollision group1="sucker_link" group2="right_EE_link right_tool_link"/>
     <noselfcollision pairs="head_neck2_link head_neck1_link"/>
     <noselfcollision pairs="head_neck1_link head_base_link"/>
     <noselfcollision pairs="base_link head_base_link"/>

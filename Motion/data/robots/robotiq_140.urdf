@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <robot name="robotiq_140">
 
+  <link name="world">
+  </link>
+
+    <joint name="freeze_base_joint" type="fixed">
+      <parent link="world" />
+      <child link="base_link" />
+    </joint>
+
   <link
     name="base_link">
     <inertial>
@@ -8,14 +16,14 @@
         xyz="-0.12713011286975 -5.73413981237447E-05 0.379646859128274"
         rpy="0 0 0" />
       <mass
-        value="163.626380453613" />
+        value="0.86247164" />
       <inertia
-        ixx="4.25096639842994"
-        ixy="-0.000184077090973253"
-        ixz="-0.0112541217774995"
-        iyy="4.66101938385433"
-        iyz="-5.17543392524605E-06"
-        izz="4.66249209274685" />
+        ixx="0.021254832"
+        ixy="-9.20385454866265E-07"
+        ixz="-5.62706088874975E-05"
+        iyy="0.0233050969"
+        iyz="-2.58771696262302E-08"
+        izz="0.0233124605" />
     </inertial>
     <visual>
       <origin
@@ -395,7 +403,7 @@
       <axis xyz="0 0 1" />
     </joint>
 
-  <klampt>
+  <klampt world_frame="world">
     <noselfcollision group1="base_link left_outer_knuckle left_inner_knuckle left_inner_finger left_outer_finger left_inner_finger_pad right_outer_knuckle right_inner_knuckle right_inner_finger right_outer_finger right_inner_finger_pad" group2="base_link left_outer_knuckle left_inner_knuckle left_inner_finger left_outer_finger left_inner_finger_pad right_outer_knuckle right_inner_knuckle right_inner_finger right_outer_finger right_inner_finger_pad"/>
   </klampt>
 

@@ -224,7 +224,7 @@ def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3,he
     elif(name == 'half_anthrax'):
         return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
     elif(name == 'cholera'):
-        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]*18
+        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]*13
     else:
         print("wrong model name used.")
         return None
