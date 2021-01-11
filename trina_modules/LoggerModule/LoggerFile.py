@@ -15,7 +15,6 @@ import sys
 from glob import glob
 import cv2
 from joblib import Parallel,delayed
-
 if(sys.version_info[0] < 3):
     from StringIO import StringIO 
 else:
@@ -89,6 +88,7 @@ def dump_dataset_to_memory(datasets,copy_images,copy_image_times):
     # print('\n\n\n\n\n\n adding new pictures to log \n\n\n\n\n\n\n')
     # start_time = time.time()
     # print(copy_images.keys())
+<<<<<<< HEAD
     try:
         # for key in copy_images.keys():
         #     # print(key)
@@ -98,6 +98,17 @@ def dump_dataset_to_memory(datasets,copy_images,copy_image_times):
         #     # print('started saving images')
         #     save_arrays_as_images(images,dset_file,times)
         Parallel(n_jobs = 4,backend = 'threading')(delayed(save_arrays_as_images)(copy_images[key],datasets[key],copy_image_times[key]) for key in copy_images.keys())
+=======
+   try:
+       useless = Paralell(n_jobs = 6,backend = 'threading')(delayed(save_arrays_as_images)(copy_images[key],datasets[key],copy_image_times[key]) for key in copy_images.keys())
+#         for key in copy_images.keys():
+#             # print(key)
+#             dset_file = datasets[key]
+#             images = copy_images[key]
+#             times = copy_image_times[key]
+#             # print('started saving images')
+#             save_arrays_as_images(images,dset_file,times) 
+>>>>>>> f39d91e1d291fecc424bfd302e578c378b835e8b
     except Exception as e:
         print(e)
         
