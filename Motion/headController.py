@@ -48,7 +48,7 @@ class HeadController:
         self.position = [0.0,0.0]
         self.positionCommand = [0.0,0.0]
         self.panLimits = {"center": 180, "min":105, "max":255} #head limits
-        self.tiltLimits = {"center": 180, "min":90, "max":230} #head limits
+        self.tiltLimits = {"center": 205, "min":90, "max":230} #head limits
         self._controlLoopLock = RLock()
 
     def start(self):
@@ -157,13 +157,16 @@ class HeadController:
         self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_TORQUE_ENABLE, TORQUE_DISABLE)
         self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_TORQUE_ENABLE, TORQUE_DISABLE)
 
+    def _testRun(self,panAngle,tiltAngle):
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(panAngle/0.08789))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(tiltAngle/0.08789))
+
 if __name__ == "__main__":
     a = HeadController()
     a.start()
     time.sleep(1)
     print(a.sensedPosition())
-    # [pos1,pos2] = a.sensedPosition()
-    # a.setPosition([pos1+1,pos2+1])
+    a._testRun(200,200)
     time.sleep(0.5)
     
     a.shutdown()

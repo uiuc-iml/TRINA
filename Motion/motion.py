@@ -502,9 +502,9 @@ class Motion:
                 limb.state.set_mode_position(limb.state.sensedq)
             elif res == 1:
                 limb.setConfig(target_config)
-            elif res == 2:
-                # TODO: I'm concerned.
-                self.setLimbPositionLinear(limb, target_config, 2)
+            # elif res == 2:
+            #     # TODO: I'm concerned.
+            #     self.setLimbPositionLinear(limb, target_config, 2)
         else:
             ### Velocity control or position control.
             if not limb.state.commandSent:
@@ -606,7 +606,7 @@ class Motion:
         return
 
     # TODO: Refactor incomplete
-    def setLimbPositionLinear(self, limb, q, duration):
+    def setLimbPositionLinear(self, limb, q, duration,col_check = True):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -619,15 +619,15 @@ class Motion:
         """
         if not self.pause_motion_flag:
             if limb.name == "left":
-                self.setLeftLimbPositionLinear(q, duration)
+                self.setLeftLimbPositionLinear(q, duration,col_check)
             else:
-                self.setRightLimbPositionLinear(q, duration)
+                self.setRightLimbPositionLinear(q, duration,col_check)
         else:
             logger.warning('Motion:paused')
             print('Motion:paused')
 
 
-    def setLeftLimbPositionLinear(self,q,duration):
+    def setLeftLimbPositionLinear(self,q,duration,col_check = True):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -645,7 +645,10 @@ class Motion:
             #TODO:Also collision checks
             if self.left_limb.enabled:
                 self._controlLoopLock.acquire()
-                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
+                if col_check:
+                    res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
+                else:
+                    res = False
                 #planningTime = 0.0 + TRINAConfig.ur5e_control_rate
                 #positionQueue = []
                 #currentq = self.left_limb.state.sensedq
@@ -669,7 +672,7 @@ class Motion:
             logger.warning('Motion:paused')
             print('Motion:paused')
 
-    def setRightLimbPositionLinear(self,q,duration):
+    def setRightLimbPositionLinear(self,q,duration,col_check = True):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -687,7 +690,10 @@ class Motion:
             #Also collision checks
             if self.right_limb.enabled:
                 self._controlLoopLock.acquire()
-                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
+                if col_check:
+                    res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
+                else:
+                    res = False
                 if res:
                     logger.warning('Collision midway')
                     print("motion.setRightLimbPosition():collision midway")
@@ -1998,8 +2004,8 @@ class Motion:
                 state.increaseB = True
 
             # print(f"DAMPING STATE: {[state.increaseB,mag]}")
-            if state.increaseB:
-                effective_b *= 20
+            # if state.increaseB:
+            #     effective_b *= 20
 
             for i in range(6):
                 if state.deadband[i] > 0:
@@ -2036,15 +2042,17 @@ class Motion:
         if state.counter % 20 == 0:
             col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
             if col_res:
+                limb.impedance_col = True
                 stop = True
                 logger.error('ImpedanceDrive collision detected,exited..')
                 print("collision detected,exited..")
-
+            else:
+                limb.impedance_col = False
         self.robot_model.setConfig(initial_config)
 
         if stop:
             # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS
-            return 2,target_config.tolist()
+            return 0,0
         else:
             return 1,target_config.tolist()
 
@@ -2095,19 +2103,25 @@ if __name__=="__main__":
     # robot.shutdown()
 
     
-
+    # robot = Motion(mode = 'Physical',components = ['left_limb', 'right_limb'],codename = "cholera")
+    # robot.startup()
+    # time.sleep(0.5)
+    # print(robot.getKlamptSensedPosition())
+    # robot.shutdown()
 
     robot = Motion(mode = 'Kinematic',components = ['left_limb', 'right_limb'],codename = "cholera")
     world = robot.world
+    # world.robot(0).setConfig([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -0.7250741163836878, -2.2922517261900843, -1.6483068466186523, 5.943393218308248, -2.8889313379870813, 1.4037957191467285, 0.0, 0.0,\
+    #  0.2039198875427246, -1.039172963505127, 1.5999015013324183, -0.5778778356364747, 0.9736828804016113, -0.09465057054628545, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     vis.add("world",world)
     vis.show()
     robot.startup()
-    robot.setRightLimbPositionLinear(TRINAConfig.right_untucked_config, 5)
-    robot.setLeftLimbPositionLinear(TRINAConfig.left_untucked_config, 5)
-    time.sleep(5)
+    robot.setLeftLimbPositionLinear([-0.7250741163836878, -2.2922517261900843, -1.6483068466186523, 5.943393218308248, -2.8889313379870813, 1.4037957191467285], 5,col_check = False)
+    robot.setRightLimbPositionLinear([0.2039198875427246, -1.039172963505127, 1.5999015013324183, -0.5778778356364747, 0.9736828804016113, -0.09465057054628545], 5)
+    # time.sleep(5)
 
-    robot.setRightEEVelocity([0,0.1,0,0,0,0])
-    robot.setLeftEEVelocity([0,-0.1,0,0,0,0])
+    # robot.setRightEEVelocity([0,0.1,0,0,0,0])
+    # robot.setLeftEEVelocity([0,-0.1,0,0,0,0])
     while True:
         vis.lock()
         vis.unlock()

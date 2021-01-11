@@ -119,7 +119,7 @@ class DirectTeleOperation:
 
 		self.max_disp = 0.125 # To tune
 
-		self.K = np.diag([200.0, 200.0, 200.0, 10.0, 10.0, 10.0])
+		self.K = np.diag([200.0, 200.0, 200.0, 20.0, 20.0, 20.0])
 
 		self.M = 1*np.eye(6)#*5.0
 		self.M[3,3] = 0.25
@@ -153,7 +153,7 @@ class DirectTeleOperation:
 		self.init_headset_orientation = {}
 		self.init_headset_rotation = {} #x,y position
 		self.panLimits = {"center": 180, "min":70, "max":290} #head limits
-		self.tiltLimits = {"center": 180, "min":90, "max":230} #head limits
+		self.tiltLimits = {"center": 205, "min":90, "max":230} #head limits
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
@@ -240,11 +240,14 @@ class DirectTeleOperation:
 			self.left_limb.setLimbPositionLinear(TRINAConfig.left_untucked_config, home_duration)
 		if self.right_limb.active:
 			self.right_limb.setLimbPositionLinear(TRINAConfig.right_untucked_config, home_duration)
+
+
+	def setHeadToDefault(self):
 		if self.head_active:
 			self.init_headset_rotation = self.UI_state['headSetPositionState']['deviceRotation']
 			self.head_active = False
-			self.robot.setHeadPosition([180*DEGREE_2_RADIAN, 180*DEGREE_2_RADIAN])
-			time.sleep(home_duration)
+			self.robot.setHeadPosition([self.panLimits["center"]*DEGREE_2_RADIAN, self.tiltLimits["center"]*DEGREE_2_RADIAN])
+			time.sleep(3)
 			self.head_active = True
 
 
@@ -253,6 +256,8 @@ class DirectTeleOperation:
 
 	def UIStateLogic(self):
 		if(type(self.UI_state)!= int):
+			if self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True :
+				self.setHeadToDefault()
 			if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
 				print("Robot Home")
 				self.setRobotToDefault()
@@ -282,7 +287,6 @@ class DirectTeleOperation:
 					print('\n\n\n\n resetting UI initial state \n\n\n\n\n')
 					self.init_UI_state = self.UI_state
 					self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-					self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
 					
 					for limb in (self.left_limb, self.right_limb):
 						limb.init_pos = limb.sensedEETransform()
@@ -298,7 +302,6 @@ class DirectTeleOperation:
 								self.UI_state["controllerPositionState"][limb.joystick]['controllerRotation'])
 
 							self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
-							self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
 							
 							limb.init_pos = limb.sensedEETransform(self.tool.tolist())
 
@@ -325,7 +328,9 @@ class DirectTeleOperation:
 			if(self.head_active):
 				self.headControl()	
 
+			# self.control('velocity')
 			self.control('impedance')
+			# self.control('position')
 
 		
 	
@@ -371,7 +376,7 @@ class DirectTeleOperation:
 
 	def baseControl(self):
 		'''controlling base movement'''
-		base_velocity = [0.1*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.1*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
+		base_velocity = [0.1*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.2*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
 		curr_velocity = np.array(self.robot.sensedBaseVelocity())
 		base_velocity_vec = np.array(base_velocity)
 		# if the commanded velocity differs from the actual velocity:
