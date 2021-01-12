@@ -664,6 +664,11 @@ class CommandServer:
 		velEE_left = {}
 		posEE_right = {}
 		velEE_right = {}
+		global_EEWrench_left = None
+		local_EEWrench_left = None
+		global_EEWrench_right = None
+		local_EEWrench_right = None
+
 		while not self.shut_down_flag:
 			loopStartTime = time.time()
 			# print('updating states')
@@ -673,12 +678,16 @@ class CommandServer:
 					pos_left = self.query_robot.sensedLeftLimbPosition()
 					vel_left = self.query_robot.sensedLeftLimbVelocity()
 					velEE_left = self.query_robot.sensedLeftEEVelocity()
+					global_EEWrench_left = self.query_robot.sensedLeftEEWrench('global')
+					local_EEWrench_left = self.query_robot.sensedLeftEEWrench('local')
 
 				if(self.right_limb_active):
 					posEE_right = self.query_robot.sensedRightEETransform()
 					pos_right = self.query_robot.sensedRightLimbPosition()
 					vel_right = self.query_robot.sensedRightLimbVelocity()
 					velEE_right = self.query_robot.sensedRightEEVelocity()
+					global_EEWrench_right = self.query_robot.sensedRightEEWrench('global')
+					local_EEWrench_right = self.query_robot.sensedRightEEWrench('local')
 
 				if(self.base_active):
 					pos_base = self.query_robot.sensedBasePosition()
@@ -716,6 +725,16 @@ class CommandServer:
 					"PositionEE": {
 						"LeftArm" : posEE_left,
 						"RightArm" : posEE_right
+					},
+					"EEWrench":{
+						"LeftArm" :{
+							"global":global_EEWrench_left,
+							"local": local_EEWrench_left
+						},
+						"RightArm" :{
+							"global":global_EEWrench_right,
+							"local": local_EEWrench_right
+						}
 					},
 					"Velocity" : {
 						"LeftArm" : vel_left,
@@ -956,7 +975,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['head','left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = ['zed_overhead'])
+	server = CommandServer(mode = 'Physical',components =  ['head','left_limb','right_limb','base'], modules = ['DirectTeleOperation','StateLogger'], codename = 'cholera', cameras = ['zed_slam'])
 	
 	# print(server.robot.closeLeftRobotiqGripper())
 	# print(server.robot.sensedLeftEETransform())
