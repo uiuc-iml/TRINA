@@ -26,7 +26,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="Cholera/base_link.STL" />
+          filename="Cholera_calibrated/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -40,7 +40,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="Cholera/base_link.STL" />
+          filename="Cholera_calibrated/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -88,8 +88,8 @@
     name="base_left_base"
     type="fixed">
     <origin
-      xyz="0.0199169066321389 0.184218468750741 1.1474483982822"
-      rpy="2.52611294491941 0.523598775598306 -2.52566187507049" />
+      xyz="0.0012562098034254498 0.1932543267616293 1.2569858725693364"
+      rpy="2.5100806626787446 0.4846408201341714 3.7518758665533896" />
     <parent
       link="base_link" />
     <child
@@ -351,7 +351,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="Cholera/left_wrist2_link.STL" />
+          filename="Cholera_calibrated/left_wrist2_link.STL" />
       </geometry>
       <material
         name="">
@@ -365,7 +365,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="Cholera/left_wrist2_link.STL" />
+          filename="Cholera_calibrated/left_wrist2_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -542,8 +542,8 @@
     name="base_right_base"
     type="fixed">
     <origin
-      xyz="0.0200830892985796 -0.184200425957397 1.1474483982822"
-      rpy="-2.5261129449194 0.523598775598298 2.52656401476832" />
+      xyz="0.0010313332699722 -0.19888109142120516 1.2534172095913139"
+      rpy="3.7445696646064053 0.5074053284196887 2.517032028984335" />
     <parent
       link="base_link" />
     <child
@@ -819,7 +819,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="Cholera/right_wrist2_link.STL" />
+          filename="Cholera_calibrated/right_wrist2_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -1234,39 +1234,40 @@
 <klampt>
     <!-- left gripper Robotiq140 -->
     <mount link = 'left_tool_link' file = "robotiq_140.rob" transform = "0 0 1 0 1 0 -1 0 0  0 0 0" prefix="left_gripper"/>
-    <noselfcollision group1="left_gripper:base_link left_gripper:right_inner_knuckle left_gripper:right_outer_knuckle left_gripper:right_outer_finger left_gripper:left_inner_knuckle left_gripper:left_outer_knuckle  left_gripper:left_outer_finger" group2="left_EE_link left_tool_link left_wrist2_link"/>
+    <noselfcollision group1="left_gripper:base_link left_gripper:right_inner_knuckle left_gripper:right_outer_knuckle left_gripper:right_outer_finger left_gripper:right_inner_finger  left_gripper:right_inner_finger_pad left_gripper:left_inner_knuckle left_gripper:left_outer_knuckle  left_gripper:left_outer_finger  left_gripper:left_inner_finger  left_gripper:left_inner_finger_pad" group2="left_EE_link left_tool_link left_wrist2_link left_wrist1_link"/>
     
     <!-- right gripper Robotiq140 -->
     <!--
     <mount link = 'right_tool_link' file = "robotiq_140.rob" transform = "0 0 1 0 1 0 -1 0 0  0 0 0" prefix="right_gripper"/>
-    <noselfcollision group1="right_gripper:base_link right_gripper:right_inner_knuckle right_gripper:right_outer_knuckle right_gripper:right_outer_finger right_gripper:left_inner_knuckle right_gripper:left_outer_knuckle  right_gripper:left_outer_finger" group2="right_EE_link right_tool_link right_wrist2_link"/>
+    <noselfcollision group1="right_gripper:base_link right_gripper:right_inner_knuckle right_gripper:right_outer_knuckle right_gripper:right_outer_finger right_gripper:right_inner_finger  right_gripper:right_inner_finger_pad right_gripper:left_inner_knuckle right_gripper:left_outer_knuckle  right_gripper:left_outer_finger right_gripper:left_inner_finger  right_gripper:left_inner_finger_pad" group2="right_EE_link right_tool_link right_wrist2_link right_wrist1_link"/>
     -->
-    <!-- right gripper vacuum -->
-    <noselfcollision group1="sucker_link" group2="right_EE_link right_tool_link"/>
 
-    <noselfcollision pairs="left_base_link right_base_link"/>
-    <noselfcollision pairs="left_base_link left_shoulder_link"/>
-    <noselfcollision pairs="left_shoulder_link left_upperarm_link"/>
-    <noselfcollision pairs="left_upperarm_link left_forearm_link"/>
-    <noselfcollision pairs="left_wrist1_link left_forearm_link"/>
-    <noselfcollision pairs="left_wrist1_link left_wrist2_link"/>
-    <noselfcollision pairs="left_EE_link left_wrist2_link"/>
-    <noselfcollision pairs="left_tool_link left_EE_link"/>
-    <noselfcollision pairs="right_base_link right_shoulder_link"/>
-    <noselfcollision pairs="right_shoulder_link right_upperarm_link"/>
-    <noselfcollision pairs="right_upperarm_link right_forearm_link"/>
-    <noselfcollision pairs="right_wrist1_link right_forearm_link"/>
-    <noselfcollision pairs="right_wrist1_link right_wrist2_link"/>
-    <noselfcollision pairs="right_EE_link right_wrist2_link"/>
-    <noselfcollision pairs="right_tool_link right_EE_link"/>
+    <!-- right gripper Robotiq ePick -->
+    <noselfcollision group1="sucker_link" group2="right_EE_link right_tool_link right_wrist2_link right_wrist1_link"/>
+    
+    <noselfcollision group1="left_base_link" group2="right_base_link right_shoulder_link right_upperarm_link"/>
+    <noselfcollision group1="left_base_link" group2="left_upperarm_link"/>
+    <noselfcollision group1="left_shoulder_link" group2="right_shoulder_link"/>
+    <noselfcollision group1="left_wrist2_link" group2="left_forearm_link left_tool_link"/>
+    <noselfcollision pairs="left_EE_link left_wrist1_link"/>
+    <noselfcollision group1="right_base_link" group2="left_shoulder_link left_upperarm_link"/>
+    <noselfcollision group1="right_base_link" group2="right_upperarm_link"/>
+    <noselfcollision group1="right_wrist2_link" group2="right_forearm_link left_tool_link"/>
+    <noselfcollision pairs="right_EE_link right_wrist1_link"/>
     <noselfcollision pairs="left_tool_link right_tool_link"/>
-    <noselfcollision group1="left_tool_link right_tool_link" group2="base_link left_base_link left_shoulder_link left_upperarm_link left_forearm_link left_wrist1_link right_base_link right_shoulder_link right_upperarm_link right_forearm_link right_wrist1_link right_wrist2_link left_EE_link right_EE_link"/>
-    <noselfcollision pairs="left_base_link right_base_link"/>
-    <noselfcollision pairs="head_neck2_link head_neck1_link"/>
-    <noselfcollision pairs="head_neck1_link head_base_link"/>
-    <noselfcollision pairs="base_link head_base_link"/>
-    <noselfcollision pairs="left_wrist2_link left_forearm_link"/>
+    <noselfcollision group1="left_tool_link right_tool_link" group2="base_link left_base_link left_shoulder_link left_upperarm_link left_forearm_link left_wrist1_link left_wrist2_link left_EE_link right_base_link right_shoulder_link right_upperarm_link right_forearm_link right_wrist1_link right_wrist2_link right_EE_link"/>
+    
+    <noselfcollision group1="base_link" group2="head_base_link head_neck1_link head_neck2_link neck_face_link"/>
+    <noselfcollision group1="base_link" group2="left_shoulder_link right_shoulder_link"/>
+    <noselfcollision group1="head_base_link" group2="head_neck2_link neck_face_link"/>
+    <noselfcollision group1="head_neck1_link" group2="neck_face_link"/>
 
+    
+  <sensors>
+   <CameraSensor name="left_realsense" link="left_wrist2_link" Tsensor="0.70248782 -0.04336461 -0.71037341 -0.71162451 -0.02867488 -0.70197458 0.01007099 0.99864772 -0.05100308  0.0333151  -0.04014731  0.12262394" xres="640" yres="480" xfov="1.20428" yfov="0.942478" zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+
+   <CameraSensor name="right_realsense" link="right_wrist2_link" Tsensor="0.95298946 0.11442072 0.28056903 0.27505 0.06178984 -0.95944229 -0.1271164 0.99150891  0.02741365 -0.02864296 -0.05 0.10547307" xres="640" yres="480" xfov="1.20428" yfov="0.942478" zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+  </sensors>
 
 </klampt>
 
