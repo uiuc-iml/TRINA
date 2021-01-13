@@ -218,6 +218,18 @@ class Jarvis:
         """
 		command = self.send_command('self.robot.setBaseVelocity', str(q))
 
+	def setBaseVelocityRamped(self, q, time):
+		"""Set the velocity of the base relative to the local base frame
+
+        Parameter:
+        ---------------
+        q: a list of 2 doubles. The linear and rotational velocites.
+		time specifies the duration
+        """
+		command = self.send_command('self.robot.setBaseVelocityRamped', str(q), str(time))
+
+
+
 	def setTorsoTargetPosition(self, q):
 		"""Set the torso target position.
 
@@ -350,7 +362,7 @@ class Jarvis:
         """
 		command = self.send_command('self.robot.closeRightRobotiqGripper')
 
-	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g=[0]*6,deadband=[0]*6, tool_center=[0,0,0]):
+	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g=[0]*6,deadband=[0]*6, tool_center=[0,0,0],col_mode = False):
 		"""Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -363,15 +375,17 @@ class Jarvis:
         M: a 6x6 numpy 2D array. The inertia matrix.
         x_dot_g: list of 6 elements. The optional desired EE velocity
         deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like "deadband")
+		col_mode: Boolean. This enables increased damping upon collision detection
+
 
         Return:
         -------------
         None
         """
 		command = self.send_command('self.robot.setLeftEETransformImpedance',
-		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(tool_center))
+		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(tool_center),str(col_mode))
 
-	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6, tool_center=[0,0,0]):
+	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6, tool_center=[0,0,0],col_mode = False):
 		"""Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -384,15 +398,17 @@ class Jarvis:
         M: a 6x6 numpy 2D array. The inertia matrix.
         x_dot_g: list of 6 elements. The optional desired EE velocity
         deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like "deadband")
+		col_mode: Boolean. This enables increased damping upon collision detection
+
 
         Return:
         -------------
         None
         """
 		command = self.send_command('self.robot.setRightEETransformImpedance',
-		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(tool_center))
+		 str(Tg),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(tool_center),str(col_mode))
 
-	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,col_mode = False):
 		"""Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -405,15 +421,16 @@ class Jarvis:
         M: a 6x6 numpy 2D array. The inertia matrix.
         x_dot_g: list of 6 elements. The optional desired EE velocity
         deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like "deadband")
+		col_mode: Boolean. This enables increased damping upon collision detection
 
         Return:
         -------------
         None
         """
 		command = self.send_command('self.robot.setLeftLimbPositionImpedance',
-		 str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband))
+		 str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(col_mode))
 
-	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6, col_mode = False):
 		"""Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -426,13 +443,15 @@ class Jarvis:
         M: a 6x6 numpy 2D array. The inertia matrix.
         x_dot_g: list of 6 elements. The optional desired EE velocity
         deadband: list of 6 elements. This is the range for ignoring the wrench readings (kind of like "deadband")
+		col_mode: Boolean. This enables increased damping upon collision detection
+
 
         Return:
         -------------
         None
         """
 		command = self.send_command('self.robot.setRightLimbPositionImpedance',
-				str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband))		
+				str(q),str(K),str(M),str(B),str(x_dot_g),str(deadband),str(col_mode))		
 
 	def setHeadPosition(self,q):
 		command = self.send_command('self.robot.setHeadPosition',

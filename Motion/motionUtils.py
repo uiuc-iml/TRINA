@@ -232,6 +232,7 @@ class LimbState:
         ##handling impedance control
         self.impedanceControl = False
         self.impedance_col = False
+        self.col_mode = False
         #goal transform and velocity
         self.T_g = []
         self.x_dot_g = []

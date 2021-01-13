@@ -41,7 +41,8 @@ limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2
 collision_check_interval = 0.1
 
 #commonly used arm configurations for Anthrax
-left_untucked_config = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+# left_untucked_config = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+left_untucked_config = [0.14728498458862305, -1.6879149876036585, -2.212571144104004, 3.9013611513325195, -0.611485783253805, 0.0978240966796875]
 def mirror_arm_config(config):
     RConfig = []
     RConfig.append(-config[0])
