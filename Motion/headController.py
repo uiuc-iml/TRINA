@@ -47,8 +47,8 @@ class HeadController:
         self.exit = False
         self.position = [0.0,0.0]
         self.positionCommand = [0.0,0.0]
-        self.panLimits = {"center": 180, "min":105, "max":255} #head limits
-        self.tiltLimits = {"center": 205, "min":90, "max":230} #head limits
+        self.panLimits = {"center": 180, "min":70, "max":290} #head limits
+        self.tiltLimits = {"center": 180, "min":90, "max":230} #head limits
         self._controlLoopLock = RLock()
 
     def start(self):

@@ -30,6 +30,7 @@ from enum import Enum
 
 DEGREE_2_RADIAN = 2.0*math.pi/180.0
 
+
 class ControllerMode(Enum):
     ABSOLUTE=0
     CLUTCHING=1
@@ -116,7 +117,7 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.head_active = ('head' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
-
+		self.col_mode = False
 		self.max_disp = 0.125 # To tune
 
 		self.K = np.diag([200.0, 200.0, 200.0, 20.0, 20.0, 20.0])
@@ -153,7 +154,7 @@ class DirectTeleOperation:
 		self.init_headset_orientation = {}
 		self.init_headset_rotation = {} #x,y position
 		self.panLimits = {"center": 180, "min":70, "max":290} #head limits
-		self.tiltLimits = {"center": 205, "min":90, "max":230} #head limits
+		self.tiltLimits = {"center": 180, "min":90, "max":230} #head limits
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
@@ -256,7 +257,7 @@ class DirectTeleOperation:
 
 	def UIStateLogic(self):
 		if(type(self.UI_state)!= int):
-			if self.UI_state["controllerButtonState"]["leftController"]["press"][1] == True :
+			if self.UI_state["controllerButtonState"]["leftController"]["press"][3] == True :
 				self.setHeadToDefault()
 			if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
 				print("Robot Home")
@@ -267,12 +268,15 @@ class DirectTeleOperation:
 				not self.UI_state["controllerButtonState"]["rightController"]
 				["press"][0] and self.last_sens_button_state
 			):
-				# Released the right controller button
+				# Released the right controller button - activating "sniper" mode
 				self.sens_state = (self.sens_state + 1) % 2
 				if self.sens_state == 0:
 					self.sensitivity = 1.0
+					self.col_mode = False
 				else:
 					self.sensitivity = 0.25
+					self.col_mode = True
+					print('setting col_mode')
 				self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 				for limb in (self.left_limb, self.right_limb):
 					self.init_UI_state["controllerPositionState"][limb.joystick]["controllerPosition"] = (
@@ -316,7 +320,7 @@ class DirectTeleOperation:
 						limb.setEETransformImpedance(
 							limb.sensedEETransform(tool_center=self.tool.tolist()),
 							self.K, self.M, [[10*x for x in a] for a in self.B],
-							tool_center=self.tool.tolist())
+							tool_center=self.tool.tolist(),col_mode = self.col_mode)
 						# limb.setEETransformImpedance(
 						# 	limb.sensedEETransform(tool_center=self.tool.tolist()),
 						# 	np.zeros((6,6)).tolist(), self.M, [[100*x for x in a] for a in self.B],
@@ -363,7 +367,7 @@ class DirectTeleOperation:
 		orientation = to_rotvec(self.UI_state['headSetPositionState']['deviceRotation'])
 		init_orientation = to_rotvec(self.init_headset_rotation)
 		panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - init_orientation["y"])), self.panLimits["min"], self.panLimits["max"])
-		tiltAngle = limitTo((self.tiltLimits["center"] - mod180(orientation["x"] - init_orientation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
+		tiltAngle = limitTo((self.tiltLimits["center"] - mod180((orientation["x"] - init_orientation["x"])*2)), self.tiltLimits["min"], self.tiltLimits["max"])
 		
 		# print("init y: ",int(init_orientation['y']),"init x: ",int(init_orientation['x']),
 		# "ori y: ", int(orientation["y"]) , "ori x: ", int(orientation["x"]) ,
@@ -376,13 +380,14 @@ class DirectTeleOperation:
 
 	def baseControl(self):
 		'''controlling base movement'''
-		base_velocity = [0.1*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.2*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
+		base_velocity = [0.2*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.4*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
 		curr_velocity = np.array(self.robot.sensedBaseVelocity())
 		base_velocity_vec = np.array(base_velocity)
 		# if the commanded velocity differs from the actual velocity:
+		base_speed = 0.5
 		if((curr_velocity-base_velocity_vec).sum()!= 0):
 			try:
-				self.robot.setBaseVelocity(base_velocity)
+				self.robot.setBaseVelocityRamped(base_velocity,base_speed)
 			except:
 				print("setBaseVelocity not successful")
 				pass
@@ -429,10 +434,10 @@ class DirectTeleOperation:
 			elif mode == 'velocity':
 				limb.setEEVelocity(error_t, tool = self.tool.tolist())
 			elif mode == 'impedance':
-				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B, tool_center=self.tool.tolist())
+				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B, tool_center=self.tool.tolist(),col_mode = self.col_mode)
 		else:
-			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B])
-
+			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B],col_mode = self.col_mode)
+		print(self.col_mode)
 	def getTargetEETransform(self, limb):
 		"""Get the transform of the end effector attached to the `side` arm
 		in the frame of the <base?> of the robot.
