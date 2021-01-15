@@ -94,22 +94,36 @@ def on_close(ws):
 
 
 def on_open(ws):
-    def run(*args):
+  def run(*args):
         global is_closed
-        a = {"a": 0, "c": 0, "p": {"api": "1.2.0", "cl": "JavaScript"}}
-        b = json.dumps(a).encode('utf-8')
-        # print(b)
+        a = {"a":0,"c":0,"p":{"api":"1.2.0","cl":"JavaScript"}}
+        b =json.dumps(a).encode('utf-8')
+        print(b)
         ws.send(b)
-        # print('this is running')
-        while is_closed == 0:
-            time.sleep(1)
-            # print('sleeping')
+
+        while is_closed==0:
+              time.sleep(1)
         time.sleep(1)
         ws.close()
         print("Thread terminating...")
+        
+        
+    def ping(*args):
+        global is_closed,roomId
+        while is_closed==0:
+             time.sleep(5)
+             if roomId!=-1:
+                  a={"a":7,"c":0,"p":{"t":0,"r":roomId,"u":userId,"m":"PONG","p":{}}}
+                  b= json.dumps(a).encode('utf-8')
+                  ws.send(b)
+                  print("PONG...")
+                     
+        time.sleep(1)
+        #ws.close()
+        print("Ping Thread terminating...")
 
     Thread(target=run).start()
-
+    Thread(target=ping).start()
 
 """Python2 compatibility: json.loads will store keys and string values as
 unicode strings instead of str (byte) strings. This causes an issue in
