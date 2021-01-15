@@ -384,7 +384,9 @@ class DirectTeleOperation:
 		curr_velocity = np.array(self.robot.sensedBaseVelocity())
 		base_velocity_vec = np.array(base_velocity)
 		# if the commanded velocity differs from the actual velocity:
-		base_speed = 0.5
+		# base_speed = 0.25
+		delta_vel = np.abs(base_velocity_vec - curr_velocity)
+		base_speed = np.max(delta_vel)/1.2
 		if((curr_velocity-base_velocity_vec).sum()!= 0):
 			try:
 				self.robot.setBaseVelocityRamped(base_velocity,base_speed)
