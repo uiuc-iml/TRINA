@@ -154,7 +154,7 @@ class DirectTeleOperation:
 		self.init_headset_orientation = {}
 		self.init_headset_rotation = {} #x,y position
 		self.panLimits = {"center": 180, "min":70, "max":290} #head limits
-		self.tiltLimits = {"center": 180, "min":90, "max":230} #head limits
+		self.tiltLimits = {"center": 180, "min":200, "max":230} #head limits
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
@@ -439,7 +439,6 @@ class DirectTeleOperation:
 				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B, tool_center=self.tool.tolist(),col_mode = self.col_mode)
 		else:
 			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B],col_mode = self.col_mode)
-		print(self.col_mode)
 	def getTargetEETransform(self, limb):
 		"""Get the transform of the end effector attached to the `side` arm
 		in the frame of the <base?> of the robot.
