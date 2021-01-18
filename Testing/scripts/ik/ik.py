@@ -5,6 +5,7 @@ import scipy as sp
 import scipy.optimize as opt
 import numpy as np
 import sys
+import time
 sys.path.append("../../../Motion")
 import TRINAConfig
 
@@ -43,11 +44,14 @@ def main():
     current_pos = robot.link(link_name).getTransform()
     target = klampt.math.se3.mul(delta, current_pos)
     lam = 0.1
+    s = time.monotonic()
     res = opt.minimize(
         ik_obj(robot.getConfig(), link_name, target, robot, lam),
-        init_guess, method='Newton-CG',
+        init_guess, method='Nelder-Mead',
         jac=ik_jac(robot.getConfig(), link_name, target, robot, lam))
+    e = time.monotonic()
     print(res)
+    print(f"Took {e - s} seconds")
 
 
 def ik_obj(q, link_name, target, robot, lam):
@@ -56,7 +60,7 @@ def ik_obj(q, link_name, target, robot, lam):
             [0] -> base rotation about the world z axis
             [1:] -> joint angles of the arms
         """
-        # obj = lam * abs(x[0] - q[BASE_R_IND])
+        obj = lam * abs(x[0] - q[BASE_R_IND])
         obj = lam * (x[0] - q[BASE_R_IND])**2
         config = q[:]
         config[BASE_R_IND] = x[0]
@@ -66,7 +70,9 @@ def ik_obj(q, link_name, target, robot, lam):
         ee_t = robot.link(link_name).getTransform()
         error = np.array(klampt.math.se3.error(ee_t, target))
         obj += np.linalg.norm(error)
-        print(obj, lam * abs(x[0] - q[BASE_R_IND]))
+        # jac = np.array(robot.link(link_name).getJacobian([0,0,0]))
+        # obj += 0.01 * np.linalg.cond(jac)
+        # print(obj, lam * abs(x[0] - q[BASE_R_IND]))
         return obj
     return f
 
@@ -91,9 +97,9 @@ def ik_jac(q, link_name, target, robot, lam):
         relevant_grad[0] = grad[BASE_R_IND]
         for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
             relevant_grad[i+1] = grad[ind]
-        # relevant_grad[0] += lam * np.sign(x[0] - q[BASE_R_IND])
+        relevant_grad[0] += lam * np.sign(x[0] - q[BASE_R_IND])
         relevant_grad[0] += lam * 2 * (x[0] - q[BASE_R_IND])
-        print(lam * np.sign(x[0] - q[BASE_R_IND]), x[0], q[BASE_R_IND])
+        # print(lam * np.sign(x[0] - q[BASE_R_IND]), x[0], q[BASE_R_IND])
         return relevant_grad
     return jac
 
