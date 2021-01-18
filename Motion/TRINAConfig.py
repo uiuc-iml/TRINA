@@ -41,7 +41,8 @@ limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2
 collision_check_interval = 0.1
 
 #commonly used arm configurations for Anthrax
-left_untucked_config = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+# left_untucked_config = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+left_untucked_config = [0.14728498458862305, -1.6879149876036585, -2.212571144104004, 3.9013611513325195, -0.611485783253805, 0.0978240966796875]
 def mirror_arm_config(config):
     RConfig = []
     RConfig.append(-config[0])
@@ -224,7 +225,7 @@ def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3,he
     elif(name == 'half_anthrax'):
         return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
     elif(name == 'cholera'):
-        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]*18
+        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]*13
     else:
         print("wrong model name used.")
         return None

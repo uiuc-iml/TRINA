@@ -25,7 +25,7 @@ class C2:
         self.interface = RedisInterface(host="localhost")
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
-        self.sleep_time = 5
+        self.sleep_time = 0
         atexit.register(self.shutdown)
         for i in self.processes:
             i.start()
@@ -39,6 +39,7 @@ class C2:
             # print('idling C2')
             time.sleep(self.sleep_time)
             a = self.jarvis.get_rgbd_images()
+            print('got images {}'.format(a.keys()))
             # print('got Images! 2',a['realsense_right'][0].shape)
             # plt.imshow(a['realsense_right'][0])
             # plt.show()

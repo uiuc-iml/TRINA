@@ -24,7 +24,7 @@ import logging
 from datetime import datetime
 
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d_%m_%Y') + ".log"
-logger = trina_logging.get_logger(__name__,logging.INFO, filename)
+logger = trina_logging.get_logger(__name__,logging.WARNING, filename)
 
 class Motion:
 
@@ -400,6 +400,8 @@ class Motion:
                         elif self.base_state.commandType == 0 and not base_state.commandSent:
                             self.base_state.commandSent = True
                             self.base.setTargetPosition(self.base_state.commandedVel)
+                        elif self.base_state.commandType == 2:
+                            self.base.setCommandedVelocityRamped(self.base_state.commandedVel,self.base_state.rampDuration)
                     if self.torso_enabled:
                         if not self.torso_state.commandSent:
                            self.torso_state.commandSent = True
@@ -499,14 +501,12 @@ class Motion:
             res,target_config = self._impedance_drive(limb)
             #res = 0 means IK has failed completely, 1 success, 2 means force overload
             if res == 0:
-                # TODO: Why is this cartesian_drive_failure?
-                self.cartesian_drive_failure = True
                 limb.state.set_mode_position(limb.state.sensedq)
             elif res == 1:
                 limb.setConfig(target_config)
-            elif res == 2:
-                # TODO: I'm concerned.
-                self.setLimbPositionLinear(limb, target_config, 2)
+            # elif res == 2:
+            #     # TODO: I'm concerned.
+            #     self.setLimbPositionLinear(limb, target_config, 2)
         else:
             ### Velocity control or position control.
             if not limb.state.commandSent:
@@ -608,7 +608,7 @@ class Motion:
         return
 
     # TODO: Refactor incomplete
-    def setLimbPositionLinear(self, limb, q, duration):
+    def setLimbPositionLinear(self, limb, q, duration,col_check = True):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -621,15 +621,15 @@ class Motion:
         """
         if not self.pause_motion_flag:
             if limb.name == "left":
-                self.setLeftLimbPositionLinear(q, duration)
+                self.setLeftLimbPositionLinear(q, duration,col_check)
             else:
-                self.setRightLimbPositionLinear(q, duration)
+                self.setRightLimbPositionLinear(q, duration,col_check)
         else:
             logger.warning('Motion:paused')
             print('Motion:paused')
 
 
-    def setLeftLimbPositionLinear(self,q,duration):
+    def setLeftLimbPositionLinear(self,q,duration,col_check = True):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -647,7 +647,10 @@ class Motion:
             #TODO:Also collision checks
             if self.left_limb.enabled:
                 self._controlLoopLock.acquire()
-                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
+                if col_check:
+                    res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
+                else:
+                    res = False
                 #planningTime = 0.0 + TRINAConfig.ur5e_control_rate
                 #positionQueue = []
                 #currentq = self.left_limb.state.sensedq
@@ -671,7 +674,7 @@ class Motion:
             logger.warning('Motion:paused')
             print('Motion:paused')
 
-    def setRightLimbPositionLinear(self,q,duration):
+    def setRightLimbPositionLinear(self,q,duration,col_check = True):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -689,7 +692,10 @@ class Motion:
             #Also collision checks
             if self.right_limb.enabled:
                 self._controlLoopLock.acquire()
-                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
+                if col_check:
+                    res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
+                else:
+                    res = False
                 if res:
                     logger.warning('Collision midway')
                     print("motion.setRightLimbPosition():collision midway")
@@ -898,7 +904,7 @@ class Motion:
                 if not limb.state.cartesianDrive:
                     limb.state.set_mode_position(limb.state.sensedq)
                     self.cartesian_drive_failure = False
-
+                    limb.state.counter = 0
                     ##cartesian velocity drive
                     limb.state.cartesianDrive = True
                     limb.state.driveTransform = (R,vectorops.add(so3.apply(R,tool),t))
@@ -923,7 +929,7 @@ class Motion:
         if not self.pause_motion_flag:
             self.setEEVelocity(self.right_limb, v, tool)
 
-    def setEETransformImpedance(self,limb,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0]):
+    def setEETransformImpedance(self,limb,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0],col_mode = False):
         """Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -988,49 +994,36 @@ class Motion:
                 limb.state.toolCenter = copy(tool_center)
                 limb.state.prev_wrench = np.array([0]*6)
 
-        formulation = 2
-        #if already in impedance control, then do not reset x_mass and x_dot_mass
-        if (not limb.state.impedanceControl) or vectorops.norm(vectorops.sub(limb.state.toolCenter,tool_center)):
-            limb.state.set_mode_reset()
             if formulation == 2:
                 limb.state.T_g = copy(Tg)
             elif formulation == 1:
-                T = limb.sensedEETransform(tool_center = [0, 0, 0])
-                limb.state.x_mass = T[1] + so3.moment(T[0])
-            (v,w) = limb.sensedEEVelocity(tool_center)
-            limb.state.x_dot_mass = v+w
-            limb.state.toolCenter = copy(tool_center)
-            limb.state.prev_wrench = np.array([0]*6)
+                limb.state.x_g = Tg[1] + so3.moment(Tg[0])
 
-        if formulation == 2:
-            limb.state.T_g = copy(Tg)
-        elif formulation == 1:
-            limb.state.x_g = Tg[1] + so3.moment(Tg[0])
+            limb.state.impedanceControl = True
 
-        limb.state.impedanceControl = True
-
-        limb.state.x_dot_g = copy(x_dot_g)
-        limb.state.K = np.copy(K)
-        limb.state.counter = 1
-        limb.state.deadband = copy(deadband)
-        if np.any(np.isnan(B)):
-            limb.state.B = np.sqrt(4.0*np.dot(M,K))
-        else:
-            limb.state.B = np.copy(B)
-        Minv = np.linalg.inv(M)
-        limb.state.Minv = Minv
-        self._controlLoopLock.release()
+            limb.state.x_dot_g = copy(x_dot_g)
+            limb.state.K = np.copy(K)
+            limb.state.counter = 1
+            limb.state.deadband = copy(deadband)
+            if np.any(np.isnan(B)):
+                limb.state.B = np.sqrt(4.0*np.dot(M,K))
+            else:
+                limb.state.B = np.copy(B)
+            Minv = np.linalg.inv(M)
+            limb.state.Minv = Minv
+            limb.state.col_mode = col_mode
+            self._controlLoopLock.release()
         return 0
 
-    def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0]):
+    def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0],col_mode = False):
         if not self.pause_motion_flag:
-            return self.setEETransformImpedance(self.left_limb, Tg, K, M, B, x_dot_g, deadband, tool_center)
+            return self.setEETransformImpedance(self.left_limb, Tg, K, M, B, x_dot_g, deadband, tool_center,col_mode)
 
-    def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0]):
+    def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0],col_mode = False):
         if not self.pause_motion_flag:
-            return self.setEETransformImpedance(self.right_limb, Tg, K, M, B, x_dot_g, deadband, tool_center)
+            return self.setEETransformImpedance(self.right_limb, Tg, K, M, B, x_dot_g, deadband, tool_center,col_mode)
 
-    def setLimbPositionImpedance(self,limb,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3):
+    def setLimbPositionImpedance(self,limb,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3,col_mode = False):
         """Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -1060,13 +1053,13 @@ class Motion:
             self.setEETransformImpedance(limb,EETransform,K,M,B,x_dot_g,deadband,tool_center)
         return 0
 
-    def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3):
+    def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3,col_mode = False):
         if not self.pause_motion_flag:
-            return self.setLimbPositionImpedance(self.left_limb, q, K, M, B, x_dot_g, deadband, tool_center)
+            return self.setLimbPositionImpedance(self.left_limb, q, K, M, B, x_dot_g, deadband, tool_center,col_mode)
 
-    def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3):
+    def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3,col_mode = False):
         if not self.pause_motion_flag:
-            return self.setLimbPositionImpedance(self.right_limb, q, K, M, B, x_dot_g, deadband, tool_center)
+            return self.setLimbPositionImpedance(self.right_limb, q, K, M, B, x_dot_g, deadband, tool_center,col_mode)
 
     def sensedLeftEETransform(self,tool_center=[0,0,0]):
         """Return the transform of the tool position w.r.t. the base frame
@@ -1084,7 +1077,7 @@ class Motion:
         else:
             logger.warning('Left limb not enabled.')
             print("Left limb not enabled.")
-            return
+            return "NA"
 
     def sensedLeftEEVelocity(self,local_pt = [0,0,0]):
         """Return the EE translational and rotational velocity  w.r.t. the base Frame
@@ -1266,6 +1259,8 @@ class Motion:
             else:
                 logger.warning('Head not enabled.')
                 print('Head not enabled.')
+
+        return "NA"
 
     def sensedBaseVelocity(self):
         """Returns the current base velocity
@@ -1889,12 +1884,13 @@ class Motion:
             logger.info('CartesianDrive IK has succeeded')
             # Converting to numpy array to use slice-by-list.
 
-            col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
-            if col_res:
-                logger.error('Collision Midway')
-                print('Collision midway')
-                return 0,np.array(self.robot_model.getConfig())[limb.active_dofs]
-
+            if limb.state.counter % 20 == 0:
+                col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
+                if col_res:
+                    logger.error('Collision Midway')
+                    print('Collision midway')
+                    return 0,np.array(self.robot_model.getConfig())[limb.active_dofs]
+            limb.state.counter += 1
             target_config = np.array(self.robot_model.getConfig())[limb.active_dofs]
 
             limb.state.driveTransform = target_transform
@@ -1997,8 +1993,9 @@ class Motion:
                 state.increaseB = True
 
             # print(f"DAMPING STATE: {[state.increaseB,mag]}")
-            # if state.increaseB:
-            #     effective_b *= 20
+            if state.col_mode:
+                if state.increaseB:
+                    effective_b *= 20
 
             for i in range(6):
                 if state.deadband[i] > 0:
@@ -2032,17 +2029,20 @@ class Motion:
         else:
             target_config = np.array(self.robot_model.getConfig())[limb.active_dofs]
 
-        col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
-        if col_res:
-            stop = True
-            logger.error('ImpedanceDrive collision detected,exited..')
-            print("collision detected,exited..")
-
+        if state.counter % 20 == 0:
+            col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
+            if col_res:
+                limb.impedance_col = True
+                stop = True
+                logger.error('ImpedanceDrive collision detected,exited..')
+                print("collision detected,exited..")
+            else:
+                limb.impedance_col = False
         self.robot_model.setConfig(initial_config)
 
         if stop:
             # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS
-            return 2,target_config.tolist()
+            return 0,0
         else:
             return 1,target_config.tolist()
 
@@ -2093,23 +2093,18 @@ if __name__=="__main__":
     # robot.shutdown()
 
 
+    # robot = Motion(mode = 'Physical',components = ['left_limb', 'right_limb'],codename = "cholera")
+    # robot.startup()
+    # time.sleep(0.5)
+    # print(robot.getKlamptSensedPosition())
+    # robot.shutdown()
 
-
-    robot = Motion(mode = 'Kinematic',components = ['left_limb', 'right_limb'],codename = "cholera")
-    world = robot.world
-    vis.add("world",world)
-    vis.show()
+    robot = Motion(mode = 'Physical',components = ['base'],codename = "cholera")
     robot.startup()
-    robot.setRightLimbPositionLinear(TRINAConfig.right_untucked_config, 5)
-    robot.setLeftLimbPositionLinear(TRINAConfig.left_untucked_config, 5)
-    time.sleep(5)
-
-    robot.setRightEEVelocity([0,0.1,0,0,0,0])
-    robot.setLeftEEVelocity([0,-0.1,0,0,0,0])
-    while True:
-        vis.lock()
-        vis.unlock()
-        time.sleep(0.02)
-
-    vis.exit()
+    time.sleep(0.2)
+    robot.setBaseVelocityRamped([0.0,0],1)
+    time.sleep(2)
+    robot.setBaseVelocityRamped([0.0,0],1)
+    time.sleep(2)
+    print('flag')
     robot.shutdown()

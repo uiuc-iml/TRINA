@@ -139,6 +139,7 @@ class BaseController:
                     if self.v_queue is not None and self.w_queue is not None and self.queue_idx < len(self.v_queue):
                         self.cmd_pub.publish(create_twist([self.v_queue[self.queue_idx], self.w_queue[self.queue_idx]]))
                         self.queue_idx += 1
+                        # print('---------------')
                     else:
                         self.v_queue = None
                         self.w_queue = None
@@ -177,7 +178,7 @@ class BaseController:
         self.not_paused = True
 
     def shutdown(self):
-        self.not_paused = False
+        self.shutdown_flag = True
         self.commanded_vel = [0.0, 0.0]
         print("BaseController:shutdown called")
 
@@ -203,21 +204,24 @@ class BaseController:
         else:
             if cmd_vel == self.commanded_vel:
                 return
-            else:
-                print("resetting ramped velocity...")
-
+            # else:
+            #     print("resetting ramped velocity...")
         target_v, target_w = cmd_vel
         curr_v, curr_w = self.measured_vel
         delta_v = target_v - curr_v
-        N = int(abs(delta_v/self.dt * v_ramp_time))
-
+        delta_w = target_w - curr_w
+        # N = int(abs(delta_v/self.dt * v_ramp_time))
+        # print(v_ramp_time,self.dt,v_ramp_time/self.dt)
+        N = max(int(v_ramp_time/self.dt),1)
+        # print(N)
         v_queue = []
         for i in range(N):
-            delta = float(i)/float(N)*target_v
+            delta = float(i)/float(N)*delta_v
             v_queue.append(curr_v + delta)
+
         w_queue = []
         for i in range(N):
-            delta = float(i)/float(N)*target_w
+            delta = float(i)/float(N)*delta_w
             w_queue.append(curr_w + delta)
 
         self.v_queue = v_queue
