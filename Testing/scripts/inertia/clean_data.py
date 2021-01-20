@@ -91,6 +91,7 @@ def main():
             ee_transform = link.getTransform()
             ee_twist = jac @ np.array(vels)
             dt = meas[t] - last_t
+            # Compute accel for the learner
             ee_accel = (ee_twist - last_ee_twist) / dt
             ee_wrench = np.array(meas[w]) - tare_value
             data_array[i - 1] = np.concatenate([np.array(ee_transform[0]),
@@ -100,6 +101,7 @@ def main():
 
             last_t = meas[t]
             last_ee_twist = ee_twist
+    # Split data into train and test
     train_ind = int((1 - args.test) * len(data_array))
     np.random.shuffle(data_array)
     train_data = data_array[:train_ind]
