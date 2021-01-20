@@ -24,8 +24,10 @@ def main():
     parser.add_argument("-w", type=str, default="TRINA_world_cholera.xml",
         help="world file name")
     parser.add_argument("-t", type=int, default=100,
-        help="number of measurements to average to compute tear, use first "
-        + "`tear_num` readings")
+        help="number of measurements to average to compute tare, use first "
+        + "`tare_num` readings")
+    parser.add_argument("--test", type=float, default=0.1,
+        help="proprtion of data held out for testing")
     args = parser.parse_args()
 
     logger = logging.getLogger(__name__)
@@ -48,13 +50,13 @@ def main():
         #   'velocity'
         #   'wrench' -- wrench is force, then torque
         data = pickle.load(inp)
-    tear_value = np.zeros(6)
+    tare_value = np.zeros(6)
     if args.t <= len(data):
         for i in range(args.t):
-            tear_value += np.array(data[i][w])
-        tear_value /= args.t
+            tare_value += np.array(data[i][w])
+        tare_value /= args.t
     else:
-        logger.warn(f"Skipped tear because tear_num={args.t} was greater "
+        logger.warn(f"Skipped tare because tare_num={args.t} was greater "
             + f"than the number of datapoints ({len(data)})")
     world = klampt.WorldModel()
     fn = args.p + args.w
@@ -90,7 +92,7 @@ def main():
             ee_twist = jac @ np.array(vels)
             dt = meas[t] - last_t
             ee_accel = (ee_twist - last_ee_twist) / dt
-            ee_wrench = np.array(meas[w]) - tear_value
+            ee_wrench = np.array(meas[w]) - tare_value
             data_array[i - 1] = np.concatenate([np.array(ee_transform[0]),
                 np.array(ee_transform[1]), ee_twist,
                 last_ee_twist, ee_accel, np.array(dt).reshape(-1),
@@ -98,8 +100,13 @@ def main():
 
             last_t = meas[t]
             last_ee_twist = ee_twist
-    np.save('data.npy', data_array)
-    np.save('tear.npy', tear_value)
+    train_ind = int((1 - args.test) * len(data_array))
+    np.random.shuffle(data_array)
+    train_data = data_array[:train_ind]
+    test_data = data_array[train_ind:]
+    np.save('train_data.npy', train_data)
+    np.save('test_data.npy', test_data)
+    np.save('tare.npy', tare_value)
 
 
 if __name__ == "__main__":
