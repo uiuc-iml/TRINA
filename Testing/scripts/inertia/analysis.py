@@ -3,6 +3,7 @@ import numpy as np
 import pickle
 import argparse
 import klampt
+import matplotlib.pyplot as plt
 import sys
 sys.path.append("../../../Motion")
 import TRINAConfig
@@ -93,15 +94,50 @@ def main():
             d_omega_vals.append(ee_accel[:3])
             d_v_vals.append(ee_accel[3:])
             w_vals.append(ee_wrench)
-            #w_vals.append(np.zeros(6))
+            # w_vals.append(np.zeros(6))
 
             last_t = meas[t]
             last_ee_twist = ee_twist
     logger.info("Finished loading data, starting optimization")
-    res = opt.minimize(
-        objective(times, R_vals, p_vals, omega_vals, d_omega_vals, v_vals,
-            d_v_vals, w_vals),
-        np.zeros(10))
+    start = np.array([0.0084, 0, 0, 0.0064, 0, 0.0023, 0, 0, 0.0624, 1.0182])
+    # start = np.array([ 4.96670394e-02,  9.18877726e-02,  1.73765360e-01,  9.33424707e-01,
+    #     1.47458136e-01,  1.30701951e-16, 0, 0,
+    #    0.8,  9.48624154e-04])
+    # res = opt.minimize(
+    #     objective(times, R_vals, p_vals, omega_vals, d_omega_vals, v_vals,
+    #         d_v_vals, w_vals),
+    #     start,
+    #     constraints=[
+    #         {'type':'ineq', 'fun': lambda x: x[-1]},    # Mass is nonnegative
+    #         {'type':'ineq', 'fun': lambda x: x[0]},     # So are diags of I matrix
+    #         {'type':'ineq', 'fun': lambda x: x[3]},
+    #         {'type':'ineq', 'fun': lambda x: x[5]},
+    #         {'type':'eq', 'fun': lambda x: x[1]},       # Try diag I matrix
+    #         {'type':'eq', 'fun': lambda x: x[2]},
+    #         {'type':'eq', 'fun': lambda x: x[4]},
+    #     ])
+    # tmp = objective(times, R_vals, p_vals, omega_vals, d_omega_vals, v_vals,
+    #         d_v_vals, w_vals)
+    # x_vals = np.linspace(-2, 2, 100)
+    # y_vals = np.zeros(len(x_vals))
+    # for i, x in enumerate(x_vals):
+    #     v = start
+    #     v[-1] = x
+    #     y_vals[i] = tmp(v)
+    y_vals = np.linalg.norm(error(start, times, R_vals, p_vals,
+        omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)[0], axis=1)
+    y_vals, preds, targs = error(start, times, R_vals, p_vals,
+            omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)
+    # plt.plot(y_vals)
+    plt.plot(preds, label="Pred")
+    # plt.plot(targs, label="Targets")
+    # plt.plot(omega_vals, label="Omega")
+    # plt.plot(d_omega_vals, label="D_Omega")
+    # plt.plot(v_vals, label="V")
+    # plt.plot(d_v_vals, label="D_V")
+    # plt.plot(w_vals, label="Wrench")
+    plt.legend(loc='lower left')
+    plt.show()
     logger.info("Finished optimization:")
     logger.info(str(res))
 
@@ -115,47 +151,61 @@ def objective(t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
     inp[9] m
     """
     def f(inp):
-        I = np.array([
-            [inp[0], inp[1], inp[2]],
-            [inp[1], inp[3], inp[4]],
-            [inp[2], inp[4], inp[5]]
-        ])
-        r = inp[6:9]
-        m = inp[9]
-        obj = 0
-        g = np.array([0, 0, -9.81])
-        grav = np.array([m*g, np.zeros(3)]).flatten()
-        init_p = np.array(p_s[0])
-        init_R = np.array(R_s[0]).reshape(-1,3).T
-        tare_offset = np.concatenate((m*g,
-            np.cross((init_p + init_R @ r), m*g)))
-        for i, t in enumerate(t_s):
-            R = np.array(R_s[i]).reshape(-1, 3).T
-            p = np.array(p_s[i])
-            Ic = R.T @ I @ R
-            accel_mat = np.zeros((6, 6))
-            accel_mat[0:3, 0:3] = m * np.eye(3)
-            accel_mat[3:6, 3:6] = Ic
-
-            d_omega = np.array(d_omega_s[i])
-            d_v = np.array(d_v_s[i])
-            accel = np.array([d_v + np.cross(d_omega, R @ r),
-                d_omega]).flatten()
-
-            omega = np.array(omega_s[i])
-            c_vec = np.cross(omega, Ic @ omega)
-            c_vec = np.array([np.zeros(3), c_vec]).flatten()
-
-            f = w_s[i][0:3]
-            tau = w_s[i][3:6]
-            target = np.array([f, tau
-                - (p + R @ (m * np.cross(r, g)))]).flatten() - tare_offset
-            obj += np.linalg.norm(accel_mat @ accel + c_vec + grav - target)**2
+        errors = error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s)
         # Important: Averaging over number of measurements was necessary for
         # achieving convergence, perhaps the slopes change too quickly without
         # it.
-        return obj / len(t_s)
+        return np.mean(np.linalg.norm(errors, axis=1)**2)
+
+
     return f
+
+
+def error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
+    I = np.array([
+        [inp[0], inp[1], inp[2]],
+        [inp[1], inp[3], inp[4]],
+        [inp[2], inp[4], inp[5]]
+    ])
+    r = inp[6:9]
+    m = inp[9]
+    errors = np.empty((len(t_s), 6))
+    targets = np.empty((len(t_s), 6))
+    predictions = np.empty((len(t_s), 6))
+    g = np.array([0, 0, -9.81])
+    grav = np.array([m*g, np.zeros(3)]).flatten()
+    init_p = np.array(p_s[0])
+    init_R = np.array(R_s[0]).reshape(-1,3).T
+    tare_offset = np.concatenate((m*g,
+        np.cross(init_p + (init_R @ r), m*g)))
+    print("Tare offset: ", tare_offset)
+    # tare_offset = np.zeros(6)
+    for i, t in enumerate(t_s):
+        R = np.array(R_s[i]).reshape(-1, 3).T
+        p = np.array(p_s[i])
+        Ic = R @ I @ R.T
+        accel_mat = np.zeros((6, 6))
+        accel_mat[:3, :3] = m * np.eye(3)
+        accel_mat[3:, 3:] = Ic
+
+        d_omega = np.array(d_omega_s[i])
+        d_v = np.array(d_v_s[i])
+        accel = np.array([d_v + np.cross(d_omega, p + R @ r),
+            d_omega]).flatten()
+
+        omega = np.array(omega_s[i])
+        c_vec = np.cross(omega, Ic @ omega)
+        c_vec = np.array([np.zeros(3), c_vec]).flatten()
+
+        f = np.array(w_s[i][:3]) + tare_offset[:3]
+        tau = np.array(w_s[i][3:]) + tare_offset[3:]
+        target = np.array([f, tau
+            - np.cross(p + R @ r, m * g)]).flatten()
+        pred = accel_mat @ accel + c_vec + grav
+        errors[i] = pred - target
+        predictions[i] = pred
+        targets[i] = target
+    return errors, predictions, targets
 
 
 if __name__ == "__main__":

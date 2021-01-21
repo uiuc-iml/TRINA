@@ -3,6 +3,7 @@ import time
 import argparse
 import numpy as np
 import pickle
+import threading
 sys.path.append("/home/motion/TRINA")
 from Motion import MotionClient
 from Motion import TRINAConfig
@@ -10,6 +11,9 @@ from klampt.io.loader import load
 from klampt.model.trajectory import RobotTrajectory
 
 CODENAME = 'cholera'
+COMPONENTS = ['left_limb']
+MODE = "Physical"
+C_FLAG = True
 
 
 def main():
@@ -18,7 +22,7 @@ def main():
 		default='inertia_record.p', help='output file name')
 	args = parser.parse_args()
 	mc = MotionClient()
-	mc.startServer(mode = "Physical", components = ['left_limb'], codename = CODENAME)
+	mc.startServer(mode=MODE, components=COMPONENTS, codename=CODENAME)
 	mc.startup()
 	time.sleep(0.05)
 	traj = load('auto', 'cholera.path')
@@ -38,6 +42,9 @@ def main():
 	#print("Setting velocity")
 	#mc.setLeftLimbVelocity([1]*6)
 	#time.sleep(init_time)
+	collection_thread = threading.Thread(target=data_collection_thread,
+		daemon=True)
+	collection_thread.start()
 	for i, q in enumerate(traj.milestones):
 		if i < len(traj.milestones) - 1:
 			q_l = np.array(mc.sensedLeftLimbPosition())
@@ -55,11 +62,25 @@ def main():
 				mc.setLeftLimbPositionLinear(
 					q_t.tolist(),
 					interval / interpolation_points)
-				collect_data(data, mc)
 				time.sleep(interval / interpolation_points)
+	C_FLAG = False
+	collection_thread.join()
 	with open(args.outfile, "wb") as of:
 		pickle.dump(data, of)
 	mc.shutdown()
+
+
+def data_collection_thread(collection):
+	# Second motion client that only reads -> don't need to worry about locking
+	# because it will never send a command that conflicts with the other
+	# MotionClient
+	mc = MotionClient()
+	mc.startServer(mode=MODE, components=COMPONENTS, codename=CODENAME)
+	mc.startup()
+	time.sleep(0.05)
+	while(C_FLAG):
+		collect_data(collection, mc)
+		time.sleep(1/20)
 
 
 def collect_data(collection, mc):
