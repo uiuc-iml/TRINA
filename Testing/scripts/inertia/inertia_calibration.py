@@ -86,7 +86,7 @@ def data_collection_thread(collection):
 def collect_data(collection, mc):
 	p = mc.sensedLeftLimbPosition()
 	v = mc.sensedLeftLimbVelocity()
-	w = mc.sensedLeftEEWrench()
+	w = mc.sensedLeftEEWrench(frame='local')
 	collection.append({
 		'time': time.time(),
 		'position': p,
