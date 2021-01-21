@@ -31,8 +31,9 @@ def main():
 	init_time = 10
 	q_i = []
 	data = []
-	for t in TRINAConfig.get_left_active_Dofs(CODENAME):
-		q_i.append(traj.milestones[0][t])
+	for i, t in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
+		# q_i.append(traj.milestones[0][t])
+		q_i.append(TRINAConfig.left_untucked_config[i])
 	mc.setLeftLimbPositionLinear(q_i, init_time)
 	time.sleep(init_time)
 	init_points = 100
