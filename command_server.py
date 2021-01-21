@@ -98,10 +98,7 @@ class testingWorldBuilder():
 					 [1.0, 0, 0, 1], 1)
 		# add one mesh
 		random.seed(30)
-		self.addRandomMesh([0 + x, -1.0 + y, self.table_height], 1)
-		self.addRandomMesh([0 + x, -1.2 + y, self.table_height], 2)
-		self.addRandomMesh([0.2 + x, -1.0 + y, self.table_height], 3)
-		self.addRandomMesh([-0.2 + x, -1.2 + y, self.table_height], 4)
+		self.addRandomMesh([-0.4 + x, -1.0 + y, self.table_height], 1)
 
 	def addIndoorNavScenario(self):
 		"""
@@ -401,7 +398,6 @@ class CommandServer:
 		for i in self.always_active:
 			self.active_modules[i] = True
 		self.start_modules(self.modules,startup = True)
-		time.sleep(3)
 
 		print('\nall modules started succesfully\n')
 		print('\n starting state receiver \n')
@@ -420,10 +416,11 @@ class CommandServer:
 		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
 		moduleMonitorThread.start()
 		print('\n module monitor started\n')
-
+		
 		atexit.register(self.shutdown_all)
 		if mode == "Kinematic":
 			self.setRobotToDefault()
+
 		
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
@@ -955,11 +952,10 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb','base'], modules = ['DirectTeleOperation', 'PointClickGrasp'], codename = 'bubonic')
+	server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb','base'], modules = ['PointClickGrasp'], codename = 'bubonic')
 	# server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
 	
-	print(server.robot.closeLeftRobotiqGripper())
-	print(server.robot.sensedLeftEETransform())
+	#server.robot.closeLeftRobotiqGripper()
 	while(True):
-		time.sleep(100)
+		time.sleep(1)
 		pass

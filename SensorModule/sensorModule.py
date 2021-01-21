@@ -177,7 +177,6 @@ class Camera_Robot:
             glLightfv(GL_LIGHT1, GL_SPECULAR, [0.5, 0.5, 0.5, 1])
             glEnable(GL_LIGHT1)
             self.simUpdaterThread = threading.Thread(target=self.update_sim)
-            self.simUpdaterThread.daemon = True
             self.simUpdaterThread.start()
             self.pcUpdaterThread = threading.Thread(target=self.update_point_clouds)
             self.pcUpdaterThread.daemon = True
@@ -344,10 +343,10 @@ class Camera_Robot:
                 print('error updating robot state')
                 print(e)
             try:
-                # print('setting config')
+                print('setting config')
                 self.simrobot.setConfig(q)
                 # print('updating simulation world')
-                self.sim.updateWorld()
+                # self.sim.updateWorld()
                 # with self.simlock:
                 # self.sim.simulate(self.dt)
                 # print('simulating left')
@@ -358,10 +357,10 @@ class Camera_Robot:
                 time.sleep(0.01)
                 # print('updating images')
                 self.left_image = list(sensing.camera_to_images(
-                    self.left_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
+                    self.left_cam, image_format='numpy', color_format='channels')) + [time.time()]
                 # print('returning images right')
                 self.right_image = list(sensing.camera_to_images(
-                    self.right_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
+                    self.right_cam, image_format='numpy', color_format='channels')) + [time.time()]
                 # print('returned images right!')
 
                 elapsed_time = time.time() - start_time
@@ -421,6 +420,7 @@ class Camera_Robot:
         curr_pose_child = None
         exit = False
         while not exit:
+            time.sleep(0.01)
             if conn.poll():
                 ros_msg, curr_pose_child, exit = conn.recv()
                 if exit:
@@ -522,9 +522,9 @@ class RealSenseCamera:
         points = self.pc.calculate(depth_frame)
         vtx = np.asarray(points.get_vertices())
         pure_point_cloud = np.zeros((640*480, 3))
-        pure_point_cloud[:, 0] = -vtx['f0']
-        pure_point_cloud[:, 1] = -vtx['f1']
-        pure_point_cloud[:, 2] = -vtx['f2']
+        pure_point_cloud[:, 0] = vtx['f0']
+        pure_point_cloud[:, 1] = vtx['f1']
+        pure_point_cloud[:, 2] = vtx['f2']
         color_t = np.asarray(color_frame.get_data()).reshape(640*480, 3)/255
         point_cloud = o3d.geometry.PointCloud()
         point_cloud.points = o3d.utility.Vector3dVector(pure_point_cloud)

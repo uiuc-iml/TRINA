@@ -410,10 +410,7 @@ class testingWorldBuilder():
                      [1.0, 0, 0, 1], 1)
         # add one mesh
         random.seed(30)
-        self.addRandomMesh([0 + x, -1.0 + y, self.table_height], 1)
-        self.addRandomMesh([0 + x, -1.2 + y, self.table_height], 2)
-        self.addRandomMesh([0.2 + x, -1.0 + y, self.table_height], 3)
-        self.addRandomMesh([-0.2 + x, -1.2 + y, self.table_height], 4)
+        self.addRandomMesh([-0.4 + x, -1.0 + y, self.table_height], 1)
 
     def addIndoorNavScenario(self):
         """
@@ -636,7 +633,7 @@ class UI_end_1:
         if "--testing" in args:
             self.jarvis.changeActivityStatus(["testing"])
         if not "--trigger" in args:
-            file_dir = "../../Motion/data/TRINA_world_anthrax_PointClick.xml"
+            file_dir = "../../Motion/data/TRINA_world_bubonic.xml"
             world = klampt.WorldModel()
             res = world.readFile(file_dir)
             builder = testingWorldBuilder(30,30,world = world)
@@ -665,11 +662,11 @@ class UI_end_1:
         vis.setWindowTitle("UI END 1")
         vis.customUI(makefunc)
         
-        pcd = o3d.io.read_point_cloud("/home/motion/item_set/item1-68.pcd")
-        pcd = pcd.uniform_down_sample(8)
-        klampt_pcd = open3d_convert.from_open3d(pcd)
-        klampt_pcd.transform(so3.from_rpy([-3.14/2 - 0.3,-0.1,-3.14/2]), [0.5, 0 ,1.08])
-        vis.add("object_pcd", klampt_pcd)
+        #pcd = o3d.io.read_point_cloud("/home/motion/item_set/item1-68.pcd")
+        #pcd = pcd.uniform_down_sample(8)
+        #klampt_pcd = open3d_convert.from_open3d(pcd)
+        #klampt_pcd.transform(so3.from_rpy([-3.14/2 - 0.3,-0.1,-3.14/2]), [0.5, 0 ,1.08])
+        #vis.add("object_pcd", klampt_pcd)
 
         # init plugin for getting input
         plugin = MyGLPlugin(world, self.global_state,self.server,self.jarvis, self.UIState,self.screenElement)
