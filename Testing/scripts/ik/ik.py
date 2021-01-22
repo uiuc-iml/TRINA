@@ -30,7 +30,7 @@ def main():
         logger.error(f"Couldn't load file {fn}, exiting.")
         sys.exit()
     robot = world.robot(0)
-    start = robot.getConfig()
+    start = np.array(robot.getConfig())
     start = np.random.rand(len(start))
     print("Start base rotation: ", start[BASE_R_IND])
     init_guess = np.zeros(7)
@@ -39,7 +39,7 @@ def main():
     init_guess[0] = start[BASE_R_IND]
     robot.setConfig(start)
     delta = list(klampt.math.se3.identity())
-    delta[1] = [-0.01, 0, 0]
+    delta[1] = [0.01, 0, 0]
     link_name = 'left_EE_link'
     current_pos = robot.link(link_name).getTransform()
     target = klampt.math.se3.mul(delta, current_pos)
@@ -47,7 +47,7 @@ def main():
     s = time.monotonic()
     res = opt.minimize(
         ik_obj(robot.getConfig(), link_name, target, robot, lam),
-        init_guess, method='Nelder-Mead',
+        init_guess, method='BFGS',
         jac=ik_jac(robot.getConfig(), link_name, target, robot, lam))
     e = time.monotonic()
     print(res)
@@ -60,8 +60,7 @@ def ik_obj(q, link_name, target, robot, lam):
             [0] -> base rotation about the world z axis
             [1:] -> joint angles of the arms
         """
-        obj = lam * abs(x[0] - q[BASE_R_IND])
-        obj = lam * (x[0] - q[BASE_R_IND])**2
+        obj = 0
         config = q[:]
         config[BASE_R_IND] = x[0]
         for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
@@ -73,6 +72,7 @@ def ik_obj(q, link_name, target, robot, lam):
         # jac = np.array(robot.link(link_name).getJacobian([0,0,0]))
         # obj += 0.01 * np.linalg.cond(jac)
         # print(obj, lam * abs(x[0] - q[BASE_R_IND]))
+        print(obj)
         return obj
     return f
 
@@ -97,9 +97,8 @@ def ik_jac(q, link_name, target, robot, lam):
         relevant_grad[0] = grad[BASE_R_IND]
         for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
             relevant_grad[i+1] = grad[ind]
-        relevant_grad[0] += lam * np.sign(x[0] - q[BASE_R_IND])
-        relevant_grad[0] += lam * 2 * (x[0] - q[BASE_R_IND])
         # print(lam * np.sign(x[0] - q[BASE_R_IND]), x[0], q[BASE_R_IND])
+        print(relevant_grad)
         return relevant_grad
     return jac
 
