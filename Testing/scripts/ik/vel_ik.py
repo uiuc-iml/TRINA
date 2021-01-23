@@ -43,14 +43,35 @@ def main():
     for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
         avail_jac[:, i+1] = np.array(full_robot_jac[:, ind])
     q_dot_part = np.linalg.lstsq(avail_jac, desired_vel, rcond=None)[0]
-    print(q_dot_part)
+    print("Particular solution: ", q_dot_part)
+
+    u, s, vh = np.linalg.svd(avail_jac)
+    v = vh.T
+    v_extra_cols = max(v.shape[0] - s.shape[0], 0)
+    nullity = v_extra_cols
+    null_inds = []
+    for i, val in enumerate(s):
+        if val == 0:
+            nullity += 1
+            null_inds.append(i)
+    null_basis = np.empty((v.shape[1], nullity))
+    null_basis[:, :v_extra_cols] = v[:, -v_extra_cols:]
+    for i, ind in null_inds:
+        null_basis[:, v_extra_cols + i] = v[:, ind]
+    B = np.diag([1,0,0,0,0,0,0])
+    G = null_basis.T @ B @ null_basis
+    H = null_basis.T @ B @ q_dot_part
+    t = np.linalg.solve(-G, H)
+    print("T: ", t)
+    q_dot_part += null_basis @ t
+    print("q_dot total: ", q_dot_part)
 
     q_dot = robot.getVelocity()
     q_dot[BASE_R_IND] = q_dot_part[0]
     for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
         q_dot[ind] = q_dot_part[i+1]
     robot.setVelocity(q_dot)
-    print(np.array(robot.link(LINK_NAME).getJacobian([0,0,0])) @ np.array(q_dot))
+    print("Final EE Twist: ", full_robot_jac @ np.array(q_dot))
 
 
 def set_left_arm_to_default(robot):
