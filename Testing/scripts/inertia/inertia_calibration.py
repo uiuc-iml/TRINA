@@ -14,9 +14,11 @@ CODENAME = 'cholera'
 COMPONENTS = ['left_limb']
 MODE = "Physical"
 C_FLAG = True
+COL_CHECK = True
 
 
 def main():
+	global C_FLAG
 	parser = argparse.ArgumentParser('collect inertia calibration data')
 	parser.add_argument('--outfile', type=str,
 		default='inertia_record.p', help='output file name')
@@ -34,17 +36,17 @@ def main():
 	for i, t in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
 		# q_i.append(traj.milestones[0][t])
 		q_i.append(TRINAConfig.left_untucked_config[i])
-	mc.setLeftLimbPositionLinear(q_i, init_time)
-	time.sleep(init_time)
+	print("Sending left arm to home position")
+	mc.setLeftLimbPositionLinear(q_i, init_time, col_check=COL_CHECK)
+	time.sleep(init_time + 0.3)
+	print("Reached home position, recording wrench measurements for tare")
 	init_points = 100
 	for i in range(init_points):
 		collect_data(data, mc)
 		time.sleep(init_time / init_points)
-	#print("Setting velocity")
-	#mc.setLeftLimbVelocity([1]*6)
-	#time.sleep(init_time)
+	print("Starting recorded trajectory")
 	collection_thread = threading.Thread(target=data_collection_thread,
-		daemon=True)
+		daemon=True, args=(data,))
 	collection_thread.start()
 	for i, q in enumerate(traj.milestones):
 		if i < len(traj.milestones) - 1:
@@ -62,16 +64,19 @@ def main():
 				print(q_t)
 				mc.setLeftLimbPositionLinear(
 					q_t.tolist(),
-					interval / interpolation_points)
+					interval / interpolation_points, col_check=COL_CHECK)
 				time.sleep(interval / interpolation_points)
+	print("Done with motion, saving")
 	C_FLAG = False
 	collection_thread.join()
 	with open(args.outfile, "wb") as of:
 		pickle.dump(data, of)
+	print("Last data point: ", data[-1])
 	mc.shutdown()
 
 
 def data_collection_thread(collection):
+	global C_FLAG
 	# Second motion client that only reads -> don't need to worry about locking
 	# because it will never send a command that conflicts with the other
 	# MotionClient

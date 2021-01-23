@@ -629,7 +629,7 @@ class Motion:
             print('Motion:paused')
 
 
-    def setLeftLimbPositionLinear(self,q,duration,col_check = True):
+    def setLeftLimbPositionLinear(self, q, duration, col_check=True):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -674,7 +674,7 @@ class Motion:
             logger.warning('Motion:paused')
             print('Motion:paused')
 
-    def setRightLimbPositionLinear(self,q,duration,col_check = True):
+    def setRightLimbPositionLinear(self, q, duration, col_check=True):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands

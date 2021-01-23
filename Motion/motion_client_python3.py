@@ -47,12 +47,12 @@ class MotionClient:
 		self.s.setRightLimbPosition(q)
 		return 0
 
-	def setLeftLimbPositionLinear(self,q,duration):
-		self.s.setLeftLimbPositionLinear(q,duration)
+	def setLeftLimbPositionLinear(self, q, duration, col_check=True):
+		self.s.setLeftLimbPositionLinear(q, duration, col_check)
 		return 0
 
-	def setRightLimbPositionLinear(self,q,duration):
-		self.s.setRightLimbPositionLinear(q,duration)
+	def setRightLimbPositionLinear(self, q, duration, col_check=True):
+		self.s.setRightLimbPositionLinear(q, duration, col_check)
 		return 0
 
 	def sensedLeftLimbPosition(self):
