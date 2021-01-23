@@ -165,8 +165,8 @@ class DirectTeleOperation:
 		# should be loaded from settings
 		print("DirectTeleOperation::CHECK THAT ROBOT IS LOADED "
 			+ "FROM CORRECT FILE")
-		self.world_file = "./Motion/data/TRINA_world_anthrax.xml"
-		self.codename = 'anthrax'
+		self.world_file = "./Motion/data/TRINA_world_cholera.xml"
+		self.codename = 'cholera'
 		self.world = klampt.WorldModel()
 		self.world.readFile(self.world_file)
 		self.robot_model = self.world.robot(0)
@@ -220,7 +220,6 @@ class DirectTeleOperation:
 				time.sleep(0.001)
 
 	def _serveStateReceiver(self):
-		# self.setRobotToDefault()
 		time.sleep(3)
 		# while(True):
 		if((self.startup == True) and (self.robot.getUIState() !=0)):
@@ -272,7 +271,7 @@ class DirectTeleOperation:
 			plan = planner.getPath()
 		self.robot_model.setConfig(init_config)
 		print("Found plan: ", plan)
-		home_gain = 1.5
+		home_gain = 2
 		for c in plan:
 			current_pos = self.robot.getKlamptSensedPosition()
 			dist = vectorops.distance(current_pos, c)
