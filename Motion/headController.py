@@ -48,9 +48,11 @@ class HeadController:
         self.position = [0.0,0.0]
         self.positionCommand = [0.0,0.0]
         self.panLimits = {"center": 180, "min":70, "max":290} #head limits
-        self.tiltLimits = {"center": 180, "min":200, "max":230} #head limits
+        self.tiltLimits = {"center": 180, "min":180, "max":230} #head limits
         self._controlLoopLock = RLock()
-
+        #for pause/resume
+        self.paused = False
+        self.paused_command_sent = False
     def start(self):
         # dynamicel init
         # Open ports
@@ -84,16 +86,22 @@ class HeadController:
         return True
 
     def _controlLoop(self):
-
         while not self.exit:
             ##update the state
             self._controlLoopLock.acquire()
             # self.position = self._getHeadPosition()
             self.newStateFlag = True
-            ##send command if there is a new one
-            if self.newCommand:
-                self._setPosition(self.positionCommand)
-            self.newCommand = False
+
+            if self.paused:
+                if not self.paused_command_sent:
+                    # self._setPosition(self.sensedPosition())      
+                    self.paused_command_sent = True
+            else:
+                ##send command if there is a new one
+                if self.newCommand:
+
+                    self._setPosition(self.positionCommand)
+                self.newCommand = False
             self._controlLoopLock.release()
             time.sleep(self.dt)
         print("Head Controller: control loop exited")
@@ -147,6 +155,17 @@ class HeadController:
 
     def markRead(self):
         self.newStateFlag = False
+
+    def pause(self):
+        self.paused = True
+        self.paused_command_sent = False
+
+    def resume(self):
+        self.paused = False
+        self.paused_command_sent = True
+
+    def isPaused(self):
+        return self.paused
 
     def shutdown(self):
         self.exit = True

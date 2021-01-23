@@ -641,7 +641,7 @@ class CommandServer:
 		while not self.shut_down_flag:
 			time.sleep(0.5)
 			try:
-				pause0 = self.server["UI_STATE"]["UIlogicState"]["stop"].read()
+				pause0 = self.server["VR_Stop"].read()
 				pause1 = self.server["Phone_Stop"].read()
 				if pause0 == False and pause1 == False:
 					self.robot.resumeMotion()

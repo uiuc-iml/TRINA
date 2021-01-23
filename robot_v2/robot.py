@@ -21,6 +21,7 @@ def on_message(ws, message):
     global server
     global UI_STATE
     global counter
+    global paused, puase_button_pressed
     # Python2 compatibility
     if type(message) != str:
         message = unidecode(message)
@@ -59,7 +60,13 @@ def on_message(ws, message):
             robotrec = {"title": "Robot Telemetry Data", "status": {"healthy": "True", "eStop": "False", "softwareEStop": "False"}, "currentConfig": {"leftArm": [-0.20578666666666667, -2.1202733333333335, -1.6030666666666669, 3.7186333333333335, -0.96508, 0.0974], "rightArm": [0.2028, -1.035932653589793, 1.6057333333333335, -0.5738406797435401, 0.9622, -0.0974], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "currentVelocity": {"leftArm": [0, 0, 0, 0, 0, 0], "rightArm": [
                 0, 0, 0, 0, 0, 0], "baseWheels": [1.1, 0.2], "base": [-0.5, 0.5, 0]}, "targetConfig": {"leftArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "rightArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "controller": {"collisionWarning": {"leftArm": "True", "rightArm": "False"}, "unreachableWarning": {"leftArm": "True", "rightArm": "False"}}, "perception": {"miniMap": {"width": 2, "height": 1, "matrix": [[0], [0]]}, "hapticFeedback": [0, 1, 2]}}
 
+            #handle robot pause logic
             server["UI_STATE"] = mjson["p"]["p"]
+            if mjson["p"]["p"]["controllerButtonState"]["rightController"]["press"][1] and not puase_button_pressed:
+                paused = not paused
+                server["VR_Stop"] = paused
+            puase_button_pressed = mjson["p"]["p"]["controllerButtonState"]["rightController"]["press"][1]
+
             return
 
             try:
@@ -94,7 +101,7 @@ def on_close(ws):
 
 
 def on_open(ws):
-  def run(*args):
+    def run(*args):
         global is_closed
         a = {"a":0,"c":0,"p":{"api":"1.2.0","cl":"JavaScript"}}
         b =json.dumps(a).encode('utf-8')
@@ -170,6 +177,7 @@ def listen():
     global server
     global UI_STATE
     global counter
+    global paused, puase_button_pressed
     counter = 0
     interface = RedisInterface(host="localhost")
     interface.initialize()
@@ -179,6 +187,7 @@ def listen():
     0, 0, 0, 0, 0, 0], "baseWheels": [1.1, 0.2], "base": [-0.5, 0.5, 0]}, "targetConfig": {"leftArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "rightArm": [0.1, 1.1, 2.1, 3.1, 4.1, 5.1], "torso": [0.1, 1.1], "baseOdometry": [0.1, 0.2, 0.4]}, "controller": {"collisionWarning": {"leftArm": "True", "rightArm": "False"}, "unreachableWarning": {"leftArm": "True", "rightArm": "False"}}, "perception": {"miniMap": {"width": 2, "height": 1, "matrix": [[0], [0]]}, "hapticFeedback": [0, 1, 2]}}
 
     UI_STATE = 0
+    paused, puase_button_pressed = False, False
     websocket.enableTrace(True)
     host = "ws://gametest.vrotors.com:8888/websocket"
     ws = websocket.WebSocketApp(host,
