@@ -120,15 +120,15 @@ class DirectTeleOperation:
 		self.col_mode = False
 		self.max_disp = 0.125 # To tune
 
-		self.K = np.diag([200.0, 200.0, 200.0, 20.0, 20.0, 20.0])
-
+		self.K = np.diag([200.0, 200.0, 200.0, 10.0, 10.0, 10.0])
+		# self.K = np.diag([200.0, 200.0, 200.0, 200.0, 200.0, 200.0])
 		self.M = 1*np.eye(6)#*5.0
 		self.M[3,3] = 0.25
 		self.M[4,4] = 0.25
 		self.M[5,5] = 0.25
 
 		self.B = 2.0*np.sqrt(4.0*np.dot(self.M,self.K))
-		self.B[3:6,3:6] = 0.75*self.B[3:6,3:6]
+		self.B[3:6,3:6] = self.B[3:6,3:6]
 		# self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
 		# self.M = np.diag((2,2,2,1,1,1))
 		# self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
@@ -154,7 +154,7 @@ class DirectTeleOperation:
 		self.init_headset_orientation = {}
 		self.init_headset_rotation = {} #x,y position
 		self.panLimits = {"center": 180, "min":70, "max":290} #head limits
-		self.tiltLimits = {"center": 180, "min":200, "max":230} #head limits
+		self.tiltLimits = {"center": 180, "min":180, "max":230} #head limits
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
 
@@ -332,8 +332,13 @@ class DirectTeleOperation:
 			if(self.head_active):
 				self.headControl()	
 
-			# self.control('velocity')
+			# # self.control('velocity')
+			# if(self.sens_state == 0):
+			# 	self.control('velocity')
+			# else:
+			# 	self.control('impedance')
 			self.control('impedance')
+
 			# self.control('position')
 
 		
@@ -386,10 +391,10 @@ class DirectTeleOperation:
 		# if the commanded velocity differs from the actual velocity:
 		# base_speed = 0.25
 		delta_vel = np.abs(base_velocity_vec - curr_velocity)
-		base_speed = np.max(delta_vel)/1.2
+		base_accel = np.max(delta_vel)/3.0
 		if((curr_velocity-base_velocity_vec).sum()!= 0):
 			try:
-				self.robot.setBaseVelocityRamped(base_velocity,base_speed)
+				self.robot.setBaseVelocityRamped(base_velocity,base_accel)
 			except:
 				print("setBaseVelocity not successful")
 				pass

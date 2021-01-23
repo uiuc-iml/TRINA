@@ -1018,10 +1018,12 @@ class Motion:
     def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0],col_mode = False):
         if not self.pause_motion_flag:
             return self.setEETransformImpedance(self.left_limb, Tg, K, M, B, x_dot_g, deadband, tool_center,col_mode)
+        return 0
 
     def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0],col_mode = False):
         if not self.pause_motion_flag:
             return self.setEETransformImpedance(self.right_limb, Tg, K, M, B, x_dot_g, deadband, tool_center,col_mode)
+        return 0
 
     def setLimbPositionImpedance(self,limb,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3,col_mode = False):
         """Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
@@ -1848,8 +1850,7 @@ class Motion:
             # NOTE: Is it better to decay by binary search here?
             limb.state.driveSpeedAdjustment = limb.state.driveSpeedAdjustment - 0.1
             if limb.state.driveSpeedAdjustment < 0.001:
-                # self.left_limb_state.cartesianDrive = False
-
+                limb.state.cartesianDrive = False
                 logger.error('CartesianDrive IK has failed completely,exited..')
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
 
@@ -1983,13 +1984,13 @@ class Motion:
 
             effective_b = np.copy(state.B)
 
-            START_THRESHOLD = 1.5
-            STOP_THRESHOLD = 4
+            START_THRESHOLD = 2
+            STOP_THRESHOLD = 8
 
             if state.increaseB:
                 if mag < STOP_THRESHOLD:
                     state.increaseB = False
-            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
+            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD:
                 state.increaseB = True
 
             # print(f"DAMPING STATE: {[state.increaseB,mag]}")
