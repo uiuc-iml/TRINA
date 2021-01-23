@@ -41,19 +41,21 @@ class HeadController:
         self.portHandler = PortHandler(DEVICENAME)
         self.dynamixel = PacketHandler(PROTOCOL_VERSION)
         self.active = False    
-        self.dt = 0.02 #50 Hz
+        self.dt = 0.05 #20 Hz
         self.newStateFlag = False
         self.newCommand = False
         self.exit = False
         self.position = [0.0,0.0]
         self.positionCommand = [0.0,0.0]
-        self.panLimits = {"center": 180, "min":90, "max":270} #head limits
-        self.tiltLimits = {"center": 180, "min":130, "max":230} #head limits
+        self.panLimits = {"center": 180, "min":70, "max":290} #head limits
+        self.tiltLimits = {"center": 180, "min":180, "max":230} #head limits
         self._controlLoopLock = RLock()
-
+        #for pause/resume
+        self.paused = False
+        self.paused_command_sent = False
     def start(self):
         # dynamicel init
-        # Open port
+        # Open ports
         if self.portHandler.openPort():
             print("Headcontroller: Succeeded to open the port")
         else:
@@ -65,14 +67,18 @@ class HeadController:
         else:
             print("Headcontroller: Failed to change the baudrate")
 
+        # Enable Torque 
+        self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_TORQUE_ENABLE, TORQUE_ENABLE)
+        self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_TORQUE_ENABLE, TORQUE_ENABLE)
+        
         #SPEED
-        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(50))
-        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_MOVING_SPEED, (int)(50))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_MOVING_SPEED, (int)(60))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_MOVING_SPEED, (int)(60))
         time.sleep(0.5)
 
         # init position
-        self.dynamixel.write4ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(self.tiltLimits["center"]/0.08789))
-        self.dynamixel.write4ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(self.panLimits["center"]/0.08789))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(self.tiltLimits["center"]/0.08789))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(self.panLimits["center"]/0.08789))
         time.sleep(0.5)
 
         controlThread = threading.Thread(target = self._controlLoop)
@@ -80,16 +86,22 @@ class HeadController:
         return True
 
     def _controlLoop(self):
-
         while not self.exit:
             ##update the state
             self._controlLoopLock.acquire()
             # self.position = self._getHeadPosition()
             self.newStateFlag = True
-            ##send command if there is a new one
-            if self.newCommand:
-                self._setPosition(self.positionCommand)
-            self.newCommand = False
+
+            if self.paused:
+                if not self.paused_command_sent:
+                    # self._setPosition(self.sensedPosition())      
+                    self.paused_command_sent = True
+            else:
+                ##send command if there is a new one
+                if self.newCommand:
+
+                    self._setPosition(self.positionCommand)
+                self.newCommand = False
             self._controlLoopLock.release()
             time.sleep(self.dt)
         print("Head Controller: control loop exited")
@@ -144,17 +156,36 @@ class HeadController:
     def markRead(self):
         self.newStateFlag = False
 
+    def pause(self):
+        self.paused = True
+        self.paused_command_sent = False
+
+    def resume(self):
+        self.paused = False
+        self.paused_command_sent = True
+
+    def isPaused(self):
+        return self.paused
+
     def shutdown(self):
         self.exit = True
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(self.panLimits["center"]/0.08789))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(self.tiltLimits["max"]/0.08789))
+        time.sleep(2)
+        # Disable Dynamixel Torque
+        self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_TORQUE_ENABLE, TORQUE_DISABLE)
+        self.dynamixel.write1ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_TORQUE_ENABLE, TORQUE_DISABLE)
 
+    def _testRun(self,panAngle,tiltAngle):
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_pan, ADDR_MX_GOAL_POSITION, (int)(panAngle/0.08789))
+        self.dynamixel.write2ByteTxRx(self.portHandler, DXL_ID_tilt, ADDR_MX_GOAL_POSITION, (int)(tiltAngle/0.08789))
 
 if __name__ == "__main__":
     a = HeadController()
     a.start()
     time.sleep(1)
     print(a.sensedPosition())
-    # [pos1,pos2] = a.sensedPosition()
-    # a.setPosition([pos1+1,pos2+1])
+    a._testRun(200,200)
     time.sleep(0.5)
     
     a.shutdown()

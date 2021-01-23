@@ -32,7 +32,7 @@ robot_ip = 'http://localhost:8080'
 ws_port = 1234
 
 #model_name = "Motion/data/TRINA_world_anthrax_PointClick.xml"
-model_name = "Motion/data/TRINA_world_bubonic.xml"
+model_name = "Motion/data/TRINA_world_cholera.xml"
 
 
 roomname = "The Lobby"

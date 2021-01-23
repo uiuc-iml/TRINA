@@ -309,7 +309,7 @@ class testingWorldBuilder():
 
 class CommandServer:
 
-	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic'):
+	def __init__(self,components =  ['base','left_limb','right_limb','left_gripper'], robot_ip = robot_ip, model_name = model_name,mode = 'Kinematic',world_file = './Motion/data/TRINA_world_bubonic.xml',modules = [],codename = 'bubonic',cameras = ['zed_slam','realsense_right','realsense_left']):
 		# we first check if redis is up and running:
 		try:
 			self.interface = RedisInterface(host="localhost")
@@ -387,7 +387,7 @@ class CommandServer:
 
 			time.sleep(3)
 		if(self.mode == 'Physical'):
-			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=['realsense_right', 'realsense_left'])
+			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=cameras)
 			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
 			time.sleep(5)
 
@@ -416,10 +416,10 @@ class CommandServer:
 		commandRecieverThread.daemon = True
 		commandRecieverThread.start()
 		print('\n command receiver started!\n')
-		print('\n starting module monitor \n')
-		moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
-		moduleMonitorThread.start()
-		print('\n module monitor started\n')
+		# print('\n starting module monitor \n')
+		# moduleMonitorThread = threading.Thread(target=self.moduleMonitor)
+		# moduleMonitorThread.start()
+		# print('\n module monitor started\n')
 
 		atexit.register(self.shutdown_all)
 		
@@ -639,7 +639,7 @@ class CommandServer:
 		while not self.shut_down_flag:
 			time.sleep(0.5)
 			try:
-				pause0 = self.server["UI_STATE"]["UIlogicState"]["stop"].read()
+				pause0 = self.server["VR_Stop"].read()
 				pause1 = self.server["Phone_Stop"].read()
 				if pause0 == False and pause1 == False:
 					self.robot.resumeMotion()
@@ -662,6 +662,11 @@ class CommandServer:
 		velEE_left = {}
 		posEE_right = {}
 		velEE_right = {}
+		global_EEWrench_left = None
+		local_EEWrench_left = None
+		global_EEWrench_right = None
+		local_EEWrench_right = None
+
 		while not self.shut_down_flag:
 			loopStartTime = time.time()
 			# print('updating states')
@@ -671,12 +676,16 @@ class CommandServer:
 					pos_left = self.query_robot.sensedLeftLimbPosition()
 					vel_left = self.query_robot.sensedLeftLimbVelocity()
 					velEE_left = self.query_robot.sensedLeftEEVelocity()
+					global_EEWrench_left = self.query_robot.sensedLeftEEWrench('global')
+					local_EEWrench_left = self.query_robot.sensedLeftEEWrench('local')
 
 				if(self.right_limb_active):
 					posEE_right = self.query_robot.sensedRightEETransform()
 					pos_right = self.query_robot.sensedRightLimbPosition()
 					vel_right = self.query_robot.sensedRightLimbVelocity()
 					velEE_right = self.query_robot.sensedRightEEVelocity()
+					global_EEWrench_right = self.query_robot.sensedRightEEWrench('global')
+					local_EEWrench_right = self.query_robot.sensedRightEEWrench('local')
 
 				if(self.base_active):
 					pos_base = self.query_robot.sensedBasePosition()
@@ -714,6 +723,16 @@ class CommandServer:
 					"PositionEE": {
 						"LeftArm" : posEE_left,
 						"RightArm" : posEE_right
+					},
+					"EEWrench":{
+						"LeftArm" :{
+							"global":global_EEWrench_left,
+							"local": local_EEWrench_left
+						},
+						"RightArm" :{
+							"global":global_EEWrench_right,
+							"local": local_EEWrench_right
+						}
 					},
 					"Velocity" : {
 						"LeftArm" : vel_left,
@@ -799,6 +818,7 @@ class CommandServer:
 				time.sleep(1e-6)
 	
 	def run(self,command):
+		# print(command)
 		try:
 			exec(command)
 		except Exception as e:
@@ -950,11 +970,11 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'bubonic')
-	# server = CommandServer(mode = 'Kinematic',components =  ['left_limb','right_limb'], modules = ['C1','C2','DirectTeleOperation','PointClickNav', 'PointClickGrasp'], codename = 'bubonic')
+	server = CommandServer(mode = 'Physical',components =  ['head','left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = ['zed_overhead'])
+	# server = CommandServer(mode = 'Physical',components =  ['head'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = ['zed_overhead'])
 	
-	print(server.robot.closeLeftRobotiqGripper())
-	print(server.robot.sensedLeftEETransform())
+	# print(server.robot.closeLeftRobotiqGripper())
+	# print(server.robot.sensedLeftEETransform())
 	while(True):
 		time.sleep(100)
 		pass

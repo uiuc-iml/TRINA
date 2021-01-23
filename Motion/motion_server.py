@@ -222,6 +222,13 @@ def _setBaseVelocity(q):
 	return 0
 
 @loggedMethod
+@xmlrpcMethod("setBaseVelocityRamped")
+def _setBaseVelocityRamped(q,time):
+	global robot
+	robot.setBaseVelocityRamped(q,time)
+	return 0
+
+@loggedMethod
 @xmlrpcMethod("setTorsoTargetPosition")
 def _setTorsoTargetPosition(q):
 	global robot
@@ -404,39 +411,39 @@ def _closeRightRobotiqGripper():
 
 @loggedMethod
 @xmlrpcMethod("setLeftEETransformImpedance")
-def _setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center):
+def _setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center,col_mode):
 	global robot
 	K = np.array(K)
 	B = np.array(B)
 	M = np.array(M)
-	return robot.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
+	return robot.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center,col_mode)
 
 @loggedMethod
 @xmlrpcMethod("setRightEETransformImpedance")
-def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center):
+def _setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center,col_mode):
 	global robot
 	K = np.array(K)
 	B = np.array(B)
 	M = np.array(M)
-	return robot.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
+	return robot.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center,col_mode)
 
 @loggedMethod
 @xmlrpcMethod("setLeftLimbPositionImpedance")
-def _setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,tool_center):
+def _setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,tool_center,col_mode):
 	global robot
 	K = np.array(K)
 	B = np.array(B)
 	M = np.array(M)
-	return robot.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,tool_center)
+	return robot.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,tool_center,col_mode)
 
 @loggedMethod
 @xmlrpcMethod("setRightLimbPositionImpedance")
-def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband):
+def _setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,col_mode):
 	global robot
 	K = np.array(K)
 	B = np.array(B)
 	M = np.array(M)
-	return robot.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)	
+	return robot.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,col_mode)	
 
 @loggedMethod
 @xmlrpcMethod("sensedHeadPosition")
