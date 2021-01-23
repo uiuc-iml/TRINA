@@ -130,16 +130,21 @@ def main():
     #     y_vals[i] = tmp(v)
     y_vals = np.linalg.norm(ee_error(start, times, R_vals, p_vals,
         omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)[0], axis=1)
-    y_vals, preds, targs = ee_error(start, times, R_vals, p_vals,
+    y_vals, preds, targs, a, c, g = ee_error(start, times, R_vals, p_vals,
             omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)
+
+    w_vals = np.array(w_vals)
     # plt.plot(y_vals)
-    plt.plot(preds, label="Pred")
-    # plt.plot(targs, label="Targets")
+    # plt.plot(a[:, :3], label="Acceleration")
+    plt.plot(g[:, :3], label="Grav")
+    # plt.plot(preds[:, :3], label="Pred")
+    plt.plot(targs[:, :3], label="Targets")
+    # plt.plot(np.linalg.norm(preds - targs, axis=1), label="Error")
     # plt.plot(omega_vals, label="Omega")
     # plt.plot(d_omega_vals, label="D_Omega")
     # plt.plot(v_vals, label="V")
     # plt.plot(d_v_vals, label="D_V")
-    # plt.plot(w_vals, label="Wrench")
+    # plt.plot(w_vals[:, :3], label="Wrench")
     plt.legend(loc='lower left')
     plt.show()
     logger.info("Finished optimization:")
@@ -221,6 +226,9 @@ def ee_error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
     errors = np.empty((len(t_s), 6))
     targets = np.empty((len(t_s), 6))
     predictions = np.empty((len(t_s), 6))
+    accel_vals = np.empty((len(t_s), 6))
+    c_vals = np.empty((len(t_s), 6))
+    grav_vals = np.empty((len(t_s), 6))
     g = np.array([0, 0, -9.81])
     init_p = np.array(p_s[0])
     init_R = np.array(R_s[0]).reshape(-1,3).T
@@ -239,20 +247,24 @@ def ee_error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
         d_v = np.array(d_v_s[i])
         accel = np.array([R.T @ d_v,
             R.T @ d_omega]).flatten()
+        accel_val = accel_mat @ accel
 
         omega = np.array(omega_s[i])
         c_vec = np.cross(R.T @ omega, I @ R.T @ omega)
         c_vec = np.array([np.zeros(3), c_vec]).flatten()
 
-        f = np.array(w_s[i][:3]) + tare_offset[:3]
+        f = (R.T @ np.array(w_s[i][:3])) + tare_offset[:3]
         tau = np.array(w_s[i][3:]) + tare_offset[3:]
         target = np.array([f, tau]).flatten()
         grav = np.concatenate((m * R.T @ g, np.cross(r, m * R.T @ g)))
-        pred = accel_mat @ accel + c_vec + grav
+        pred = accel_val + c_vec + grav
         errors[i] = pred - target
         predictions[i] = pred
         targets[i] = target
-    return errors, predictions, targets
+        accel_vals[i] = accel_val
+        c_vals[i] = c_vec
+        grav_vals[i] = grav
+    return errors, predictions, targets, accel_vals, c_vals, grav_vals
 
 
 if __name__ == "__main__":

@@ -14,12 +14,14 @@ CODENAME = 'cholera'
 COMPONENTS = ['left_limb']
 MODE = "Physical"
 C_FLAG = True
-COL_CHECK = True
+COL_CHECK = False
 
 
 def main():
 	global C_FLAG
 	parser = argparse.ArgumentParser('collect inertia calibration data')
+	parser.add_argument('--traj', type=str,
+		default='cholera.path', help='input trajectory')
 	parser.add_argument('--outfile', type=str,
 		default='inertia_record.p', help='output file name')
 	args = parser.parse_args()
@@ -27,14 +29,13 @@ def main():
 	mc.startServer(mode=MODE, components=COMPONENTS, codename=CODENAME)
 	mc.startup()
 	time.sleep(0.05)
-	traj = load('auto', 'cholera.path')
+	traj = load('auto', args.traj)
 	interval = 5
 	interpolation_points = 10
-	init_time = 10
+	init_time = 3
 	q_i = []
 	data = []
 	for i, t in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
-		# q_i.append(traj.milestones[0][t])
 		q_i.append(TRINAConfig.left_untucked_config[i])
 	print("Sending left arm to home position")
 	mc.setLeftLimbPositionLinear(q_i, init_time, col_check=COL_CHECK)
@@ -92,7 +93,7 @@ def data_collection_thread(collection):
 def collect_data(collection, mc):
 	p = mc.sensedLeftLimbPosition()
 	v = mc.sensedLeftLimbVelocity()
-	w = mc.sensedLeftEEWrench(frame='local')
+	w = mc.sensedLeftEEWrench()
 	collection.append({
 		'time': time.time(),
 		'position': p,
