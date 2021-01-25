@@ -117,7 +117,7 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.head_active = ('head' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
-		self.col_mode = False
+		self.col_mode = True
 		self.max_disp = 0.125 # To tune
 
 		self.K = np.diag([200.0, 200.0, 200.0, 10.0, 10.0, 10.0])
@@ -128,7 +128,7 @@ class DirectTeleOperation:
 		self.M[5,5] = 0.25
 
 		self.B = 2.0*np.sqrt(4.0*np.dot(self.M,self.K))
-		self.B[3:6,3:6] = self.B[3:6,3:6]
+		self.B[3:6,3:6] = 2.0 * self.B[3:6,3:6]
 		# self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
 		# self.M = np.diag((2,2,2,1,1,1))
 		# self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
@@ -272,7 +272,7 @@ class DirectTeleOperation:
 				self.sens_state = (self.sens_state + 1) % 2
 				if self.sens_state == 0:
 					self.sensitivity = 1.0
-					self.col_mode = False
+					self.col_mode = True
 				else:
 					self.sensitivity = 0.25
 					self.col_mode = True
