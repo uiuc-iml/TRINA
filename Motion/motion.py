@@ -15,6 +15,7 @@ from klampt.model import ik, collide
 import numpy as np
 import scipy as sp
 from klampt import WorldModel,vis
+from scipy import signal as spsignal
 import os
 
 
@@ -400,6 +401,8 @@ class Motion:
                         elif self.base_state.commandType == 0 and not base_state.commandSent:
                             self.base_state.commandSent = True
                             self.base.setTargetPosition(self.base_state.commandedVel)
+                        elif self.base_state.commandType == 2:
+                            self.base.setCommandedVelocityRamped(self.base_state.commandedVel,self.base_state.rampDuration)
                     if self.torso_enabled:
                         if not self.torso_state.commandSent:
                            self.torso_state.commandSent = True
@@ -502,9 +505,9 @@ class Motion:
                 limb.state.set_mode_position(limb.state.sensedq)
             elif res == 1:
                 limb.setConfig(target_config)
-            elif res == 2:
-                # TODO: I'm concerned.
-                self.setLimbPositionLinear(limb, target_config, 2)
+            # elif res == 2:
+            #     # TODO: I'm concerned.
+            #     self.setLimbPositionLinear(limb, target_config, 2)
         else:
             ### Velocity control or position control.
             if not limb.state.commandSent:
@@ -606,7 +609,7 @@ class Motion:
         return
 
     # TODO: Refactor incomplete
-    def setLimbPositionLinear(self, limb, q, duration):
+    def setLimbPositionLinear(self, limb, q, duration,col_check = True):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -619,15 +622,15 @@ class Motion:
         """
         if not self.pause_motion_flag:
             if limb.name == "left":
-                self.setLeftLimbPositionLinear(q, duration)
+                self.setLeftLimbPositionLinear(q, duration,col_check)
             else:
-                self.setRightLimbPositionLinear(q, duration)
+                self.setRightLimbPositionLinear(q, duration,col_check)
         else:
             logger.warning('Motion:paused')
             print('Motion:paused')
 
 
-    def setLeftLimbPositionLinear(self,q,duration):
+    def setLeftLimbPositionLinear(self,q,duration,col_check = True):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -645,7 +648,10 @@ class Motion:
             #TODO:Also collision checks
             if self.left_limb.enabled:
                 self._controlLoopLock.acquire()
-                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
+                if col_check:
+                    res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(left_limb = self.left_limb.state.sensedq),self._get_klampt_q(left_limb = q))
+                else:
+                    res = False
                 #planningTime = 0.0 + TRINAConfig.ur5e_control_rate
                 #positionQueue = []
                 #currentq = self.left_limb.state.sensedq
@@ -669,7 +675,7 @@ class Motion:
             logger.warning('Motion:paused')
             print('Motion:paused')
 
-    def setRightLimbPositionLinear(self,q,duration):
+    def setRightLimbPositionLinear(self,q,duration,col_check = True):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -687,7 +693,10 @@ class Motion:
             #Also collision checks
             if self.right_limb.enabled:
                 self._controlLoopLock.acquire()
-                res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
+                if col_check:
+                    res = self._check_collision_linear_adaptive(self.robot_model,self._get_klampt_q(right_limb = self.right_limb.state.sensedq),self._get_klampt_q(right_limb = q))
+                else:
+                    res = False
                 if res:
                     logger.warning('Collision midway')
                     print("motion.setRightLimbPosition():collision midway")
@@ -921,7 +930,7 @@ class Motion:
         if not self.pause_motion_flag:
             self.setEEVelocity(self.right_limb, v, tool)
 
-    def setEETransformImpedance(self,limb,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0]):
+    def setEETransformImpedance(self,limb,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0],col_mode = False):
         """Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -986,49 +995,38 @@ class Motion:
                 limb.state.toolCenter = copy(tool_center)
                 limb.state.prev_wrench = np.array([0]*6)
 
-        formulation = 2
-        #if already in impedance control, then do not reset x_mass and x_dot_mass
-        if (not limb.state.impedanceControl) or vectorops.norm(vectorops.sub(limb.state.toolCenter,tool_center)):
-            limb.state.set_mode_reset()
             if formulation == 2:
                 limb.state.T_g = copy(Tg)
             elif formulation == 1:
-                T = limb.sensedEETransform(tool_center = [0, 0, 0])
-                limb.state.x_mass = T[1] + so3.moment(T[0])
-            (v,w) = limb.sensedEEVelocity(tool_center)
-            limb.state.x_dot_mass = v+w
-            limb.state.toolCenter = copy(tool_center)
-            limb.state.prev_wrench = np.array([0]*6)
+                limb.state.x_g = Tg[1] + so3.moment(Tg[0])
 
-        if formulation == 2:
-            limb.state.T_g = copy(Tg)
-        elif formulation == 1:
-            limb.state.x_g = Tg[1] + so3.moment(Tg[0])
+            limb.state.impedanceControl = True
 
-        limb.state.impedanceControl = True
-
-        limb.state.x_dot_g = copy(x_dot_g)
-        limb.state.K = np.copy(K)
-        limb.state.counter = 1
-        limb.state.deadband = copy(deadband)
-        if np.any(np.isnan(B)):
-            limb.state.B = np.sqrt(4.0*np.dot(M,K))
-        else:
-            limb.state.B = np.copy(B)
-        Minv = np.linalg.inv(M)
-        limb.state.Minv = Minv
-        self._controlLoopLock.release()
+            limb.state.x_dot_g = copy(x_dot_g)
+            limb.state.K = np.copy(K)
+            limb.state.counter = 1
+            limb.state.deadband = copy(deadband)
+            if np.any(np.isnan(B)):
+                limb.state.B = np.sqrt(4.0*np.dot(M,K))
+            else:
+                limb.state.B = np.copy(B)
+            Minv = np.linalg.inv(M)
+            limb.state.Minv = Minv
+            limb.state.col_mode = col_mode
+            self._controlLoopLock.release()
         return 0
 
-    def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0]):
+    def setLeftEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0],col_mode = False):
         if not self.pause_motion_flag:
-            return self.setEETransformImpedance(self.left_limb, Tg, K, M, B, x_dot_g, deadband, tool_center)
+            return self.setEETransformImpedance(self.left_limb, Tg, K, M, B, x_dot_g, deadband, tool_center,col_mode)
+        return 0
 
-    def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0]):
+    def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0,0,0],col_mode = False):
         if not self.pause_motion_flag:
-            return self.setEETransformImpedance(self.right_limb, Tg, K, M, B, x_dot_g, deadband, tool_center)
+            return self.setEETransformImpedance(self.right_limb, Tg, K, M, B, x_dot_g, deadband, tool_center,col_mode)
+        return 0
 
-    def setLimbPositionImpedance(self,limb,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3):
+    def setLimbPositionImpedance(self,limb,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3,col_mode = False):
         """Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
         The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
         and the inertia matrix
@@ -1058,13 +1056,13 @@ class Motion:
             self.setEETransformImpedance(limb,EETransform,K,M,B,x_dot_g,deadband,tool_center)
         return 0
 
-    def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3):
+    def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3,col_mode = False):
         if not self.pause_motion_flag:
-            return self.setLimbPositionImpedance(self.left_limb, q, K, M, B, x_dot_g, deadband, tool_center)
+            return self.setLimbPositionImpedance(self.left_limb, q, K, M, B, x_dot_g, deadband, tool_center,col_mode)
 
-    def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3):
+    def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center=[0]*3,col_mode = False):
         if not self.pause_motion_flag:
-            return self.setLimbPositionImpedance(self.right_limb, q, K, M, B, x_dot_g, deadband, tool_center)
+            return self.setLimbPositionImpedance(self.right_limb, q, K, M, B, x_dot_g, deadband, tool_center,col_mode)
 
     def sensedLeftEETransform(self,tool_center=[0,0,0]):
         """Return the transform of the tool position w.r.t. the base frame
@@ -1853,8 +1851,7 @@ class Motion:
             # NOTE: Is it better to decay by binary search here?
             limb.state.driveSpeedAdjustment = limb.state.driveSpeedAdjustment - 0.1
             if limb.state.driveSpeedAdjustment < 0.001:
-                # self.left_limb_state.cartesianDrive = False
-
+                limb.state.cartesianDrive = False
                 logger.error('CartesianDrive IK has failed completely,exited..')
                 print("motion.controlLoop():CartesianDrive IK has failed completely,exited..")
 
@@ -1969,57 +1966,58 @@ class Motion:
         wrench = limb.sensedEEWrench(frame = 'global')
         # print(vectorops.norm_L2(wrench[0:3]))
         #if force too big, backup a bit and stop
-        stop = False
-        if vectorops.norm_L2(wrench[0:3]) > 60:
-            stop = True
-            print('Max force exceeded')
-        if stop:
-            # TODO: Dangerous (tool center)
-            TEE = limb.sensedEETransform()
-            #move back 20 mm
-            T = (TEE[0],vectorops.add(TEE[1],vectorops.mul(vectorops.unit(wrench[0:3]),0.02)))
-        else:
-            # The hack.
-            wrench = np.array(wrench)
-            displace_wrench = np.array(wrench[:3])
-            # Force magnitude.
-            mag = np.linalg.norm(displace_wrench)
-            old_wrench = state.prev_wrench[:3]
+        # The hack.
+        wrench = np.array(wrench)
+        displace_wrench = np.array(wrench[:3])
+        # Force magnitude.
+        mag = np.linalg.norm(displace_wrench)
+        old_wrench = state.prev_wrench[:3]
+        state.wrench_norm_history.append(mag)
+        state.wrench_norm_history.pop(0)
+        filtered_mag = spsignal.lfilter(state.wrench_filter_b, 
+            state.wrench_filter_a, state.wrench_norm_history)[-1]
+        # print(f"mag: {mag:1.3g}\tFmag: {filtered_mag:1.3g}")
 
-            effective_b = np.copy(state.B)
+        effective_b = np.copy(state.B)
 
-            START_THRESHOLD = 1.5
-            STOP_THRESHOLD = 4
+        START_THRESHOLD = 10
+        STOP_THRESHOLD = 8
 
-            if state.increaseB:
-                if mag < STOP_THRESHOLD:
-                    state.increaseB = False
-            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD and mag > 0.0:
-                state.increaseB = True
+        # if state.increaseB:
+        #     if mag < STOP_THRESHOLD:
+        #         state.increaseB = False
+        # elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD:
+        #     state.increaseB = True
+        if filtered_mag < STOP_THRESHOLD:
+            state.increaseB = False
+        if (mag > START_THRESHOLD) or (filtered_mag > START_THRESHOLD):
+            state.increaseB = True
 
-            # print(f"DAMPING STATE: {[state.increaseB,mag]}")
-            if state.increaseB:
-                effective_b *= 20
+        # print(f"DAMPING STATE: {[state.increaseB,mag > START_THRESHOLD]}")
+        # print(state.col_mode)
+        if state.col_mode and state.increaseB:
+            # print("Increasing B!!!!!!")
+            effective_b *= 30
 
-            for i in range(6):
-                if state.deadband[i] > 0:
-                    if math.fabs(wrench[i]) < state.deadband[i]:
-                        wrench[i] = 0
-            # start = time.monotonic()
-            N = 2
-            for i in range(N):
-                state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, m_inv = state.Minv,\
-                    K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
-                    T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
-            # print("Time: ", time.monotonic() - start)
-            state.counter += 1
+        for i in range(6):
+            if state.deadband[i] > 0:
+                if math.fabs(wrench[i]) < state.deadband[i]:
+                    wrench[i] = 0
+        # start = time.monotonic()
+        N = 2
+        for i in range(N):
+            state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, m_inv = state.Minv,\
+                K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
+                T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
+        # print("Time: ", time.monotonic() - start)
+        state.counter += 1
 
-            state.prev_wrench = np.array(wrench)
+        state.prev_wrench = np.array(wrench)
 
-            #orthogonalize the rotation matrix
-            if state.counter % 100 == 0:
-                state.T_mass = (so3.from_moment(so3.moment(state.T_mass[0])),state.T_mass[1])
-            T = state.T_mass
+        #orthogonalize the rotation matrix
+        if state.counter % 100 == 0:
+            state.T_mass = (so3.from_moment(so3.moment(state.T_mass[0])),state.T_mass[1])
+        T = state.T_mass
 
         goal = ik.objective(limb.EE_link,R=T[0],\
             t = vectorops.sub(T[1],so3.apply(T[0],state.toolCenter)))
@@ -2036,17 +2034,14 @@ class Motion:
         if state.counter % 20 == 0:
             col_res = self._check_collision_linear_adaptive(self.robot_model,initial_config,self.robot_model.getConfig())
             if col_res:
+                limb.impedance_col = True
                 stop = True
                 logger.error('ImpedanceDrive collision detected,exited..')
                 print("collision detected,exited..")
-
+            else:
+                limb.impedance_col = False
         self.robot_model.setConfig(initial_config)
-
-        if stop:
-            # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS
-            return 2,target_config.tolist()
-        else:
-            return 1,target_config.tolist()
+        return 1,target_config.tolist()
 
     def _get_klampt_q(self,left_limb = [],right_limb = []):
         if len(left_limb):
@@ -2095,10 +2090,18 @@ if __name__=="__main__":
     # robot.shutdown()
 
     
+    # robot = Motion(mode = 'Physical',components = ['left_limb', 'right_limb'],codename = "cholera")
+    # robot.startup()
+    # time.sleep(0.5)
+    # print(robot.getKlamptSensedPosition())
+    # robot.shutdown()
 
-
-    robot = Motion(mode = 'Physical',components = ['left_limb', 'right_limb'],codename = "cholera")
+    robot = Motion(mode = 'Physical',components = ['base'],codename = "cholera")
     robot.startup()
     time.sleep(0.2)
-    print(robot.getKlamptSensedPosition())
+    robot.setBaseVelocityRamped([0.0,0],1)
+    time.sleep(2)
+    robot.setBaseVelocityRamped([0.0,0],1)
+    time.sleep(2)
+    print('flag')
     robot.shutdown()

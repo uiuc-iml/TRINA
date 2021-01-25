@@ -1,7 +1,5 @@
 import time,math
-# from klampt import vis
-# from klampt import WorldModel
-# from klampt.model.trajectory import Trajectory
+import klampt
 import threading
 # from Motion.motion_client_python3 import MotionClient
 import json
@@ -17,11 +15,14 @@ import csv
 from threading import Thread
 import sys
 import json
+import klampt.plan as kp
 from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 import signal
 from klampt.math import so3, so2, se3, vectorops
+from Motion import TRINAConfig
+
 from Motion import TRINAConfig
 
 from robot_v2 import robot as controller_listen
@@ -30,9 +31,10 @@ from enum import Enum
 
 DEGREE_2_RADIAN = 2.0*math.pi/180.0
 
+
 class ControllerMode(Enum):
-    ABSOLUTE=0
-    CLUTCHING=1
+	ABSOLUTE=0
+	CLUTCHING=1
 
 robot_ip = 'http://localhost:8080'
 
@@ -95,7 +97,7 @@ class DirectTeleOperation:
 			self.robot.setLeftLimbPositionLinear,
 			self.robot.sensedLeftEETransform, 
 			self.robot.setLeftEEInertialTransform,
-			self.robot.setLeftEEVelocity, 
+			self.robot.setLeftEEVelocity,
 			self.robot.setLeftEETransformImpedance,
 			self.robot.openLeftRobotiqGripper,
 			self.robot.closeLeftRobotiqGripper)
@@ -107,7 +109,7 @@ class DirectTeleOperation:
 			self.robot.setRightLimbPositionLinear,
 			self.robot.sensedRightEETransform, 
 			self.robot.setRightEEInertialTransform,
-			self.robot.setRightEEVelocity, 
+			self.robot.setRightEEVelocity,
 			self.robot.setRightEETransformImpedance,
 			self.robot.openRightRobotiqGripper,
 			self.robot.closeRightRobotiqGripper)
@@ -116,18 +118,18 @@ class DirectTeleOperation:
 		self.torso_active = ('torso' in self.components)
 		self.head_active = ('head' in self.components)
 		self.temp_robot_telemetry = {'leftArm':[0,0,0,0,0,0],'rightArm':[0,0,0,0,0,0]}
-
+		self.col_mode = True
 		self.max_disp = 0.125 # To tune
 
 		self.K = np.diag([200.0, 200.0, 200.0, 10.0, 10.0, 10.0])
-
+		# self.K = np.diag([200.0, 200.0, 200.0, 200.0, 200.0, 200.0])
 		self.M = 1*np.eye(6)#*5.0
 		self.M[3,3] = 0.25
 		self.M[4,4] = 0.25
 		self.M[5,5] = 0.25
 
 		self.B = 2.0*np.sqrt(4.0*np.dot(self.M,self.K))
-		self.B[3:6,3:6] = 0.75*self.B[3:6,3:6]
+		self.B[3:6,3:6] = 2.0 * self.B[3:6,3:6]
 		# self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
 		# self.M = np.diag((2,2,2,1,1,1))
 		# self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
@@ -153,9 +155,22 @@ class DirectTeleOperation:
 		self.init_headset_orientation = {}
 		self.init_headset_rotation = {} #x,y position
 		self.panLimits = {"center": 180, "min":70, "max":290} #head limits
-		self.tiltLimits = {"center": 180, "min":90, "max":230} #head limits
+		self.tiltLimits = {"center": 180, "min":180, "max":230} #head limits
 		self.startup = True
 		signal.signal(signal.SIGINT, self.sigint_handler) # catch SIGINT (ctrl+c)
+		self.left_limb.openRobotiqGripper()
+		self.right_limb.openRobotiqGripper()
+
+		# Super temporary fix to load the robot model, after refactor this
+		# should be loaded from settings
+		print("DirectTeleOperation::CHECK THAT ROBOT IS LOADED "
+			+ "FROM CORRECT FILE")
+		self.world_file = "./Motion/data/TRINA_world_cholera.xml"
+		self.codename = 'cholera'
+		self.world = klampt.WorldModel()
+		self.world.readFile(self.world_file)
+		self.robot_model = self.world.robot(0)
+		self.cspace = kp.robotcspace.RobotCSpace(self.robot_model)
 
 		stateRecieverThread = threading.Thread(target=self._serveStateReceiver)
 		main_thread = threading.Thread(target = self._infoLoop)
@@ -205,7 +220,6 @@ class DirectTeleOperation:
 				time.sleep(0.001)
 
 	def _serveStateReceiver(self):
-		# self.setRobotToDefault()
 		time.sleep(3)
 		# while(True):
 		if((self.startup == True) and (self.robot.getUIState() !=0)):
@@ -235,24 +249,64 @@ class DirectTeleOperation:
 
 
 	def setRobotToDefault(self):
-		home_duration = 4
-		if self.left_limb.active:
-			self.left_limb.setLimbPositionLinear(TRINAConfig.left_untucked_config, home_duration)
-		if self.right_limb.active:
-			self.right_limb.setLimbPositionLinear(TRINAConfig.right_untucked_config, home_duration)
+		init_config = self.robot.getKlamptSensedPosition()
+		target_config = init_config[:]
+		left_config = TRINAConfig.left_untucked_config
+		right_config = TRINAConfig.right_untucked_config
+		for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(self.codename)):
+			target_config[ind] = left_config[i]
+		for i, ind in enumerate(TRINAConfig.get_right_active_Dofs(self.codename)):
+			target_config[ind] = right_config[i]
+		planner, psettings = kp.cspace.configurePlanner(self.cspace, 
+			self.robot.getKlamptSensedPosition(), target_config)
+		print(psettings)
+		plan = planner.getPath()
+		iteration = 0
+		inner_steps = 10
+		while plan is None:
+			iteration += 1
+			print("Iteration: ", iteration)
+			print(f"Planning for {inner_steps} steps")
+			planner.planMore(inner_steps)
+			plan = planner.getPath()
+		self.robot_model.setConfig(init_config)
+		print("Found plan: ", plan)
+		home_gain = 2
+		for c in plan:
+			current_pos = self.robot.getKlamptSensedPosition()
+			dist = vectorops.distance(current_pos, c)
+			if dist < 0.1:
+				home_duration = 1
+			else:
+				home_duration = home_gain * dist
+			if self.left_limb.active:
+				left_arm_config = []
+				for ind in TRINAConfig.get_left_active_Dofs(self.codename):
+					left_arm_config.append(c[ind])
+				self.left_limb.setLimbPositionLinear(left_arm_config, 
+					home_duration)
+			if self.right_limb.active:
+				right_arm_config = []
+				for ind in TRINAConfig.get_right_active_Dofs(self.codename):
+					right_arm_config.append(c[ind])
+				self.right_limb.setLimbPositionLinear(right_arm_config, 
+					home_duration)
+			if self.left_limb.active or self.right_limb.active:
+				time.sleep(home_duration)
+		planner.close()
+
+	def setHeadToDefault(self):
 		if self.head_active:
 			self.init_headset_rotation = self.UI_state['headSetPositionState']['deviceRotation']
 			self.head_active = False
-			self.robot.setHeadPosition([180*DEGREE_2_RADIAN, 180*DEGREE_2_RADIAN])
-			time.sleep(home_duration)
+			self.robot.setHeadPosition([self.panLimits["center"]*DEGREE_2_RADIAN, self.tiltLimits["center"]*DEGREE_2_RADIAN])
+			time.sleep(3)
 			self.head_active = True
-
-
-
-
 
 	def UIStateLogic(self):
 		if(type(self.UI_state)!= int):
+			if self.UI_state["controllerButtonState"]["leftController"]["press"][3] == True :
+				self.setHeadToDefault()
 			if self.UI_state["controllerButtonState"]["leftController"]["press"][0] == True :
 				print("Robot Home")
 				self.setRobotToDefault()
@@ -262,12 +316,15 @@ class DirectTeleOperation:
 				not self.UI_state["controllerButtonState"]["rightController"]
 				["press"][0] and self.last_sens_button_state
 			):
-				# Released the right controller button
+				# Released the right controller button - activating "sniper" mode
 				self.sens_state = (self.sens_state + 1) % 2
 				if self.sens_state == 0:
 					self.sensitivity = 1.0
+					self.col_mode = True
 				else:
 					self.sensitivity = 0.25
+					self.col_mode = True
+					print('setting col_mode')
 				self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 				for limb in (self.left_limb, self.right_limb):
 					self.init_UI_state["controllerPositionState"][limb.joystick]["controllerPosition"] = (
@@ -283,7 +340,7 @@ class DirectTeleOperation:
 					self.init_UI_state = self.UI_state
 					self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 					self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
-					
+
 					for limb in (self.left_limb, self.right_limb):
 						limb.init_pos = limb.sensedEETransform()
 						limb.teleoperationState = 2
@@ -299,7 +356,7 @@ class DirectTeleOperation:
 
 							self.init_headset_orientation = self.treat_headset_orientation(self.UI_state['headSetPositionState']['deviceRotation'])
 							self.init_headset_rotation = self.init_UI_state['headSetPositionState']['deviceRotation']
-							
+
 							limb.init_pos = limb.sensedEETransform(self.tool.tolist())
 
 							# print("BEGIN CLUTCHING, ZERO!")
@@ -313,7 +370,7 @@ class DirectTeleOperation:
 						limb.setEETransformImpedance(
 							limb.sensedEETransform(tool_center=self.tool.tolist()),
 							self.K, self.M, [[10*x for x in a] for a in self.B],
-							tool_center=self.tool.tolist())
+							tool_center=self.tool.tolist(),col_mode = self.col_mode)
 						# limb.setEETransformImpedance(
 						# 	limb.sensedEETransform(tool_center=self.tool.tolist()),
 						# 	np.zeros((6,6)).tolist(), self.M, [[100*x for x in a] for a in self.B],
@@ -325,7 +382,14 @@ class DirectTeleOperation:
 			if(self.head_active):
 				self.headControl()	
 
+			# # self.control('velocity')
+			# if(self.sens_state == 0):
+			# 	self.control('velocity')
+			# else:
+			# 	self.control('impedance')
 			self.control('impedance')
+
+			# self.control('position')
 
 		
 	
@@ -358,7 +422,7 @@ class DirectTeleOperation:
 		orientation = to_rotvec(self.UI_state['headSetPositionState']['deviceRotation'])
 		init_orientation = to_rotvec(self.init_headset_rotation)
 		panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - init_orientation["y"])), self.panLimits["min"], self.panLimits["max"])
-		tiltAngle = limitTo((self.tiltLimits["center"] - mod180(orientation["x"] - init_orientation["x"])), self.tiltLimits["min"], self.tiltLimits["max"])
+		tiltAngle = limitTo((self.tiltLimits["center"] - mod180((orientation["x"] - init_orientation["x"])*2)), self.tiltLimits["min"], self.tiltLimits["max"])
 		
 		# print("init y: ",int(init_orientation['y']),"init x: ",int(init_orientation['x']),
 		# "ori y: ", int(orientation["y"]) , "ori x: ", int(orientation["x"]) ,
@@ -371,13 +435,16 @@ class DirectTeleOperation:
 
 	def baseControl(self):
 		'''controlling base movement'''
-		base_velocity = [0.1*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.1*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
+		base_velocity = [0.2*(self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][1]),0.4*(-self.UI_state["controllerButtonState"]["rightController"]["thumbstickMovement"][0])]
 		curr_velocity = np.array(self.robot.sensedBaseVelocity())
 		base_velocity_vec = np.array(base_velocity)
 		# if the commanded velocity differs from the actual velocity:
+		# base_speed = 0.25
+		delta_vel = np.abs(base_velocity_vec - curr_velocity)
+		base_accel = np.max(delta_vel)/3.0
 		if((curr_velocity-base_velocity_vec).sum()!= 0):
 			try:
-				self.robot.setBaseVelocity(base_velocity)
+				self.robot.setBaseVelocityRamped(base_velocity,base_accel)
 			except:
 				print("setBaseVelocity not successful")
 				pass
@@ -403,13 +470,12 @@ class DirectTeleOperation:
 
 		self.robot.addRobotTelemetry(self.temp_robot_telemetry)
 
-	"""
-	Control an arm based on UI state and other jazz. Might lock it.
-
-	limb: Arm object.
-	mode: One of position, velocity, or impedance.
-	"""
 	def controlArm(self, limb, mode):
+		"""Control an arm based on UI state and other jazz. Might lock it.
+
+		limb: Arm object.
+		mode: One of position, velocity, or impedance.
+		"""
 		assert (mode in ['position', 'velocity', 'impedance']), "Invalid mode"
 		if self.UI_state["controllerButtonState"][limb.joystick]["squeeze"][1] > 0.5:
 			RR_final, RT_final, curr_transform = self.getTargetEETransform(limb)
@@ -424,10 +490,9 @@ class DirectTeleOperation:
 			elif mode == 'velocity':
 				limb.setEEVelocity(error_t, tool = self.tool.tolist())
 			elif mode == 'impedance':
-				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B, tool_center=self.tool.tolist())
+				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B, tool_center=self.tool.tolist(),col_mode = self.col_mode)
 		else:
-			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B])
-
+			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B],col_mode = self.col_mode)
 	def getTargetEETransform(self, limb):
 		"""Get the transform of the end effector attached to the `side` arm
 		in the frame of the <base?> of the robot.
@@ -537,7 +602,6 @@ class DirectTeleOperation:
 
 		# return so3.matrix(rotation_final)
 		return rotation_final
-
 
 
 if __name__ == "__main__" :

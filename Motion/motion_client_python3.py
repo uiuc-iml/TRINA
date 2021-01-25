@@ -110,6 +110,9 @@ class MotionClient:
 	def setBaseVelocity(self, q):
 		self.s.setBaseVelocity(q)
 
+	def setBaseVelocityRamped(self,q,time):
+		self.s.setBaseVelocityRamped(q,time)
+
 	def setTorsoTargetPosition(self, q):
 		self.s.setTorsoTargetPosition(q)
 
@@ -206,29 +209,29 @@ class MotionClient:
 	def closeRightRobotiqGripper(self):
 		self.s.closeRightRobotiqGripper()	
 
-	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0.0]*3):
+	def setLeftEETransformImpedance(self,Tg,K,M,B,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0.0]*3,col_mode = False):
 		# K = K.tolist()
 		# B = B.tolist()
 		# M = M.tolist()
-		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
+		self.s.setLeftEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center,col_mode)
 
-	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0.0]*3):
+	def setRightEETransformImpedance(self,Tg,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,tool_center = [0.0]*3,col_mode = False):
 		# K = K.tolist()
 		# B = B.tolist()
 		# M = M.tolist()
-		self.s.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center)
+		self.s.setRightEETransformImpedance(Tg,K,M,B,x_dot_g,deadband,tool_center,col_mode)
 
-	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+	def setLeftLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,col_mode = False):
 		K = K.tolist()
 		B = B.tolist()
 		M = M.tolist()
-		self.s.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
+		self.s.setLeftLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,col_mode)
 
-	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6):
+	def setRightLimbPositionImpedance(self,q,K,M,B = np.nan,x_dot_g = [0]*6,deadband = [0]*6,col_mode = False):
 		K = K.tolist()
 		B = B.tolist()
 		M = M.tolist()
-		self.s.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband)
+		self.s.setRightLimbPositionImpedance(q,K,M,B,x_dot_g,deadband,col_mode)
 
 	def sensedHeadPosition(self):
 		return self.s.sensedHeadPosition()

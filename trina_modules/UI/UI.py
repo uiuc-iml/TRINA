@@ -100,6 +100,7 @@ class UIStateReciever(WebSocket):
         self.interface.initialize()
         self.server = KeyValueStore(self.interface)
         self.server["Phone_Stop"] = False
+        self.server["VR_Stop"] = False
 
 
     def handleClose(self): 

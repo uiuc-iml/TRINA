@@ -23,7 +23,6 @@ left_Robotiq_type = 'parallel'
 right_Robotiq_type = 'vacuum'
 ur5e_control_rate = 0.004 #250 Hz
 
-
 # left_limb_gravity_upright = [-4.91,-4.91,-6.93672]  #R_upright_newlocal * left_limb_gravity_upright = new gravity vector
 # right_limb_gravity_upright = [4.91,-4.91,-6.93672]
 
@@ -41,7 +40,8 @@ limb_position_lower_limits = [-2.0*pi+epsilon,-2.0*pi+epsilon,-2.0*pi+epsilon,-2
 collision_check_interval = 0.1
 
 #commonly used arm configurations for Anthrax
-left_untucked_config = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+# left_untucked_config = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+left_untucked_config = [0.14728498458862305, -1.6879149876036585, -2.212571144104004, 3.9013611513325195, -0.611485783253805, 0.0978240966796875]
 def mirror_arm_config(config):
     RConfig = []
     RConfig.append(-config[0])
@@ -53,6 +53,10 @@ def mirror_arm_config(config):
     return RConfig
 
 right_untucked_config = mirror_arm_config(left_untucked_config)
+# Bubonic
+# left_untucked_config = [2.525717355599908, 2.0460428045669827, -3.920560436831199, -0.4358181444600667, -0.7994447765249488, 0.23715545920590908]
+# right_untucked_config = mirror_arm_config(left_untucked_config)
+
 left_tabletop_config = [-1.2396209875689905, -2.6281658611693324, -1.0119028091430664, 5.456587779312887, -2.3149259726153772, 0.15132474899291992]
 right_tabletop_config = mirror_arm_config(left_tabletop_config)
 
@@ -224,7 +228,7 @@ def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3,he
     elif(name == 'half_anthrax'):
         return base[0:3] + [0]*7 + list(left_limb) + [0]*19 + [1.16] + [0]*5 + [0]*18 #at a position that does not collide with left limb
     elif(name == 'cholera'):
-        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]*18
+        return base[0:2] + [0]*1 + [base[2]] + [0]*3 + list(head) + [0]*2 + list(left_limb) + [0]*2 + list(right_limb) + [0]*13
     else:
         print("wrong model name used.")
         return None
