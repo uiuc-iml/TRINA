@@ -107,10 +107,11 @@ def main():
     # start = np.array([ 4.96670394e-02,  9.18877726e-02,  1.73765360e-01,  9.33424707e-01,
     #     1.47458136e-01,  1.30701951e-16, 0, 0,
     #    0.8,  9.48624154e-04])
+    # obj_f = objective(times, R_vals, p_vals, omega_vals, d_omega_vals, v_vals,
+    #     d_v_vals, w_vals)
+    # logger.info(f"Initial objective value: {obj_f(start)}")
     # res = opt.minimize(
-    #     objective(times, R_vals, p_vals, omega_vals, d_omega_vals, v_vals,
-    #         d_v_vals, w_vals),
-    #     start,
+    #     obj_f, start,
     #     constraints=[
     #         {'type':'ineq', 'fun': lambda x: x[-1]},    # Mass is nonnegative
     #         {'type':'ineq', 'fun': lambda x: x[0]},     # So are diags of I matrix
@@ -128,23 +129,22 @@ def main():
     #     v = start
     #     v[-1] = x
     #     y_vals[i] = tmp(v)
-    y_vals = np.linalg.norm(ee_error(start, times, R_vals, p_vals,
-        omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)[0], axis=1)
-    y_vals, preds, targs, a, c, g = ee_error(start, times, R_vals, p_vals,
+    # y_vals = np.linalg.norm(ee_error(start, times, R_vals, p_vals,
+    #     omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)[0], axis=1)
+    y_vals, preds, targs, a, c, g, w = ee_error(start, times, R_vals, p_vals,
             omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)
-
     w_vals = np.array(w_vals)
     # plt.plot(y_vals)
     # plt.plot(a[:, :3], label="Acceleration")
-    plt.plot(g[:, :3], label="Grav")
-    # plt.plot(preds[:, :3], label="Pred")
-    plt.plot(targs[:, :3], label="Targets")
+    plt.plot(g[:, 3:], label="Grav")
+    # plt.plot(preds[:, 3:], label="Pred")
+    # plt.plot(targs[:, 3:], label="Targets")
     # plt.plot(np.linalg.norm(preds - targs, axis=1), label="Error")
     # plt.plot(omega_vals, label="Omega")
     # plt.plot(d_omega_vals, label="D_Omega")
     # plt.plot(v_vals, label="V")
     # plt.plot(d_v_vals, label="D_V")
-    # plt.plot(w_vals[:, :3], label="Wrench")
+    plt.plot(w_vals[:, 3:], label="Wrench")
     plt.legend(loc='lower left')
     plt.show()
     logger.info("Finished optimization:")
@@ -229,12 +229,13 @@ def ee_error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
     accel_vals = np.empty((len(t_s), 6))
     c_vals = np.empty((len(t_s), 6))
     grav_vals = np.empty((len(t_s), 6))
+    local_ws = np.empty((len(t_s), 6))
     g = np.array([0, 0, -9.81])
     init_p = np.array(p_s[0])
     init_R = np.array(R_s[0]).reshape(-1,3).T
     tare_offset = np.concatenate((m * init_R.T @ g,
         np.cross(r, m * init_R.T @ g)))
-    print("Tare offset: ", tare_offset)
+    # print("Tare offset: ", tare_offset)
     # tare_offset = np.zeros(6)
     for i, t in enumerate(t_s):
         R = np.array(R_s[i]).reshape(-1, 3).T
@@ -253,9 +254,11 @@ def ee_error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
         c_vec = np.cross(R.T @ omega, I @ R.T @ omega)
         c_vec = np.array([np.zeros(3), c_vec]).flatten()
 
-        f = (R.T @ np.array(w_s[i][:3])) + tare_offset[:3]
-        tau = np.array(w_s[i][3:]) + tare_offset[3:]
-        target = np.array([f, tau]).flatten()
+        f = (R.T @ np.array(w_s[i][:3]))
+        tau = ((R.T @ np.array(w_s[i][3:]))
+            - R.T @ np.cross(p, np.array(w_s[i][:3])))
+        local_w = np.array([f, tau]).flatten()
+        target = local_w + tare_offset
         grav = np.concatenate((m * R.T @ g, np.cross(r, m * R.T @ g)))
         pred = accel_val + c_vec + grav
         errors[i] = pred - target
@@ -264,7 +267,8 @@ def ee_error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
         accel_vals[i] = accel_val
         c_vals[i] = c_vec
         grav_vals[i] = grav
-    return errors, predictions, targets, accel_vals, c_vals, grav_vals
+        local_ws[i] = local_w
+    return errors, predictions, targets, accel_vals, c_vals, grav_vals, local_ws
 
 
 if __name__ == "__main__":
