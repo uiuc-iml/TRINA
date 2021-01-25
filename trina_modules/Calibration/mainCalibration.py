@@ -17,6 +17,7 @@ else:
 
 # sys.path.append('/opt/ros/kinetic/lib/python2.7/dist-packages')
 from klampt.math import vectorops as vo
+from klampt.math import so3
 import trimesh
 import numpy as np
 
@@ -25,7 +26,7 @@ import pickle
 
 def pixelToP(x,y,pcd,dimy):
     tmp = pcd[y*dimy+x]
-    return [-tmp[0],-tmp[1],-tmp[2]]  ##data in folder 3/ only have y and z negated. In the future, should load just as is.
+    return [tmp[0],tmp[1],tmp[2]]  ##data in folder 3/ only have y and z negated. In the future, should load just as is.
     # tmp = pcd[y]
 
 
@@ -331,6 +332,8 @@ def mainCalibrationURDF(pic_path,robot_path,URDF_save_folder,cameras,links):
     #     pickle.dump(Tr, handle)
     # with open(folder + 'qr', 'wb') as handle:
     #     pickle.dump(qr, handle)
+    # exit()
+  
 
     #load the extracted data
     with open(folder + 'Tl', 'rb') as handle:
@@ -348,53 +351,47 @@ def mainCalibrationURDF(pic_path,robot_path,URDF_save_folder,cameras,links):
     T_c_r_0 = ([1,0,0,0,0,-1,0,1,0],[0.0,-0.05,0.1])
     T_marker_1 = ([1,0,0,0,1,0,0,0,1],[0.15,0.0,0.363]) #This is exact
     T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links)
-    print('camera transforms:',np.array(T_c_l[0]+T_c_l[1]),np.array(T_c_r[0]+T_c_r[1]))
-
     from klampt.math import so3
-    print(T_base_l[1],so3.rpy(T_base_l[0]))s
-    print(T_base_r[1],so3.rpy(T_base_r[0]))
+    print('left base rpy,t:',so3.rpy(T_base_l[0]),T_base_l[1])
+    # print('right base rpy,t:',so3.rpy(T_base_r[0]),T_base_r[1])
+
+
+
     # #now modify the URDF 
     # Hardcode these for now. Set these in the setting file in the future
     world = WorldModel()
     res = world.loadElement(robot_path)
     robot = world.robot(0)
 
-    # zl = robot.link(10).getParentTransform()[1][2]
-    # zr = robot.link(18).getParentTransform()[1][2]
-    # yl = robot.link(10).getParentTransform()[1][1]
-    # yr = robot.link(18).getParentTransform()[1][1]
-    # print(robot.link(10).getParentTransform())
     robot.link(10).setParentTransform(T_base_l[0],T_base_l[1])
-    robot.link(18).setParentTransform(T_base_r[0],T_base_r[1])
-    # print(robot.link(10).getParentTransform())
-    # loader.save(robot,'auto',URDF_save_folder + 'Cholera_calibrated.rob') #klampt loader only saves a robot to .rob. In addition, it does not save the meshes, and will keep
+    # robot.link(18).setParentTransform(T_base_r[0],T_base_r[1])
+    loader.save(robot,'auto',URDF_save_folder + 'Cholera_calibrated.rob') #klampt loader only saves a robot to .rob. In addition, it does not save the meshes, and will keep
     
     #modify the mesh
     camera_l = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
-    camera_r = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
+    # camera_r = trimesh.load_mesh('~/TRINA/Motion/data/robots/sensors/SR305.STL')
     T_c_l = klampt_to_np(T_c_l)
-    T_c_r = klampt_to_np(T_c_r)
+    # T_c_r = klampt_to_np(T_c_r)
 
     from numpy.linalg import inv
     camera_l.apply_transform(T_c_l)
-    camera_r.apply_transform(T_c_r)
+    # camera_r.apply_transform(T_c_r)
     l_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Cholera/left_wrist2_link.STL')
-    r_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Cholera/right_wrist2_link.STL')
+    # r_link5 = trimesh.load_mesh('~/TRINA/Motion/data/robots/Cholera/right_wrist2_link.STL')
     l_link5_new = trimesh.util.concatenate([l_link5,camera_l])
-    r_link5_new = trimesh.util.concatenate([r_link5,camera_r])
+    # r_link5_new = trimesh.util.concatenate([r_link5,camera_r])
     # ## The camera is merged with the wrist 2 geometry
     l_link5_new.export('~/TRINA/Motion/data/robots/Cholera_calibrated/left_wrist2_link.STL')
-    r_link5_new.export('~/TRINA/Motion/data/robots/Cholera_calibrated/right_wrist2_link.STL')
-
+    # r_link5_new.export('~/TRINA/Motion/data/robots/Cholera_calibrated/right_wrist2_link.STL')
 
     # lower/raise the base link
     # TODO: break the base link into 2 links to accomodate calibration
-    base_link = trimesh.load_mesh('~/TRINA/Motion/data/robots/Cholera/base_link.STL')
+    # base_link = trimesh.load_mesh('~/TRINA/Motion/data/robots/Cholera/base_link.STL')
     # print(zl,zr,T_base_l[1][2],T_base_r[1][2])
     # print([0,0,(zl+zr-T_base_l[1][2]-T_base_r[1][2])/2])
     # print(yl,yr,T_base_l[1][1],T_base_r[1][1])
-    base_link.apply_transform(klampt_to_np(([1,0,0,0,1,0,0,0,1],[0,0,(-zl-zr+T_base_l[1][2]+T_base_r[1][2])/2])))
-    base_link.export('~/TRINA/Motion/data/robots/Cholera_calibrated/base_link.STL')
+    # base_link.apply_transform(klampt_to_np(([1,0,0,0,1,0,0,0,1],[0,0,(-zl-zr+T_base_l[1][2]+T_base_r[1][2])/2])))
+    # base_link.export('~/TRINA/Motion/data/robots/Cholera_calibrated/base_link.STL')
 
     
     # ####Final step
@@ -461,10 +458,10 @@ if __name__=="__main__":
     ####################
 
     traj_path = 'URDF_calibration.path'
-    pic_path = './data/drawer_test_URDF/'
+    pic_path = './data/0124Test/'
     robot_path = '../../Motion/data/robots/Cholera.urdf'
     rob_save_folder = '../../Motion/data/robots/'
-    cameras =['realsense_left','realsense_right']
+    cameras =['realsense_left']#,'realsense_right']
 
     ##Take pictures
     # from calibrationLogger import CalibrationLogger

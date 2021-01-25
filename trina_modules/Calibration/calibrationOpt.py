@@ -47,19 +47,20 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
         T_c_EE = (so3.from_moment(x[9:12]),x[6:9])
         trans_error = 0.
         angle_error = 0.
-        for T_m_c,q in zip(Tl,ql):
+        for i,(T_m_c,q) in enumerate(zip(Tl,ql)):
             
             #transform Tl..
             T_EE = getLeftLinkTransform(robot_model,q,links[0],model = 'cholera')
             T_EE_base = se3.mul(se3.inv(T_l_0),T_EE) #EE in arm base
             T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
             #only use position
-            error_vec = vectorops.sub(T_marker_1[1],T_m_predicted[1])
-            trans_error += vectorops.normSquared(error_vec)
+            # error_vec = vectorops.sub(T_marker_1[1],T_m_predicted[1])
+            # trans_error += vectorops.normSquared(error_vec)
             #use entire transform
-            # error_vec = se3.error(T_marker_1,T_m_predicted)
-            # trans_error += vectorops.normSquared(error_vec[0:3]) 
-            # angle_error += vectorops.normSquared(error_vec[3:6])
+            # print(i,T_m_predicted,T_marker_1)
+            error_vec = se3.error(T_marker_1,T_m_predicted)
+            trans_error += vectorops.normSquared(error_vec[0:3]) 
+            angle_error += vectorops.normSquared(error_vec[3:6])
         expr = math.sqrt(trans_error/len(Tl))+ 1.0*math.sqrt(angle_error/len(Tl))
         print("Local solve: func(left arm)=%f"%expr)
         print('pos error:',math.sqrt(trans_error/(len(Tl))),'angle error', math.sqrt(angle_error/(len(Tl))))
@@ -97,9 +98,9 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
     bnds = ((-0.03, 0.03), (0.13, 0.23),(1.23,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
     res = sopt.minimize(funcl,np.array(x_l_0),bounds = bnds,method='L-BFGS-B')
     x_l = res.x
-    bnds = ((-0.03, 0.03), (-0.23, -0.13),(1.23,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.05,0),(-0.2,0.2),(None,None),(None,None),(None,None))
-    res = sopt.minimize(funcr,np.array(x_r_0),bounds = bnds,method='L-BFGS-B')
-    x_r = res.x
+    # bnds = ((-0.03, 0.03), (-0.23, -0.13),(1.23,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.05,0),(-0.2,0.2),(None,None),(None,None),(None,None))
+    # res = sopt.minimize(funcr,np.array(x_r_0),bounds = bnds,method='L-BFGS-B')
+    # x_r = res.x
 
     print("Left Arm Local solve: func(left arm)=%f"%funcl(x_l))
     print('initial left shoulder transform:',T_l_0)
@@ -107,16 +108,17 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
     print('initial camera transform:',T_c_l_0)
     print('final camera transform:',(so3.from_moment(x_l[9:12]),x_l[6:9]))
 
-    print("Right Arm Local solve: func(left arm)=%f"%funcr(x_r))
-    print('initial Right shoulder transform:',T_r_0)
-    print('final right shoulder transform:',(so3.from_moment(x_r[3:6]),x_r[0:3]))
-    print('initial camera transform:',T_c_r_0)
-    print('final camera transform:',(so3.from_moment(x_r[9:12]),x_r[6:9]))
-
+    # print("Right Arm Local solve: func(left arm)=%f"%funcr(x_r))
+    # print('initial Right shoulder transform:',T_r_0)
+    # print('final right shoulder transform:',(so3.from_moment(x_r[3:6]),x_r[0:3]))
+    # print('initial camera transform:',T_c_r_0)
+    # print('final camera transform:',(so3.from_moment(x_r[9:12]),x_r[6:9]))
 
     #left shoulder, left camera, right shoulder, right camera
-    return (so3.from_moment(x_l[3:6]),x_l[0:3].tolist()),(so3.from_moment(x_l[9:12]),x_l[6:9].tolist()),\
-        (so3.from_moment(x_r[3:6]),x_r[0:3].tolist()),(so3.from_moment(x_r[9:12]),x_r[6:9].tolist())
+    # return (so3.from_moment(x_l[3:6]),x_l[0:3].tolist()),(so3.from_moment(x_l[9:12]),x_l[6:9].tolist()),\
+    #     (so3.from_moment(x_r[3:6]),x_r[0:3].tolist()),(so3.from_moment(x_r[9:12]),x_r[6:9].tolist())
+
+    return (so3.from_moment(x_l[3:6]),x_l[0:3].tolist()),(so3.from_moment(x_l[9:12]),x_l[6:9].tolist()),[],[]
 
 def StaticCalibration(T_0,qs,cameras,T_marker_0,world_path,link):
 
