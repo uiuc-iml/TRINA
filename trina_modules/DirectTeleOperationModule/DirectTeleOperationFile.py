@@ -20,6 +20,7 @@ from reem.connection import RedisInterface
 from reem.datatypes import KeyValueStore
 import traceback
 import signal
+import cvxpy as cp
 from klampt.math import so3, so2, se3, vectorops
 from Motion import TRINAConfig
 
@@ -52,7 +53,7 @@ is_closed=0
 mode="Physical" # UNUSED FOR ANYTHING
 
 class TeleopArmState:
-	def __init__(self, side, active, gripper_active, set_limb_position_linear, 
+	def __init__(self, side, active, gripper_active, set_limb_position_linear,
 			transform_sensor, transform_setter,
 			proportional_controller, impedance_controller,
 			open_robotiq_gripper, close_robotiq_gripper):
@@ -92,10 +93,10 @@ class DirectTeleOperation:
 		#self.robot.getComponents()
 		left_limb_active = ('left_limb' in self.components)
 		left_gripper_active = ('left_gripper' in self.components)
-		self.left_limb = TeleopArmState("left", left_limb_active, 
-			left_gripper_active, 
+		self.left_limb = TeleopArmState("left", left_limb_active,
+			left_gripper_active,
 			self.robot.setLeftLimbPositionLinear,
-			self.robot.sensedLeftEETransform, 
+			self.robot.sensedLeftEETransform,
 			self.robot.setLeftEEInertialTransform,
 			self.robot.setLeftEEVelocity,
 			self.robot.setLeftEETransformImpedance,
@@ -104,10 +105,10 @@ class DirectTeleOperation:
 
 		right_limb_active = ('right_limb' in self.components)
 		right_gripper_active = ('right_gripper' in self.components)
-		self.right_limb = TeleopArmState("right", right_limb_active, 
-			right_gripper_active, 
+		self.right_limb = TeleopArmState("right", right_limb_active,
+			right_gripper_active,
 			self.robot.setRightLimbPositionLinear,
-			self.robot.sensedRightEETransform, 
+			self.robot.sensedRightEETransform,
 			self.robot.setRightEEInertialTransform,
 			self.robot.setRightEEVelocity,
 			self.robot.setRightEETransformImpedance,
@@ -257,7 +258,7 @@ class DirectTeleOperation:
 			target_config[ind] = left_config[i]
 		for i, ind in enumerate(TRINAConfig.get_right_active_Dofs(self.codename)):
 			target_config[ind] = right_config[i]
-		planner, psettings = kp.cspace.configurePlanner(self.cspace, 
+		planner, psettings = kp.cspace.configurePlanner(self.cspace,
 			self.robot.getKlamptSensedPosition(), target_config)
 		print(psettings)
 		plan = planner.getPath()
@@ -283,13 +284,13 @@ class DirectTeleOperation:
 				left_arm_config = []
 				for ind in TRINAConfig.get_left_active_Dofs(self.codename):
 					left_arm_config.append(c[ind])
-				self.left_limb.setLimbPositionLinear(left_arm_config, 
+				self.left_limb.setLimbPositionLinear(left_arm_config,
 					home_duration)
 			if self.right_limb.active:
 				right_arm_config = []
 				for ind in TRINAConfig.get_right_active_Dofs(self.codename):
 					right_arm_config.append(c[ind])
-				self.right_limb.setLimbPositionLinear(right_arm_config, 
+				self.right_limb.setLimbPositionLinear(right_arm_config,
 					home_duration)
 			if self.left_limb.active or self.right_limb.active:
 				time.sleep(home_duration)
@@ -378,9 +379,9 @@ class DirectTeleOperation:
 			# print("UI state Logic")
 			if(self.base_active):
 				self.baseControl()
-			
+
 			if(self.head_active):
-				self.headControl()	
+				self.headControl()
 
 			# # self.control('velocity')
 			# if(self.sens_state == 0):
@@ -391,8 +392,8 @@ class DirectTeleOperation:
 
 			# self.control('position')
 
-		
-	
+
+
 	def headControl(self):
 		def mod180(x):
 			while x >= 180:
@@ -417,13 +418,13 @@ class DirectTeleOperation:
 			rpy = partial_rotation.as_euler('ZYX',degrees=True)
 			rpy2 = partial_rotation.as_euler('YXZ',degrees=True)
 			return {"y":rpy[0],"x":rpy2[0]}
-		
+
 
 		orientation = to_rotvec(self.UI_state['headSetPositionState']['deviceRotation'])
 		init_orientation = to_rotvec(self.init_headset_rotation)
 		panAngle = limitTo((self.panLimits["center"] - mod180(orientation["y"] - init_orientation["y"])), self.panLimits["min"], self.panLimits["max"])
 		tiltAngle = limitTo((self.tiltLimits["center"] - mod180((orientation["x"] - init_orientation["x"])*2)), self.tiltLimits["min"], self.tiltLimits["max"])
-		
+
 		# print("init y: ",int(init_orientation['y']),"init x: ",int(init_orientation['x']),
 		# "ori y: ", int(orientation["y"]) , "ori x: ", int(orientation["x"]) ,
 		# "pan: ",int(panAngle),"tilt: ",int(tiltAngle))
@@ -493,6 +494,36 @@ class DirectTeleOperation:
 				limb.setEETransformImpedance(target_transform, self.K, self.M, self.B, tool_center=self.tool.tolist(),col_mode = self.col_mode)
 		else:
 			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B],col_mode = self.col_mode)
+
+	def unifiedControl(self, left_target, right_target):
+		"""Velocity control for the entire robot using a unified controller
+		that takes base degrees of freedom into account (when available)
+		"""
+		left_err = np.array(
+			se3.error(left_target, self.robot.sensedLeftEETransform()))
+		right_err = np.array(
+			se3.error(right_target, self.robot.sensedRightEETransform()))
+		left_EE_link_name = 'left_EE_link'
+		right_EE_link_name = 'right_EE_link'
+		m = 6
+		J_l = self.robot_model.link(left_EE_link_name).getJacobian(self.tool)
+		# These tool offsets should really be separate for left/right limbs
+		J_r = self.robot_model.link(right_EE_link_name).getJacobian(self.tool)
+		full_jac = np.vstack([np.array(J_l), np.array(J_r)])
+		full_err = np.concatenate([left_err, right_err])
+		u, s, vh = np.linalg.svd(full_jac)
+		s_mag = np.abs(s)
+		max_sing_mag = s_mag[0]
+		min_sing_mag = s_mag[0]
+		for val in s_mag:
+			if val > max_sing_mag:
+				max_sing_mag = val
+			if val < min_sing_mag:
+				min_sing_mag = val
+		if min_sing_mag < 1e-4:
+			# Singular or nearly singular -> just get LS solution
+			pass
+
 	def getTargetEETransform(self, limb):
 		"""Get the transform of the end effector attached to the `side` arm
 		in the frame of the <base?> of the robot.
@@ -572,7 +603,7 @@ class DirectTeleOperation:
 		dist = se3.distance(t_final, curr_transform, Rweight=0.0)
 		if dist > self.max_disp:
 			w = self.max_disp / dist
-			t_final[1] = ((1 - w) * np.array(curr_transform[1]) 
+			t_final[1] = ((1 - w) * np.array(curr_transform[1])
 				+ w * np.array(t_final[1])).tolist()
 		return t_final[0], t_final[1], curr_transform
 
