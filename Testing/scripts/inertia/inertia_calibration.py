@@ -87,7 +87,7 @@ def data_collection_thread(collection):
 	time.sleep(0.05)
 	while(C_FLAG):
 		collect_data(collection, mc)
-		time.sleep(1/20)
+		time.sleep(1/300)
 
 
 def collect_data(collection, mc):

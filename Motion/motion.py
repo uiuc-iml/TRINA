@@ -2057,55 +2057,18 @@ class Motion:
 
 
 if __name__=="__main__":
-
-    ###Read the current position ###
-    # robot = Motion(mode = 'Physical',components = ['left_limb','right_limb'],codename = "bubonic")
-    # robot.startup()
-    # time.sleep(0.05)
-    # # robot.setLeftLimbPositionLinear([-4.02248,0.1441026,1.58109,-0.254,0.9090495,0.46262],30)
-    # # print(robot.getKlamptSensedPosition())
-    # # with open('tmp.txt', 'a') as f:
-    # #     f.write(f"\n{str(robot.getKlamptSensedPosition())}")
-    # left_pos = robot.sensedLeftEETransform(tool_center=[0.17,0,0])
-    # K = np.diag([200.0, 200.0, 200.0, 1.0, 1.0, 1.0])
-    # # K = np.zeros((6,6))
-    # # K[3:6,3:6] = np.eye(3)*1000
-
-    # M = 1*np.eye(6)#*5.0
-    # M[3,3] = 0.25
-    # M[4,4] = 0.25
-    # M[5,5] = 0.25
-
-    # B = 2.0*np.sqrt(4.0*np.dot(M,K))
-    # # B = 30*np.eye(6)
-    # B[3:6,3:6] = 0.75*B[3:6,3:6]
-    # # self.B[3:6,3:6] = self.B[3:6,3:6]*2.0
-    # # self.M = np.diag((2,2,2,1,1,1))
-    # # self.B = np.sqrt(32 * self.K *ABSOLUTE self.M)
-    # # K = K.tolist()
-    # # M = M.tolist()
-    # # B = B.tolist()
-    # robot.setLeftEETransformImpedance(left_pos, K, M, B,tool_center=[0.17,0,0])
-    # # robot.setLeftEEInertialTransform(left_pos, 0.1)
-    # print("Holding position")
-    # while True:
-    #     # print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
-    #     time.sleep(0.01)
-    # robot.shutdown()
-
-
-    # robot = Motion(mode = 'Physical',components = ['left_limb', 'right_limb'],codename = "cholera")
-    # robot.startup()
-    # time.sleep(0.5)
-    # print(robot.getKlamptSensedPosition())
-    # robot.shutdown()
-
-    robot = Motion(mode = 'Physical',components = ['base'],codename = "cholera")
+    robot = Motion(mode = 'Physical',components = ['left_limb'],codename = "cholera")
     robot.startup()
     time.sleep(0.2)
-    robot.setBaseVelocityRamped([0.0,0],1)
-    time.sleep(2)
-    robot.setBaseVelocityRamped([0.0,0],1)
-    time.sleep(2)
+    robot.setLeftLimbPositionLinear(TRINAConfig.left_untucked_config, 1)
+    time.sleep(1)
+    # robot.setLeftLimbVelocity([0,0,0,0,0,-0.1])
+    while True:
+        try:
+            print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
+            time.sleep(0.1)
+        except KeyboardInterrupt:
+            print("Exiting")
+            break
     print('flag')
     robot.shutdown()

@@ -145,7 +145,7 @@ def main():
     # plt.plot(v_vals, label="V")
     # plt.plot(d_v_vals, label="D_V")
     plt.plot(w_vals[:, :3], label="Wrench")
-    plt.plot(w[:, :3], label="Local")
+    # plt.plot(w[:, :3], label="Local")
     plt.legend(loc='lower left')
     plt.show()
     logger.info("Finished optimization:")
