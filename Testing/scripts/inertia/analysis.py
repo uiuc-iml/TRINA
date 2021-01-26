@@ -104,9 +104,6 @@ def main():
             last_ee_twist = ee_twist[:]
     logger.info("Finished loading data, starting optimization")
     start = np.array([0.0084, 0, 0, 0.0064, 0, 0.0023, 0, 0, 0.0624, 1.0182])
-    # start = np.array([ 4.96670394e-02,  9.18877726e-02,  1.73765360e-01,  9.33424707e-01,
-    #     1.47458136e-01,  1.30701951e-16, 0, 0,
-    #    0.8,  9.48624154e-04])
     # obj_f = objective(times, R_vals, p_vals, omega_vals, d_omega_vals, v_vals,
     #     d_v_vals, w_vals)
     # logger.info(f"Initial objective value: {obj_f(start)}")
@@ -117,39 +114,29 @@ def main():
     #         {'type':'ineq', 'fun': lambda x: x[0]},     # So are diags of I matrix
     #         {'type':'ineq', 'fun': lambda x: x[3]},
     #         {'type':'ineq', 'fun': lambda x: x[5]},
-    #         {'type':'eq', 'fun': lambda x: x[1]},       # Try diag I matrix
-    #         {'type':'eq', 'fun': lambda x: x[2]},
-    #         {'type':'eq', 'fun': lambda x: x[4]},
+    #         # {'type':'eq', 'fun': lambda x: x[1]},       # Try diag I matrix
+    #         # {'type':'eq', 'fun': lambda x: x[2]},
+    #         # {'type':'eq', 'fun': lambda x: x[4]},
     #     ])
-    # tmp = objective(times, R_vals, p_vals, omega_vals, d_omega_vals, v_vals,
-    #         d_v_vals, w_vals)
-    # x_vals = np.linspace(-2, 2, 100)
-    # y_vals = np.zeros(len(x_vals))
-    # for i, x in enumerate(x_vals):
-    #     v = start
-    #     v[-1] = x
-    #     y_vals[i] = tmp(v)
-    # y_vals = np.linalg.norm(ee_error(start, times, R_vals, p_vals,
-    #     omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)[0], axis=1)
+    # logger.info("Finished optimization:")
+    # logger.info(str(res))
     y_vals, preds, targs, a, c, g, w = ee_error(start, times, R_vals, p_vals,
             omega_vals, d_omega_vals, v_vals, d_v_vals, w_vals)
     w_vals = np.array(w_vals)
     # plt.plot(y_vals)
     # plt.plot(a[:, :3], label="Acceleration")
     # plt.plot(g[:, :3], label="Grav")
-    # plt.plot(preds[:, 3:], label="Pred")
-    # plt.plot(targs[:, 3:], label="Targets")
+    plt.plot(preds[:, :3], label="Pred")
+    plt.plot(targs[1:, :3], label="Targets")
     # plt.plot(np.linalg.norm(preds - targs, axis=1), label="Error")
     # plt.plot(omega_vals, label="Omega")
     # plt.plot(d_omega_vals, label="D_Omega")
     # plt.plot(v_vals, label="V")
     # plt.plot(d_v_vals, label="D_V")
-    plt.plot(w_vals[:, :3], label="Wrench")
+    # plt.plot(w_vals[:, :3], label="Wrench")
     # plt.plot(w[:, :3], label="Local")
     plt.legend(loc='lower left')
     plt.show()
-    logger.info("Finished optimization:")
-    logger.info(str(res))
 
 
 def objective(t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
@@ -161,11 +148,12 @@ def objective(t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
     inp[9] m
     """
     def f(inp):
-        errors = ee_error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s)
+        errors, preds, targs, a, c, g, w = ee_error(
+            inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s)
         # Important: Averaging over number of measurements was necessary for
         # achieving convergence, perhaps the slopes change too quickly without
         # it.
-        return np.mean(np.linalg.norm(errors, axis=1)**2)
+        return np.mean(np.linalg.norm(preds[:-1] - targs[1:], axis=1)**2)
     return f
 
 
@@ -180,6 +168,10 @@ def error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
     errors = np.empty((len(t_s), 6))
     targets = np.empty((len(t_s), 6))
     predictions = np.empty((len(t_s), 6))
+    accel_vals = np.empty((len(t_s), 6))
+    c_vals = np.empty((len(t_s), 6))
+    grav_vals = np.empty((len(t_s), 6))
+    local_ws = np.zeros((len(t_s), 6))
     g = np.array([0, 0, -9.81])
     grav = np.array([m*g, np.zeros(3)]).flatten()
     init_p = np.array(p_s[0])
@@ -200,20 +192,25 @@ def error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
         d_v = np.array(d_v_s[i])
         accel = np.array([d_v + np.cross(d_omega, p + R @ r),
             d_omega]).flatten()
+        accel_val = accel_mat @ accel
 
         omega = np.array(omega_s[i])
         c_vec = np.cross(omega, Ic @ omega)
         c_vec = np.array([np.zeros(3), c_vec]).flatten()
 
+        grav[3:] = np.cross(R @ r, m * g)
+
         f = np.array(w_s[i][:3]) + tare_offset[:3]
         tau = np.array(w_s[i][3:]) + tare_offset[3:]
-        target = np.array([f, tau
-            - np.cross(p + R @ r, m * g)]).flatten()
-        pred = accel_mat @ accel + c_vec + grav
+        target = np.array([f, tau]).flatten()
+        pred = accel_val + c_vec + grav
         errors[i] = pred - target
         predictions[i] = pred
         targets[i] = target
-    return errors, predictions, targets
+        accel_vals[i] = accel_val
+        c_vals[i] = c_vec
+        grav_vals[i] = grav
+    return errors, predictions, targets, accel_vals, c_vals, grav_vals, local_ws
 
 
 def ee_error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
@@ -249,7 +246,7 @@ def ee_error(inp, t_s, R_s, p_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
         d_v = np.array(d_v_s[i])
         accel = np.array([R.T @ d_v,
             R.T @ d_omega]).flatten()
-        accel_val = accel_mat @ accel
+        accel_val = -accel_mat @ accel
 
         omega = np.array(omega_s[i])
         c_vec = np.cross(R.T @ omega, I @ R.T @ omega)
