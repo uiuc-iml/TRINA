@@ -101,6 +101,8 @@ def main():
 
             last_t = meas[t]
             last_ee_twist = ee_twist
+    # Save data sequentially for visualization later
+    np.save('sequence.npy', data_array)
     # Split data into train and test
     train_ind = int((1 - args.test) * len(data_array))
     np.random.shuffle(data_array)
