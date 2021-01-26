@@ -337,11 +337,11 @@ class Motion:
                 if self.estop_enabled:
                     self.estopped = self.estop.isEstopped()
                     if self.estopped:
-                        self.shutdown() 
+                        self.shutdown()
                         logger.info('Motion: estopped')
                         print('Motion: Estopped')
                         break
-                    
+
                 #Update current state. Only read state if a new one has been posted
                 #still update the state even if robot is paused
                 if self.base_enabled and self.base.newState():
@@ -386,7 +386,7 @@ class Motion:
                         if self.head_enabled:
                             self.head.pause()
                         self.pause_motion_sent = True #unused
-                else:              
+                else:
                     #Send Commands
                     if self.left_limb.enabled:
                         self.drive_limb(self.left_limb)
@@ -630,7 +630,7 @@ class Motion:
             print('Motion:paused')
 
 
-    def setLeftLimbPositionLinear(self,q,duration,col_check = True):
+    def setLeftLimbPositionLinear(self, q, duration, col_check=True):
         """Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -675,7 +675,7 @@ class Motion:
             logger.warning('Motion:paused')
             print('Motion:paused')
 
-    def setRightLimbPositionLinear(self,q,duration,col_check = True):
+    def setRightLimbPositionLinear(self, q, duration, col_check=True):
         """Set right limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -910,7 +910,7 @@ class Motion:
                     limb.state.cartesianDrive = True
                     limb.state.driveTransform = (R,vectorops.add(so3.apply(R,tool),t))
 
-                
+
                 limb.state.startTransform = (R,vectorops.add(so3.apply(R,tool),t))
                 limb.state.driveSpeedAdjustment = 1.0
                 limb.state.toolCenter = deepcopy(tool)
@@ -982,7 +982,7 @@ class Motion:
             self._controlLoopLock.acquire()
 
             formulation = 2
-            #if already in impedance control, then do not reset x_mass and x_dot_mass 
+            #if already in impedance control, then do not reset x_mass and x_dot_mass
             if (not limb.state.impedanceControl) or vectorops.norm(vectorops.sub(limb.state.toolCenter,tool_center)):
                 limb.state.set_mode_reset()
                 if formulation == 2:
@@ -1262,9 +1262,9 @@ class Motion:
             else:
                 logger.warning('Head not enabled.')
                 print('Head not enabled.')
-        
+
         return "NA"
-            
+
     def sensedBaseVelocity(self):
         """Returns the current base velocity
 
@@ -1568,7 +1568,7 @@ class Motion:
             if self.head_enabled:
                 self.setHeadPosition(self.sensedHeadPosition())
 
-            
+
             self._controlLoopLock.release()
         return 0
 
@@ -1974,7 +1974,7 @@ class Motion:
         old_wrench = state.prev_wrench[:3]
         state.wrench_norm_history.append(mag)
         state.wrench_norm_history.pop(0)
-        filtered_mag = spsignal.lfilter(state.wrench_filter_b, 
+        filtered_mag = spsignal.lfilter(state.wrench_filter_b,
             state.wrench_filter_a, state.wrench_norm_history)[-1]
         # print(f"mag: {mag:1.3g}\tFmag: {filtered_mag:1.3g}")
 
@@ -2056,24 +2056,12 @@ if __name__=="__main__":
     robot = Motion(mode = 'Physical',components = ['left_limb'],codename = "cholera")
     robot.startup()
     time.sleep(0.2)
-    home_time = 3
-    robot.setLeftLimbPositionLinear(
-            TRINAConfig.left_untucked_config, home_time)
-    time.sleep(home_time)
-    print("Home, setting impedance mode")
-    K = np.diag([200.0, 200.0, 200.0, 10.0, 10.0, 10.0])
-    M = 1*np.eye(6)#*5.0
-    M[3,3] = 0.25
-    M[4,4] = 0.25
-    M[5,5] = 0.25
-    B = 2.0*np.sqrt(4.0*np.dot(M,K))
-    B[3:6,3:6] = 2.0 * B[3:6,3:6]
-    robot.setLeftEETransformImpedance(
-        robot.sensedLeftEETransform(),
-        K, M, B
-    )
+    robot.setLeftLimbPositionLinear(TRINAConfig.left_untucked_config, 1)
+    time.sleep(1)
+    # robot.setLeftLimbVelocity([0,0,0,0,0,-0.1])
     while True:
         try:
+            print('{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}\t{:2.3f}'.format(*robot.sensedLeftEEWrench(frame='global')))
             time.sleep(0.1)
         except KeyboardInterrupt:
             print("Exiting")

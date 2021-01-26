@@ -45,7 +45,7 @@ def main():
         denom = (times[fd] - times[bk])
         d_omega = (np.array(omega_vals[fd])
             - np.array(omega_vals[bk])) /denom
-        d_v = (np.array(v_vals[fd]) 
+        d_v = (np.array(v_vals[fd])
             - np.array(v_vals[bk])) / denom
         d_omega_vals.append(d_omega)
         d_v_vals.append(d_v)
@@ -54,13 +54,12 @@ def main():
     omega_vals.pop(0); omega_vals.pop()
     v_vals.pop(0); v_vals.pop()
     w_vals.pop(0); w_vals.pop()
-    s_obj = functools.partial(objective, 
+    s_obj = functools.partial(objective,
         t_s=times, R_s=R_vals, omega_s=omega_vals,
         d_omega_s=d_omega_vals, v_s=v_vals, d_v_s=d_v_vals,
         w_s=w_vals)
     print(s_obj(np.zeros(10)))
     print(minimize(s_obj, np.zeros(10)))
-    
 
 
 def objective(inp, t_s, R_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
@@ -88,7 +87,7 @@ def objective(inp, t_s, R_s, omega_s, d_omega_s, v_s, d_v_s, w_s):
 
         d_omega = np.array(d_omega_s[i])
         d_v = np.array(d_v_s[i])
-        accel = np.array([d_v + np.cross(d_omega, R @ r), 
+        accel = np.array([d_v + np.cross(d_omega, R @ r),
             d_omega]).flatten()
 
         omega = np.array(omega_s[i])

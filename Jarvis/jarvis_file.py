@@ -96,7 +96,7 @@ class Jarvis:
 		command = self.send_command('self.robot.setRightLimbPosition', str(q))
 		return 0
 
-	def setLeftLimbPositionLinear(self, q, duration):
+	def setLeftLimbPositionLinear(self, q, duration, col_check=True):
 		"""Set Left limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -106,10 +106,10 @@ class Jarvis:
         q: a list of 6 doubles. The desired joint positions.
         duration: double. The desired duration.
         """
-		command = self.send_command('self.robot.setLeftLimbPositionLinear', str(q), str(duration))
+		command = self.send_command('self.robot.setLeftLimbPositionLinear', str(q), str(duration), str(col_check))
 		return 0
 
-	def setRightLimbPositionLinear(self, q, duration):
+	def setRightLimbPositionLinear(self, q, duration, col_check=True):
 		"""Set right limb to moves to a configuration in a certain amount of time at constant speed
 
         Set a motion queue, this will clear the setPosition() commands
@@ -119,7 +119,7 @@ class Jarvis:
         q: a list of 6 doubles. The desired joint positions.
         duration: double. The desired duration.
         """
-		command = self.send_command('self.robot.setRightLimbPositionLinear', str(q), str(duration))
+		command = self.send_command('self.robot.setRightLimbPositionLinear', str(q), str(duration), str(col_check))
 		return 0
 
 	def setVelocity(self, qdot):

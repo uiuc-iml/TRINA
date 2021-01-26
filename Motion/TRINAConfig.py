@@ -11,12 +11,12 @@ right_limb_address = '10.1.1.20'
 ##These are for the Righthand gripper
 # left_limb_payload = 0.86125
 # left_limb_cog = [-0.0058,-0.001,0.05865] #this needs to be in UR EE frame
-left_limb_payload = 0.1 #1.025 
-left_limb_cog = [0.,0.,0.03] #[0.0,0.0,0.08] 
+left_limb_payload = 0.0 #1.025
+left_limb_cog = [0.0,0.0,0.0]
 
 #estimated for the pusher, need to run the calibrater
-right_limb_payload = 0.86125 #0.4
-right_limb_cog = [0.0,0.0,0.06]
+right_limb_payload = 0.0 #0.86125 #0.4
+right_limb_cog = [0.0,0.0,0.0]
 left_Robotiq = True
 right_Robotiq = True
 left_Robotiq_type = 'parallel'
@@ -77,7 +77,7 @@ def get_wrench_R_right(name):
     if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')|(name == 'cholera')):
         return [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]
     elif (name == "bubonic"):
-        return [-0.7071067811865476, 0.49999999999999994, 0.5, -0.7071067811865476, -0.49999999999999994, -0.5, 0.0, -0.7071067811865476, 0.7071067811865476]  
+        return [-0.7071067811865476, 0.49999999999999994, 0.5, -0.7071067811865476, -0.49999999999999994, -0.5, 0.0, -0.7071067811865476, 0.7071067811865476]
 
     return
 
@@ -92,7 +92,7 @@ def get_right_gravity_vector_upright(name):
     if ((name == "anthrax")|(name == 'anthrax_lowpoly')|(name == 'seed')|(name == 'cholera')):
         return [4.91,-4.91,-6.93672]
     elif (name == "bubonic"):
-        return [4.91,-4.91,6.93672]    
+        return [4.91,-4.91,6.93672]
 
 def get_left_tool_link_N(name):
     if((name == "anthrax")|(name == "anthrax_lowpoly")|(name == "bubonic")):
@@ -161,6 +161,5 @@ def get_klampt_model_q(name,left_limb = [0]*6,right_limb = [0]*6,base = [0]*3,he
 # R_local_global_upright_right = [-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,-sqrt(0.5),-sqrt(0.5)]
 
 ## this is used when dealing with gravity vector
-# R_URbase_global_upright_left = [sqrt(0.5),sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),sqrt(0.25),0,-sqrt(0.5),sqrt(0.5)] 
+# R_URbase_global_upright_left = [sqrt(0.5),sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),sqrt(0.25),0,-sqrt(0.5),sqrt(0.5)]
 # R_URbase_global_upright_right = [sqrt(0.5),-sqrt(0.25),-sqrt(0.25),sqrt(0.5),sqrt(0.25),sqrt(0.25),0,sqrt(0.5),sqrt(0.5)]
-

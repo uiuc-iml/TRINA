@@ -117,16 +117,16 @@ def _setRightLimbPosition(q):
 
 @loggedMethod
 @xmlrpcMethod("setLeftLimbPositionLinear")
-def _setLeftLimbPositionLinear(q,duration):
+def _setLeftLimbPositionLinear(q, duration, col_check):
 	global robot
-	robot.setLeftLimbPositionLinear(q,duration)
+	robot.setLeftLimbPositionLinear(q, duration, col_check)
 	return 0
 
 @loggedMethod
 @xmlrpcMethod("setRightLimbPositionLinear")
-def _setRightLimbPositionLinear(q,duration):
+def _setRightLimbPositionLinear(q, duration, col_check):
 	global robot
-	robot.setRightLimbPositionLinear(q,duration)
+	robot.setRightLimbPositionLinear(q, duration, col_check)
 	return 0
 
 @loggedMethod

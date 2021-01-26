@@ -406,11 +406,11 @@ class CommandServer:
 		print('\nall modules started succesfully\n')
 		print('\n starting state receiver \n')
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
-		stateRecieverThread.start()		
+		stateRecieverThread.start()
 		print('\n state receiver started!\n')
 		print('\n starting pause/resume check\n')
 		pauseResumeThread = threading.Thread(target=self.pauseResumeChecker)
-		pauseResumeThread.start()	
+		pauseResumeThread.start()
 		print('\n starting command receiver \n')
 		commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
 		commandRecieverThread.daemon = True
@@ -422,7 +422,7 @@ class CommandServer:
 		# print('\n module monitor started\n')
 
 		atexit.register(self.shutdown_all)
-		
+
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
 
@@ -634,7 +634,7 @@ class CommandServer:
 	def activate(self,name):
 		while not self.shut_down_flag:
 			time.sleep(0.1)
-	
+
 	def pauseResumeChecker(self):
 		while not self.shut_down_flag:
 			time.sleep(0.5)
@@ -816,7 +816,7 @@ class CommandServer:
 				time.sleep(self.dt - elapsedTime)
 			else:
 				time.sleep(1e-6)
-	
+
 	def run(self,command):
 		# print(command)
 		try:
@@ -972,7 +972,7 @@ if __name__=="__main__":
 
 	server = CommandServer(mode = 'Physical',components =  ['head', 'left_limb','right_limb', 'base'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = [])
 	# server = CommandServer(mode = 'Physical',components =  ['head'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = ['zed_overhead'])
-	
+
 	# print(server.robot.closeLeftRobotiqGripper())
 	# print(server.robot.sensedLeftEETransform())
 	while(True):
