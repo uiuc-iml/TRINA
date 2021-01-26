@@ -422,8 +422,6 @@ class CommandServer:
 		# print('\n module monitor started\n')
 
 		atexit.register(self.shutdown_all)
-		if mode == "Kinematic":
-			self.setRobotToDefault()
 
 		# self.switch_module_activity(['C2'])
 		# self.empty_command.update({'UI':[]})
@@ -877,13 +875,10 @@ class CommandServer:
 		return 0
 
 	def setRobotToDefault(self):
-		leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
-		rightUntuckedConfig = self.robot.mirror_arm_config(leftUntuckedConfig)
-		print('right_Untucked',rightUntuckedConfig)
 		if('left_limb' in self.components):
-			self.robot.setLeftLimbPositionLinear(leftUntuckedConfig,2)
+			self.robot.setLeftLimbPositionLinear(left_untucked_config, 2)
 		if('right_limb' in self.components):
-			self.robot.setRightLimbPositionLinear(rightUntuckedConfig,2)
+			self.robot.setRightLimbPositionLinear(right_untucked_config, 2)
 
 	def start_redis(self):
 		print('starting redis')
@@ -975,7 +970,7 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['head','left_limb','right_limb','base'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = ['zed_overhead'])
+	server = CommandServer(mode = 'Physical',components =  ['head', 'left_limb','right_limb', 'base'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = [])
 	# server = CommandServer(mode = 'Physical',components =  ['head'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = ['zed_overhead'])
 
 	# print(server.robot.closeLeftRobotiqGripper())

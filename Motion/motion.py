@@ -15,6 +15,7 @@ from klampt.model import ik, collide
 import numpy as np
 import scipy as sp
 from klampt import WorldModel,vis
+from scipy import signal as spsignal
 import os
 
 
@@ -1965,58 +1966,58 @@ class Motion:
         wrench = limb.sensedEEWrench(frame = 'global')
         # print(vectorops.norm_L2(wrench[0:3]))
         #if force too big, backup a bit and stop
-        stop = False
-        if vectorops.norm_L2(wrench[0:3]) > 60:
-            stop = True
-            print('Max force exceeded')
-        if stop:
-            # TODO: Dangerous (tool center)
-            TEE = limb.sensedEETransform()
-            #move back 20 mm
-            T = (TEE[0],vectorops.add(TEE[1],vectorops.mul(vectorops.unit(wrench[0:3]),0.02)))
-        else:
-            # The hack.
-            wrench = np.array(wrench)
-            displace_wrench = np.array(wrench[:3])
-            # Force magnitude.
-            mag = np.linalg.norm(displace_wrench)
-            old_wrench = state.prev_wrench[:3]
+        # The hack.
+        wrench = np.array(wrench)
+        displace_wrench = np.array(wrench[:3])
+        # Force magnitude.
+        mag = np.linalg.norm(displace_wrench)
+        old_wrench = state.prev_wrench[:3]
+        state.wrench_norm_history.append(mag)
+        state.wrench_norm_history.pop(0)
+        filtered_mag = spsignal.lfilter(state.wrench_filter_b,
+            state.wrench_filter_a, state.wrench_norm_history)[-1]
+        # print(f"mag: {mag:1.3g}\tFmag: {filtered_mag:1.3g}")
 
-            effective_b = np.copy(state.B)
+        effective_b = np.copy(state.B)
 
-            START_THRESHOLD = 2
-            STOP_THRESHOLD = 8
+        START_THRESHOLD = 10
+        STOP_THRESHOLD = 8
 
-            if state.increaseB:
-                if mag < STOP_THRESHOLD:
-                    state.increaseB = False
-            elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD:
-                state.increaseB = True
+        # if state.increaseB:
+        #     if mag < STOP_THRESHOLD:
+        #         state.increaseB = False
+        # elif np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD:
+        #     state.increaseB = True
+        if filtered_mag < STOP_THRESHOLD:
+            state.increaseB = False
+        if (mag > START_THRESHOLD) or (filtered_mag > START_THRESHOLD):
+            state.increaseB = True
 
-            # print(f"DAMPING STATE: {[state.increaseB,mag]}")
-            if state.col_mode:
-                if state.increaseB:
-                    effective_b *= 20
+        # print(f"DAMPING STATE: {[state.increaseB,mag > START_THRESHOLD]}")
+        # print(state.col_mode)
+        if state.col_mode and state.increaseB:
+            # print("Increasing B!!!!!!")
+            effective_b *= 30
 
-            for i in range(6):
-                if state.deadband[i] > 0:
-                    if math.fabs(wrench[i]) < state.deadband[i]:
-                        wrench[i] = 0
-            # start = time.monotonic()
-            N = 2
-            for i in range(N):
-                state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, m_inv = state.Minv,\
-                    K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
-                    T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
-            # print("Time: ", time.monotonic() - start)
-            state.counter += 1
+        for i in range(6):
+            if state.deadband[i] > 0:
+                if math.fabs(wrench[i]) < state.deadband[i]:
+                    wrench[i] = 0
+        # start = time.monotonic()
+        N = 2
+        for i in range(N):
+            state.T_mass, state.x_dot_mass = self._simulate(wrench = wrench, m_inv = state.Minv,\
+                K = state.K,B = effective_b,T_curr = state.T_mass,x_dot_curr = state.x_dot_mass,\
+                T_g = state.T_g,x_dot_g = state.x_dot_g,dt = self.dt/N)
+        # print("Time: ", time.monotonic() - start)
+        state.counter += 1
 
-            state.prev_wrench = np.array(wrench)
+        state.prev_wrench = np.array(wrench)
 
-            #orthogonalize the rotation matrix
-            if state.counter % 100 == 0:
-                state.T_mass = (so3.from_moment(so3.moment(state.T_mass[0])),state.T_mass[1])
-            T = state.T_mass
+        #orthogonalize the rotation matrix
+        if state.counter % 100 == 0:
+            state.T_mass = (so3.from_moment(so3.moment(state.T_mass[0])),state.T_mass[1])
+        T = state.T_mass
 
         goal = ik.objective(limb.EE_link,R=T[0],\
             t = vectorops.sub(T[1],so3.apply(T[0],state.toolCenter)))
@@ -2040,12 +2041,7 @@ class Motion:
             else:
                 limb.impedance_col = False
         self.robot_model.setConfig(initial_config)
-
-        if stop:
-            # NOTE: LimbController only takes python floats!!! THIS IS DANGEROUS
-            return 0,0
-        else:
-            return 1,target_config.tolist()
+        return 1,target_config.tolist()
 
     def _get_klampt_q(self,left_limb = [],right_limb = []):
         if len(left_limb):
@@ -2070,5 +2066,4 @@ if __name__=="__main__":
         except KeyboardInterrupt:
             print("Exiting")
             break
-    print('flag')
     robot.shutdown()

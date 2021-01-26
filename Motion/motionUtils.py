@@ -2,6 +2,7 @@ import copy
 import time
 import numpy as np
 from klampt.math import vectorops,so3,se3
+from scipy import signal as spsignal
 
 class KinematicLimbController:
     def __init__(self, getConfig, getVelocity, setConfig, setVelocity, newState):
@@ -196,7 +197,7 @@ class Limb:
         self.controller.resume()
 
 class LimbState:
-    def __init__(self):
+    def __init__(self, wrench_history_len=50, w_filter_ord=3, w_freq=0.08):
         
         self.sensedq = [0.0,0.0,0.0,0.0,0.0,0.0]
         self.commandedq = []
@@ -239,10 +240,6 @@ class LimbState:
         self.K = []
         self.B = []
         self.Minv = []
-        # I - delta_t A and its LU decomposition to do backward euler
-        # A = [[0, 1], [-Minv K, -Minv B]]
-        self.A = None
-        self.LU = None
         #mass transform and velocity
         self.T_mass = []
         self.x_dot_mass = []
@@ -250,8 +247,16 @@ class LimbState:
         self.counter = 1
         #range for ignoring the wrench readings
         self.deadband = [0]*6
+        # Store previous information about wrenches for filtering
         self.prev_wrench = np.array([0]*6)
         self.increaseB = False
+        self.wrench_history_len = wrench_history_len
+        self.wrench_filter_order = w_filter_ord
+        self.wrench_crit_freq = w_freq
+        self.wrench_filter_b, self.wrench_filter_a = \
+            spsignal.butter(self.wrench_filter_order,
+                self.wrench_crit_freq, 'low')
+        self.wrench_norm_history = [0] * self.wrench_history_len
         self.last_p_time = time.monotonic()
 
     def set_mode_reset(self):
