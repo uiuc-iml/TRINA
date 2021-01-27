@@ -94,11 +94,10 @@ class testingWorldBuilder():
 
 		self.addTable(x, y)
 		# add some cubes
-		self.addCube((so3.from_axis_angle(([0, 0, 1], 0.5)), [x, y - 0.7, self.table_height]), self.cube_width,
-					 [1.0, 0, 0, 1], 1)
+		#self.addCube((so3.from_axis_angle(([0, 0, 1], 0.5)), [x, y - 0.7, self.table_height]), self.cube_width, [1.0, 0, 0, 1], 1)
 		# add one mesh
 		random.seed(30)
-		self.addRandomMesh([-0.4 + x, -1.0 + y, self.table_height], 1)
+		self.addRandomMesh([-0.3 + x, -0.9 + y, self.table_height], 1)
 
 	def addIndoorNavScenario(self):
 		"""

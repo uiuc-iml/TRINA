@@ -410,7 +410,7 @@ class testingWorldBuilder():
                      [1.0, 0, 0, 1], 1)
         # add one mesh
         random.seed(30)
-        self.addRandomMesh([-0.4 + x, -1.0 + y, self.table_height], 1)
+        self.addRandomMesh([-0.3 + x, -0.9 + y, self.table_height], 1)
 
     def addIndoorNavScenario(self):
         """

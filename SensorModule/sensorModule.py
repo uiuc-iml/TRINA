@@ -335,7 +335,7 @@ class Camera_Robot:
             start_time = time.time()
             # print('updating_sim')
             try:
-                # print(self.jarvis.sensedRobotq(),self.jarvis.sensedRightEETransform(),self.jarvis.sensedLeftEETransform())
+                #print(self.jarvis.sensedRobotq(),self.jarvis.sensedRightEETransform(),self.jarvis.sensedLeftEETransform())
                 q = self.jarvis.sensedRobotq()
                 self.Rrotation, self.Rtranslation = self.jarvis.sensedRightEETransform()
                 self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftEETransform()
@@ -344,6 +344,7 @@ class Camera_Robot:
                 print(e)
             try:
                 print('setting config')
+                #print(q)
                 self.simrobot.setConfig(q)
                 # print('updating simulation world')
                 # self.sim.updateWorld()

@@ -142,13 +142,13 @@ class PointClickGrasp:
                         print(os.getcwd())
                         
                         if self.mode == "Kinematic":
-                            leftUntuckedConfig = [-0.2028, -2.1063, -1.610, 3.7165, -0.9622, 1.0974]
+                            leftUntuckedConfig = [-0.2028, -2.1063, -1.610, 3.8165, -0.9622, 1.0974]
                             rightUntuckedConfig = self.jarvis.mirror_arm_config(leftUntuckedConfig)
                             self.jarvis.setLeftLimbPositionLinear(leftUntuckedConfig, 2)
                             self.jarvis.setRightLimbPositionLinear(rightUntuckedConfig, 2)
                             
-                            self.jarvis.setBaseVelocity([0.1, 0])
-                            time.sleep(2)
+                            self.jarvis.setBaseVelocity([0.15, 0])
+                            time.sleep(2.2)
                             self.jarvis.setBaseVelocity([0, 0])
                             
                 elif (status == 'idle'):
@@ -207,10 +207,11 @@ class PointClickGrasp:
                 # ask for a ray
                 #self.ray = self.jarvis.sendAndGetRayClickUI()
                 
-                leftUntuckedConfig = [-0.1028, -2.5063, -1.710, 3.7165, -0.9622, 0.9974]
+                leftUntuckedConfig = [-0.1028, -2.5063, -1.710, 3.7165, -0.9622, 1.0974]
                 rightUntuckedConfig = self.jarvis.mirror_arm_config(leftUntuckedConfig)
                 self.jarvis.setLeftLimbPositionLinear(leftUntuckedConfig, 2)
                 self.jarvis.setRightLimbPositionLinear(rightUntuckedConfig, 2)
+                time.sleep(4)
                 
                 
                 self.rgbdimage = self.jarvis.get_rgbd_images()
@@ -232,23 +233,27 @@ class PointClickGrasp:
                 mask_overlay = label2rgb(segmented,np.array(color_left),colors=[(255,0,0),(0,0,255), (0, 255,0), (255,255,0),(0,255,255), (255, 0,255)],alpha=0.01, bg_label=0, bg_color=None)
                 
                 
-                time.sleep(4)
                 #cv2.imshow("image", color_left)
+                #cv2.waitKey(0)
                 #if cv2.waitKey(1) & 0xFF == ord('q'):
                 #    break
                 
+                klampt_to_o3d = np.array([[0,-1,0,0],[0,0,-1,0],[1,0,0,0],[0,0,0,1]])
+                inv_k_to_o3d = np.linalg.inv(klampt_to_o3d)
+                
                 color = o3d.geometry.Image(np.array(color_left))
-                print(list(depth_left))
-                depth_left_flipped = np.array(depth_left).astype(np.float32)*(-1)
+                #print(list(depth_left))
+                depth_left_flipped = np.array(depth_left).astype(np.float32)*(1)
                 depth = o3d.geometry.Image(np.array(depth_left_flipped))
                 # Flip it, otherwise the pointcloud will be upside down
                 
                 self.pcds = self.jarvis.get_point_clouds()
                 print(self.pcds)
                 pcd = self.pcds['realsense_left']
-                rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(color, depth, 10)
+                rgbd_image = o3d.geometry.RGBDImage.create_from_color_and_depth(color, depth, 1.0, convert_rgb_to_intensity=False)
                 pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd_image,o3d.camera.PinholeCameraIntrinsic(o3d.camera.PinholeCameraIntrinsicParameters.PrimeSenseDefault))
-                pcd.transform([[-1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+                pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+                print(pcd.has_points())
                 o3d.io.write_point_cloud("test_grasping.pcd", pcd)
                 
                 
@@ -262,9 +267,11 @@ class PointClickGrasp:
                 
                 os.system("/home/motion/gpd/build/detect_grasps /home/motion/gpd/cfg/eigen_params.cfg /home/motion/TRINA/test_grasping.pcd")
                 
-                leftUntuckedConfig = [-0.1028, -3.2263, -0.710, 3.7165, -0.9622, 0.9974]
+                leftUntuckedConfig = [-0.2528, -3.4263, -0.510, 3.7165, -0.9622, 0.9974]
                 self.jarvis.setLeftLimbPositionLinear(leftUntuckedConfig, 2)
                 time.sleep(3)
+                
+                self.state = 'idle'
 
             elapsed_time = time.time() - loop_start_time
             if elapsed_time < self.infoLoop_rate:
