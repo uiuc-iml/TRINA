@@ -496,33 +496,33 @@ class DirectTeleOperation:
 			limb.setEETransformImpedance(limb.sensedEETransform(), self.K, self.M, [[4*x for x in a] for a in self.B],col_mode = self.col_mode)
 
 	def unifiedControl(self, left_target, right_target):
-		"""Velocity control for the entire robot using a unified controller
-		that takes base degrees of freedom into account (when available)
-		"""
-		left_err = np.array(
-			se3.error(left_target, self.robot.sensedLeftEETransform()))
-		right_err = np.array(
-			se3.error(right_target, self.robot.sensedRightEETransform()))
-		left_EE_link_name = 'left_EE_link'
-		right_EE_link_name = 'right_EE_link'
-		m = 6
-		J_l = self.robot_model.link(left_EE_link_name).getJacobian(self.tool)
-		# These tool offsets should really be separate for left/right limbs
-		J_r = self.robot_model.link(right_EE_link_name).getJacobian(self.tool)
-		full_jac = np.vstack([np.array(J_l), np.array(J_r)])
-		full_err = np.concatenate([left_err, right_err])
-		u, s, vh = np.linalg.svd(full_jac)
-		s_mag = np.abs(s)
-		max_sing_mag = s_mag[0]
-		min_sing_mag = s_mag[0]
-		for val in s_mag:
-			if val > max_sing_mag:
-				max_sing_mag = val
-			if val < min_sing_mag:
-				min_sing_mag = val
-		if min_sing_mag < 1e-4:
-			# Singular or nearly singular -> just get LS solution
-			pass
+	    """Velocity control for the entire robot using a unified controller
+	    that takes base degrees of freedom into account (when available)
+	    """
+	    left_err = np.array(
+	        se3.error(left_target, self.robot.sensedLeftEETransform()))
+	    right_err = np.array(
+	        se3.error(right_target, self.robot.sensedRightEETransform()))
+	    left_EE_link_name = 'left_EE_link'
+	    right_EE_link_name = 'right_EE_link'
+	    m = 6
+	    J_l = self.robot_model.link(left_EE_link_name).getJacobian(self.tool)
+	    # These tool offsets should really be separate for left/right limbs
+	    J_r = self.robot_model.link(right_EE_link_name).getJacobian(self.tool)
+	    full_jac = np.vstack([np.array(J_l), np.array(J_r)])
+	    full_err = np.concatenate([left_err, right_err])
+	    u, s, vh = np.linalg.svd(full_jac)
+	    s_mag = np.abs(s)
+	    max_sing_mag = s_mag[0]
+	    min_sing_mag = s_mag[0]
+	    for val in s_mag:
+	        if val > max_sing_mag:
+	            max_sing_mag = val
+	        if val < min_sing_mag:
+	            min_sing_mag = val
+	    if min_sing_mag < 1e-4:
+	        # Singular or nearly singular -> just get LS solution
+	        pass
 
 	def getTargetEETransform(self, limb):
 		"""Get the transform of the end effector attached to the `side` arm

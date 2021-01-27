@@ -6,13 +6,15 @@ import scipy.optimize as opt
 import numpy as np
 import sys
 import time
+import cvxpy as cp
 sys.path.append("../../../Motion")
 import TRINAConfig
 
 
 BASE_R_IND = 3
 CODENAME = 'cholera'
-LINK_NAME = 'left_EE_link'
+LEFT_LINK_NAME = 'left_EE_link'
+RIGHT_LINK_NAME = 'right_EE_link'
 
 
 def main():
@@ -31,13 +33,16 @@ def main():
         logger.error(f"Couldn't load file {fn}, exiting.")
         sys.exit()
     robot = world.robot(0)
-    set_left_arm_to_default(robot)
+    set_arms_to_default(robot)
 
-    # Start with no rotation, just move in the y direction
-    desired_vel = np.array([0, 0, 0, 0, 1, 0])
+    # Start with no rotation, just move in the x direction
+    desired_vel = np.array([0, 0, 0, 1, 0, 0])
 
-    # Use std lstsq method to find particular solution
-    full_robot_jac = np.array(robot.link(LINK_NAME).getJacobian([0,0,0]))
+    # Use cvxpy method to find particular solution
+    left_full_robot_jac = np.array(
+        robot.link(LEFT_LINK_NAME).getJacobian([0,0,0]))
+    left_full_robot_jac = np.array(
+        robot.link(LEFT_LINK_NAME).getJacobian([0,0,0]))
     avail_jac = np.empty((6, 7)) # Each column has 6 elts, we use 7 DoFs
     avail_jac[:, 0] = full_robot_jac[:, BASE_R_IND]
     for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
@@ -74,10 +79,12 @@ def main():
     print("Final EE Twist: ", full_robot_jac @ np.array(q_dot))
 
 
-def set_left_arm_to_default(robot):
+def set_arms_to_default(robot):
     cfg = robot.getConfig()
     for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
        cfg[ind] = TRINAConfig.left_untucked_config[i]
+    for i, ind in enumerate(TRINAConfig.get_right_active_Dofs(CODENAME)):
+       cfg[ind] = TRINAConfig.right_untucked_config[i]
     robot.setConfig(cfg)
 
 
