@@ -24,7 +24,6 @@ def main():
     with open("linear_regressor.p", "wb") as of:
         pickle.dump(regressor, of)
     predictions = regressor.predict(X_test)
-    print(regressor.score(X_test, y_test))
     print("R2 score:", sklearn.metrics.r2_score(y_test, predictions))
 
 

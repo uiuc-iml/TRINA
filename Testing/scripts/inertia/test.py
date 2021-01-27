@@ -10,9 +10,11 @@ def main():
     parser = argparse.ArgumentParser(description="Test force predictor")
     parser.add_argument("--file", type=str, default="regressor.p",
         help="which regressor to test")
+    parser.add_argument("--data", type=str, default="test_data.npy",
+        help="data file to test on")
     args = parser.parse_args()
 
-    test_data_array = np.load('test_data.npy')
+    test_data_array = np.load(args.data)
     X_test = test_data_array[:, :num_inp_features]
     y_test = test_data_array[:, num_inp_features:]
     with open(args.file, "rb") as of:
