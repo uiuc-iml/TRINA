@@ -13,6 +13,7 @@ def main():
         help="chronologically recorded features file")
     parser.add_argument("--file", type=str, default="",
         help="which regressor to test")
+    parser.add_argument("--title", type=str, default="", help="plot title")
     args = parser.parse_args()
 
     # test_data_array = np.load('test_data.npy')
@@ -26,9 +27,10 @@ def main():
     # predictions = regressor.predict(X_test)
     # print("R2 score:", sklearn.metrics.r2_score(y_test, predictions))
 
-    plt.plot(data[:, -num_out_features:], label='GT')
-    # plt.plot(pred, label='Pred')
+    plt.plot(data[:, -num_out_features:-3], label='GT')
+    plt.plot(pred[:, :3], label='Pred')
     plt.legend()
+    plt.title(args.title)
     plt.show()
 
 

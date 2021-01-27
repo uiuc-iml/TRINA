@@ -17,6 +17,8 @@ def main():
     X_test = test_data_array[:, :num_inp_features]
     y_train = train_data_array[:, num_inp_features:]
     y_test = test_data_array[:, num_inp_features:]
+    print(f"Using {len(X_train)} points for training")
+    print(f"Using {len(X_test)} points for testing")
     regressor = LinearRegression()
     regressor.fit(X_train, y_train)
     with open("linear_regressor.p", "wb") as of:
