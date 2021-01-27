@@ -1980,8 +1980,8 @@ class Motion:
 
         effective_b = np.copy(state.B)
 
-        START_THRESHOLD = 10
-        STOP_THRESHOLD = 8
+        START_THRESHOLD = 20
+        STOP_THRESHOLD = 4
 
         # if state.increaseB:
         #     if mag < STOP_THRESHOLD:
@@ -1990,11 +1990,12 @@ class Motion:
         #     state.increaseB = True
         if filtered_mag < STOP_THRESHOLD:
             state.increaseB = False
-        if (mag > START_THRESHOLD) or (filtered_mag > START_THRESHOLD):
+        if (np.linalg.norm(displace_wrench - old_wrench) > START_THRESHOLD) or (filtered_mag > START_THRESHOLD):
             state.increaseB = True
 
         # print(f"DAMPING STATE: {[state.increaseB,mag > START_THRESHOLD]}")
         # print(state.col_mode)
+        # print(state.increaseB)
         if state.col_mode and state.increaseB:
             # print("Increasing B!!!!!!")
             effective_b *= 30
