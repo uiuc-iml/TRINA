@@ -27,8 +27,9 @@ def main():
     # predictions = regressor.predict(X_test)
     # print("R2 score:", sklearn.metrics.r2_score(y_test, predictions))
 
-    plt.plot(data[:, -num_out_features:-3], label='GT')
-    plt.plot(pred[:, :3], label='Pred')
+    # plt.plot(data[:, -num_out_features:-3], label='GT')
+    # plt.plot(pred[:, :3], label='Pred')
+    plt.plot(data[:, -num_out_features:-3] - pred[:, :3], label="Corrected Ext Force")
     plt.legend()
     plt.title(args.title)
     plt.show()
