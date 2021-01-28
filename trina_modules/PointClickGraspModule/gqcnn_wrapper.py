@@ -16,6 +16,15 @@ import klampt.model.sensing
 
 def create_segmentaton_Mask(depth_array, camera_intr):
     depth_im = DepthImage(depth_array, frame=camera_intr.frame)
+    maximum = np.max(depth_array)
+    minimum = np.min(depth_array)
+    mean = np.mean(depth_array)
+    for i in range(len(depth_array)):
+        if depth_array[i] < minimum + (mean - minimum)/50:
+            depth_array[i] = 0
+        else:
+            depth_array[i] = 255
+    return BinaryImage(depth_array, frame = camera_intr.frame)
     segmentation_mask = depth_im.invalid_pixel_mask().inverse()
     return segmentation_mask.mask_binary(segmentation_mask)
 
@@ -35,7 +44,7 @@ def grasping_wrapper(depth_array, segmentation_mask, camera_intrinsic, config, m
     rgbd_im = RgbdImage.from_color_and_depth(color_im, depth_im)
     state = RgbdImageState(rgbd_im, camera_intrinsic, segmask= segmentation_mask)
 
-   
+
     policy_config = config["policy"]
     if "gqcnn_model" in policy_config["metric"]:
         policy_config["metric"]["gqcnn_model"] = model_path
@@ -43,11 +52,11 @@ def grasping_wrapper(depth_array, segmentation_mask, camera_intrinsic, config, m
             policy_config["metric"]["gqcnn_model"] = os.path.join(
                 os.path.dirname(os.path.realpath(__file__)),
                 policy_config["metric"]["gqcnn_model"])
-    
+
     policy_config["metric"]["fully_conv_gqcnn_config"]["im_height"] = depth_image.shape[0]
     policy_config["metric"]["fully_conv_gqcnn_config"]["im_width"] = depth_image.shape[1]
     policy = FullyConvolutionalGraspingPolicyParallelJaw(policy_config)
-    
+
     action = policy(state)
     return action.grasp # this contains center ang depth width
 
