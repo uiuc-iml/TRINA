@@ -20,7 +20,7 @@ from klampt.math import vectorops as vo
 from klampt.math import so3
 import trimesh
 import numpy as np
-
+from utils_my import *
 import pickle
 
 
@@ -332,7 +332,6 @@ def mainCalibrationURDF(pic_path,robot_path,URDF_save_folder,cameras,links):
     #     pickle.dump(Tr, handle)
     # with open(folder + 'qr', 'wb') as handle:
     #     pickle.dump(qr, handle)
-    # exit()
   
 
     #load the extracted data
@@ -353,6 +352,8 @@ def mainCalibrationURDF(pic_path,robot_path,URDF_save_folder,cameras,links):
     T_base_l, T_c_l,T_base_r, T_c_r = URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links)
     from klampt.math import so3
     print('left base rpy,t:',so3.rpy(T_base_l[0]),T_base_l[1])
+    print('left camera transform:',T_c_l)
+    print('left camera R row major:',col_to_row_major(T_c_l[0]))
     # print('right base rpy,t:',so3.rpy(T_base_r[0]),T_base_r[1])
 
 
@@ -458,7 +459,7 @@ if __name__=="__main__":
     ####################
 
     traj_path = 'URDF_calibration.path'
-    pic_path = './data/0124Test/'
+    pic_path = './data/0127Test/'
     robot_path = '../../Motion/data/robots/Cholera.urdf'
     rob_save_folder = '../../Motion/data/robots/'
     cameras =['realsense_left']#,'realsense_right']

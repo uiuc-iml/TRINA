@@ -54,13 +54,13 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
             T_EE_base = se3.mul(se3.inv(T_l_0),T_EE) #EE in arm base
             T_m_predicted = se3.mul(se3.mul(se3.mul(T_base,T_EE_base),T_c_EE),T_m_c)
             #only use position
-            # error_vec = vectorops.sub(T_marker_1[1],T_m_predicted[1])
-            # trans_error += vectorops.normSquared(error_vec)
+            error_vec = vectorops.sub(T_marker_1[1],T_m_predicted[1])
+            trans_error += vectorops.normSquared(error_vec)
             #use entire transform
             # print(i,T_m_predicted,T_marker_1)
-            error_vec = se3.error(T_marker_1,T_m_predicted)
-            trans_error += vectorops.normSquared(error_vec[0:3]) 
-            angle_error += vectorops.normSquared(error_vec[3:6])
+            # error_vec = se3.error(T_marker_1,T_m_predicted)
+            # trans_error += vectorops.normSquared(error_vec[0:3]) 
+            # angle_error += vectorops.normSquared(error_vec[3:6])
         expr = math.sqrt(trans_error/len(Tl))+ 1.0*math.sqrt(angle_error/len(Tl))
         print("Local solve: func(left arm)=%f"%expr)
         print('pos error:',math.sqrt(trans_error/(len(Tl))),'angle error', math.sqrt(angle_error/(len(Tl))))
@@ -95,7 +95,7 @@ def URDFCalibration(Tl,ql,Tr,qr,T_marker_1,T_c_l_0,T_c_r_0,robot_path,links):
 
     import scipy.optimize as sopt
 
-    bnds = ((-0.03, 0.03), (0.13, 0.23),(1.23,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
+    bnds = ((-0.03, 0.03), (0.17, 0.20),(1.23,1.4),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.2,0.2),(-0.2,0.2),(None,None),(None,None),(None,None))
     res = sopt.minimize(funcl,np.array(x_l_0),bounds = bnds,method='L-BFGS-B')
     x_l = res.x
     # bnds = ((-0.03, 0.03), (-0.23, -0.13),(1.23,1.7),(None,None),(None,None),(None,None),(-0.2,0.2),(-0.05,0),(-0.2,0.2),(None,None),(None,None),(None,None))

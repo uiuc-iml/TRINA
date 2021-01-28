@@ -1,5 +1,9 @@
 from copy import copy
 
+def col_to_row_major(R):
+    return [R[0],R[3],R[6],R[1],R[4],R[7],R[2],R[3],R[6]]
+
+
 def getLeftLinkTransform(robot,q,link_num,model):
     """
     Given TRINA robot configurtion, return the left EE transform
