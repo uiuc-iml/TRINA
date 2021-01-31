@@ -1264,9 +1264,43 @@
 
     
   <sensors>
-   <CameraSensor name="left_realsense" link="left_wrist2_link" Tsensor="0.8990921184670562 -0.4372496117896444 -0.02112201458730667 0.002250223607065338 -0.043633398031157476 0.9990450755946764 -0.4377536967338361 -0.8982810827163509 -0.03824653487312042  0.01912898 -0.05347852  0.1225568" xres="640" yres="480" xfov="1.20428" yfov="0.942478" zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+    <CameraSensor name="realsense_left" link="left_wrist2_link" 
+      Tsensor="0.8990921184670562 -0.4372496117896444 -0.02112201458730667 
+              0.002250223607065338 -0.043633398031157476 0.9990450755946764 
+              -0.4377536967338361 -0.8982810827163509 -0.03824653487312042  
+              0.01912898 -0.05347852  0.1225568" 
+      xres="640" yres="480" xfov="1.20428" yfov="0.942478" zmin="0.2" 
+      zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
 
-   <CameraSensor name="right_realsense" link="right_wrist2_link" Tsensor="0.95298946 0.11442072 0.28056903 0.27505 0.06178984 -0.95944229 -0.1271164 0.99150891  0.02741365 -0.02864296 -0.05 0.10547307" xres="640" yres="480" xfov="1.20428" yfov="0.942478" zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+    <CameraSensor name="realsense_right" link="right_wrist2_link" 
+      Tsensor="0.95298946 0.11442072 0.28056903 
+                0.27505 0.06178984 -0.95944229 
+                -0.1271164 0.99150891  0.02741365 
+                -0.02864296 -0.05 0.10547307" 
+      xres="640" yres="480" xfov="1.20428" yfov="0.942478" 
+      zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+
+    <CameraSensor name="realsense_slam_l515" link="base_link" 
+      Tsensor="1 0 0
+               0 1 0
+               0 0 1
+               0 0 1.10" 
+      xres="640" yres="480" xfov="1.20428" yfov="0.942478" 
+      zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+
+    <CameraSensor name="zed_slam" link="base_link" 
+      Tsensor="1 0 0
+               0 1 0
+               0 0 1
+               0 0 1.05" 
+      xres="640" yres="480" xfov="1.20428" yfov="0.942478" 
+      zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+
+    <LaserRangeSensor name="lidar" link="base_link" 
+      Tsensor="0 0 1  1 0 0  0 1 0  0.2 0 0.2"  depthMaximum="25.0" 
+      depthMinimum="0.1" depthResolution="0.01" depthVarianceLinear="0.0001" 
+      xSweepMagnitude="1.91986" measurementCount="660" />
+
   </sensors>
 
 </klampt>

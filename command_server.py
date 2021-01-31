@@ -970,7 +970,11 @@ if __name__=="__main__":
 
 	parser = argparse.ArgumentParser(description='Initialization parameters for TRINA')
 
-	server = CommandServer(mode = 'Physical',components =  ['left_limb','right_limb'], modules = ['DirectTeleOperation', 'StateLogger'], codename = 'cholera', cameras = [])
+	server = CommandServer(mode='Kinematic', 
+		world_file='./Motion/data/TRINA_world_cholera.xml',
+		components=['left_limb','right_limb'], 
+		modules=['DirectTeleOperation'], 
+		codename='cholera', cameras=['zed_slam'])
 	# server = CommandServer(mode = 'Physical',components =  ['head'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = ['zed_overhead'])
 	
 	# print(server.robot.closeLeftRobotiqGripper())

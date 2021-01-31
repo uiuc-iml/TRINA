@@ -10,6 +10,7 @@ import pickle
 import klampt
 import numpy
 import time
+import traceback
 from klampt.math import se3
 from klampt import vis, Geometry3D
 from klampt.model import sensing
@@ -146,8 +147,12 @@ class Camera_Robot:
             self.simrobot.setConfig(self.jarvis.sensedRobotq())
             self.sim = klampt.Simulator(self.world)
             self.simulated_cameras = {}
-            self.left_cam = self.sim.controller(0).sensor("left_hand_camera")
-            self.right_cam = self.sim.controller(0).sensor("right_hand_camera")
+            # self.left_cam = self.sim.controller(0).sensor("left_hand_camera")
+            # self.right_cam = self.sim.controller(0).sensor("right_hand_camera")
+            print(self.sim.controller(0))
+            # print(self.sim.controller(0).settings())
+            self.left_cam = self.sim.controller(0).sensor("realsense_left")
+            self.right_cam = self.sim.controller(0).sensor("realsense_right")
             self.lidar = self.sim.controller(0).sensor("lidar")
             self.system_start = time.time()
             self.simulated_cameras.update(
@@ -281,6 +286,7 @@ class Camera_Robot:
     def get_rgbd_images(self, cameras=[]):
         if(cameras == []):
             cameras = list(self.active_cameras.keys())
+
         output = {}
         if(type(cameras) == str):
             cameras = [cameras]
@@ -366,6 +372,8 @@ class Camera_Robot:
                 # print('returning images left')
                 time.sleep(0.01)
                 # print('updating images')
+                print(f"Camera type: {self.left_cam.type()}")
+                print(self.left_cam.name())
                 self.left_image = list(sensing.camera_to_images(
                     self.left_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
                 # print('returning images right')
@@ -382,6 +390,7 @@ class Camera_Robot:
                     # print('done sleeping')
             except Exception as e:
                 print(e)
+                traceback.print_exc()
                 print('Somehow there was an error during updating the simulation. WTF!?')
         print('somehow exited the loop')
 
@@ -424,7 +433,7 @@ class Camera_Robot:
         except Exception as e:
             print(e)
             pass
-        pub = rospy.Publisher("base_scan", sensor_msgs.msg.LaserScan)
+        pub = rospy.Publisher("base_scan", sensor_msgs.msg.LaserScan, queue_size=10)
 
         ros_msg = None
         curr_pose_child = None
