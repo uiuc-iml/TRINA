@@ -1281,18 +1281,18 @@
       zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
 
     <CameraSensor name="realsense_slam_l515" link="base_link" 
-      Tsensor="1 0 0
+      Tsensor="0 0 1
                0 1 0
-               0 0 1
-               0 0 1.10" 
+               -1 0 0
+               0.1 0 1.10"
       xres="640" yres="480" xfov="1.20428" yfov="0.942478" 
       zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
 
     <CameraSensor name="zed_slam" link="base_link" 
-      Tsensor="1 0 0
+      Tsensor="0 0 1
                0 1 0
-               0 0 1
-               0 0 1.05" 
+               -1 0 0
+               0.1 0 1.05"
       xres="640" yres="480" xfov="1.20428" yfov="0.942478" 
       zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
 
