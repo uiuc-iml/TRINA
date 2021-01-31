@@ -57,7 +57,7 @@ class Camera_Robot:
     """
 
     # Whenever a new realsense camera is added, please update this dictionary with its serial number
-    def __init__(self, robot, cameras= None, mode='Kinematic', components=[], world=[], ros_active = True, use_jarvis = True):
+    def __init__(self, robot, cameras=None, mode='Kinematic', components=[], world=[], ros_active = True, use_jarvis = True):
         """
         Instantiates a camera robot instance
 
@@ -97,7 +97,7 @@ class Camera_Robot:
                                     'realsense_overhead':os.path.join(trina_dir,'Sensors/realsense_overhead_config.npy'),
                                     'realsense_slam_l515':os.path.join(trina_dir,'Sensors/realsense_slam_l515_config.npy'),
                                     'zed_slam':os.path.join(trina_dir,'Sensors/zed_slam_config.npy')
-}
+        }
         self.valid_cameras = ['realsense_right',
                               'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead','realsense_slam_l515','zed_slam']
         # we first check if the parameters are valid:
@@ -147,25 +147,27 @@ class Camera_Robot:
             self.simrobot.setConfig(self.jarvis.sensedRobotq())
             self.sim = klampt.Simulator(self.world)
             self.simulated_cameras = {}
-            # self.left_cam = self.sim.controller(0).sensor("left_hand_camera")
-            # self.right_cam = self.sim.controller(0).sensor("right_hand_camera")
-            print(self.sim.controller(0))
-            # print(self.sim.controller(0).settings())
-            self.left_cam = self.sim.controller(0).sensor("realsense_left")
-            self.right_cam = self.sim.controller(0).sensor("realsense_right")
+            self.simulated_camera_names = cameras \
+                if type(cameras) == list or type(cameras) == tuple else []
+            self.cam_key = 'camera'
+            self.pc_key = 'point_cloud'
+            self.img_key = 'image'
+            for name in self.simulated_camera_names:
+                if name not in self.valid_cameras:
+                    raise ValueError(f"Kinematic sensor module "
+                        + "did not recognize camera name {name}.")
+                self.simulated_cameras[name] = {self.cam_key:
+                    self.sim.controller(0).sensor(name),
+                    self.pc_key: [],
+                    self.img_key: []
+                }
             self.lidar = self.sim.controller(0).sensor("lidar")
             self.system_start = time.time()
-            self.simulated_cameras.update(
-                {'realsense_right': self.right_cam, 'realsense_left': self.left_cam})
             # vis.add("world",self.world)
 
             # vis.show()
             # vis.kill()
             # and we start the thread that will update the simulation live:
-            self.right_image = []
-            self.left_image = []
-            self.left_point_cloud = []#np.zeros(shape=(3, 6))
-            self.right_point_cloud = []#np.zeros(shape=(3, 6))
             self.simlock = threading.Lock()
             # GLEW WORKAROUND
             glutInit([])
@@ -239,48 +241,30 @@ class Camera_Robot:
                         {camera: self.active_cameras[camera].get_point_cloud()})
             return output
         else:
-            lpc = self.left_point_cloud
-            rpc = self.right_point_cloud
-            # lpc = sensing.camera_to_points(self.left_cam, points_format='numpy', all_points=False, color_format='channels')
-            # rpc = sensing.camera_to_points(self.right_cam, points_format='numpy', all_points=False, color_format='channels')
-
-            left_pcd = o3d.geometry.PointCloud()
-            left_pcd.points = o3d.utility.Vector3dVector(lpc[:, :3])
-            left_pcd.colors = o3d.utility.Vector3dVector(lpc[:, 3:])
-            right_pcd = o3d.geometry.PointCloud()
-            right_pcd.points = o3d.utility.Vector3dVector(rpc[:, :3])
-            right_pcd.colors = o3d.utility.Vector3dVector(rpc[:, 3:])
-            # we finally transform the point clouds:
             try:
-                klampt_to_o3d = np.array([[0,-1,0,0],[0,0,-1,0],[1,0,0,0],[0,0,0,1]])
-                inv_k_to_o3d = np.linalg.inv(klampt_to_o3d)
-                Rrotation = self.Rrotation  
-                Rtranslation = self.Rtranslation
-                Lrotation = self.Lrotation
-                Ltranslation = self.Ltranslation
-                REE_transform = np.array(
-                    se3.homogeneous((Rrotation, Rtranslation)))
-                LEE_transform = np.array(
-                    se3.homogeneous((Lrotation, Ltranslation)))
-                self.realsense_transform = np.eye(4)
-                # we then apply the necessary similarity transforms:
-                final_Rtransform = np.matmul(inv_k_to_o3d,
-                                                np.matmul(klampt_to_o3d,
-                                                    np.matmul(
-                                                        REE_transform,inv_k_to_o3d)))
-                final_Ltransform = np.matmul(inv_k_to_o3d,
-                                np.matmul(klampt_to_o3d,
-                                    np.matmul(
-                                        LEE_transform,inv_k_to_o3d)))
-                
-
-                # we then apply this transform to the point cloud
-                Rtransformed_pc = right_pcd.transform(final_Rtransform)
-                Ltransformed_pc = left_pcd.transform(final_Ltransform)
-                return {"realsense_right": Rtransformed_pc, "realsense_left": Ltransformed_pc}
+                ret = {}
+                for name in self.simulated_camera_names:
+                    cam = self.simulated_cameras[name][self.cam_key]
+                    pc = self.simulated_cameras[name][self.pc_key]
+                    data = o3d.geometry.PointCloud()
+                    data.points = o3d.utility.Vector3dVector(pc[:, :3])
+                    data.colors = o3d.utility.Vector3dVector(pc[:, 3:])
+                    klampt_to_o3d = np.array([
+                        [0,-1,0,0],
+                        [0,0,-1,0],
+                        [1,0,0,0],
+                        [0,0,0,1]
+                    ])
+                    inv_k_to_o3d = np.linalg.inv(klampt_to_o3d)
+                    transform = np.array(se3.homogeneous(
+                        sensing.get_sensor_xform(cam, robot=self.simrobot)))
+                    transform = (inv_k_to_o3d @ klampt_to_o3d 
+                        @ transform @ inv_k_to_o3d)
+                    trans_data = data.transform(transform)
+                    ret[name] = trans_data
+                return ret
             except Exception as e:
-                print(e)
-                print('failed to communicate with robot')
+                traceback.print_exc()
                 return "Failed to Communicate"
 
     def get_rgbd_images(self, cameras=[]):
@@ -304,18 +288,10 @@ class Camera_Robot:
                     continue
             return output
         else:
-            # try:
-            #     right_image = sensing.camera_to_images(self.right_cam, image_format= 'numpy', color_format='channels')
-            # except Exception as e:
-            #     print('failed to retrieve right camera',e)
-            #     right_image = []
-            # try:
-            #     left_image = sensing.camera_to_images(self.left_cam, image_format= 'numpy', color_format='channels')
-            # except Exception as e:
-            #     print('failed to retrieve left camera',e)
-            #     left_image = []
-
-            return {"realsense_right": self.right_image, "realsense_left": self.left_image}
+            ret = {}
+            for name in self.simulated_camera_names:
+                ret[name] = self.simulated_cameras[name][self.img_key]
+            return ret
 
     def safely_close_all(self):
         # print(self.shutdown)
@@ -349,37 +325,23 @@ class Camera_Robot:
 
         while(True):
             start_time = time.time()
-            # print('updating_sim')
             try:
-                # print(self.jarvis.sensedRobotq(),self.jarvis.sensedRightEETransform(),self.jarvis.sensedLeftEETransform())
                 q = self.jarvis.sensedRobotq()
-                self.Rrotation, self.Rtranslation = self.jarvis.sensedRightEETransform()
-                self.Lrotation, self.Ltranslation = self.jarvis.sensedLeftEETransform()
             except Exception as e:
                 print('error updating robot state')
                 print(e)
             try:
-                # print('setting config')
                 self.simrobot.setConfig(q)
-                # print('updating simulation world')
                 self.sim.updateWorld()
-                # with self.simlock:
-                # self.sim.simulate(self.dt)
-                # print('simulating left')
-                self.left_cam.kinematicSimulate(self.world, self.dt)
-                # print('simulating right')
-                self.right_cam.kinematicSimulate(self.world, self.dt) 
-                # print('returning images left')
+                for name in self.simulated_camera_names:
+                    cam = self.simulated_cameras[name][self.cam_key]
+                    cam.kinematicReset()
+                    cam.kinematicSimulate(self.world, self.dt)
+                    self.simulated_cameras[name][self.img_key] = list(
+                        sensing.camera_to_images(cam, image_format='numpy', 
+                            color_format='channels')
+                        ) + [self.jarvis.getTrinaTime()]
                 time.sleep(0.01)
-                # print('updating images')
-                print(f"Camera type: {self.left_cam.type()}")
-                print(self.left_cam.name())
-                self.left_image = list(sensing.camera_to_images(
-                    self.left_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
-                # print('returning images right')
-                self.right_image = list(sensing.camera_to_images(
-                    self.right_cam, image_format='numpy', color_format='channels')) + [self.jarvis.getTrinaTime()]
-                # print('returned images right!')
 
                 elapsed_time = time.time() - start_time
                 # print('calculated time!')
@@ -389,7 +351,6 @@ class Camera_Robot:
                     time.sleep(self.dt-elapsed_time)
                     # print('done sleeping')
             except Exception as e:
-                print(e)
                 traceback.print_exc()
                 print('Somehow there was an error during updating the simulation. WTF!?')
         print('somehow exited the loop')
@@ -401,16 +362,17 @@ class Camera_Robot:
             # self.sim.simulate(self.dt)
             # print(id(self))
             self.sim.updateWorld()
-
-            # print('updating point clouds')
-            self.left_point_cloud = sensing.camera_to_points(
-                self.left_cam, points_format='numpy', all_points=False, color_format='channels')
-            self.right_point_cloud = sensing.camera_to_points(
-                self.right_cam, points_format='numpy', all_points=False, color_format='channels')
+            for name in self.simulated_camera_names:
+                cam = self.simulated_cameras[name][self.cam_key]
+                self.simulated_cameras[name][self.pc_key] = \
+                    sensing.camera_to_points(cam, 
+                        points_format='numpy', all_points=False, 
+                        color_format='channels'
+                    )
             time.sleep(3*self.dt)
+
     def update_lidar_sim(self,ros_parent_conn,world,jarvis,simrobot,lidar):
         rospy.init_node("lidar_update_node")
-
         dt = 0.01
         while(True):
             start_time = time.time()
@@ -476,7 +438,6 @@ class Camera_Robot:
         res.ranges = measurements
         res.intensities = []
         return res
-
 
 
 class RealSenseCamera:

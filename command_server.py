@@ -382,12 +382,14 @@ class CommandServer:
 			builder = testingWorldBuilder(30,30,world = self.world)
 			builder.addTableTopScenario(x = 1.5,y = 1.0)
 			self.world = builder.getWorld()
-			self.sensor_module = Camera_Robot(robot = self.robot,world = self.world)
+			self.sensor_module = Camera_Robot(robot=self.robot,
+				world=self.world, cameras=cameras)
 			print('\n\n\n\n\n initialization of Kinematic sensor module sucessfull!!\n\n\n')
 
 			time.sleep(3)
 		if(self.mode == 'Physical'):
-			self.sensor_module = Camera_Robot(robot = self.robot, mode = self.mode, cameras=cameras)
+			self.sensor_module = Camera_Robot(robot=self.robot,
+				mode=self.mode, cameras=cameras)
 			print('\n\n\n\n\n initialization of Physical sensor module sucessfull!!\n\n\n')
 			time.sleep(5)
 
@@ -408,9 +410,10 @@ class CommandServer:
 		stateRecieverThread = threading.Thread(target=self.stateReciever)
 		stateRecieverThread.start()		
 		print('\n state receiver started!\n')
-		print('\n starting pause/resume check\n')
-		pauseResumeThread = threading.Thread(target=self.pauseResumeChecker)
-		pauseResumeThread.start()	
+		if self.mode == 'Physical':
+			print('\n starting pause/resume check\n')
+			pauseResumeThread = threading.Thread(target=self.pauseResumeChecker)
+			pauseResumeThread.start()
 		print('\n starting command receiver \n')
 		commandRecieverThread = Process(target=self.commandReciever, args=(self.robot, self.active_modules))
 		commandRecieverThread.daemon = True
