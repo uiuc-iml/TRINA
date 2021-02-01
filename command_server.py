@@ -977,7 +977,8 @@ if __name__=="__main__":
 		world_file='./Motion/data/TRINA_world_cholera.xml',
 		components=['left_limb','right_limb'], 
 		modules=['DirectTeleOperation'], 
-		codename='cholera', cameras=['zed_slam'])
+		codename='cholera', 
+		cameras=['zed_slam_left', 'zed_slam_right', 'realsense_slam_l515'])
 	# server = CommandServer(mode = 'Physical',components =  ['head'], modules = ['DirectTeleOperation'], codename = 'cholera', cameras = ['zed_overhead'])
 	
 	# print(server.robot.closeLeftRobotiqGripper())

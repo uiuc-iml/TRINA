@@ -99,7 +99,10 @@ class Camera_Robot:
                                     'zed_slam':os.path.join(trina_dir,'Sensors/zed_slam_config.npy')
         }
         self.valid_cameras = ['realsense_right',
-                              'realsense_left', 'zed_torso', 'zed_back','realsense_overhead','zed_overhead','realsense_slam_l515','zed_slam']
+            'realsense_left', 'zed_torso', 'zed_back',
+            'realsense_overhead', 'zed_overhead',
+            'realsense_slam_l515','zed_slam',
+            'zed_slam_left', 'zed_slam_right']
         # we first check if the parameters are valid:
         # checking if cameras make sense:
         self.cameras = cameras
@@ -154,8 +157,8 @@ class Camera_Robot:
             self.img_key = 'image'
             for name in self.simulated_camera_names:
                 if name not in self.valid_cameras:
-                    raise ValueError(f"Kinematic sensor module "
-                        + "did not recognize camera name {name}.")
+                    raise ValueError("Kinematic sensor module "
+                        + f"did not recognize camera name {name}.")
                 self.simulated_cameras[name] = {self.cam_key:
                     self.sim.controller(0).sensor(name),
                     self.pc_key: [],
@@ -264,8 +267,7 @@ class Camera_Robot:
                     ret[name] = trans_data
                 return ret
             except Exception as e:
-                traceback.print_exc()
-                return "Failed to Communicate"
+                return traceback.format_exc()
 
     def get_rgbd_images(self, cameras=[]):
         if(cameras == []):
@@ -358,9 +360,6 @@ class Camera_Robot:
     def update_point_clouds(self):
         time.sleep(3)
         while(True):
-            # with self.simlock:
-            # self.sim.simulate(self.dt)
-            # print(id(self))
             self.sim.updateWorld()
             for name in self.simulated_camera_names:
                 cam = self.simulated_cameras[name][self.cam_key]
