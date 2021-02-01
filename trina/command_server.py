@@ -262,7 +262,7 @@ class CommandServer:
                 print('   Restarting module ' + name)
                 #need to reload module and all sub-modules
                 reload(mod.modobj)
-                for k in sys.modules:
+                for k in list(sys.modules):
                     if k.startswith(mod.modobj.__name__):
                         reload(sys.modules[k])
                 #reload class map

@@ -194,7 +194,7 @@ def get_module_classes(names,doreload=True):
                 raise RuntimeError("Invalid module name {}, could not be found/loaded in {}".format(briefName,module_locations))
         if doreload:
             reload(modobj)
-            for k in sys.modules:
+            for k in list(sys.modules):
                 if k.startswith(modobj.__name__):
                     reload(sys.modules[k])
         modclassname = mod_class_map.get(name,name)
@@ -235,7 +235,7 @@ def get_api_classes(names,doreload=True):
         #for safety
         if doreload:
             reload(modobj)
-            for k in sys.modules:
+            for k in list(sys.modules):
                 if k.startswith(modobj.__name__):
                     reload(sys.modules[k])
         modclassname = mod_class_map.get(name,name)
