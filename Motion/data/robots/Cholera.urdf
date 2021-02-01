@@ -1285,8 +1285,8 @@
                0 1 0
                -1 0 0
                0.1 0 1.10"
-      xres="1280" yres="480" xfov="1.20428" yfov="0.942478" 
-      zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+      xres="1280" yres="720" xfov="1.20428" yfov="0.942478" 
+      zmin="0.1" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
 
     <CameraSensor name="zed_slam_left" link="base_link" 
       Tsensor="0 0 1
@@ -1294,7 +1294,7 @@
                -1 0 0
                0.1 -0.06 1.05"
       xres="672" yres="376" xfov="1.20428" yfov="0.942478" 
-      zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+      zmin="0.1" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
 
       <CameraSensor name="zed_slam_right" link="base_link" 
       Tsensor="0 0 1
@@ -1302,7 +1302,7 @@
                -1 0 0
                0.1 0.06 1.05"
       xres="672" yres="376" xfov="1.20428" yfov="0.942478" 
-      zmin="0.2" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
+      zmin="0.1" zmax ="1.5" zresolution="0.01" zvarianceLinear="0.00001"/>
 
     <LaserRangeSensor name="lidar" link="base_link" 
       Tsensor="0 0 1  1 0 0  0 1 0  0.2 0 0.2"  depthMaximum="25.0" 
