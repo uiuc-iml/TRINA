@@ -21,6 +21,21 @@ res = robot.startup()
 if not res:
     raise RuntimeError("Motion server not running?")
 
+#add more visualization items here under the format {key:STATE_SERVER_PATH}
+visItems = {
+    
+}
+
+#add more plot items here under the format {plot: items} where items is a dict {key:STATE_SERVER_PATH}
+plotItems = {
+    "Controllers" : {
+        "left_joystick_x" : ['UI_STATE','controllerButtonState','leftController','thumbstickMovement',0],
+        "left_joystick_y" : ['UI_STATE','controllerButtonState','leftController','thumbstickMovement',1],
+        "right_joystick_x" : ['UI_STATE','controllerButtonState','rightController','thumbstickMovement',0],
+        "right_joystick_y" : ['UI_STATE','controllerButtonState','rightController','thumbstickMovement',1],
+    }
+}
+
 server = trina.state_server.StateServer()
 # robot.startServer(mode = 'Kinematic', components = [])
 
@@ -39,30 +54,33 @@ def translate_camera(linknum):
     camera.set_matrix(Tlink)
     vis.unlock()
     return Tlink
-# while(True):#     print('\n\n {} \n\n'.format(i))tra
-#     try:
-#         vis.lock()
-#         link = vis_robot.link(i)           # This link number should be the end effector link number
-#         Tlink = link.getTransform()
-#         camera.set_matrix(Tlink)
-#         vis.unlock()
-#         time.sleep(1)
-#         i+=1
-#         print(i)
-#     except:
-#         print('error occured!!!!!')
-#         break
+
+for plotName,plotPaths in plotItems.items():
+    vis.addPlot(plotName)
+
 t0 = time.time()
 while vis.shown():
     vis.lock()
     #temp: try sending a motion
-    #robot.setBaseVelocity([0.1*math.sin(0.2*(time.time()-t0)),0])
     sensed_position = server["ROBOT_STATE"]["Position"]["Robotq"].read()
-    #qbase = robot.sensedBasePosition()
-    #sensed_position[:2] = qbase[:2]
-    #sensed_position[3] = qbase[3]
-    # print(len(sensed_position))
     vis_robot.setConfig(sensed_position)
+
+    #plot various things
+    for plotName,plotPaths in plotItems.items():
+        for item,path in plotPaths.items():
+            try:
+                value = server.get(path)
+            except Exception as e:
+                print("Error",e,"while getting path",path)
+                import traceback
+                traceback.print_exc()
+                continue
+            if hasattr(value,'__iter__'):
+                for i,v in enumerate(value):
+                    vis.logPlot(plotName,'{}[{}]'.format(v,i),v)
+            else:
+                vis.logPlot(plotName,item,value)
+        
     ## end effector is 42
     # Adding the third person perspective. First, select a link that is aligned with the base
     EndLink = vis_robot.link(3)           # This link number should be the end effector link number
