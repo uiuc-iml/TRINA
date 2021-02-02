@@ -11,6 +11,8 @@ sys.path.append("../../../Motion")
 import TRINAConfig
 
 
+BASE_X_IND = 0
+BASE_Y_IND = 1
 BASE_R_IND = 3
 CODENAME = 'cholera'
 LEFT_LINK_NAME = 'left_EE_link'
@@ -35,48 +37,143 @@ def main():
     robot = world.robot(0)
     set_arms_to_default(robot)
 
-    # Start with no rotation, just move in the x direction
-    desired_vel = np.array([0, 0, 0, 1, 0, 0])
+    current_config = robot.getConfig()
+    theta = current_config[BASE_R_IND]
+
+    left_desired_twist = np.array([0, 0, 0, -1, 0, 0])
+    right_desired_twist = np.array([0, 0, 0, 0, 0, 0])
 
     # Use cvxpy method to find particular solution
-    left_full_robot_jac = np.array(
-        robot.link(LEFT_LINK_NAME).getJacobian([0,0,0]))
-    left_full_robot_jac = np.array(
-        robot.link(LEFT_LINK_NAME).getJacobian([0,0,0]))
-    avail_jac = np.empty((6, 7)) # Each column has 6 elts, we use 7 DoFs
-    avail_jac[:, 0] = full_robot_jac[:, BASE_R_IND]
-    for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
-        avail_jac[:, i+1] = np.array(full_robot_jac[:, ind])
-    q_dot_part = np.linalg.lstsq(avail_jac, desired_vel, rcond=None)[0]
-    print("Particular solution: ", q_dot_part)
+    q_dot_part, avail_jac, _ = get_ls_soln(robot, left_desired_twist, right_desired_twist)
 
+    lam_x = 0.1
+    lam_theta = 0.1
+    nu = 1.0
     u, s, vh = np.linalg.svd(avail_jac)
+    # The closer we are to singular, the more the base can move forward without
+    # penalty
+    hinge_x = lam_x / s[-1]
+    hinge_theta = lam_theta / s[-1]
+    print("Hinges: ", hinge_x, hinge_theta)
+    null_basis = get_null_basis(u, s, vh)
+    t = cp.Variable(null_basis.shape[1])
+    total_vec = q_dot_part + null_basis @ t
+    base_vec = total_vec[-3:]
+    R = np.array([[np.cos(theta), -np.sin(theta)],[np.sin(theta), np.cos(theta)]])
+    local_base_vel = R.T @ base_vec[:2]
+    obj = cp.Minimize(cp.pos(local_base_vel[0] - hinge_x)
+        + cp.neg(local_base_vel[0])
+        + cp.pos(base_vec[-1] - hinge_theta)
+        + cp.neg(base_vec[-1] - hinge_theta)
+        + nu * cp.norm_inf(total_vec))
+    constraints = [base_vec[1] * np.cos(theta) - base_vec[0] * np.sin(theta) == 0]
+    prob = cp.Problem(obj, constraints)
+    res = prob.solve()
+    t = t.value
+    print("T: ", t)
+    q_dot_part += null_basis @ t
+    print("q_dot total: ", q_dot_part)
+
+    left_dofs = 6
+    right_dofs = 6
+    q_dot = robot.getVelocity()
+    for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
+        q_dot[ind] = q_dot_part[i]
+    for i, ind in enumerate(TRINAConfig.get_right_active_Dofs(CODENAME)):
+        q_dot[ind] = q_dot_part[i + left_dofs]
+    for i, ind in enumerate(get_base_dofs(CODENAME)):
+        q_dot[ind] = q_dot_part[i + left_dofs + right_dofs]
+    robot.setVelocity(q_dot)
+
+    left_full_robot_jac = np.array(
+        robot.link(LEFT_LINK_NAME).getJacobian([0,0,0]))
+    right_full_robot_jac = np.array(
+        robot.link(RIGHT_LINK_NAME).getJacobian([0,0,0]))
+    print("Final Left EE Twist: ", left_full_robot_jac @ np.array(q_dot))
+    print("Final Right EE Twist: ", right_full_robot_jac @ np.array(q_dot))
+
+    print("Base null movement")
+    q_dot_part, _ = null_base_move(robot, np.array([0, 0, 1, 1, 0, 0]))
+    print(q_dot_part)
+    q_dot = robot.getVelocity()
+    for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
+        q_dot[ind] = q_dot_part[i]
+    for i, ind in enumerate(TRINAConfig.get_right_active_Dofs(CODENAME)):
+        q_dot[ind] = q_dot_part[i + left_dofs]
+    for i, ind in enumerate(get_base_dofs(CODENAME)):
+        q_dot[ind] = q_dot_part[i + left_dofs + right_dofs]
+    left_full_robot_jac = np.array(
+        robot.link(LEFT_LINK_NAME).getJacobian([0,0,0]))
+    right_full_robot_jac = np.array(
+        robot.link(RIGHT_LINK_NAME).getJacobian([0,0,0]))
+    print("Final Left EE Twist: ", left_full_robot_jac @ np.array(q_dot))
+    print("Final Right EE Twist: ", right_full_robot_jac @ np.array(q_dot))
+
+
+def get_ls_soln(robot, left_desired_twist, right_desired_twist):
+    current_config = robot.getConfig()
+    avail_jac = get_jacobian(robot, LEFT_LINK_NAME, RIGHT_LINK_NAME)
+    q_dot_part = cp.Variable(avail_jac.shape[1])
+    obj = cp.Minimize(cp.norm2(avail_jac @ q_dot_part
+        - np.concatenate((left_desired_twist, right_desired_twist)))**2)
+    # q_dot_y cos(theta) - q_dot_x sin(theta) = 0
+    theta = current_config[BASE_R_IND]
+    constraints = [q_dot_part[-2] * np.cos(theta) - q_dot_part[-3] * np.sin(theta) == 0]
+    prob = cp.Problem(obj, constraints)
+    res = prob.solve()
+    return q_dot_part.value, avail_jac, res
+
+
+def null_base_move(robot, target_base_twist):
+    current_config = robot.getConfig()
+    theta = current_config[BASE_R_IND]
+    jac = get_jacobian(robot, LEFT_LINK_NAME, RIGHT_LINK_NAME)
+    u, s, vh = np.linalg.svd(jac)
+    null_basis = get_null_basis(u, s, vh)
+    t = cp.Variable(null_basis.shape[1])
+    total_vec = null_basis @ t
+    base_vec = total_vec[-3:]
+    base_twist = np.array([0, 0, base_vec[2], base_vec[0], base_vec[1], 0], dtype=object)
+    obj = cp.Minimize((target_base_twist[2] - base_vec[2])**2 + (target_base_twist[3] - base_vec[0])**2 + (target_base_twist[4] - base_vec[1])**2)
+    constraints = [base_vec[1] * np.cos(theta) - base_vec[0] * np.sin(theta) == 0]
+    prob = cp.Problem(obj, constraints)
+    res = prob.solve()
+    return null_basis @ t.value, res
+
+
+def get_null_basis(u, s, vh):
     v = vh.T
-    v_extra_cols = max(v.shape[0] - s.shape[0], 0)
+    v_extra_cols = max(v.shape[1] - s.shape[0], 0)
     nullity = v_extra_cols
     null_inds = []
     for i, val in enumerate(s):
         if val == 0:
             nullity += 1
             null_inds.append(i)
-    null_basis = np.empty((v.shape[1], nullity))
+    null_basis = np.empty((v.shape[0], nullity))
     null_basis[:, :v_extra_cols] = v[:, -v_extra_cols:]
     for i, ind in null_inds:
         null_basis[:, v_extra_cols + i] = v[:, ind]
-    B = np.diag([1,0,0,0,0,0,0])
-    G = null_basis.T @ B @ null_basis
-    H = null_basis.T @ B @ q_dot_part
-    t = np.linalg.solve(-G, H)
-    print("T: ", t)
-    q_dot_part += null_basis @ t
-    print("q_dot total: ", q_dot_part)
+    return null_basis
 
-    q_dot = robot.getVelocity()
-    q_dot[BASE_R_IND] = q_dot_part[0]
+def get_jacobian(robot, left_link_name, right_link_name):
+    left_full_robot_jac = np.array(
+        robot.link(left_link_name).getJacobian([0,0,0]))
+    right_full_robot_jac = np.array(
+        robot.link(right_link_name).getJacobian([0,0,0]))
+    left_dofs = 6
+    right_dofs = 6
+    base_dofs = 3
+    total_dofs = left_dofs + right_dofs + base_dofs
+    avail_jac = np.zeros((6*2, total_dofs)) # Each column has 6 elts
     for i, ind in enumerate(TRINAConfig.get_left_active_Dofs(CODENAME)):
-        q_dot[ind] = q_dot_part[i+1]
-    robot.setVelocity(q_dot)
-    print("Final EE Twist: ", full_robot_jac @ np.array(q_dot))
+        avail_jac[:6, i] = np.array(left_full_robot_jac[:, ind])
+    for i, ind in enumerate(TRINAConfig.get_right_active_Dofs(CODENAME)):
+        avail_jac[6:, i+left_dofs] = np.array(right_full_robot_jac[:, ind])
+    for i, ind in enumerate(get_base_dofs(CODENAME)):
+        avail_jac[:6, i+left_dofs+right_dofs] = np.array(left_full_robot_jac[:, ind])
+        avail_jac[6:, i+left_dofs+right_dofs] = np.array(right_full_robot_jac[:, ind])
+    return avail_jac
 
 
 def set_arms_to_default(robot):
@@ -86,6 +183,11 @@ def set_arms_to_default(robot):
     for i, ind in enumerate(TRINAConfig.get_right_active_Dofs(CODENAME)):
        cfg[ind] = TRINAConfig.right_untucked_config[i]
     robot.setConfig(cfg)
+
+
+def get_base_dofs(codename):
+    # Hard coded for cholera, will eventually support the other versions
+    return [0, 1, 3]
 
 
 if __name__ == "__main__":
