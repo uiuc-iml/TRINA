@@ -975,7 +975,7 @@ if __name__=="__main__":
 
 	server = CommandServer(mode='Kinematic', 
 		world_file='./Motion/data/TRINA_world_cholera.xml',
-		components=['left_limb','right_limb'], 
+		components=['left_limb','right_limb', 'base'], 
 		modules=['DirectTeleOperation'], 
 		codename='cholera', 
 		cameras=['zed_slam_left', 'zed_slam_right', 'realsense_slam_l515'])

@@ -444,7 +444,8 @@ class DirectTeleOperation:
 		base_accel = np.max(delta_vel)/3.0
 		if((curr_velocity-base_velocity_vec).sum()!= 0):
 			try:
-				self.robot.setBaseVelocityRamped(base_velocity,base_accel)
+				# self.robot.setBaseVelocityRamped(base_velocity,base_accel)
+				self.robot.setBaseVelocity(base_velocity)
 			except:
 				print("setBaseVelocity not successful")
 				pass

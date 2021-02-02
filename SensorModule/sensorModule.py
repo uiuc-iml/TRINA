@@ -337,7 +337,7 @@ class Camera_Robot:
                 self.sim.updateWorld()
                 for name in self.simulated_camera_names:
                     cam = self.simulated_cameras[name][self.cam_key]
-                    cam.kinematicReset()
+                    # cam.kinematicReset()
                     cam.kinematicSimulate(self.world, self.dt)
                     self.simulated_cameras[name][self.img_key] = list(
                         sensing.camera_to_images(cam, image_format='numpy', 
