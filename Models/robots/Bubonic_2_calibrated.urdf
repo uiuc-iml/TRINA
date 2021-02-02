@@ -1,0 +1,508 @@
+<robot name="Lowpoly_anthrax_URDF">
+  <link name="base_link">
+    <inertial>
+      <origin xyz="-0.12713011286975 -5.7341398127575E-05 0.379646859128274" rpy="0 0 0"/>
+      <mass value="163.626380453613"/>
+      <inertia ixx="4.25096639842994" ixy="-0.000184077090973238" ixz="-0.0112541217774994" iyy="4.66101938385433" iyz="-5.17543392520442E-06" izz="4.66249209274685"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/base_link_Adjusted_Calibrated.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/base_link_Adjusted_Calibrated.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="left_base_link">
+    <inertial>
+      <origin xyz="2.22044604925031E-16 9.99200722162641E-16 0.0452500167858332" rpy="0 0 0"/>
+      <mass value="1.39397162412901"/>
+      <inertia ixx="0.00271550342627118" ixy="7.04731412115578E-19" ixz="-5.42101086242752E-20" iyy="0.00271550342627118" iyz="3.79470760369927E-19" izz="0.00319199166031868"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_base_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_base_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="base_left_base" type="fixed">
+    <origin xyz="-0.105005 -0.717077 0.563484" rpy="0.631490 0.478004 -2.040709"/>
+    <parent link="base_link"/>
+    <child link="left_base_link"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+  <link name="left_shoulder_link">
+    <inertial>
+      <origin xyz="1.12259138429494E-07 0.00937261703154357 0.0670267735608716" rpy="0 0 0"/>
+      <mass value="1.69867693696253"/>
+      <inertia ixx="0.00442864582515311" ixy="-4.01722462792849E-09" ixz="2.82097973886702E-10" iyy="0.00390531721787359" iyz="5.69611350561717E-05" izz="0.00356004264650293"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_shoulder_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_shoulder_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_base_shoulder" type="revolute">
+    <origin xyz="0 0 0.09906" rpy="0 0 1.5708"/>
+    <parent link="left_base_link"/>
+    <child link="left_shoulder_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="150" velocity="3.33"/>
+  </joint>
+  <link name="left_upperarm_link">
+    <inertial>
+      <origin xyz="1.35809636203632E-07 0.212500030104974 0.0653493983179751" rpy="0 0 0"/>
+      <mass value="6.31285273346305"/>
+      <inertia ixx="0.16990036349023" ixy="8.61179156198127E-09" ixz="3.01509572205039E-07" iyy="0.0127291856529223" iyz="-4.74484101098058E-10" izz="0.168139675767776"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_upperarm_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_upperarm_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_shoulder_upperarm" type="revolute">
+    <origin xyz="0 0.0744 0.063449" rpy="-1.5708 -1.5708 0"/>
+    <parent link="left_shoulder_link"/>
+    <child link="left_upperarm_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="150" velocity="3.33"/>
+  </joint>
+  <link name="left_forearm_link">
+    <inertial>
+      <origin xyz="-7.21842751127966E-08 0.150537143611748 0.0641679799855241" rpy="0 0 0"/>
+      <mass value="3.18874316726664"/>
+      <inertia ixx="0.0756021338285762" ixy="-1.63221275874433E-08" ixz="6.02985657932598E-10" iyy="0.00433469538941206" iyz="-0.00195295053988458" izz="0.0749130409802872"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_forearm_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_forearm_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_upperarm_forearm" type="revolute">
+    <origin xyz="0 0.425 0" rpy="3.1416 0 -3.1416"/>
+    <parent link="left_upperarm_link"/>
+    <child link="left_forearm_link"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="-6.28" upper="6.28" effort="28" velocity="3.33"/>
+  </joint>
+  <link name="left_wrist1_link">
+    <inertial>
+      <origin xyz="-7.1778948118606E-08 -0.00387150310160189 0.0495746168733397" rpy="0 0 0"/>
+      <mass value="0.571932642971713"/>
+      <inertia ixx="0.000793661756662814" ixy="9.85054196143888E-11" ixz="-4.33405092752624E-10" iyy="0.000568425969946135" iyz="2.06484711595074E-05" izz="0.00064715956186603"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_wrist1_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_wrist1_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_forearm_wrist1" type="revolute">
+    <origin xyz="0 0.39225 0.01395" rpy="-3.1416 0 1.5708"/>
+    <parent link="left_forearm_link"/>
+    <child link="left_wrist1_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="28" velocity="3.33"/>
+  </joint>
+  <link name="left_wrist2_link">
+    <inertial>
+      <origin xyz="8.2370181786473E-09 -0.00401809052430258 0.0461487178886337" rpy="0 0 0"/>
+      <mass value="0.547369091670539"/>
+      <inertia ixx="0.000728213850225437" ixy="-3.66202033974528E-11" ixz="6.99880360914215E-11" iyy="0.000503983487755794" iyz="1.59481868034702E-05" izz="0.00062888409092405"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_wrist2_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_wrist2_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_wrist1_wrist2" type="revolute">
+    <origin xyz="0 0.0463 0.0589" rpy="1.5708 0 3.1416"/>
+    <parent link="left_wrist1_link"/>
+    <child link="left_wrist2_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="28" velocity="3.33"/>
+  </joint>
+  <link name="left_wrist3_link">
+    <inertial>
+      <origin xyz="-4.44089209850063E-16 -8.88178419700125E-16 0.0254445195252653" rpy="0 0 0"/>
+      <mass value="0.224027022443648"/>
+      <inertia ixx="0.00012658229794006" ixy="-3.3881317890172E-21" ixz="2.37169225231204E-20" iyy="0.00012658229794006" iyz="0" izz="0.000155143101918596"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_wrist3_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_wrist3_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_wrist2_EE" type="revolute">
+    <origin xyz="0 0.0463 0.0534" rpy="1.5708 0 -3.1416"/>
+    <parent link="left_wrist2_link"/>
+    <child link="left_wrist3_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="28" velocity="3.33"/>
+  </joint>
+  <link name="left_EE_link">
+    <inertial>
+      <origin xyz="-0.000499999999999945 -6.66133814775094E-16 -7.7715611723761E-16" rpy="0 0 0"/>
+      <mass value="2.50000000000001E-05"/>
+      <inertia ixx="1.04166666666664E-10" ixy="1.4701842918423E-25" ixz="1.14706686506377E-25" iyy="5.41666666666658E-11" iyz="1.55096364853693E-24" izz="5.41666666666652E-11"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_EE_link_Adjusted.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/left_EE_link_Adjusted.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="left_EE_tool" type="fixed">
+    <origin xyz="0 0 0.0533" rpy="1.5708 -1.5708 0"/>
+    <parent link="left_wrist3_link"/>
+    <child link="left_EE_link"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+  <link name="right_base_link">
+    <inertial>
+      <origin xyz="-6.66133814775094E-16 -1.74860126378462E-15 0.0452500167858318" rpy="0 0 0"/>
+      <mass value="1.39397162412901"/>
+      <inertia ixx="0.00271550342627118" ixy="-7.04731412115578E-19" ixz="5.96311194867027E-19" iyy="0.00271550342627118" iyz="-5.42101086242752E-20" izz="0.00319199166031868"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_base_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_base_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="base_right_base" type="fixed">
+    <origin xyz="0.243036 -0.661803 0.551280" rpy="-0.590603 0.476972 -0.874202"/>
+    <parent link="base_link"/>
+    <child link="right_base_link"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+  <link name="right_shoulder_link">
+    <inertial>
+      <origin xyz="-0.00154136079217201 0.00937262863101362 0.0670090673661046" rpy="0 0 0"/>
+      <mass value="1.69867710673471"/>
+      <inertia ixx="0.00442819106459179" ixy="-1.30490914044873E-06" ixz="1.99679554823108E-05" iyy="0.00390531761998801" iyz="5.6944639556471E-05" izz="0.00356049958613063"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_shoulder_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_shoulder_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_base_shoulder" type="revolute">
+    <origin xyz="0 0 0.09906" rpy="0 0.022997 1.5708"/>
+    <parent link="right_base_link"/>
+    <child link="right_shoulder_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="150" velocity="3.33"/>
+  </joint>
+  <link name="right_upperarm_link">
+    <inertial>
+      <origin xyz="-1.35809636314654E-07 0.212499969895026 0.0653493983179749" rpy="0 0 0"/>
+      <mass value="6.31285273346305"/>
+      <inertia ixx="0.16990036349023" ixy="8.61179156198127E-09" ixz="-3.01509572201569E-07" iyy="0.0127291856529223" iyz="4.7448409242444E-10" izz="0.168139675767776"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_upperarm_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_upperarm_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_shoulder_upperarm" type="revolute">
+    <origin xyz="-0.001459 0.0744 0.063432" rpy="1.5708 -1.5478 -3.1416"/>
+    <parent link="right_shoulder_link"/>
+    <child link="right_upperarm_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="150" velocity="3.33"/>
+  </joint>
+  <link name="right_forearm_link">
+    <inertial>
+      <origin xyz="-6.51721676625527E-08 0.150537142769539 0.0641679270968201" rpy="0 0 0"/>
+      <mass value="3.18874319308628"/>
+      <inertia ixx="0.0756018379787176" ixy="-9.18789419683845E-08" ixz="-2.64058856169758E-08" iyy="0.00433460732058588" iyz="-0.00195295576164618" izz="0.0749126055109013"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_forearm_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_forearm_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_upperarm_forearm" type="revolute">
+    <origin xyz="0 0.425 0" rpy="3.1416 0 3.1416"/>
+    <parent link="right_upperarm_link"/>
+    <child link="right_forearm_link"/>
+    <axis xyz="0 0 -1"/>
+    <limit lower="-6.28" upper="6.28" effort="28" velocity="3.33"/>
+  </joint>
+  <link name="right_wrist1_link">
+    <inertial>
+      <origin xyz="6.77764224743527E-08 -0.00387151440579392 0.049574612674143" rpy="0 0 0"/>
+      <mass value="0.57193266344647"/>
+      <inertia ixx="0.000793662220107901" ixy="-1.36261282164822E-10" ixz="5.74541059408687E-10" iyy="0.000568425667847512" iyz="2.06482942693128E-05" izz="0.000647159597311378"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_wrist1_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_wrist1_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_forearm_wrist1" type="revolute">
+    <origin xyz="0 0.39225 0.01395" rpy="-3.1416 0 1.5708"/>
+    <parent link="right_forearm_link"/>
+    <child link="right_wrist1_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="28" velocity="3.33"/>
+  </joint>
+  <link name="right_wrist2_link">
+    <inertial>
+      <origin xyz="-8.49086201348825E-09 -0.0040180890044077 0.0461487179547788" rpy="0 0 0"/>
+      <mass value="0.547369089830729"/>
+      <inertia ixx="0.000728213856136488" ixy="-3.15444880909536E-12" ixz="-4.45911125135801E-11" iyy="0.000503983486196674" iyz="1.59481930558237E-05" izz="0.00062888408937255"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_wrist2_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_wrist2_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_wrist1_wrist2" type="revolute">
+    <origin xyz="0 0.0463 0.0589" rpy="1.5708 0 -3.1416"/>
+    <parent link="right_wrist1_link"/>
+    <child link="right_wrist2_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="28" velocity="3.33"/>
+  </joint>
+  <link name="right_wrist3_link">
+    <inertial>
+      <origin xyz="0 0 0.0254445195252659" rpy="0 0 0"/>
+      <mass value="0.224027022443649"/>
+      <inertia ixx="0.00012658229794006" ixy="-6.7762635780344E-21" ixz="-4.40457132572236E-20" iyy="0.00012658229794006" iyz="-3.3881317890172E-21" izz="0.000155143101918596"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_wrist3_link.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_wrist3_link.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_wrist2_EE" type="revolute">
+    <origin xyz="0 0.0463 0.0534" rpy="1.5708 -0.022997 3.1416"/>
+    <parent link="right_wrist2_link"/>
+    <child link="right_wrist3_link"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-6.28" upper="6.28" effort="28" velocity="3.33"/>
+  </joint>
+  <link name="right_EE_link">
+    <inertial>
+      <origin xyz="-0.000500000000000056 4.44089209850063E-16 2.22044604925031E-16" rpy="0 0 0"/>
+      <mass value="2.49999999999999E-05"/>
+      <inertia ixx="1.04166666666663E-10" ixy="-2.05179566004364E-25" ixz="-9.37040537657727E-26" iyy="5.41666666666652E-11" iyz="-8.40105309624169E-25" izz="5.41666666666645E-11"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_EE_link_Adjusted.STL"/>
+      </geometry>
+      <material name="">
+        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="Bubonic_zherong/right_EE_link_Adjusted.STL"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="right_EE_tool" type="fixed">
+    <origin xyz="0 0 0.0533" rpy="1.5478 -1.5708 0"/>
+    <parent link="right_wrist3_link"/>
+    <child link="right_EE_link"/>
+    <axis xyz="0 0 0"/>
+  </joint>
+<klampt>
+    <noselfcollision pairs="left_base_link right_base_link"/>
+    <noselfcollision pairs="left_base_link left_shoulder_link"/>
+    <noselfcollision pairs="left_shoulder_link left_upperarm_link"/>
+    <noselfcollision pairs="left_upperarm_link left_forearm_link"/>
+    <noselfcollision pairs="left_forearm_link left_wrist1_link"/>
+    <noselfcollision pairs="left_wrist1_link left_wrist2_link"/>
+    <noselfcollision pairs="left_wrist2_link left_EE_link"/>
+    <noselfcollision pairs="right_base_link right_shoulder_link"/>
+    <noselfcollision pairs="right_shoulder_link right_upperarm_link"/>
+    <noselfcollision pairs="right_upperarm_link right_forearm_link"/>
+    <noselfcollision pairs="right_forearm_link right_wrist1_link"/>
+    <noselfcollision pairs="right_wrist1_link right_wrist2_link"/>
+    <noselfcollision pairs="right_wrist2_link right_EE_link"/>
+    <noselfcollision pairs="left_EE_link right_EE_link"/>
+    <noselfcollision group1="left_EE_link right_EE_link" group2="left_base_link left_shoulder_link left_upperarm_link left_forearm_link left_wrist1_link right_base_link right_shoulder_link right_upperarm_link right_forearm_link right_wrist1_link right_wrist2_link"/>
+    <sensors>
+        <LaserRangeSensor name="lidar" link="base_link" Tsensor="0 0 1  1 0 0  0 1 0  0.2 0 0.2"  depthMaximum="25.0" depthMinimum="0.1" depthResolution="0.01" depthVarianceLinear="0.0001" xSweepMagnitude="1.91986" measurementCount="660" />
+        <CameraSensor name="left_hand_camera" link="left_wrist2_link" Tsensor="1 0 0  0 1 0  0 0 1   0 0 0"  xres="640" yres="480" xfov="1.2" yfov="0.95" zmin="0.15" zmax="4" zresolution="0.01" zvarianceLinear="0.00001" />
+        <CameraSensor name="right_hand_camera" link="right_wrist2_link" Tsensor="1 0 0  0 1 0  0 0 1   0 0 0"  xres="640" yres="480" xfov="1.2" yfov="0.95" zmin="0.15" zmax="4" zresolution="0.01" zvarianceLinear="0.00001" />
+        <CameraSensor name="torso_l515_camera" link="base_link" Tsensor="0 0 1  -1 0 0  0 -1 0   0.1 0 1.2"  xres="640" yres="480" xfov="1.22" yfov="0.96" zmin="0.25" zmax="5" zresolution="0.01" zvarianceLinear="0.00001" />
+        <CameraSensor name="head_camera" link="base_link" Tsensor="0 0 1  -1 0 0  0 -1 0   0.15 0 1.55"  depth=0 xres="640" yres="480" xfov="1.57" yfov="1.05" zmin="0.05" /> 
+    </sensors>
+  </klampt>
+</robot>

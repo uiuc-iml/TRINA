@@ -1,0 +1,786 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina package &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="trina.jarvis package" href="trina.jarvis.html" />
+    <link rel="prev" title="Welcome to the TRINA Python API documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">trina package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="trina.jarvis.html">trina.jarvis package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.html">trina.modules package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.sensors.html">trina.sensors package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.utils.html">trina.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-trina.command_server">trina.command_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-trina.settings">trina.settings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-trina.setup">trina.setup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-trina.state_server">trina.state_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-trina">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+      <li>trina package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/trina.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="trina-package">
+<h1>trina package<a class="headerlink" href="#trina-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="trina.jarvis.html">trina.jarvis package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="trina.jarvis.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.jarvis.html#module-trina.jarvis.api">trina.jarvis.api module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.jarvis.html#module-trina.jarvis.jarvis">trina.jarvis.jarvis module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.jarvis.html#module-trina.jarvis.module">trina.jarvis.module module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.jarvis.html#module-trina.jarvis">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="trina.modules.html">trina.modules package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="trina.modules.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.Example.html">trina.modules.Example package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Example.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Example.html#module-trina.modules.Example.api">trina.modules.Example.api module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Example.html#module-trina.modules.Example.module">trina.modules.Example.module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Example.html#module-trina.modules.Example">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.Logger.html">trina.modules.Logger package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Logger.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Logger.html#trina-modules-logger-module-module">trina.modules.Logger.module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Logger.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.Motion.html">trina.modules.Motion package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Motion.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Motion.html#module-trina.modules.Motion.api">trina.modules.Motion.api module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Motion.html#module-trina.modules.Motion.module">trina.modules.Motion.module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Motion.html#module-trina.modules.Motion">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.Sensor.html">trina.modules.Sensor package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Sensor.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Sensor.html#module-trina.modules.Sensor.api">trina.modules.Sensor.api module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Sensor.html#module-trina.modules.Sensor.module">trina.modules.Sensor.module module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.Sensor.html#module-trina.modules.Sensor">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.UI.html">trina.modules.UI package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.UI.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.UI.html#trina-modules-ui-localui-module">trina.modules.UI.LocalUI module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.UI.html#trina-modules-ui-remoteui-module">trina.modules.UI.RemoteUI module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.UI.html#module-trina.modules.UI.api">trina.modules.UI.api module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.UI.html#module-contents">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.apps.html">trina.modules.apps package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.apps.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.apps.html#module-trina.modules.apps">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="trina.modules.html#module-trina.modules">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="trina.sensors.html">trina.sensors package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="trina.sensors.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.sensors.html#module-trina.sensors.realsense">trina.sensors.realsense module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.sensors.html#module-trina.sensors.zed">trina.sensors.zed module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.sensors.html#module-trina.sensors">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="trina.utils.html">trina.utils package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="trina.utils.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.utils.html#module-trina.utils.locking">trina.utils.locking module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.utils.html#module-trina.utils.loops">trina.utils.loops module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.utils.html#module-trina.utils.nested_json_accessor">trina.utils.nested_json_accessor module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.utils.html#module-trina.utils.promise">trina.utils.promise module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.utils.html#module-trina.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trina.command_server">
+<span id="trina-command-server-module"></span><h2>trina.command_server module<a class="headerlink" href="#module-trina.command_server" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.command_server.CommandLogger">
+<em class="property">class </em><code class="sig-prename descclassname">trina.command_server.</code><code class="sig-name descname">CommandLogger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">host</span><span class="o">=</span><span class="default_value">'localhost'</span></em>, <em class="sig-param"><span class="n">port</span><span class="o">=</span><span class="default_value">6379</span></em>, <em class="sig-param"><span class="n">max_length</span><span class="o">=</span><span class="default_value">10000</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandLogger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandLogger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trina.command_server.CommandLogger.log_command">
+<code class="sig-name descname">log_command</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span></em>, <em class="sig-param"><span class="n">time</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandLogger.log_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandLogger.log_command" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.command_server.CommandServer">
+<em class="property">class </em><code class="sig-prename descclassname">trina.command_server.</code><code class="sig-name descname">CommandServer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">modules</span><span class="o">=</span><span class="default_value">[]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.activate_module">
+<code class="sig-name descname">activate_module</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.activate_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.activate_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>App-accessible call.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.commandReceiverLoop">
+<code class="sig-name descname">commandReceiverLoop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.commandReceiverLoop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.commandReceiverLoop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.create_jarvis">
+<code class="sig-name descname">create_jarvis</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">server</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.create_jarvis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.create_jarvis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.deactivate_module">
+<code class="sig-name descname">deactivate_module</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.deactivate_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.deactivate_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>App-accessible call.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.moduleMonitorLoop">
+<code class="sig-name descname">moduleMonitorLoop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.moduleMonitorLoop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.moduleMonitorLoop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.restart_module">
+<code class="sig-name descname">restart_module</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.restart_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.restart_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>App-accessible call.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.runModuleCommand">
+<code class="sig-name descname">runModuleCommand</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.runModuleCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.runModuleCommand" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.shutdown">
+<code class="sig-name descname">shutdown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.shutdown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.shutdown" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.shutdown_all">
+<code class="sig-name descname">shutdown_all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.shutdown_all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.shutdown_all" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.start_dummy_module">
+<code class="sig-name descname">start_dummy_module</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.start_dummy_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.start_dummy_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an unmanaged dummy module and returns the class instance</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.start_module">
+<code class="sig-name descname">start_module</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module_class</span></em>, <em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.start_module"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.start_module" title="Permalink to this definition">¶</a></dt>
+<dd><p>Starts up a new module and returns the class instance</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.start_modules">
+<code class="sig-name descname">start_modules</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module_names</span><span class="o">=</span><span class="default_value">[]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.start_modules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.start_modules" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.start_redis">
+<code class="sig-name descname">start_redis</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.start_redis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.start_redis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Taken out in the Redrun version</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.start_ros_stuff">
+<code class="sig-name descname">start_ros_stuff</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.start_ros_stuff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.start_ros_stuff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Taken out in the Redrun version</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.switch_module_activity">
+<code class="sig-name descname">switch_module_activity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">to_activate</span></em>, <em class="sig-param"><span class="n">to_deactivate</span><span class="o">=</span><span class="default_value">[]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.switch_module_activity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.switch_module_activity" title="Permalink to this definition">¶</a></dt>
+<dd><p>App-accessible call.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.command_server.CommandServer.timeUpdaterLoop">
+<code class="sig-name descname">timeUpdaterLoop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServer.timeUpdaterLoop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServer.timeUpdaterLoop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.command_server.CommandServerJarvisHooks">
+<em class="property">class </em><code class="sig-prename descclassname">trina.command_server.</code><code class="sig-name descname">CommandServerJarvisHooks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">server</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#CommandServerJarvisHooks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.CommandServerJarvisHooks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Place here whatever access to the CommandServer object
+you believe that jarvis.APILayers should have.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.command_server.RunningModuleInfo">
+<em class="property">class </em><code class="sig-prename descclassname">trina.command_server.</code><code class="sig-name descname">RunningModuleInfo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">modobj</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">classobj</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">classinstance</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#RunningModuleInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.RunningModuleInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trina.command_server.RunningModuleInfo.is_managed">
+<code class="sig-name descname">is_managed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/command_server.html#RunningModuleInfo.is_managed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.command_server.RunningModuleInfo.is_managed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.settings">
+<span id="trina-settings-module"></span><h2>trina.settings module<a class="headerlink" href="#module-trina.settings" title="Permalink to this headline">¶</a></h2>
+<p>A unified way of accessing TRINA settings.</p>
+<p>The settings are accessed by calling <code class="docutils literal notranslate"><span class="pre">trina.settings.get(key1.key2)</span></code> or
+<code class="docutils literal notranslate"><span class="pre">trina.settings.settings()[key1][key2]</span></code>.</p>
+<p>This will produce a dictionary-like object referencing the JSON-distributed
+files in the TRINA/Settings folder, starting at TRINA/Settings/root.json.</p>
+<p>The other methods, like <a class="reference internal" href="#trina.settings.robot_settings" title="trina.settings.robot_settings"><code class="xref py py-func docutils literal notranslate"><span class="pre">robot_settings()</span></code></a>, <a class="reference internal" href="#trina.settings.robot_codename" title="trina.settings.robot_codename"><code class="xref py py-func docutils literal notranslate"><span class="pre">robot_codename()</span></code></a>,
+<a class="reference internal" href="#trina.settings.left_arm_dofs" title="trina.settings.left_arm_dofs"><code class="xref py py-func docutils literal notranslate"><span class="pre">left_arm_dofs()</span></code></a>, etc are all convenience methods.</p>
+<dl class="py function">
+<dt id="trina.settings.add_left_arm_config">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">add_left_arm_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#add_left_arm_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.add_left_arm_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a named configuration of the robot’s left arm.  Note: does not
+save to disk</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.add_right_arm_config">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">add_right_arm_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">1</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#add_right_arm_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.add_right_arm_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds a named configuration of the robot’s right arm.  Note: does not
+save to disk</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.app_settings">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">app_settings</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#app_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.app_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the settings for the given app</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.calibration_configs">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">calibration_configs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">task</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#calibration_configs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.calibration_configs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns calibration configurations for the given calibration task.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.camera_settings">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">camera_settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#camera_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.camera_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns camera settings, e.g., serial numbers, links, transforms</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.edit_calibration_configs">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">edit_calibration_configs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">task</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#edit_calibration_configs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.edit_calibration_configs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Edits calibration configurations for the given calibration task. Saves
+to disk when OK is prssed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.edit_left_arm_config">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">edit_left_arm_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#edit_left_arm_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.edit_left_arm_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visually edits a named configuration of the robot’s left arm.  Note: does not
+save to disk.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.edit_right_arm_config">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">edit_right_arm_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#edit_right_arm_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.edit_right_arm_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Visually edits a named configuration of the robot’s left arm.  Note: does not
+save to disk.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.get">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">decode</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieves a setting from a period-separated string.  If decode=True,
+this decodes the NestedJsonAccessor object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.left_arm_config">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">left_arm_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#left_arm_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.left_arm_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a named configuration of the robot’s left arm.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.left_arm_dofs">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">left_arm_dofs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#left_arm_dofs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.left_arm_dofs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns list of left arm links in model</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.left_tool_link">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">left_tool_link</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#left_tool_link"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.left_tool_link" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns left arm tool link in model</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.mirror_arm_config">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">mirror_arm_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#mirror_arm_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.mirror_arm_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mirrors an arm configuration from left to right or vice versa.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.model_settings">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">model_settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#model_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.model_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns robot model settings, e.g., link groups</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.motion_server_addr">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">motion_server_addr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#motion_server_addr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.motion_server_addr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns formatted address string for the motion server</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.motion_server_components">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">motion_server_components</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#motion_server_components"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.motion_server_components" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the robot components used by the motion server, by default</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.motion_server_ip">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">motion_server_ip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#motion_server_ip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.motion_server_ip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the motion server IP address</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.motion_server_mode">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">motion_server_mode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#motion_server_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.motion_server_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns assumed motion server mode – note that the motion server
+can actually be started / restarted in a different mode.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.motion_server_port">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">motion_server_port</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#motion_server_port"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.motion_server_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the motion server port</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.motion_settings">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">motion_settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#motion_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.motion_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns robot-specific parameter settings being used by the Motion server</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.redis_server_ip">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">redis_server_ip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#redis_server_ip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.redis_server_ip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the redis server IP address</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.reload">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">reload</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#reload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.reload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reloads everything from files.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.right_arm_config">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">right_arm_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#right_arm_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.right_arm_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a named configuration of the robot’s right arm, or a mirrored
+version of the named configuration for the left arm.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.right_arm_dofs">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">right_arm_dofs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#right_arm_dofs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.right_arm_dofs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns list of right arm links in model</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.right_tool_link">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">right_tool_link</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#right_tool_link"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.right_tool_link" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns right arm tool link in model</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.robot_codename">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">robot_codename</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#robot_codename"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.robot_codename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the codename for the robot.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.robot_home_config">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">robot_home_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#robot_home_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.robot_home_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the robot’s home configuration.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.robot_model">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">robot_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#robot_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.robot_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the URDF model for the robot.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.robot_settings">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">robot_settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#robot_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.robot_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns settings specific to the robot rather than the user or the software system</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.save_configs">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">save_configs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#save_configs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.save_configs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves all the user’s changed configs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.set">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">set</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">dosave</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets a setting to some value from a period-separated string.
+If dosave == True, then the settings are saved</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.settings">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the global settings object.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.simulation_world_file">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">simulation_world_file</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#simulation_world_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.simulation_world_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a suggested simulation world file</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.settings.user_settings">
+<code class="sig-prename descclassname">trina.settings.</code><code class="sig-name descname">user_settings</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/settings.html#user_settings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.settings.user_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns settings specific to the user rather than the robot or the software system</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.setup">
+<span id="trina-setup-module"></span><h2>trina.setup module<a class="headerlink" href="#module-trina.setup" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="trina.setup.get_logger">
+<code class="sig-prename descclassname">trina.setup.</code><code class="sig-name descname">get_logger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">level</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">filename</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/setup.html#get_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.setup.get_logger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="trina.setup.log_root">
+<code class="sig-prename descclassname">trina.setup.</code><code class="sig-name descname">log_root</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/setup.html#log_root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.setup.log_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root path of TRINA logging folder</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.setup.models_root">
+<code class="sig-prename descclassname">trina.setup.</code><code class="sig-name descname">models_root</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/setup.html#models_root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.setup.models_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root path of TRINA Models folder</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.setup.robot_model_load">
+<code class="sig-prename descclassname">trina.setup.</code><code class="sig-name descname">robot_model_load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/setup.html#robot_model_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.setup.robot_model_load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads the URDF model for the robot. Returns a klampt.WorldModel</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.setup.robot_models_root">
+<code class="sig-prename descclassname">trina.setup.</code><code class="sig-name descname">robot_models_root</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/setup.html#robot_models_root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.setup.robot_models_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root path of TRINA robot models folder</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.setup.set_robot_sensor_calibration">
+<code class="sig-prename descclassname">trina.setup.</code><code class="sig-name descname">set_robot_sensor_calibration</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">world</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/setup.html#set_robot_sensor_calibration"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.setup.set_robot_sensor_calibration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a klampt.Simulator that is calibrated according to the
+sensor calibration in Settings/</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.setup.simulation_world_load">
+<code class="sig-prename descclassname">trina.setup.</code><code class="sig-name descname">simulation_world_load</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/setup.html#simulation_world_load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.setup.simulation_world_load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a suggested simulation klampt.WorldModel</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.setup.trina_root">
+<code class="sig-prename descclassname">trina.setup.</code><code class="sig-name descname">trina_root</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/setup.html#trina_root"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.setup.trina_root" title="Permalink to this definition">¶</a></dt>
+<dd><p>Root path of TRINA folder</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.state_server">
+<span id="trina-state-server-module"></span><h2>trina.state_server module<a class="headerlink" href="#module-trina.state_server" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.state_server.StateServer">
+<em class="property">class </em><code class="sig-prename descclassname">trina.state_server.</code><code class="sig-name descname">StateServer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">host</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">reem.datatypes.KeyValueStore</span></code></p>
+<p>StateServer should usually be treated just like a normal
+REEM KeyValueStore object.</p>
+<p>Overall, the use of StateServer is preferable to <code class="docutils literal notranslate"><span class="pre">reem.KeyValueStore</span></code>
+because it’s:</p>
+<ul class="simple">
+<li><p>Pickleable</p></li>
+<li><p>Extra convenience functions (<a class="reference internal" href="#trina.state_server.StateServer.redis_client" title="trina.state_server.StateServer.redis_client"><code class="xref py py-func docutils literal notranslate"><span class="pre">redis_client()</span></code></a>)</p></li>
+</ul>
+<p>Using the <a class="reference internal" href="#trina.state_server.StateServer.var" title="trina.state_server.StateServer.var"><code class="xref py py-func docutils literal notranslate"><span class="pre">var()</span></code></a>, <a class="reference internal" href="#trina.state_server.StateServer.set" title="trina.state_server.StateServer.set"><code class="xref py py-func docutils literal notranslate"><span class="pre">set()</span></code></a>, <a class="reference internal" href="#trina.state_server.StateServer.get" title="trina.state_server.StateServer.get"><code class="xref py py-func docutils literal notranslate"><span class="pre">get()</span></code></a> methods have following
+advantages over using the [] syntax defined in REEM:</p>
+<ul class="simple">
+<li><p>Can accept paths in the form of string paths <code class="docutils literal notranslate"><span class="pre">['key1','key2']</span></code> or
+period- separated keys <code class="docutils literal notranslate"><span class="pre">'key1.key2'</span></code></p></li>
+<li><p>More tolerant of uninitialized keys and will fill in empty dicts as
+needed.</p></li>
+</ul>
+<dl class="py method">
+<dt id="trina.state_server.StateServer.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServer.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServer.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a path (period-separated str or list of str), returns a JSON
+object or numpy array at path by recursively descending into self.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.state_server.StateServer.redis_client">
+<code class="sig-name descname">redis_client</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServer.redis_client"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServer.redis_client" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a raw handle to the redis client.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.state_server.StateServer.set">
+<code class="sig-name descname">set</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServer.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServer.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a path (list of str), sets a value in the state
+server.  The item must be json-encodable or a numpy array.</p>
+<p>If you are accessing a path with multiple subkeys that don’t
+exist, the subkeys will be added.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.state_server.StateServer.set_new">
+<code class="sig-name descname">set_new</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServer.set_new"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServer.set_new" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a new item if the path doesn’t exist yet</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.state_server.StateServer.var">
+<code class="sig-name descname">var</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServer.var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServer.var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a path (period-separated str or list of str), returns a
+<a class="reference internal" href="#trina.state_server.StateServerVar" title="trina.state_server.StateServerVar"><code class="xref py py-class docutils literal notranslate"><span class="pre">StateServerVar</span></code></a> object that accesses the key using get()/set().</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.state_server.StateServerVar">
+<em class="property">class </em><code class="sig-prename descclassname">trina.state_server.</code><code class="sig-name descname">StateServerVar</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">server</span></em>, <em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServerVar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServerVar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>This will create all parent keys in path upon a failed set</p>
+<dl class="py method">
+<dt id="trina.state_server.StateServerVar.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServerVar.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServerVar.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the value at the given key from the state server</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.state_server.StateServerVar.set">
+<code class="sig-name descname">set</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/state_server.html#StateServerVar.set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.state_server.StateServerVar.set" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the value at the given key into the state server</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trina" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="trina.jarvis.html" class="btn btn-neutral float-right" title="trina.jarvis package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to the TRINA Python API documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

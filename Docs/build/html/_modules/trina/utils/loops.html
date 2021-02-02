@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.utils.loops &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.utils.loops</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.utils.loops</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span>
+
+<div class="viewcode-block" id="TimedLooper"><a class="viewcode-back" href="../../../trina.utils.html#trina.utils.loops.TimedLooper">[docs]</a><span class="k">class</span> <span class="nc">TimedLooper</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A class to easily control how timed loops are run.</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        looper = TimedLooper(dt=0.01)</span>
+<span class="sd">        while looper:</span>
+<span class="sd">            ... do stuff ...</span>
+<span class="sd">            if need to stop:</span>
+<span class="sd">                looper.stop()</span>
+<span class="sd">                #or just call break</span>
+
+<span class="sd">    Note that if dt is too small (or rate is too large), the timing will not</span>
+<span class="sd">    be accurate due to the system scheduler resolution.</span>
+
+<span class="sd">    If the code within the loop takes more than dt seconds to run, then a </span>
+<span class="sd">    warning may be printed.  To turn this off, set ``warnings=0`` in the</span>
+<span class="sd">    constructor.  By default, this will print a warning on the first overrun,</span>
+<span class="sd">    and every ``warning_frequency`` overruns thereafter.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        dt (float, optional): the desired time between loops (in seconds)</span>
+<span class="sd">        rate (float, optional): the number of times per second to run this</span>
+<span class="sd">            loop (in Hz).  dt = 1/rate.  One of dt or rate must be specified.</span>
+<span class="sd">        warning_frequency (int, optional): if the elapsed time between calls</span>
+<span class="sd">            exceeds dt, a warning message will be printed at this frequency.</span>
+<span class="sd">            Set this to 0 to disable warnings.</span>
+<span class="sd">        name (str, optional): a descriptive name to be used in the warning</span>
+<span class="sd">            string.</span>
+
+<span class="sd">    Warning: DO NOT attempt to save some time and call the TimedLooper()</span>
+<span class="sd">    constructor as the condition of your while loop!  I.e., do not do this::</span>
+
+<span class="sd">        while TimedLooper(dt=0.01):</span>
+<span class="sd">            ...</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">rate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">warning_frequency</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span>
+        <span class="k">if</span> <span class="n">dt</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">rate</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;One of dt or rate must be specified&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">rate</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;dt must be positive&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">warning_frequency</span> <span class="o">==</span> <span class="s1">&#39;auto&#39;</span><span class="p">:</span>
+            <span class="n">warning_frequency</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mf">2.0</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">warning_frequency</span> <span class="o">=</span> <span class="n">warning_frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iters</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_time_overrun_since_last_warn</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iters_of_last_warn</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_overruns_since_last_warn</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_overruns</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_warn_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tstart</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tlast</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tnext</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exit</span> <span class="o">=</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="TimedLooper.stop"><a class="viewcode-back" href="../../../trina.utils.html#trina.utils.loops.TimedLooper.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exit</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">__nonzero__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__bool__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exit</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">tnow</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tlast</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tstart</span> <span class="o">=</span> <span class="n">tnow</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_tnext</span> <span class="o">=</span> <span class="n">tnow</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">tnow</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tnext</span>
+            <span class="k">if</span> <span class="n">elapsed_time</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_num_overruns</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_num_overruns_since_last_warn</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_time_overrun_since_last_warn</span> <span class="o">+=</span> <span class="n">elapsed_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">warning_frequency</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_overruns</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">warning_frequency</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">ave_overrun</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_time_overrun_since_last_warn</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_overruns_since_last_warn</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">print_warning</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: exceeded loop time budget </span><span class="si">{:.4f}</span><span class="s2">s on </span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2"> iters, by </span><span class="si">{:4f}</span><span class="s2">s on average&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="s1">&#39;TimedLooper&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_num_overruns_since_last_warn</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_iters</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iters_of_last_warn</span><span class="p">,</span>
+                        <span class="n">ave_overrun</span><span class="p">))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_iters_of_last_warn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iters</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_time_overrun_since_last_warn</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_num_overruns_since_last_warn</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_warn_count</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_tnext</span> <span class="o">=</span> <span class="n">tnow</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_tnext</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+                <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tnext</span> <span class="o">&gt;=</span> <span class="n">tnow</span><span class="p">,</span><span class="s2">&quot;Uh... elapsed time is &gt; dt but tnext &lt; tnow: </span><span class="si">%f</span><span class="s2">, </span><span class="si">%f</span><span class="s2">, </span><span class="si">%f</span><span class="s2">&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">elapsed_time</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">_tnext</span><span class="p">,</span><span class="n">tnow</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iters</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tnext</span><span class="o">-</span><span class="n">tnow</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tlast</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="TimedLooper.time_elapsed"><a class="viewcode-back" href="../../../trina.utils.html#trina.utils.loops.TimedLooper.time_elapsed">[docs]</a>    <span class="k">def</span> <span class="nf">time_elapsed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the total time elapsed from the start, in seconds&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">_tstart</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tstart</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="TimedLooper.iters"><a class="viewcode-back" href="../../../trina.utils.html#trina.utils.loops.TimedLooper.iters">[docs]</a>    <span class="k">def</span> <span class="nf">iters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the total number of iters run&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iters</span></div>
+
+<div class="viewcode-block" id="TimedLooper.print_warning"><a class="viewcode-back" href="../../../trina.utils.html#trina.utils.loops.TimedLooper.print_warning">[docs]</a>    <span class="k">def</span> <span class="nf">print_warning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">s</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override this to change how warning strings are printed, e.g. to</span>
+<span class="sd">        add your own logger&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="p">)</span></div></div>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">random</span>
+    <span class="n">looper</span> <span class="o">=</span> <span class="n">TimedLooper</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span><span class="n">warning_frequency</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">looper</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;looping&quot;</span><span class="p">,</span><span class="n">looper</span><span class="o">.</span><span class="n">iters</span><span class="p">(),</span><span class="n">looper</span><span class="o">.</span><span class="n">time_elapsed</span><span class="p">(),</span><span class="s2">&quot;~=&quot;</span><span class="p">,</span><span class="n">looper</span><span class="o">.</span><span class="n">iters</span><span class="p">()</span><span class="o">*</span><span class="n">looper</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span>
+        <span class="c1">#simulate some time-consuming operation</span>
+        <span class="c1">#time.sleep(random.uniform(0,0.005))    #below threshold</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">0.02</span><span class="p">))</span>    <span class="c1">#some above threshold</span>
+        <span class="c1">#time.sleep(0.05)                      #all above threshold</span>
+        <span class="k">if</span> <span class="n">looper</span><span class="o">.</span><span class="n">time_elapsed</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">looper</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

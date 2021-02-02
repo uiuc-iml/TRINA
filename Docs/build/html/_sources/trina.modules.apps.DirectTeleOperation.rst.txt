@@ -1,0 +1,22 @@
+trina.modules.apps.DirectTeleOperation package
+==============================================
+
+Submodules
+----------
+
+trina.modules.apps.DirectTeleOperation.module module
+----------------------------------------------------
+
+.. automodule:: trina.modules.apps.DirectTeleOperation.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.apps.DirectTeleOperation
+   :members:
+   :undoc-members:
+   :show-inheritance:

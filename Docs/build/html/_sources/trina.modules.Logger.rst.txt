@@ -1,0 +1,22 @@
+trina.modules.Logger package
+============================
+
+Submodules
+----------
+
+trina.modules.Logger.module module
+----------------------------------
+
+.. automodule:: trina.modules.Logger.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.Logger
+   :members:
+   :undoc-members:
+   :show-inheritance:

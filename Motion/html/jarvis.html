@@ -28,11 +28,7 @@
 import threading
 import sys
 
-if(sys.version_info[0] &lt; 3):
-    # from future import *
-    from motion_client import MotionClient
-else:
-    from motion_client_python3 import MotionClient
+from motion_client import MotionClient
 import json
 from multiprocessing import Process, Manager, Pipe
 import numpy as np

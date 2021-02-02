@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.sensors package &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="trina.utils package" href="trina.utils.html" />
+    <link rel="prev" title="trina.modules.apps.PointClickNav package" href="trina.modules.apps.PointClickNav.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="trina.html">trina package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="trina.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="trina.jarvis.html">trina.jarvis package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.html">trina.modules package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">trina.sensors package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.sensors.realsense">trina.sensors.realsense module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.sensors.zed">trina.sensors.zed module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.sensors">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.utils.html">trina.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.command_server">trina.command_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.settings">trina.settings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.setup">trina.setup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.state_server">trina.state_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">trina</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="trina.html">trina package</a> &raquo;</li>
+        
+      <li>trina.sensors package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/trina.sensors.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="trina-sensors-package">
+<h1>trina.sensors package<a class="headerlink" href="#trina-sensors-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trina.sensors.realsense">
+<span id="trina-sensors-realsense-module"></span><h2>trina.sensors.realsense module<a class="headerlink" href="#module-trina.sensors.realsense" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.sensors.realsense.RealSenseCamera">
+<em class="property">class </em><code class="sig-prename descclassname">trina.sensors.realsense.</code><code class="sig-name descname">RealSenseCamera</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">serial_num</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.realsense.RealSenseCamera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trina.sensors.realsense.RealSenseCamera.latest_point_cloud">
+<code class="sig-name descname">latest_point_cloud</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera.latest_point_cloud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.realsense.RealSenseCamera.latest_point_cloud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the point cloud from the last frame.</p>
+<p>Args:
+:returns: returns the point cloud in the camera’s local frame</p>
+<blockquote>
+<div><p>as a open3D PointCloud, or None if the data is not available</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>transformed_pc</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.realsense.RealSenseCamera.latest_rgbd_images">
+<code class="sig-name descname">latest_rgbd_images</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera.latest_rgbd_images"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.realsense.RealSenseCamera.latest_rgbd_images" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.realsense.RealSenseCamera.safely_close">
+<code class="sig-name descname">safely_close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera.safely_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.realsense.RealSenseCamera.safely_close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.realsense.RealSenseCamera.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.realsense.RealSenseCamera.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.sensors.zed">
+<span id="trina-sensors-zed-module"></span><h2>trina.sensors.zed module<a class="headerlink" href="#module-trina.sensors.zed" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.sensors.zed.ZedCamera">
+<em class="property">class </em><code class="sig-prename descclassname">trina.sensors.zed.</code><code class="sig-name descname">ZedCamera</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">serial_num</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.zed.ZedCamera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trina.sensors.zed.ZedCamera.latest_point_cloud">
+<code class="sig-name descname">latest_point_cloud</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera.latest_point_cloud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.zed.ZedCamera.latest_point_cloud" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.zed.ZedCamera.latest_rgbd_images">
+<code class="sig-name descname">latest_rgbd_images</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera.latest_rgbd_images"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.zed.ZedCamera.latest_rgbd_images" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.zed.ZedCamera.safely_close">
+<code class="sig-name descname">safely_close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera.safely_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.zed.ZedCamera.safely_close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.zed.ZedCamera.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.zed.ZedCamera.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.sensors">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trina.sensors" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.sensors.RealSenseCamera">
+<em class="property">class </em><code class="sig-prename descclassname">trina.sensors.</code><code class="sig-name descname">RealSenseCamera</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">serial_num</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.RealSenseCamera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trina.sensors.RealSenseCamera.latest_point_cloud">
+<code class="sig-name descname">latest_point_cloud</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera.latest_point_cloud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.RealSenseCamera.latest_point_cloud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the point cloud from the last frame.</p>
+<p>Args:
+:returns: returns the point cloud in the camera’s local frame</p>
+<blockquote>
+<div><p>as a open3D PointCloud, or None if the data is not available</p>
+</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>transformed_pc</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.RealSenseCamera.latest_rgbd_images">
+<code class="sig-name descname">latest_rgbd_images</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera.latest_rgbd_images"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.RealSenseCamera.latest_rgbd_images" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.RealSenseCamera.safely_close">
+<code class="sig-name descname">safely_close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera.safely_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.RealSenseCamera.safely_close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.RealSenseCamera.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/realsense.html#RealSenseCamera.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.RealSenseCamera.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.sensors.ZedCamera">
+<em class="property">class </em><code class="sig-prename descclassname">trina.sensors.</code><code class="sig-name descname">ZedCamera</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">serial_num</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.ZedCamera" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="trina.sensors.ZedCamera.latest_point_cloud">
+<code class="sig-name descname">latest_point_cloud</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera.latest_point_cloud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.ZedCamera.latest_point_cloud" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.ZedCamera.latest_rgbd_images">
+<code class="sig-name descname">latest_rgbd_images</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera.latest_rgbd_images"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.ZedCamera.latest_rgbd_images" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.ZedCamera.safely_close">
+<code class="sig-name descname">safely_close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera.safely_close"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.ZedCamera.safely_close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.sensors.ZedCamera.update">
+<code class="sig-name descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/sensors/zed.html#ZedCamera.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.sensors.ZedCamera.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="trina.utils.html" class="btn btn-neutral float-right" title="trina.utils package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="trina.modules.apps.PointClickNav.html" class="btn btn-neutral float-left" title="trina.modules.apps.PointClickNav package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

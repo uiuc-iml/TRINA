@@ -17,6 +17,7 @@ import scipy as sp
 from klampt import WorldModel,vis
 from scipy import signal as spsignal
 import os
+<<<<<<< HEAD
 
 
 sys.path.append("..")
@@ -26,10 +27,21 @@ from datetime import datetime
 
 filename = "errorLogs/logFile_" + datetime.now().strftime('%d_%m_%Y') + ".log"
 logger = trina_logging.get_logger(__name__,logging.WARNING, filename)
+=======
+import sys
+try:
+    import trina
+except ImportError:
+    sys.path.append(os.path.expanduser("~/TRINA"))
+    import trina
+
+import logging
+logger = trina.setup.get_logger(__name__,logging.INFO)
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
 
 class Motion:
 
-    def __init__(self,mode = 'Kinematic', components = ['left_limb','right_limb'], debug_logging = False, codename = 'seed'):
+    def __init__(self,mode = 'Kinematic', components = ['left_limb','right_limb'], debug_logging = False, codename = 'Bubonic'):
         """
         This class provides a low-level controller to the TRINA robot.
 
@@ -37,15 +49,16 @@ class Motion:
         ------------
         mode: The 'Kinematic' mode starts a kinematic simlation of the robot. The 'Physical' mode interfaces with
             the robotic hardware directly.
-        model_path: The TRINA robot model path.
+        codename: The TRINA robot code.
         components: In the physical mode, we would like to have the option of starting only a subset of the components.
             It is a list of component names, including: left_limb, right_limb, base, torso (including the support legs.),
             left_gripper, right_gripper.
         """
         self.codename = codename
         self.mode = mode
-        self.model_path = "data/TRINA_world_" + self.codename + ".xml"
-        self.computation_model_path = "data/TRINA_world_" + self.codename + ".xml"
+        self.model_path = os.path.join(trina.setup.robot_models_root(),self.codename.capitalize() + ".urdf")
+        self.computation_model_path = os.path.join(trina.setup.robot_models_root(),self.codename.capitalize() + ".urdf")
+        self.components = components
         self.debug_logging = debug_logging
         if(self.debug_logging):
             self.logging_filename = time.time()
@@ -64,22 +77,31 @@ class Motion:
         self.world = WorldModel()
         res = self.world.readFile(self.computation_model_path)
         if not res:
-            logger.error('unable to load model')
-            raise RuntimeError("unable to load model")
+            logger.error('unable to load model '+self.computation_model_path)
+            raise RuntimeError("unable to load model "+self.computation_model_path)
 
         #Initialize collision detection
         self.collider = collide.WorldCollider(self.world)
         self.robot_model = self.world.robot(0)
+<<<<<<< HEAD
         for this_linknum in range(self.robot_model.numLinks()):
             this_link = self.robot_model.link(this_linknum)
             this_link.geometry().setCollisionMargin(TRINAConfig.collision_margin)
             # if(this_link.getName() in ['base_link','head_neck2_link']):
             #     print('setting collision margin for link: {} '.format(this_link.getName()))
             #     this_link.geometry().setCollisionMargin(TRINAConfig.collision_margin)
+=======
+        #End-effector links and active dofs used for arm cartesian control and IK
+        self.left_EE_link = self.robot_model.link(trina.settings.left_tool_link())
+        self.left_active_Dofs = trina.settings.left_arm_dofs()
+        self.right_EE_link = self.robot_model.link(trina.settings.right_tool_link())
+        self.right_active_Dofs = trina.settings.right_arm_dofs()
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
         #UR5 arms need correct gravity vector
         self.currentGravityVector = [0,0,-9.81]
 
         #Enable some components of the robot
+<<<<<<< HEAD
 
         self.base_enabled = False
         self.torso_enabled = False
@@ -92,6 +114,15 @@ class Motion:
         left_limb_controller = None
         right_limb_controller = None
 
+=======
+        self.left_limb_enabled = ('left_limb' in components)
+        self.right_limb_enabled = ('right_limb' in components)
+        self.base_enabled = ('base' in components)
+        self.torso_enabled = ('torso' in components)
+        self.left_gripper_enabled = ('left_gripper' in components)
+        self.right_gripper_enabled = ('right_gripper' in components)
+        self.head_enabled = ('head' in components)
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
         #Initialize components
         if self.mode == "Kinematic":
             from kinematicController import KinematicController
@@ -472,6 +503,7 @@ class Motion:
         self._purge_commands()
         print("motion.controlThread: exited")
 
+<<<<<<< HEAD
     def drive_limb(self, limb):
         if limb.state.commandQueue:
             if limb.state.commandType == 0:
@@ -521,10 +553,15 @@ class Motion:
     #TODO: finish setting the entire robot
     def setPosition(self,q):
         """set the position of the entire robot
+=======
+    def setKlamptPosition(self,q,duration):
+        """set the position of the entire robot from a Klampt configuration
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
 
         Parameter:
         ---------------
         q: a merged list of joint positions, in the order of torso,base,left limb, right limb, left gripper...
+<<<<<<< HEAD
         """
         #if not self.pause_motion_flag:
         #assert len(q) == 12, "motion.setPosition(): Wrong number of dimensions of config sent"
@@ -549,6 +586,22 @@ class Motion:
                 self.setLeftLimbPosition(q)
             else:
                 self.setRightLimbPosition(q)
+=======
+        duration: disired time it takes to reach q (s)
+        """
+        basedofs = TRINAConfig.get_base_dofs()
+        qbase = [q[i] for i in basedofs]
+        leftdofs = TRINAConfig.get_left_active_Dofs(self.codename)
+        qleft = [q[i] for i in leftdofs]
+        rightdofs = TRINAConfig.get_right_active_Dofs(self.codename)
+        qright = [q[i] for i in rightdofs]
+        self.setLeftLimbPositionLinear(qleft,duration)
+        self.setRightLimbPositionLinear(qright,duration)
+        qbase_cur = self.sensedBasePosition()
+        diff = [qbase[0]-qbase_cur[0],qbase[1]-qbase_cur[1],so2.angle_diff(qbase[2],qbase_cur[2])]
+        velocity = vectorops.norm(diff[0:2]) + abs(diff[2])  #TODO: how is velocity related to path following duration?
+        self.setBaseTargetPosition(qbase,velocity)
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
 
     def setLeftLimbPosition(self,q):
         """Set the left limb joint positions, and the limb moves as fast as possible
@@ -712,9 +765,6 @@ class Motion:
             logger.warning('Motion:paused')
             print('Motion:paused')
         return
-
-
-
 
     def sensedLeftLimbPosition(self):
         """The current joint positions of the left limb
@@ -1574,9 +1624,15 @@ class Motion:
 
     def isPaused(self):
         """
+<<<<<<< HEAD
         Return whether the robot is paused
         """
         return self.pause_motion_flag
+=======
+        self.stop_motion_flag = False
+        self.stop_motion_sent = False
+        return
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
 
     def mirror_arm_config(self,config):
         """given the Klampt config of the left or right arm, return the other
@@ -1627,7 +1683,7 @@ class Motion:
 
     def setRobotToDefualt(self):
         """ Some helper function when debugging"""
-        leftUntuckedConfig = [-0.2028,-2.1063,-1.610,3.7165,-0.9622,0.0974]
+        leftUntuckedConfig = trina.settings.left_arm_config('untucked')
         rightUntuckedConfig = self.mirror_arm_config(leftUntuckedConfig)
         self.setLeftLimbPositionLinear(leftUntuckedConfig,1)
         self.setRightLimbPositionLinear(rightUntuckedConfig,1)

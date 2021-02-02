@@ -1,0 +1,434 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.Sensor.api &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.modules.Sensor.api</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.modules.Sensor.api</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+<span class="kn">from</span> <span class="nn">trina.utils</span> <span class="k">import</span> <span class="n">Promise</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<div class="viewcode-block" id="SensorAPI"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI">[docs]</a><span class="k">class</span> <span class="nc">SensorAPI</span><span class="p">(</span><span class="n">jarvis</span><span class="o">.</span><span class="n">APILayer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;External API for the sensor module.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">sensor_module</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span> <span class="o">=</span> <span class="n">sensor_module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">sensor_module</span><span class="o">.</span><span class="n">update_lock</span>
+        <span class="n">jarvis</span><span class="o">.</span><span class="n">APILayer</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SensorAPI.name"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.name">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;sensors&quot;</span></div>
+
+<div class="viewcode-block" id="SensorAPI.interprocess"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.interprocess">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">interprocess</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="SensorAPI.camerasAvailable"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.camerasAvailable">[docs]</a>    <span class="k">def</span> <span class="nf">camerasAvailable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of strings describing available cameras&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">active_cameras</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SensorAPI.getRgbdImages"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.getRgbdImages">[docs]</a>    <span class="k">def</span> <span class="nf">getRgbdImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cameras</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the RGBD cameras from all cameras or a subset of cameras</span>
+<span class="sd">        corresponding to the latest images taken.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cameras: Can be one of the following:</span>
+
+<span class="sd">                - None indicates all cameras.</span>
+<span class="sd">                - str: indicates one camera.  (Note the return value is still a dict</span>
+<span class="sd">                  with one key)</span>
+<span class="sd">                - list of str: multiple cameras.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: keys are cameras and values are (rgb,depth) image pairs.  Each</span>
+<span class="sd">            image is a numpy object. (These are shared across threads, so be careful</span>
+<span class="sd">            not to modify them.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">get_rgbd_images</span><span class="p">(</span><span class="n">cameras</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SensorAPI.getNextRgbdImages"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.getNextRgbdImages">[docs]</a>    <span class="k">def</span> <span class="nf">getNextRgbdImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cameras</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a Promise for the next RGBD images.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cameras: Can be one of the following:</span>
+
+<span class="sd">                - None indicates all cameras.</span>
+<span class="sd">                - str: indicates one camera.  (Note the return value is still a dict</span>
+<span class="sd">                  with one key)</span>
+<span class="sd">                - list of str: multiple cameras.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            Promise: To get the next images when they arrive, call wait() on the</span>
+<span class="sd">            Promise object. value() has the same format the result of</span>
+<span class="sd">            :func:`getRgbdImages`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">(</span><span class="s2">&quot;RGBD image request from &quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_caller_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cameras</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+                <span class="n">cameras</span> <span class="o">=</span> <span class="p">[</span><span class="n">cameras</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">requests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="p">,</span><span class="s1">&#39;get_rgbd_images&#39;</span><span class="p">,</span><span class="n">cameras</span><span class="p">,{}))</span>
+            <span class="k">return</span> <span class="n">p</span></div>
+
+<div class="viewcode-block" id="SensorAPI.getPointClouds"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.getPointClouds">[docs]</a>    <span class="k">def</span> <span class="nf">getPointClouds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cameras</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the point clouds corresponding to the latest image</span>
+<span class="sd">        taken.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cameras: Can be one of the following:</span>
+
+<span class="sd">                - None indicates all cameras.</span>
+<span class="sd">                - str: indicates one camera.  (Note the return value is still a dict</span>
+<span class="sd">                  with one key)</span>
+<span class="sd">                - list of str: multiple cameras.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: where keys are camera snd values are point clouds. Each</span>
+<span class="sd">            point cloud is expressed in world coordinates as Open3D PointCloud</span>
+<span class="sd">            objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">get_point_clouds</span><span class="p">(</span><span class="n">cameras</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SensorAPI.getNextPointClouds"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.getNextPointClouds">[docs]</a>    <span class="k">def</span> <span class="nf">getNextPointClouds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cameras</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a Promise for the next point clouds.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cameras: Can be one of the following:</span>
+
+<span class="sd">                - None indicates all cameras.</span>
+<span class="sd">                - str: indicates one camera.  (Note the return value is still a dict</span>
+<span class="sd">                  with one key)</span>
+<span class="sd">                - list of str: multiple cameras.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Promise: To get the next point clouds when they arrive, call wait() </span>
+<span class="sd">            on the Promise object.  value() has the same format the result of</span>
+<span class="sd">            :func:`getPointClouds`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">(</span><span class="s2">&quot;Point cloud request from &quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_caller_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cameras</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+                <span class="n">cameras</span> <span class="o">=</span> <span class="p">[</span><span class="n">cameras</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">requests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="p">,</span><span class="s1">&#39;get_point_clouds&#39;</span><span class="p">,</span><span class="n">cameras</span><span class="p">,{}))</span>
+            <span class="k">return</span> <span class="n">p</span></div>
+
+<div class="viewcode-block" id="SensorAPI.getLidarScan"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.getLidarScan">[docs]</a>    <span class="k">def</span> <span class="nf">getLidarScan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the Lidar scan as a list of floats</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">get_lidar_scan</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SensorAPI.getLidarPointCloud"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.getLidarPointCloud">[docs]</a>    <span class="k">def</span> <span class="nf">getLidarPointCloud</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the Lidar scan as an N x 3 numpy array of points.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">get_lidar_point_cloud</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SensorAPI.getNextLidarScan"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.getNextLidarScan">[docs]</a>    <span class="k">def</span> <span class="nf">getNextLidarScan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a Promise for the Lidar scan.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Promise: To get the next point clouds when they arrive, call wait() </span>
+<span class="sd">            on the Promise object.  value() has the same result as</span>
+<span class="sd">            :func:`getLidarScan`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">(</span><span class="s2">&quot;Lidar scan request from &quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_caller_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">requests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="p">,</span><span class="s1">&#39;get_lidar_scan&#39;</span><span class="p">,</span><span class="kc">None</span><span class="p">,{}))</span>
+            <span class="k">return</span> <span class="n">p</span></div>
+
+<div class="viewcode-block" id="SensorAPI.getNextLidarPointCloud"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPI.getNextLidarPointCloud">[docs]</a>    <span class="k">def</span> <span class="nf">getNextLidarPointCloud</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a Promise for the Lidar scan.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Promise: To get the next point clouds when they arrive, call wait() </span>
+<span class="sd">            on the Promise object.  value() has the same result as</span>
+<span class="sd">            :func:`getLidarPointCloud`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">Promise</span><span class="p">(</span><span class="s2">&quot;Lidar point cloud request from &quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">_caller_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sensor_module</span><span class="o">.</span><span class="n">requests</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">p</span><span class="p">,</span><span class="s1">&#39;get_lidar_point_cloud&#39;</span><span class="p">,</span><span class="kc">None</span><span class="p">,{}))</span>
+            <span class="k">return</span> <span class="n">p</span></div></div>
+
+
+<div class="viewcode-block" id="SensorAPISlow"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPISlow">[docs]</a><span class="k">class</span> <span class="nc">SensorAPISlow</span><span class="p">(</span><span class="n">jarvis</span><span class="o">.</span><span class="n">APILayer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;External API for the sensor module -- slow version that uses the state server to copy images.&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SensorAPISlow.name"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPISlow.name">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;sensors&quot;</span></div>
+
+<div class="viewcode-block" id="SensorAPISlow.interprocess"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPISlow.interprocess">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">interprocess</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="SensorAPISlow.camerasAvailable"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPISlow.camerasAvailable">[docs]</a>    <span class="k">def</span> <span class="nf">camerasAvailable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list of strings describing available cameras&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameraNames&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="SensorAPISlow.getRgbdImages"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPISlow.getRgbdImages">[docs]</a>    <span class="k">def</span> <span class="nf">getRgbdImages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cameras</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the RGBD cameras from all cameras or a subset of cameras</span>
+<span class="sd">        corresponding to the latest images taken.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cameras: Can be one of the following:</span>
+
+<span class="sd">                - None indicates all cameras.</span>
+<span class="sd">                - str: indicates one camera.  (Note the return value is still a dict</span>
+<span class="sd">                  with one key)</span>
+<span class="sd">                - list of str: multiple cameras.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: keys are cameras and values are (rgb,depth) image pairs.  Each</span>
+<span class="sd">            image is a numpy object. (These are shared across threads, so be careful</span>
+<span class="sd">            not to modify them.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">cameras</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cameras</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameraNames&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cameras</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="n">cameras</span> <span class="o">=</span> <span class="p">[</span><span class="n">cameras</span><span class="p">]</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">cam</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_redisSet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">cam</span><span class="p">,</span><span class="s1">&#39;requestImagesTime&#39;</span><span class="p">],</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">cam</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">rgb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">cam</span><span class="p">,</span><span class="s1">&#39;images&#39;</span><span class="p">,</span><span class="s1">&#39;rgb&#39;</span><span class="p">])</span>
+                <span class="n">depth</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">cam</span><span class="p">,</span><span class="s1">&#39;images&#39;</span><span class="p">,</span><span class="s1">&#39;depth&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">depth</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">res</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span> <span class="o">=</span> <span class="n">rgb</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">res</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">rgb</span><span class="p">,</span><span class="n">depth</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exception getting Sensor.cameras.cam.images.rgb&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="kn">import</span> <span class="nn">traceback</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="SensorAPISlow.getPointClouds"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPISlow.getPointClouds">[docs]</a>    <span class="k">def</span> <span class="nf">getPointClouds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">cameras</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the point clouds corresponding to the latest image</span>
+<span class="sd">        taken.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cameras: Can be one of the following:</span>
+
+<span class="sd">                - None indicates all cameras.</span>
+<span class="sd">                - str: indicates one camera.  (Note the return value is still a dict</span>
+<span class="sd">                  with one key)</span>
+<span class="sd">                - list of str: multiple cameras.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: where keys are camera snd values are point clouds. Each</span>
+<span class="sd">            point cloud is expressed in world coordinates as Open3D PointCloud</span>
+<span class="sd">            objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cameras</span><span class="p">,</span><span class="kc">None</span><span class="p">):</span>
+            <span class="n">cameras</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameraNames&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cameras</span><span class="p">,</span><span class="nb">str</span><span class="p">):</span>
+            <span class="n">cameras</span> <span class="o">=</span> <span class="p">[</span><span class="n">cameras</span><span class="p">]</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">cam</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_redisSet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">cam</span><span class="p">,</span><span class="s1">&#39;requestPointCloudTime&#39;</span><span class="p">],</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">cam</span> <span class="ow">in</span> <span class="n">cameras</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;cameras&#39;</span><span class="p">,</span><span class="n">cam</span><span class="p">,</span><span class="s1">&#39;pointCloud&#39;</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="SensorAPISlow.getLidarScan"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPISlow.getLidarScan">[docs]</a>    <span class="k">def</span> <span class="nf">getLidarScan</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the Lidar scan as a list of floats</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;lidar&#39;</span><span class="p">,</span><span class="s1">&#39;scan&#39;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="SensorAPISlow.getLidarPointCloud"><a class="viewcode-back" href="../../../../trina.modules.Sensor.html#trina.modules.Sensor.api.SensorAPISlow.getLidarPointCloud">[docs]</a>    <span class="k">def</span> <span class="nf">getLidarPointCloud</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the Lidar scan as an N x 3 numpy array of points.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span><span class="p">[</span><span class="n">cam</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_redisGet</span><span class="p">([</span><span class="s1">&#39;Sensor&#39;</span><span class="p">,</span><span class="s1">&#39;lidar&#39;</span><span class="p">,</span><span class="s1">&#39;pointCloud&#39;</span><span class="p">])</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

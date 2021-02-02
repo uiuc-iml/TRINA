@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<world>
+    <robot name="trina" file="../robots/Anthrax.urdf" rotateZ="0" translation="0 0 0">
+    </robot>
+    <terrain file="terrains/cube.off" scale="100.0 100.0 0.01" translation="-5.0 -5.0 -0.01">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+
+    <terrain name="obs0" file="cube.off" translation="2 2 0">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+    <terrain name="obs1" file="cube.off" translation="-2 2 0">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+    <terrain name="obs2" file="cube.off" translation="-2 -2 0">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+    <terrain name="obs3" file="cube.off" translation="2 -2 0">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+    <terrain name="obs4" file="cube.off" translation="5 0 0">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+    <terrain name="obs5" file="cube.off" translation="0 5 0">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+    <terrain name="obs6" file="cube.off" translation="-5 0 0">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+    <terrain name="obs7" file="cube.off" translation="0 -5 0">
+        <display color="0.8 0.8 0.8"/>
+    </terrain>
+</world>

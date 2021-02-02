@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.utils package &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="trina.sensors package" href="trina.sensors.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="trina.html">trina package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="trina.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="trina.jarvis.html">trina.jarvis package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.modules.html">trina.modules package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.sensors.html">trina.sensors package</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">trina.utils package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.utils.locking">trina.utils.locking module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.utils.loops">trina.utils.loops module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.utils.nested_json_accessor">trina.utils.nested_json_accessor module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.utils.promise">trina.utils.promise module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-trina.utils">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.command_server">trina.command_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.settings">trina.settings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.setup">trina.setup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.state_server">trina.state_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="trina.html">trina package</a> &raquo;</li>
+        
+      <li>trina.utils package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/trina.utils.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="trina-utils-package">
+<h1>trina.utils package<a class="headerlink" href="#trina-utils-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trina.utils.locking">
+<span id="trina-utils-locking-module"></span><h2>trina.utils.locking module<a class="headerlink" href="#module-trina.utils.locking" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="trina.utils.locking.lock_wrap">
+<code class="sig-prename descclassname">trina.utils.locking.</code><code class="sig-name descname">lock_wrap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lock</span></em>, <em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/locking.html#lock_wrap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.locking.lock_wrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wraps a function fn with a lock acquisition.  Returns a callable
+that accepts the same signature as fn.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.utils.loops">
+<span id="trina-utils-loops-module"></span><h2>trina.utils.loops module<a class="headerlink" href="#module-trina.utils.loops" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.utils.loops.TimedLooper">
+<em class="property">class </em><code class="sig-prename descclassname">trina.utils.loops.</code><code class="sig-name descname">TimedLooper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dt</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rate</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">warning_frequency</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/loops.html#TimedLooper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.loops.TimedLooper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A class to easily control how timed loops are run.</p>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">looper</span> <span class="o">=</span> <span class="n">TimedLooper</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="mf">0.01</span><span class="p">)</span>
+<span class="k">while</span> <span class="n">looper</span><span class="p">:</span>
+    <span class="o">...</span> <span class="n">do</span> <span class="n">stuff</span> <span class="o">...</span>
+    <span class="k">if</span> <span class="n">need</span> <span class="n">to</span> <span class="n">stop</span><span class="p">:</span>
+        <span class="n">looper</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+        <span class="c1">#or just call break</span>
+</pre></div>
+</div>
+<p>Note that if dt is too small (or rate is too large), the timing will not
+be accurate due to the system scheduler resolution.</p>
+<p>If the code within the loop takes more than dt seconds to run, then a
+warning may be printed.  To turn this off, set <code class="docutils literal notranslate"><span class="pre">warnings=0</span></code> in the
+constructor.  By default, this will print a warning on the first overrun,
+and every <code class="docutils literal notranslate"><span class="pre">warning_frequency</span></code> overruns thereafter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dt</strong> (<em>float</em><em>, </em><em>optional</em>) – the desired time between loops (in seconds)</p></li>
+<li><p><strong>rate</strong> (<em>float</em><em>, </em><em>optional</em>) – the number of times per second to run this
+loop (in Hz).  dt = 1/rate.  One of dt or rate must be specified.</p></li>
+<li><p><strong>warning_frequency</strong> (<em>int</em><em>, </em><em>optional</em>) – if the elapsed time between calls
+exceeds dt, a warning message will be printed at this frequency.
+Set this to 0 to disable warnings.</p></li>
+<li><p><strong>name</strong> (<em>str</em><em>, </em><em>optional</em>) – a descriptive name to be used in the warning
+string.</p></li>
+</ul>
+</dd>
+</dl>
+<p>Warning: DO NOT attempt to save some time and call the TimedLooper()
+constructor as the condition of your while loop!  I.e., do not do this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">while</span> <span class="n">TimedLooper</span><span class="p">(</span><span class="n">dt</span><span class="o">=</span><span class="mf">0.01</span><span class="p">):</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt id="trina.utils.loops.TimedLooper.iters">
+<code class="sig-name descname">iters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/loops.html#TimedLooper.iters"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.loops.TimedLooper.iters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the total number of iters run</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.loops.TimedLooper.print_warning">
+<code class="sig-name descname">print_warning</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/loops.html#TimedLooper.print_warning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.loops.TimedLooper.print_warning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Override this to change how warning strings are printed, e.g. to
+add your own logger</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.loops.TimedLooper.stop">
+<code class="sig-name descname">stop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/loops.html#TimedLooper.stop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.loops.TimedLooper.stop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.loops.TimedLooper.time_elapsed">
+<code class="sig-name descname">time_elapsed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/loops.html#TimedLooper.time_elapsed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.loops.TimedLooper.time_elapsed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the total time elapsed from the start, in seconds</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.utils.nested_json_accessor">
+<span id="trina-utils-nested-json-accessor-module"></span><h2>trina.utils.nested_json_accessor module<a class="headerlink" href="#module-trina.utils.nested_json_accessor" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor">
+<em class="property">class </em><code class="sig-prename descclassname">trina.utils.nested_json_accessor.</code><code class="sig-name descname">NestedJsonAccessor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">parent</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Makes it really easy to define a JSON structure distributed across
+files.  With this structure, JSON files can refer to other files using
+values of the form “&#64;FILENAME.JSON” and they will be automatically
+loaded when accessed.</p>
+<p>Almost all dict/list accessors are implemented.  To treat this like a plain
+dict, call <a class="reference internal" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.asdict" title="trina.utils.nested_json_accessor.NestedJsonAccessor.asdict"><code class="xref py py-func docutils literal notranslate"><span class="pre">asdict()</span></code></a>.  By default, this will only return the contents
+of the immediate JSON file. To get the whole structure. call
+<code class="docutils literal notranslate"><span class="pre">asdict(True)</span></code>. To treat a list object as a plain list, use
+<a class="reference internal" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.aslist" title="trina.utils.nested_json_accessor.NestedJsonAccessor.aslist"><code class="xref py py-func docutils literal notranslate"><span class="pre">aslist()</span></code></a> or <code class="docutils literal notranslate"><span class="pre">list(self)</span></code>.</p>
+<p>To save back to disk, call the <a class="reference internal" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.save" title="trina.utils.nested_json_accessor.NestedJsonAccessor.save"><code class="xref py py-func docutils literal notranslate"><span class="pre">save()</span></code></a> function.  This will preserve
+the data and file structure as much as possible.</p>
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.append">
+<code class="sig-name descname">append</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.append"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.append" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.asdict">
+<code class="sig-name descname">asdict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.asdict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.asdict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.aslist">
+<code class="sig-name descname">aslist</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.aslist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.aslist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">default</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.load">
+<code class="sig-name descname">load</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.registerCodec">
+<em class="property">classmethod </em><code class="sig-name descname">registerCodec</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ext</span></em>, <em class="sig-param"><span class="n">encoder</span></em>, <em class="sig-param"><span class="n">decoder</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.registerCodec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.registerCodec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.save">
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.setref">
+<code class="sig-name descname">setref</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.setref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.setref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates that key should be saved to file fn and replaced with a
+reference.  fn may be a relative or absolute reference.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.nested_json_accessor.NestedJsonAccessor.values">
+<code class="sig-name descname">values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#NestedJsonAccessor.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.NestedJsonAccessor.values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="trina.utils.nested_json_accessor.json_recode_str">
+<code class="sig-prename descclassname">trina.utils.nested_json_accessor.</code><code class="sig-name descname">json_recode_str</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">input</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/nested_json_accessor.html#json_recode_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.nested_json_accessor.json_recode_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-trina.utils.promise">
+<span id="trina-utils-promise-module"></span><h2>trina.utils.promise module<a class="headerlink" href="#module-trina.utils.promise" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.utils.promise.Promise">
+<em class="property">class </em><code class="sig-prename descclassname">trina.utils.promise.</code><code class="sig-name descname">Promise</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>A placeholder for an asynchronous result, inspired by the twisted
+package. Can wait passively by testing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">promise</span><span class="p">:</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">promise</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>setting a callback function fn(value) with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">promise</span><span class="o">.</span><span class="n">setCallback</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or blocking until it arrives using::</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">val</span> <span class="o">=</span> <span class="n">promise</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>If you wish to put a timeout on <a class="reference internal" href="#trina.utils.promise.Promise.wait" title="trina.utils.promise.Promise.wait"><code class="xref py py-func docutils literal notranslate"><span class="pre">wait()</span></code></a>, use
+<code class="docutils literal notranslate"><span class="pre">val</span> <span class="pre">=</span> <span class="pre">promise.wait(timeout)</span></code>.</p>
+<p><a class="reference internal" href="#trina.utils.promise.Promise.value" title="trina.utils.promise.Promise.value"><code class="xref py py-func docutils literal notranslate"><span class="pre">value()</span></code></a> will raise a RuntimeError if the value is not available yet.</p>
+<p><code class="docutils literal notranslate"><span class="pre">wait(timeout)</span></code> will raise a <a class="reference internal" href="#trina.utils.promise.PromiseTimeout" title="trina.utils.promise.PromiseTimeout"><code class="xref py py-class docutils literal notranslate"><span class="pre">PromiseTimeout</span></code></a> exception if the
+timeout is reached without the result arriving.</p>
+<p>For functions writing to this value: use <code class="docutils literal notranslate"><span class="pre">callback(value)</span></code> to set the
+value when it is available.</p>
+<dl class="py method">
+<dt id="trina.utils.promise.Promise.available">
+<code class="sig-name descname">available</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise.available"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise.available" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.promise.Promise.callback">
+<code class="sig-name descname">callback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise.callback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise.callback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the provider to set the value.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.promise.Promise.errback">
+<code class="sig-name descname">errback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">error</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise.errback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise.errback" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by the provider to indicate an error.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.promise.Promise.error">
+<code class="sig-name descname">error</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise.error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise.error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.promise.Promise.setCallback">
+<code class="sig-name descname">setCallback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise.setCallback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise.setCallback" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.promise.Promise.setErrback">
+<code class="sig-name descname">setErrback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fn</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise.setErrback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise.setErrback" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.promise.Promise.value">
+<code class="sig-name descname">value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise.value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise.value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.utils.promise.Promise.wait">
+<code class="sig-name descname">wait</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">resolution</span><span class="o">=</span><span class="default_value">0.001</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#Promise.wait"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.Promise.wait" title="Permalink to this definition">¶</a></dt>
+<dd><p>Blocks until the response is available.  If you wish to put a timeout
+on this call, use the timeout argument.  For finer control on the polling
+frequency, change the resolution argument.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="trina.utils.promise.PromiseTimeout">
+<em class="property">exception </em><code class="sig-prename descclassname">trina.utils.promise.</code><code class="sig-name descname">PromiseTimeout</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">promise</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/utils/promise.html#PromiseTimeout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.utils.promise.PromiseTimeout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.utils">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trina.utils" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="trina.sensors.html" class="btn btn-neutral float-left" title="trina.sensors package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

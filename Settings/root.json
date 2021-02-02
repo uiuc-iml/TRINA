@@ -1,0 +1,65 @@
+{
+    "robot": "@robot_bubonic.json",
+    "user": {
+        "configs":"@anthrax/configs.json"
+    },
+    "MotionServer": {
+        "mode": "Kinematic",
+        "ip_address":"127.0.0.1",
+        "port":8080,
+        "components":["left_limb","right_limb","base"]
+    },
+    "RedisServer": {
+        "ip_address":"localhost"
+    },
+    "Jarvis":{
+        "#_comment1":"If you would like to access a different class in your module rather than ModuleName, put the class name here",
+        "module_class_map": {
+            "Motion":"MotionModule",
+            "UI":"LocalUI",
+            "Sensor":"SensorModuleSlow"
+        },
+        "module_locations":["trina.modules","trina_devel.modules"],
+        "app_locations":["trina.modules.apps","trina_devel.modules.apps"]
+    },
+    "CommandServer":{
+        "time_updater_dt":0.001,
+        "command_receiver_dt":0.001,
+        "health_monitor_dt":1,
+        "heartbeat_tolerance":10,
+        "verbose":1,
+        "#_comment2":"To force modules to be verbose, put them here",
+        "debug":["UI","App_DirectTeleOperation","Sensor"],
+        "#_comment3":"To force modules to be silent, put them here",
+        "silent":[]
+    },
+    "Simulation":{
+        "world_file":"Models/simulation_worlds/TRINA_world_bubonic_with_obstacle.xml"
+    },
+    "MotionModule": {
+        "state_receiver_dt":0.015
+    },
+    "SensorModule": {
+        "sim_update_dt":0.15,
+        "update_robot_dt":0.05
+    },
+    "CalibrationModule" : {
+        "realsense_right": {
+            "configs":"calibration/right_sensor_calibration.configs",
+            "limb":"right_arm"
+        },
+        "realsense_left": {
+            "configs": "calibration/left_sensor_calibration.configs",
+            "limb":"left_arm"
+        },
+        "l515_torso": {
+            "configs": "calibration/torso_sensor_calibration.configs",
+            "limb":"left_arm"
+        },
+        "fixed_camera": {
+            "configs": "calibration/fixed_sensor_calibration.configs",
+            "limb":"right_arm"
+        }
+    }
+    
+}

@@ -1,0 +1,355 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.Motion.module &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.modules.Motion.module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.modules.Motion.module</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">Motion</span> <span class="k">import</span> <span class="n">MotionClient</span>
+<span class="kn">from</span> <span class="nn">Motion</span> <span class="k">import</span> <span class="n">TRINAConfig</span>
+<span class="kn">from</span> <span class="nn">.api</span> <span class="k">import</span> <span class="n">MotionAPI</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">trina</span>
+<span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+<span class="kn">from</span> <span class="nn">trina.utils</span> <span class="k">import</span> <span class="n">TimedLooper</span>
+
+<div class="viewcode-block" id="MotionModule"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.module.MotionModule">[docs]</a><span class="k">class</span> <span class="nc">MotionModule</span><span class="p">(</span><span class="n">jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Jarvis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">robot_ip</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">jarvis</span><span class="o">.</span><span class="n">APIModule</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Jarvis</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+        <span class="k">if</span> <span class="n">robot_ip</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">robot_ip</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">motion_server_addr</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robot_ip</span> <span class="o">=</span> <span class="n">robot_ip</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robot</span> <span class="o">=</span> <span class="n">MotionClient</span><span class="p">(</span><span class="n">address</span> <span class="o">=</span> <span class="n">robot_ip</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">startup</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unable to connect to Motion Server&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">mode</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">codename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">codename</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">components</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">activeComponents</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left_limb_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;left_limb&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right_limb_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;right_limb&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;base&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">left_gripper_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;left_gripper&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">right_gripper_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;right_gripper&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">torso_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;torso&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_left</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_right</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_base</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_left_gripper</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_right_gripper</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pos_torso</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_base</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_right</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vel_left</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">posEE_left</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velEE_left</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">posEE_right</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">velEE_right</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n\n\n\n</span><span class="s1"> Initializing robot states&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robotRead</span> <span class="o">=</span> <span class="n">MotionClient</span><span class="p">(</span><span class="n">address</span> <span class="o">=</span> <span class="n">robot_ip</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;MotionModule&#39;</span><span class="p">)[</span><span class="s1">&#39;state_receiver_dt&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="c1">#for some reason, the thread seems to run faster?</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stateReceiver_loop</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;stateReceiver&#39;</span><span class="p">)</span>
+        <span class="c1">#self.startProcess(self.stateReceiver_run)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startMonitorThread</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MotionModule.name"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.module.MotionModule.name">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Motion&quot;</span></div>
+
+<div class="viewcode-block" id="MotionModule.apiClass"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.module.MotionModule.apiClass">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">apiClass</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MotionAPI</span></div>
+
+<div class="viewcode-block" id="MotionModule.moduleCommandObject"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.module.MotionModule.moduleCommandObject">[docs]</a>    <span class="k">def</span> <span class="nf">moduleCommandObject</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span></div>
+
+<div class="viewcode-block" id="MotionModule.stateReceiver_run"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.module.MotionModule.stateReceiver_run">[docs]</a>    <span class="k">def</span> <span class="nf">stateReceiver_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">robotRead</span> <span class="o">=</span> <span class="n">MotionClient</span><span class="p">(</span><span class="n">address</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot_ip</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">state_server</span><span class="o">.</span><span class="n">StateServer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">server</span><span class="p">)</span>
+        <span class="n">looper</span> <span class="o">=</span> <span class="n">TimedLooper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;MotionModule.stateReceiver&quot;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">looper</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stateReceiver_loop</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MotionModule.stateReceiver_loop"><a class="viewcode-back" href="../../../../trina.modules.Motion.html#trina.modules.Motion.module.MotionModule.stateReceiver_loop">[docs]</a>    <span class="k">def</span> <span class="nf">stateReceiver_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">counter</span><span class="o">%</span><span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1">#periodically run the heartbeat</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">log_health</span><span class="p">()</span>
+        <span class="n">robot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robotRead</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">server</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1">#t0 = time.time()</span>
+            <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left_limb_active</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">posEE_left</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEETransform</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pos_left</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftLimbPosition</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_left</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftLimbVelocity</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">velEE_left</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEEVelocity</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">global_EEWrench_left</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEEWrench</span><span class="p">(</span><span class="s1">&#39;global&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">local_EEWrench_left</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEEWrench</span><span class="p">(</span><span class="s1">&#39;local&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right_limb_active</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">posEE_right</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEETransform</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pos_right</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedRightLimbPosition</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_right</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedRightLimbVelocity</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">velEE_right</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEEVelocity</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">global_EEWrench_right</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEEWrench</span><span class="p">(</span><span class="s1">&#39;global&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">local_EEWrench_right</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEEWrench</span><span class="p">(</span><span class="s1">&#39;local&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">base_active</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pos_base</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedBasePosition</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">vel_base</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedBaseVelocity</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">klampt_q</span> <span class="o">=</span> <span class="n">TRINAConfig</span><span class="o">.</span><span class="n">get_klampt_model_q</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">codename</span><span class="p">,</span><span class="n">left_limb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_left</span><span class="p">,</span> <span class="n">right_limb</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_right</span><span class="p">,</span> <span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_base</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">klampt_command_pos</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">getKlamptCommandedPosition</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">klampt_sensor_pos</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">getKlamptSensedPosition</span><span class="p">()</span>
+            <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left_gripper_active</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pos_left_gripper</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftGripperPosition</span><span class="p">()</span>
+            <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right_gripper_active</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pos_right_gripper</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedRightGripperPosition</span><span class="p">()</span>
+            <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">torso_active</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pos_torso</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensedTorsoPosition</span><span class="p">()</span>
+
+            <span class="c1">#t1 = time.time()</span>
+            <span class="c1">#print(&quot;Read robot info in time&quot;,t1-t0)</span>
+
+            <span class="n">server</span><span class="p">[</span><span class="s2">&quot;ROBOT_INFO&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;Started&quot;</span> <span class="p">:</span> <span class="n">robot</span><span class="o">.</span><span class="n">isStarted</span><span class="p">(),</span>
+                <span class="s2">&quot;Shutdown&quot;</span> <span class="p">:</span> <span class="n">robot</span><span class="o">.</span><span class="n">isShutDown</span><span class="p">(),</span>
+                <span class="s2">&quot;Moving&quot;</span> <span class="p">:</span> <span class="kc">True</span><span class="p">,</span><span class="c1">#robot.moving(),</span>
+                <span class="s2">&quot;CartesianDrive&quot;</span> <span class="p">:</span> <span class="kc">True</span><span class="p">,</span><span class="c1">#robot.cartesianDriveFail(),</span>
+                <span class="s2">&quot;Components&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">,</span>
+                <span class="s2">&quot;Mode&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span>
+            <span class="p">}</span>
+            <span class="n">server</span><span class="p">[</span><span class="s2">&quot;ROBOT_STATE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;Position&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;LeftArm&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_left</span><span class="p">,</span>
+                    <span class="s2">&quot;RightArm&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_right</span><span class="p">,</span>
+                    <span class="s2">&quot;Base&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_base</span><span class="p">,</span>
+                    <span class="s2">&quot;Torso&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_torso</span><span class="p">,</span>
+                    <span class="s2">&quot;LeftGripper&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_left_gripper</span><span class="p">,</span>
+                    <span class="s2">&quot;RightGripper&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_right_gripper</span><span class="p">,</span>
+                    <span class="s2">&quot;Robotq&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">klampt_q</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;PositionEE&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;LeftArm&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">posEE_left</span><span class="p">,</span>
+                    <span class="s2">&quot;RightArm&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">posEE_right</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;EEWrench&quot;</span><span class="p">:{</span>
+                    <span class="s2">&quot;LeftArm&quot;</span> <span class="p">:{</span>
+                        <span class="s2">&quot;global&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">global_EEWrench_left</span><span class="p">,</span>
+                        <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_EEWrench_left</span>
+                    <span class="p">},</span>
+                    <span class="s2">&quot;RightArm&quot;</span> <span class="p">:{</span>
+                        <span class="s2">&quot;global&quot;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">global_EEWrench_right</span><span class="p">,</span>
+                        <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_EEWrench_right</span>
+                    <span class="p">}</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;Velocity&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;LeftArm&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_left</span><span class="p">,</span>
+                    <span class="s2">&quot;RightArm&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_right</span><span class="p">,</span>
+                    <span class="s2">&quot;Base&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">vel_base</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;VelocityEE&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;LeftArm&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">velEE_left</span><span class="p">,</span>
+                    <span class="s2">&quot;RightArm&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">velEE_right</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;KlamptCommandPos&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">klampt_command_pos</span><span class="p">,</span>
+                <span class="s2">&quot;KlamptSensedPos&quot;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">klampt_sensor_pos</span>
+            <span class="p">}</span>
+            <span class="c1"># print(&#39;states updated with success!&#39;)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="kn">import</span> <span class="nn">traceback</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span></div></div>
+
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

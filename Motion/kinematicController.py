@@ -30,10 +30,6 @@ def cleanup():
   pass
 
 
-model_config_length = 43
-base_indeces = [0,3]
-left_limb_indexes = [10,16]
-right_limb_indexes = [27,33]
 class KinematicController:
     def __init__(self, model_path,codename):
         self.left_limb_state = LimbState()
@@ -106,6 +102,7 @@ class KinematicController:
                         vx = self.base_state.v_queue[self.base_state.queue_idx]
                         w = self.base_state.w_queue[self.base_state.queue_idx]
                     else:
+<<<<<<< HEAD
                         self.base_state.v_queue = None
                         self.base_state.w_queue = None
                         vx = self.base_state.commandedVel[0]
@@ -220,6 +217,64 @@ class KinematicController:
                 self.robot.setConfig(TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb_to_be_set, right_limb = right_limb_to_be_set,base = base_state_q_to_be_set,head = head_to_be_set))
                 self.new_state = True
 
+=======
+                        dq_to_be_set.append(command)
+                left_limb_to_be_set = vectorops.add(self.left_limb_state.sensedq,vectorops.mul(dq_to_be_set,self.dt))
+                left_limb_to_be_set ,flag = self._limitLimbPosition(left_limb_to_be_set)
+                self.left_limb_state.senseddq = vectorops.div(vectorops.sub(dq_to_be_set,self.left_limb_state.sensedq),self.dt)
+                self.left_limb_state.sensedq = deepcopy(left_limb_to_be_set)
+            #right limb
+            right_limb_to_be_set = []
+            dq_to_be_set = []
+            if self.right_limb_state.commandType == 0:
+                for i in range(6):
+                    command = self.right_limb_state.commandedq[i]
+                    old = self.right_limb_state.sensedq[i]
+                    if (command-old) > self.limb_velocity_limit*self.dt:
+                        qi = self.limb_velocity_limit*self.dt + old
+                    elif (command-old) <  -self.limb_velocity_limit*self.dt:
+                        qi = old-self.limb_velocity_limit*self.dt
+                    else:
+                        qi = command
+                    right_limb_to_be_set.append(qi)
+                right_limb_to_be_set,flag = self._limitLimbPosition(right_limb_to_be_set)
+                self.right_limb_state.sensedq = deepcopy(right_limb_to_be_set)
+                self.right_limb_state.senseddq = vectorops.div(vectorops.sub(right_limb_to_be_set,self.right_limb_state.sensedq),self.dt)
+            elif self.right_limb_state.commandType == 1:
+                for i in range(6):
+                    command = self.right_limb_state.commandeddq[i]
+                    if command > self.limb_velocity_limit:
+                        dq_to_be_set.append(self.limb_velocity_limit)
+                    elif command <  -self.limb_velocity_limit:
+                        dq_to_be_set.append(-self.limb_velocity_limit)
+                    else:
+                        dq_to_be_set.append(command)
+                right_limb_to_be_set = vectorops.add(self.right_limb_state.sensedq,vectorops.mul(dq_to_be_set,self.dt))
+                right_limb_to_be_set ,flag = self._limitLimbPosition(right_limb_to_be_set)
+                self.right_limb_state.senseddq = vectorops.div(vectorops.sub(dq_to_be_set,self.right_limb_state.sensedq),self.dt)
+                self.right_limb_state.sensedq = deepcopy(right_limb_to_be_set)
+
+            if flag:
+                print("KinematicController: limbs at position limits")
+
+            #left gripper
+            affineDrive = 1.0
+            left_gripper_to_be_set = [0]*17
+            left_gripper_to_be_set[4] = self.left_gripper_state.command_finger_set[0]
+            left_gripper_to_be_set[5] = self.left_gripper_state.command_finger_set[0]*affineDrive
+            left_gripper_to_be_set[9] = self.left_gripper_state.command_finger_set[1]
+            left_gripper_to_be_set[10] = self.left_gripper_state.command_finger_set[1]*affineDrive
+            left_gripper_to_be_set[13] = self.left_gripper_state.command_finger_set[2]
+            left_gripper_to_be_set[14] = self.left_gripper_state.command_finger_set[2]*affineDrive
+            left_gripper_to_be_set[4] = self.left_gripper_state.command_finger_set[3]
+            left_gripper_to_be_set[8] = -self.left_gripper_state.command_finger_set[3]
+            #need to check limits here.... ignoring for now....
+            self.left_gripper_state.sense_finger_set = deepcopy(self.left_gripper_state.command_finger_set)
+            #set klampt robot config
+
+            self.robot.setConfig(TRINAConfig.get_klampt_model_q(self.codename,left_limb = left_limb_to_be_set, right_limb = right_limb_to_be_set,base = base_state_q_to_be_set))
+            self.new_state = True
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
             self.controlLoopLock.release()
             elapsedTime = time.time() - loopStartTime
 
@@ -321,6 +376,11 @@ class KinematicController:
     def shutdown(self):
         self.shut_down = True
         return
+
+    def stopMotion(self):
+        self.setBaseVelocity([0]*2)
+        self.left_limb_state.set_mode_velocity([0]*6)
+        self.right_limb_state.set_mode_velocity([0]*6)
 
     def _setKlamptModelConfig(self):
     	q = [0] + self.left_limb_state.sensedq + [0, 0] + self.right_limb_state.sensedq + [0]

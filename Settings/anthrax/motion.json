@@ -1,0 +1,19 @@
+{
+    "ur5e_control_rate": 0.004,
+    "left_gripper" : {
+        "enabled":false,
+        "type":"vacuum"
+    },
+    "right_gripper" : {
+        "enabled":false,
+        "type":"parallel"
+    },
+    "limb_velocity_limits": [2.0, 2.0, 2.0, 2.0, 2.0, 2.0], 
+    "limb_EE_velocity_limits": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    "epsilon": 0.01,
+    "collision_check_interval": 0.1,
+    "left_limb_gravity_upright": [-4.91, -4.91, -6.93672],
+    "right_limb_gravity_upright": [4.91, -4.91, -6.93672],
+    "R_local_global_upright_left": "[sqrt(0.5),-sqrt(0.25),-sqrt(0.25),-sqrt(0.5),-sqrt(0.25),-sqrt(0.25),0,sqrt(0.5),-sqrt(0.5)]",
+    "R_local_global_upright_right": "[-sqrt(0.5),-sqrt(0.25),sqrt(0.25),-sqrt(0.5),sqrt(0.25),-sqrt(0.25),0,-sqrt(0.5),-sqrt(0.5)]",
+}

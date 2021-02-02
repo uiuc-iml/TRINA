@@ -1,0 +1,62 @@
+trina.modules.apps.PointClickGrasp package
+==========================================
+
+Submodules
+----------
+
+trina.modules.apps.PointClickGrasp.PointClickGraspFile module
+-------------------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickGrasp.PointClickGraspFile
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickGrasp.geometry module
+--------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickGrasp.geometry
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickGrasp.global\_planner module
+---------------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickGrasp.global_planner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickGrasp.local\_planner module
+--------------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickGrasp.local_planner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickGrasp.motion\_primitives module
+------------------------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickGrasp.motion_primitives
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.apps.PointClickGrasp.utils module
+-----------------------------------------------
+
+.. automodule:: trina.modules.apps.PointClickGrasp.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.apps.PointClickGrasp
+   :members:
+   :undoc-members:
+   :show-inheritance:

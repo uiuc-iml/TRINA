@@ -2,8 +2,6 @@ from enum import Enum
 import rospy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from tf.transformations import euler_from_quaternion
-import tf
 from threading import Thread
 import math
 from copy import deepcopy
@@ -150,6 +148,8 @@ class BaseController:
         self.cmd_pub.publish(create_twist((0, 0)))
 
     def _odom_callback(self, odom_msg):
+        from tf.transformations import euler_from_quaternion
+
         self.state_read = False
         # x-position
         self.measured_pos[0] = odom_msg.pose.pose.position.x

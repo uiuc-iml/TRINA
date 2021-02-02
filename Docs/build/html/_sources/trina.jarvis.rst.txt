@@ -1,0 +1,38 @@
+trina.jarvis package
+====================
+
+Submodules
+----------
+
+trina.jarvis.api module
+-----------------------
+
+.. automodule:: trina.jarvis.api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.jarvis.jarvis module
+--------------------------
+
+.. automodule:: trina.jarvis.jarvis
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.jarvis.module module
+--------------------------
+
+.. automodule:: trina.jarvis.module
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.jarvis
+   :members:
+   :undoc-members:
+   :show-inheritance:

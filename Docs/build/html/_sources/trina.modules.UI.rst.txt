@@ -1,0 +1,38 @@
+trina.modules.UI package
+========================
+
+Submodules
+----------
+
+trina.modules.UI.LocalUI module
+-------------------------------
+
+.. automodule:: trina.modules.UI.LocalUI
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.UI.RemoteUI module
+--------------------------------
+
+.. automodule:: trina.modules.UI.RemoteUI
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+trina.modules.UI.api module
+---------------------------
+
+.. automodule:: trina.modules.UI.api
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: trina.modules.UI
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,286 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.setup &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.setup</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.setup</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">WorldModel</span><span class="p">,</span><span class="n">Simulator</span>
+<span class="kn">from</span> <span class="nn">.import</span> <span class="n">settings</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+
+<div class="viewcode-block" id="trina_root"><a class="viewcode-back" href="../../trina.html#trina.setup.trina_root">[docs]</a><span class="k">def</span> <span class="nf">trina_root</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Root path of TRINA folder&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/TRINA&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="models_root"><a class="viewcode-back" href="../../trina.html#trina.setup.models_root">[docs]</a><span class="k">def</span> <span class="nf">models_root</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Root path of TRINA Models folder&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trina_root</span><span class="p">(),</span><span class="s2">&quot;Models&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="robot_models_root"><a class="viewcode-back" href="../../trina.html#trina.setup.robot_models_root">[docs]</a><span class="k">def</span> <span class="nf">robot_models_root</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Root path of TRINA robot models folder&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trina_root</span><span class="p">(),</span><span class="s2">&quot;Models/robots&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="log_root"><a class="viewcode-back" href="../../trina.html#trina.setup.log_root">[docs]</a><span class="k">def</span> <span class="nf">log_root</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Root path of TRINA logging folder&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trina_root</span><span class="p">(),</span><span class="s2">&quot;errorLogs&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="robot_model_load"><a class="viewcode-back" href="../../trina.html#trina.setup.robot_model_load">[docs]</a><span class="k">def</span> <span class="nf">robot_model_load</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Loads the URDF model for the robot. Returns a klampt.WorldModel&quot;&quot;&quot;</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">WorldModel</span><span class="p">()</span>
+    <span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trina_root</span><span class="p">(),</span><span class="n">settings</span><span class="o">.</span><span class="n">robot_model</span><span class="p">())</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">readFile</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unable to read robot model &quot;</span><span class="o">+</span><span class="n">model_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">w</span></div>
+
+<div class="viewcode-block" id="simulation_world_load"><a class="viewcode-back" href="../../trina.html#trina.setup.simulation_world_load">[docs]</a><span class="k">def</span> <span class="nf">simulation_world_load</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns a suggested simulation klampt.WorldModel&quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">klampt</span> <span class="k">import</span> <span class="n">WorldModel</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">WorldModel</span><span class="p">()</span>
+    <span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trina_root</span><span class="p">(),</span><span class="n">settings</span><span class="o">.</span><span class="n">simulation_world_file</span><span class="p">())</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">w</span><span class="o">.</span><span class="n">readFile</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">res</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unable to read simulation world &quot;</span><span class="o">+</span><span class="n">model_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">w</span></div>
+
+<div class="viewcode-block" id="set_robot_sensor_calibration"><a class="viewcode-back" href="../../trina.html#trina.setup.set_robot_sensor_calibration">[docs]</a><span class="k">def</span> <span class="nf">set_robot_sensor_calibration</span><span class="p">(</span><span class="n">world</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns a klampt.Simulator that is calibrated according to the </span>
+<span class="sd">    sensor calibration in Settings/&quot;&quot;&quot;</span>
+    <span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">world</span><span class="p">)</span>
+    <span class="n">robot</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">controller</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">all_cams</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="n">sensori</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensor</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sensori</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;CameraSensor&#39;</span><span class="p">:</span>
+            <span class="n">all_cams</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sensori</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">sensori</span><span class="o">.</span><span class="n">type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>  <span class="c1">#out of sensors</span>
+            <span class="k">break</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="kn">from</span> <span class="nn">klampt.model</span> <span class="k">import</span> <span class="n">sensing</span>
+    <span class="kn">from</span> <span class="nn">klampt.math</span> <span class="k">import</span> <span class="n">se3</span>
+    <span class="kn">from</span> <span class="nn">klampt.io</span> <span class="k">import</span> <span class="n">loader</span>
+    <span class="n">camera_settings</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">camera_settings</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">camera</span> <span class="ow">in</span> <span class="n">camera_settings</span><span class="p">:</span>
+        <span class="n">cam</span> <span class="o">=</span> <span class="n">robot</span><span class="o">.</span><span class="n">sensor</span><span class="p">(</span><span class="n">camera</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cam</span><span class="o">.</span><span class="n">name</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="c1"># valid camera</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Updating simulated camera&quot;</span><span class="p">,</span><span class="n">cam</span><span class="o">.</span><span class="n">name</span><span class="p">(),</span><span class="s2">&quot;to match calibration in TRINA/Settings/&quot;</span><span class="p">)</span>
+            <span class="n">calib_fn</span> <span class="o">=</span> <span class="n">camera_settings</span><span class="p">[</span><span class="n">camera</span><span class="p">][</span><span class="s2">&quot;transform&quot;</span><span class="p">]</span>
+            <span class="n">calib_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">trina_root</span><span class="p">(),</span><span class="n">calib_fn</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">calib_fn</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;npy&#39;</span><span class="p">):</span>
+                <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>    
+                <span class="n">transform</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">calib_fn</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">))</span>
+                <span class="n">sensing</span><span class="o">.</span><span class="n">set_sensor_xform</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span><span class="n">se3</span><span class="o">.</span><span class="n">from_homogeneous</span><span class="p">(</span><span class="n">transform</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">transform</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">calib_fn</span><span class="p">)</span>
+                <span class="n">sensing</span><span class="o">.</span><span class="n">set_sensor_xform</span><span class="p">(</span><span class="n">cam</span><span class="p">,</span><span class="n">transform</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sim</span></div>
+
+
+<div class="viewcode-block" id="get_logger"><a class="viewcode-back" href="../../trina.html#trina.setup.get_logger">[docs]</a><span class="k">def</span> <span class="nf">get_logger</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">log_root</span><span class="p">()):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">log_root</span><span class="p">())</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">filename</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">log_root</span><span class="p">()</span><span class="o">+</span><span class="s2">&quot;/logFile_&quot;</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%d</span><span class="s1">%m%Y&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.log&quot;</span>
+    <span class="k">if</span> <span class="n">level</span> <span class="o">==</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+    <span class="n">logFormatter</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> [</span><span class="si">%(levelname)s</span><span class="s2">] </span><span class="si">%(process)s</span><span class="s2"> (</span><span class="si">%(threadName)-9s</span><span class="s2">) </span><span class="si">%(name)s</span><span class="s2">: </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">fileHandler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+    <span class="n">consoleHandler</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+    <span class="n">fileHandler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logFormatter</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">fileHandler</span><span class="p">)</span>
+    <span class="n">consoleHandler</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">logFormatter</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">consoleHandler</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">level</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">logger</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,276 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.sensors.zed &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.sensors.zed</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.sensors.zed</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="ZedCamera"><a class="viewcode-back" href="../../../trina.sensors.html#trina.sensors.zed.ZedCamera">[docs]</a><span></span><span class="k">class</span> <span class="nc">ZedCamera</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">serial_num</span><span class="p">):</span>
+        <span class="c1"># only import pyzed if running on python3</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">pyzed.sl</span> <span class="k">as</span> <span class="nn">sl</span>
+        <span class="c1"># Note: This code presumes the zed cameras are fixed w.r.t. the base.</span>
+        <span class="c1"># Create a Camera object</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zed</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Camera</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">serial_num</span> <span class="o">=</span> <span class="n">serial_num</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">point_cloud</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Mat</span><span class="p">()</span>
+        <span class="c1"># Create a InitParameters object and set configuration parameters</span>
+        <span class="n">init_params</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">InitParameters</span><span class="p">()</span>
+        <span class="n">init_params</span><span class="o">.</span><span class="n">sdk_verbose</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># init_params.camera_resolution = sl.RESOLUTION.HD1080</span>
+        <span class="n">init_params</span><span class="o">.</span><span class="n">camera_resolution</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">RESOLUTION</span><span class="o">.</span><span class="n">HD2K</span>
+        <span class="n">init_params</span><span class="o">.</span><span class="n">depth_mode</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">DEPTH_MODE</span><span class="o">.</span><span class="n">PERFORMANCE</span>
+        <span class="n">init_params</span><span class="o">.</span><span class="n">coordinate_units</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">UNIT</span><span class="o">.</span><span class="n">METER</span>
+        <span class="n">init_params</span><span class="o">.</span><span class="n">set_from_serial_number</span><span class="p">(</span><span class="n">serial_num</span><span class="p">)</span>
+        <span class="n">init_params</span><span class="o">.</span><span class="n">depth_minimum_distance</span> <span class="o">=</span> <span class="mf">0.20</span>
+        <span class="n">init_params</span><span class="o">.</span><span class="n">depth_maximum_distance</span> <span class="o">=</span> <span class="mi">40</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Mat</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">Mat</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">runtime_parameters</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">RuntimeParameters</span><span class="p">()</span>
+        <span class="c1"># Open the camera</span>
+        <span class="n">err</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zed</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">init_params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">err</span> <span class="o">!=</span> <span class="n">sl</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;There was an error while trying to access the zed camera, please review and try again.&#39;</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="ZedCamera.update"><a class="viewcode-back" href="../../../trina.sensors.html#trina.sensors.zed.ZedCamera.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zed</span><span class="o">.</span><span class="n">grab</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">runtime_parameters</span><span class="p">)</span> <span class="o">==</span> <span class="n">sl</span><span class="o">.</span><span class="n">ERROR_CODE</span><span class="o">.</span><span class="n">SUCCESS</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">connected</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="ZedCamera.latest_point_cloud"><a class="viewcode-back" href="../../../trina.sensors.html#trina.sensors.zed.ZedCamera.latest_point_cloud">[docs]</a>    <span class="k">def</span> <span class="nf">latest_point_cloud</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zed</span><span class="o">.</span><span class="n">retrieve_measure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">point_cloud</span><span class="p">,</span> <span class="n">sl</span><span class="o">.</span><span class="n">MEASURE</span><span class="o">.</span><span class="n">XYZRGBA</span><span class="p">)</span>
+        <span class="n">pc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">point_cloud</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+
+        <span class="n">float_color</span> <span class="o">=</span> <span class="n">pc</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">3</span><span class="p">]</span>
+        <span class="n">final_shape</span> <span class="o">=</span> <span class="n">float_color</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">float_color</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="n">red</span> <span class="o">=</span> <span class="n">data</span><span class="p">[::</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">final_shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+        <span class="n">green</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">::</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">final_shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+        <span class="n">blue</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="p">::</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">final_shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">::</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">final_shape</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="s1">&#39;F&#39;</span><span class="p">)</span>
+
+        <span class="n">color_pic</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">final_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">final_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="n">color_pic</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">red</span>
+        <span class="n">color_pic</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">green</span>
+        <span class="n">color_pic</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">blue</span>
+        <span class="n">color_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">color_pic</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">255</span>
+
+        <span class="c1"># pc = np.nan_to_num(pc)</span>
+        <span class="n">reshaped_pc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">pc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">pc</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="n">reshaped_pc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">reshaped_pc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">reshaped_pc</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">pc</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="n">reshaped_pc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">reshaped_pc</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">posinf</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">neginf</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># we must now process color - and here comes a lot of bit shifting</span>
+
+        <span class="n">point_cloud</span> <span class="o">=</span> <span class="n">o3d</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">PointCloud</span><span class="p">()</span>
+        <span class="n">point_cloud</span><span class="o">.</span><span class="n">points</span> <span class="o">=</span> <span class="n">o3d</span><span class="o">.</span><span class="n">utility</span><span class="o">.</span><span class="n">Vector3dVector</span><span class="p">(</span><span class="n">reshaped_pc</span><span class="p">)</span>
+        <span class="n">point_cloud</span><span class="o">.</span><span class="n">colors</span> <span class="o">=</span> <span class="n">o3d</span><span class="o">.</span><span class="n">utility</span><span class="o">.</span><span class="n">Vector3dVector</span><span class="p">(</span><span class="n">color_t</span><span class="p">)</span>
+        <span class="c1"># we then finally transform the point cloud to the robot&#39;s coordinates:</span>
+        <span class="k">return</span> <span class="n">point_cloud</span></div>
+
+<div class="viewcode-block" id="ZedCamera.latest_rgbd_images"><a class="viewcode-back" href="../../../trina.sensors.html#trina.sensors.zed.ZedCamera.latest_rgbd_images">[docs]</a>    <span class="k">def</span> <span class="nf">latest_rgbd_images</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">connected</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Data Not Available at the moment&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zed</span><span class="o">.</span><span class="n">retrieve_image</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="p">,</span> <span class="n">sl</span><span class="o">.</span><span class="n">VIEW</span><span class="o">.</span><span class="n">LEFT</span><span class="p">)</span> <span class="c1"># Get the left image</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zed</span><span class="o">.</span><span class="n">retrieve_measure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">,</span> <span class="n">sl</span><span class="o">.</span><span class="n">MEASURE</span><span class="o">.</span><span class="n">DEPTH</span><span class="p">)</span> <span class="c1"># Retrieve depth Mat. Depth is aligned on the left image</span>
+        <span class="k">return</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="o">.</span><span class="n">get_data</span><span class="p">()])</span></div>
+    
+<div class="viewcode-block" id="ZedCamera.safely_close"><a class="viewcode-back" href="../../../trina.sensors.html#trina.sensors.zed.ZedCamera.safely_close">[docs]</a>    <span class="k">def</span> <span class="nf">safely_close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;safely closing zed camera &#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">serial_num</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zed</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

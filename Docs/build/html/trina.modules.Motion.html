@@ -1,0 +1,891 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.Motion package &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="trina.modules.Sensor package" href="trina.modules.Sensor.html" />
+    <link rel="prev" title="trina.modules.Logger package" href="trina.modules.Logger.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="trina.html">trina package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="trina.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="trina.jarvis.html">trina.jarvis package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="trina.modules.html">trina.modules package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="trina.modules.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.html#module-trina.modules">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.sensors.html">trina.sensors package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.utils.html">trina.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.command_server">trina.command_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.settings">trina.settings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.setup">trina.setup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.state_server">trina.state_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="trina.html">trina package</a> &raquo;</li>
+        
+          <li><a href="trina.modules.html">trina.modules package</a> &raquo;</li>
+        
+      <li>trina.modules.Motion package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/trina.modules.Motion.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="trina-modules-motion-package">
+<h1>trina.modules.Motion package<a class="headerlink" href="#trina-modules-motion-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trina.modules.Motion.api">
+<span id="trina-modules-motion-api-module"></span><h2>trina.modules.Motion.api module<a class="headerlink" href="#module-trina.modules.Motion.api" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.modules.Motion.api.MotionAPI">
+<em class="property">class </em><code class="sig-prename descclassname">trina.modules.Motion.api.</code><code class="sig-name descname">MotionAPI</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">caller_name</span></em>, <em class="sig-param"><span class="n">state_server</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trina.jarvis.html#trina.jarvis.api.APILayer" title="trina.jarvis.api.APILayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">trina.jarvis.api.APILayer</span></code></a></p>
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.activeComponents">
+<code class="sig-name descname">activeComponents</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.activeComponents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.activeComponents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of active components as queried by the Motion Server.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.cartesianDriveFail">
+<code class="sig-name descname">cartesianDriveFail</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.cartesianDriveFail"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.cartesianDriveFail" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return if cartesian drive has failed or not</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.closeLeftRobotiqGripper">
+<code class="sig-name descname">closeLeftRobotiqGripper</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.closeLeftRobotiqGripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.closeLeftRobotiqGripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.closeRightRobotiqGripper">
+<code class="sig-name descname">closeRightRobotiqGripper</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.closeRightRobotiqGripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.closeRightRobotiqGripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>close the parallel gripper or start the vacuum gripper. This gripper is connected to the arm.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.getComponents">
+<code class="sig-name descname">getComponents</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.getComponents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.getComponents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return robot component dictionary</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.getKlamptCommandedPosition">
+<code class="sig-name descname">getKlamptCommandedPosition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.getKlamptCommandedPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.getKlamptCommandedPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the entire commanded position, in Klampt format. The base returns velocity instead</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.getKlamptSensedPosition">
+<code class="sig-name descname">getKlamptSensedPosition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.getKlamptSensedPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.getKlamptSensedPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the entire sensed Klampt position, in Klampt format.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.isShutDown">
+<code class="sig-name descname">isShutDown</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.isShutDown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.isShutDown" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether the robot is shutdown</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.isStarted">
+<code class="sig-name descname">isStarted</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.isStarted"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.isStarted" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether the robot has started</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.mirror_arm_config">
+<code class="sig-name descname">mirror_arm_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.mirror_arm_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.mirror_arm_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>given the Klampt config of the left or right arm, return the other</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>list of 6 floats. Limb configuration.</strong> (<em>A</em>) – </p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of 6 floats. Limb configuration.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.mode">
+<code class="sig-name descname">mode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Motion Server mode, either ‘Kinematic’ or ‘Physical’.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.moving">
+<code class="sig-name descname">moving</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.moving"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.moving" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns true if the robot is currently moving.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.name">
+<em class="property">classmethod </em><code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an identifier that will be used to refer to the API under
+jarvis and the state server.  Subclass may override this, otherwise
+the identifier is lowercase(classname)-‘api’</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.openLeftRobotiqGripper">
+<code class="sig-name descname">openLeftRobotiqGripper</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.openLeftRobotiqGripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.openLeftRobotiqGripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.openRightRobotiqGripper">
+<code class="sig-name descname">openRightRobotiqGripper</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.openRightRobotiqGripper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.openRightRobotiqGripper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open the parallel gripper or release the vacuum gripper. This gripper is connected to the arm.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.resumeMotion">
+<code class="sig-name descname">resumeMotion</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.resumeMotion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.resumeMotion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpause the robot.</p>
+<p>After unpausing, the robot is still stationery until some new commands is added</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedBasePosition">
+<code class="sig-name descname">sensedBasePosition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedBasePosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedBasePosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current base position. Zero position is the position when the base is started.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of 3 floats. Position and rotation.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedBaseVelocity">
+<code class="sig-name descname">sensedBaseVelocity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedBaseVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedBaseVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current base velocity</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of 2 floats. Linear and Rotational velocities.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedLeftEETransform">
+<code class="sig-name descname">sensedLeftEETransform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedLeftEETransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedLeftEETransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the transform w.r.t. the base frame</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>(R,t)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedLeftEEVelocity">
+<code class="sig-name descname">sensedLeftEEVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">local_pt</span><span class="o">=</span><span class="default_value">[0, 0, 0]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedLeftEEVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedLeftEEVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the EE translational and rotational velocity  w.r.t. the base DataFrame</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>local_pt</strong> – the local point in the EE local frame.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(v,w), a tuple of 2 velocity vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedLeftEEWrench">
+<code class="sig-name descname">sensedLeftEEWrench</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frame</span><span class="o">=</span><span class="default_value">'global'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedLeftEEWrench"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedLeftEEWrench" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>frame</strong> (<em>str</em>) – ‘global’ or ‘local’</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of 6 floats, expressed either in global or local EE coordinate, gravity of the attachement compensated for</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>wrench</p>
+</dd>
+</dl>
+<p>Note:
+The attachment weight to the ft sensor can be corrected by U5 directly</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedLeftGripperPosition">
+<code class="sig-name descname">sensedLeftGripperPosition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedLeftGripperPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedLeftGripperPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the current positions of the fingers.
+#TODO
+###Under development</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedLeftLimbPosition">
+<code class="sig-name descname">sensedLeftLimbPosition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedLeftLimbPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedLeftLimbPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current joint positions of the left limb</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of 6 floats. The limb configuration.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedLeftLimbVelocity">
+<code class="sig-name descname">sensedLeftLimbVelocity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedLeftLimbVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedLeftLimbVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the current limb joint velocities</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of 6 floats. The joint velocities.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedRightEETransform">
+<code class="sig-name descname">sensedRightEETransform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedRightEETransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedRightEETransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the transform w.r.t. the base frame</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>(R,t)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedRightEEVelocity">
+<code class="sig-name descname">sensedRightEEVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">local_pt</span><span class="o">=</span><span class="default_value">[0, 0, 0]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedRightEEVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedRightEEVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the EE translational and rotational velocity  w.r.t. the base DataFrame</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>local_pt</strong> – the local point in the EE local frame.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(v,w), a tuple of 2 velocity vectors</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedRightEEWrench">
+<code class="sig-name descname">sensedRightEEWrench</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frame</span><span class="o">=</span><span class="default_value">'global'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedRightEEWrench"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedRightEEWrench" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>frame</strong> (<em>sr</em>) – ‘global’ or ‘local’</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of 6 floats, expressed either in global or local EE coordinate</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>wrench</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedRightLimbPosition">
+<code class="sig-name descname">sensedRightLimbPosition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedRightLimbPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedRightLimbPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>The current joint positions of the right limb</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of 6 floats. The limb configuration.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedRightLimbVelocity">
+<code class="sig-name descname">sensedRightLimbVelocity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedRightLimbVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedRightLimbVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the current limb joint velocities</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of 6 floats. The joint velocities.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedRobotq">
+<code class="sig-name descname">sensedRobotq</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedRobotq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedRobotq" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the Robotq position.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.sensedTorsoPosition">
+<code class="sig-name descname">sensedTorsoPosition</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.sensedTorsoPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.sensedTorsoPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current torso position</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of 2 floats. The positions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setBaseTargetPosition">
+<code class="sig-name descname">setBaseTargetPosition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">vel</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setBaseTargetPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setBaseTargetPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the local target position of the base.</p>
+<p>The base constructs a path to go to the desired position, following the desired speed along the path
+:param q: a list of 3 floats. The desired x,y position and rotation.
+:param Vel: Desired speed along the path.
+:type Vel: float</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setBaseVelocity">
+<code class="sig-name descname">setBaseVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setBaseVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setBaseVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the velocity of the base relative to the local base frame</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>q</strong> – a list of 2 floats. The linear and rotational velocites.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setKlamptPosition">
+<code class="sig-name descname">setKlamptPosition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">duration</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setKlamptPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setKlamptPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the position of the entire robot as the Klamp’t model configuration</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> – a merged list of joint positions, in the order of torso,base,left limb, right limb, left gripper…</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) – desired time to reach q (s)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftEEInertialTransform">
+<code class="sig-name descname">setLeftEEInertialTransform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Ttarget</span></em>, <em class="sig-param"><span class="n">duration</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftEEInertialTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftEEInertialTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the trasform of the arm w.r.t. the base frame, movement complsetLeftLimbCo</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftEETransformImpedance">
+<code class="sig-name descname">setLeftEETransformImpedance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Tg</span></em>, <em class="sig-param"><span class="n">K</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">B</span></em>, <em class="sig-param"><span class="n">x_dot_g</span><span class="o">=</span><span class="default_value">[0, 0, 0, 0, 0, 0]</span></em>, <em class="sig-param"><span class="n">deadband</span><span class="o">=</span><span class="default_value">[0, 0, 0, 0, 0, 0]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftEETransformImpedance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftEETransformImpedance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
+The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
+and the inertia matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Tg</strong> – target transform of the EE, in Klampt format</p></li>
+<li><p><strong>K</strong> – a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.</p></li>
+<li><p><strong>B</strong> – a 6x6 numpy 2D array. The damping matrix.</p></li>
+<li><p><strong>M</strong> – a 6x6 numpy 2D array. The inertia matrix.</p></li>
+<li><p><strong>x_dot_g</strong> – list of 6 elements. The optional desired EE velocity</p></li>
+<li><p><strong>deadband</strong> – list of 6 elements. This is the range for ignoring the wrench readings (kind of like “deadband”)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftEEVelocity">
+<code class="sig-name descname">setLeftEEVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">tool</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftEEVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftEEVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the end-effect cartesian velocity, in the base frame.</p>
+<p>Implemented using position control and IK. Will keep moving until infeasible.
+TODO: implement collision detection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>v</strong> – A list of 6 floatd. v[0:3] is the desired cartesian position velocities and v[3:6] is the desired rotational velocity</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftGripperPosition">
+<code class="sig-name descname">setLeftGripperPosition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">position</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftGripperPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftGripperPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the position of the gripper. Moves as fast as possible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>position</strong> – a list of 4 floats, the angles of finger 1,2 , the angle of the thumb,
+the rotation of finger 1&amp;2 (they rotate together)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftGripperVelocity">
+<code class="sig-name descname">setLeftGripperVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">velocity</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftGripperVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftGripperVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the velocity of the gripper. Moves as fast as possible.
+#TODO
+###Under development</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftLimbPosition">
+<code class="sig-name descname">setLeftLimbPosition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftLimbPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftLimbPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the left limb joint positions, and the limb moves as fast as possible</p>
+<p>This will clear the motion queue.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>q</strong> – a list of 6 floats. The desired joint positions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftLimbPositionImpedance">
+<code class="sig-name descname">setLeftLimbPositionImpedance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">K</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">B</span><span class="o">=</span><span class="default_value">nan</span></em>, <em class="sig-param"><span class="n">x_dot_g</span><span class="o">=</span><span class="default_value">[0, 0, 0, 0, 0, 0]</span></em>, <em class="sig-param"><span class="n">deadband</span><span class="o">=</span><span class="default_value">[0, 0, 0, 0, 0, 0]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftLimbPositionImpedance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftLimbPositionImpedance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
+The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
+and the inertia matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> – target positin of the limb</p></li>
+<li><p><strong>K</strong> – a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.</p></li>
+<li><p><strong>B</strong> – a 6x6 numpy 2D array. The damping matrix.</p></li>
+<li><p><strong>M</strong> – a 6x6 numpy 2D array. The inertia matrix.</p></li>
+<li><p><strong>x_dot_g</strong> – list of 6 elements. The optional desired EE velocity</p></li>
+<li><p><strong>deadband</strong> – list of 6 elements. This is the range for ignoring the wrench readings (kind of like “deadband”)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftLimbPositionLinear">
+<code class="sig-name descname">setLeftLimbPositionLinear</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">duration</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftLimbPositionLinear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftLimbPositionLinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set Left limb to moves to a configuration in a certain amount of time at constant speed</p>
+<p>Set a motion queue, this will clear the setPosition() commands</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> – a list of 6 floats. The desired joint positions.</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) – The desired duration.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setLeftLimbVelocity">
+<code class="sig-name descname">setLeftLimbVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qdot</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setLeftLimbVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setLeftLimbVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the left limb joint velocities</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>qdot</strong> – a list of 6 floats. Joint velocities</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setRightEEInertialTransform">
+<code class="sig-name descname">setRightEEInertialTransform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Ttarget</span></em>, <em class="sig-param"><span class="n">duration</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setRightEEInertialTransform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setRightEEInertialTransform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the trasform of the arm w.r.t. the base frame, movement complete in a certain amount of time</p>
+<p>This current version assmumes that the torso is at zero position.
+#TODO: implement version with torso not at zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Ttarget</strong> – A klampt rigid transform (R,t). R is a column major form of a rotation matrix. t is a 3-element list</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) – The duration of the movement</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setRightEETransformImpedance">
+<code class="sig-name descname">setRightEETransformImpedance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Tg</span></em>, <em class="sig-param"><span class="n">K</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">B</span><span class="o">=</span><span class="default_value">nan</span></em>, <em class="sig-param"><span class="n">x_dot_g</span><span class="o">=</span><span class="default_value">[0, 0, 0, 0, 0, 0]</span></em>, <em class="sig-param"><span class="n">deadband</span><span class="o">=</span><span class="default_value">[0, 0, 0, 0, 0, 0]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setRightEETransformImpedance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setRightEETransformImpedance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the target transform of the EE in the global frame. The EE will follow a linear trajectory in the cartesian space to the target transform.
+The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
+and the inertia matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Tg</strong> – target transform of the EE, in Klampt format</p></li>
+<li><p><strong>K</strong> – a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.</p></li>
+<li><p><strong>B</strong> – a 6x6 numpy 2D array. The damping matrix.</p></li>
+<li><p><strong>M</strong> – a 6x6 numpy 2D array. The inertia matrix.</p></li>
+<li><p><strong>x_dot_g</strong> – list of 6 elements. The optional desired EE velocity</p></li>
+<li><p><strong>deadband</strong> – list of 6 elements. This is the range for ignoring the wrench readings (kind of like “deadband”)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setRightEEVelocity">
+<code class="sig-name descname">setRightEEVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">v</span></em>, <em class="sig-param"><span class="n">tool</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setRightEEVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setRightEEVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the end-effect cartesian velocity, in the base frame.</p>
+<p>Implemented using position control and IK. Will keep moving until infeasible.
+TODO: implement collision detection</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>v</strong> – A list of 6 floats. v[0:3] is the desired cartesian position velocities and v[3:6] is the desired rotational velocity</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setRightLimbPosition">
+<code class="sig-name descname">setRightLimbPosition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setRightLimbPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setRightLimbPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the right limb joint positions, and the limb moves as fast as possible</p>
+<p>This will clear the motion queue.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>q</strong> – a list of 6 floats. The desired joint positions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setRightLimbPositionImpedance">
+<code class="sig-name descname">setRightLimbPositionImpedance</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">K</span></em>, <em class="sig-param"><span class="n">M</span></em>, <em class="sig-param"><span class="n">B</span><span class="o">=</span><span class="default_value">nan</span></em>, <em class="sig-param"><span class="n">x_dot_g</span><span class="o">=</span><span class="default_value">[0, 0, 0, 0, 0, 0]</span></em>, <em class="sig-param"><span class="n">deadband</span><span class="o">=</span><span class="default_value">[0, 0, 0, 0, 0, 0]</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setRightLimbPositionImpedance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setRightLimbPositionImpedance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the target position of the limb. The EE will follow a linear trajectory in the cartesian space to the target transform.
+The EE will behave like a spring-mass-damper system attached to the target transform. The user will need to supply the elasticity matrix, the damping matrix,
+and the inertia matrix</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> – target positin of the limb</p></li>
+<li><p><strong>K</strong> – a 6x6 numpy 2D array. The elasticity matrix, this should be a diagonal matrix. The ordering is that the first 3 diagonal entries are for translations.</p></li>
+<li><p><strong>B</strong> – a 6x6 numpy 2D array. The damping matrix.</p></li>
+<li><p><strong>M</strong> – a 6x6 numpy 2D array. The inertia matrix.</p></li>
+<li><p><strong>x_dot_g</strong> – list of 6 elements. The optional desired EE velocity</p></li>
+<li><p><strong>deadband</strong> – list of 6 elements. This is the range for ignoring the wrench readings (kind of like “deadband”)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setRightLimbPositionLinear">
+<code class="sig-name descname">setRightLimbPositionLinear</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em>, <em class="sig-param"><span class="n">duration</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setRightLimbPositionLinear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setRightLimbPositionLinear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set right limb to moves to a configuration in a certain amount of time at constant speed</p>
+<p>Set a motion queue, this will clear the setPosition() commands</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>q</strong> – a list of 6 floats. The desired joint positions.</p></li>
+<li><p><strong>duration</strong> (<em>float</em>) – The desired duration.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setRightLimbVelocity">
+<code class="sig-name descname">setRightLimbVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qdot</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setRightLimbVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setRightLimbVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the right limb joint velocities</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>qdot</strong> – a list of 6 floats. Joint velocities</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setTorsoTargetPosition">
+<code class="sig-name descname">setTorsoTargetPosition</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">q</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setTorsoTargetPosition"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setTorsoTargetPosition" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the torso target position.</p>
+<p>Moves to the target as fast as possible.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>q</strong> – a list of 2 floats. The lift and tilt positions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.setVelocity">
+<code class="sig-name descname">setVelocity</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">qdot</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.setVelocity"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.setVelocity" title="Permalink to this definition">¶</a></dt>
+<dd><p>set the velocity of the entire robot, under development rn</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.api.MotionAPI.stopMotion">
+<code class="sig-name descname">stopMotion</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/api.html#MotionAPI.stopMotion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.api.MotionAPI.stopMotion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pause the motion of the robot, starting from the next control loop.</p>
+<p>This is not shutdown. Just a pause.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.modules.Motion.module">
+<span id="trina-modules-motion-module-module"></span><h2>trina.modules.Motion.module module<a class="headerlink" href="#module-trina.modules.Motion.module" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.modules.Motion.module.MotionModule">
+<em class="property">class </em><code class="sig-prename descclassname">trina.modules.Motion.module.</code><code class="sig-name descname">MotionModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Jarvis</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">robot_ip</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/module.html#MotionModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.module.MotionModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trina.jarvis.html#trina.jarvis.api.APIModule" title="trina.jarvis.api.APIModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">trina.jarvis.api.APIModule</span></code></a></p>
+<dl class="py method">
+<dt id="trina.modules.Motion.module.MotionModule.apiClass">
+<em class="property">classmethod </em><code class="sig-name descname">apiClass</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/module.html#MotionModule.apiClass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.module.MotionModule.apiClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the class used to implement the API layer.  Must be
+overridden by subclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.module.MotionModule.moduleCommandObject">
+<code class="sig-name descname">moduleCommandObject</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/module.html#MotionModule.moduleCommandObject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.module.MotionModule.moduleCommandObject" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the APILayer returned by <code class="xref py py-func docutils literal notranslate"><span class="pre">api()</span></code> implements functions using
+<code class="xref py py-func docutils literal notranslate"><span class="pre">APILayer._moduleCommand()</span></code>, return a pair <code class="docutils literal notranslate"><span class="pre">(api_name,object)</span></code>
+object whose methods will be called.</p>
+<p>Note: the object’s methods will be called from an arbitrary non-module
+thread, so make sure the methods are thread-safe.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.module.MotionModule.name">
+<em class="property">classmethod </em><code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/module.html#MotionModule.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.module.MotionModule.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the identifier used to refer to this module in Jarvis.
+Default is the class’ name.  Optional override.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.module.MotionModule.stateReceiver_loop">
+<code class="sig-name descname">stateReceiver_loop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/module.html#MotionModule.stateReceiver_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.module.MotionModule.stateReceiver_loop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Motion.module.MotionModule.stateReceiver_run">
+<code class="sig-name descname">stateReceiver_run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Motion/module.html#MotionModule.stateReceiver_run"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Motion.module.MotionModule.stateReceiver_run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.modules.Motion">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trina.modules.Motion" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="trina.modules.Sensor.html" class="btn btn-neutral float-right" title="trina.modules.Sensor package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="trina.modules.Logger.html" class="btn btn-neutral float-left" title="trina.modules.Logger package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

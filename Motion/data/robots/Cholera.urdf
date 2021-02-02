@@ -1261,6 +1261,7 @@
     <noselfcollision group1="base_link" group2="left_shoulder_link right_shoulder_link"/>
     <noselfcollision group1="head_base_link" group2="head_neck2_link neck_face_link"/>
     <noselfcollision group1="head_neck1_link" group2="neck_face_link"/>
+    <noselfcollision group1="left_shoulder_link left_forearm_link left_upperarm_link" group2="head_base_link head_neck1_link head_neck2_link neck_face_link"/>
 
     
   <sensors>

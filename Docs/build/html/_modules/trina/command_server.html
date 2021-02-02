@@ -1,0 +1,766 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.command_server &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.command_server</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.command_server</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span><span class="o">,</span><span class="nn">math</span><span class="o">,</span><span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Process</span><span class="p">,</span> <span class="n">Manager</span><span class="p">,</span> <span class="n">Pipe</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">csv</span><span class="o">,</span><span class="nn">sys</span><span class="o">,</span><span class="nn">shlex</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Thread</span><span class="p">,</span><span class="n">Lock</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="ne">TimeoutError</span><span class="p">,</span><span class="n">Process</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">klampt</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Thread</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">future</span> <span class="k">import</span> <span class="o">*</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">importlib</span> <span class="k">import</span> <span class="n">reload</span>
+<span class="kn">from</span> <span class="nn">importlib</span> <span class="k">import</span> <span class="n">import_module</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>  <span class="c1">#must be run from command line</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/TRINA&quot;</span><span class="p">))</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+<span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+<span class="kn">from</span> <span class="nn">trina.utils</span> <span class="k">import</span> <span class="n">TimedLooper</span><span class="p">,</span><span class="n">lock_wrap</span>
+<span class="kn">import</span> <span class="nn">redis</span>
+
+<div class="viewcode-block" id="CommandServerJarvisHooks"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServerJarvisHooks">[docs]</a><span class="k">class</span> <span class="nc">CommandServerJarvisHooks</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Place here whatever access to the CommandServer object</span>
+<span class="sd">    you believe that jarvis.APILayers should have.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">server</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">switch_module_activity</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">switch_module_activity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deactivate_module</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">deactivate_module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">activate_module</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">activate_module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restart_module</span> <span class="o">=</span> <span class="n">server</span><span class="o">.</span><span class="n">restart_module</span></div>
+
+<div class="viewcode-block" id="RunningModuleInfo"><a class="viewcode-back" href="../../trina.html#trina.command_server.RunningModuleInfo">[docs]</a><span class="k">class</span> <span class="nc">RunningModuleInfo</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">modobj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">classobj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span><span class="n">classinstance</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modobj</span> <span class="o">=</span> <span class="n">modobj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">classobj</span> <span class="o">=</span> <span class="n">classobj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">classinstance</span> <span class="o">=</span> <span class="n">classinstance</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apiclass</span> <span class="o">=</span> <span class="n">classobj</span><span class="o">.</span><span class="n">apiClass</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apiname</span> <span class="o">=</span> <span class="n">classobj</span><span class="o">.</span><span class="n">apiClass</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apiclass</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apiname</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span> <span class="o">=</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">classinstance</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">classinstance</span><span class="o">.</span><span class="n">jarvis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="RunningModuleInfo.is_managed"><a class="viewcode-back" href="../../trina.html#trina.command_server.RunningModuleInfo.is_managed">[docs]</a>    <span class="k">def</span> <span class="nf">is_managed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">modobj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div></div>
+
+
+<div class="viewcode-block" id="CommandServer"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer">[docs]</a><span class="k">class</span> <span class="nc">CommandServer</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">modules</span> <span class="o">=</span> <span class="p">[]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;CommandServer&#39;</span><span class="p">)[</span><span class="s1">&#39;verbose&#39;</span><span class="p">]</span>
+        <span class="c1"># we first check if redis is up and running:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">server</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">state_server</span><span class="o">.</span><span class="n">StateServer</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Reem already up and running&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Reem server has not been created yet.  Try running from &#39;redrun redrun_config.json&#39;&quot;</span><span class="p">)</span>
+            <span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># # if we cannot connect to redis, we start the server for once:</span>
+            <span class="c1"># print(&#39;starting redis server because of &#39;,e)</span>
+            <span class="c1"># self.redis_process = Process(target = self.start_redis())</span>
+            <span class="c1"># self.redis_process.daemon = False</span>
+            <span class="c1"># self.redis_process.start()</span>
+            <span class="c1"># # self.start_redis()</span>
+            <span class="c1"># # wait for it to start</span>
+            <span class="c1"># time.sleep(2)</span>
+            <span class="c1"># # then we start our connections as normal:</span>
+            <span class="c1"># self.server = trina.state_server.StateServer()</span>
+
+        <span class="c1"># self.start_ros_stuff()</span>
+        <span class="c1"># we then proceed with startup as normal</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;HEALTH_LOG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_command_env</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">Lock</span><span class="p">()</span>
+        <span class="c1">#define the environment in which an API call should be run here</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_command_env</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;jarvis&#39;</span><span class="p">:</span><span class="n">CommandServerJarvisHooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">startup</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shut_down_flag</span> <span class="o">=</span> <span class="kc">False</span>
+        
+        <span class="c1"># a map for module names (brief CapWords descriptor) to RunningModuleInfo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_modules</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span>
+
+        <span class="n">timeUpdaterThread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeUpdaterLoop</span><span class="p">)</span>
+        <span class="n">timeUpdaterThread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">timeUpdaterThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">commandReceiverThread</span> <span class="o">=</span> <span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">commandReceiverLoop</span><span class="p">)</span>
+        <span class="n">commandReceiverThread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">commandReceiverThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">moduleMonitorThread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">moduleMonitorLoop</span><span class="p">)</span>
+        <span class="n">moduleMonitorThread</span><span class="o">.</span><span class="n">daemon</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">moduleMonitorThread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">shutdown_all</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CommandServer.create_jarvis"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.create_jarvis">[docs]</a>    <span class="k">def</span> <span class="nf">create_jarvis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="n">server</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1">#initialize APIs available to the module</span>
+        <span class="k">if</span> <span class="n">server</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">server</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">state_server</span><span class="o">.</span><span class="n">StateServer</span><span class="p">()</span>
+        <span class="n">apis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">mod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">api</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">classinstance</span><span class="o">.</span><span class="n">api</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">server</span><span class="p">)</span>
+                <span class="n">apis</span><span class="p">[</span><span class="n">api</span><span class="o">.</span><span class="n">name</span><span class="p">()]</span> <span class="o">=</span> <span class="n">api</span>
+            <span class="k">except</span> <span class="ne">NotImplementedError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Module&quot;</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;has no API&quot;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">pass</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Module&quot;</span><span class="p">,</span><span class="n">i</span><span class="p">,</span><span class="s2">&quot;has no API&quot;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">pass</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Available APIs for module&quot;</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="s2">&quot;:&quot;</span><span class="p">,</span><span class="nb">list</span><span class="p">(</span><span class="n">apis</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">jarvis</span><span class="o">.</span><span class="n">Jarvis</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">),</span><span class="n">apis</span><span class="p">,</span><span class="n">server</span><span class="p">)</span>
+        <span class="c1">#take out APIs for deactivated modules from the Jarvis namespace</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">mod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="ow">and</span> <span class="n">mod</span><span class="o">.</span><span class="n">apiname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="nb">delattr</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="n">mod</span><span class="o">.</span><span class="n">apiname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="CommandServer.start_module"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.start_module">[docs]</a>    <span class="k">def</span> <span class="nf">start_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">module_class</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Starts up a new module and returns the class instance&quot;&quot;&quot;</span>
+        <span class="c1">#set up a new redis interface and trina queue</span>
+        <span class="n">module_server</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">state_server</span><span class="o">.</span><span class="n">StateServer</span><span class="p">()</span>
+        <span class="n">module_jarvis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_jarvis</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">module_server</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;HEALTH_LOG&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">True</span><span class="p">,</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;waiting&#39;</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">module_class</span><span class="p">(</span><span class="n">module_jarvis</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">status</span>
+        <span class="n">debugModules</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;CommandServer&#39;</span><span class="p">)[</span><span class="s1">&#39;debug&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">debugModules</span><span class="p">:</span>
+            <span class="c1">#turn on debugging</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">a</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span>
+        <span class="n">silentModules</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;CommandServer&#39;</span><span class="p">)[</span><span class="s1">&#39;silent&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">silentModules</span><span class="p">:</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1">#determine whether this module implements the moduleCommand interface</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">moduleCommandObject</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module_command_env</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">apiClass</span><span class="p">()</span><span class="o">.</span><span class="n">name</span><span class="p">()]</span> <span class="o">=</span> <span class="n">obj</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Module command env&quot;</span><span class="p">,</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_command_env</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">except</span> <span class="ne">NotImplementedError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">a</span></div>
+
+<div class="viewcode-block" id="CommandServer.start_dummy_module"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.start_dummy_module">[docs]</a>    <span class="k">def</span> <span class="nf">start_dummy_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Creates an unmanaged dummy module and returns the class instance&quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Module </span><span class="si">{}</span><span class="s2"> already exists&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">RunningModuleInfo</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="n">module_server</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">state_server</span><span class="o">.</span><span class="n">StateServer</span><span class="p">()</span>
+        <span class="n">module_jarvis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_jarvis</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">module_server</span><span class="p">)</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="n">RunningModuleInfo</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">mod</span><span class="o">.</span><span class="n">jarvis</span> <span class="o">=</span> <span class="n">module_jarvis</span>
+        <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;HEALTH_LOG&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;off&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+        <span class="c1">#module_jarvis.enableHealthChecks(False)</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mod</span>
+        <span class="k">return</span> <span class="n">module_jarvis</span></div>
+
+<div class="viewcode-block" id="CommandServer.start_modules"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.start_modules">[docs]</a>    <span class="k">def</span> <span class="nf">start_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">module_names</span> <span class="o">=</span> <span class="p">[]):</span>
+        <span class="n">activity_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">command_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">module_names</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">trina.modules</span>
+            <span class="kn">import</span> <span class="nn">trina.modules.apps</span>
+            <span class="kn">import</span> <span class="nn">trina_devel.modules</span>
+            <span class="kn">import</span> <span class="nn">trina_devel.modules.apps</span>
+            <span class="n">all_modules</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">trina</span><span class="o">.</span><span class="n">modules</span><span class="p">)</span> <span class="o">+</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">trina_devel</span><span class="o">.</span><span class="n">modules</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span> <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;modules&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="k">continue</span>
+                <span class="n">all_modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">trina</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">apps</span><span class="p">)</span> <span class="o">+</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">trina_devel</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">apps</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span> <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;modules&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="k">continue</span>
+                <span class="n">all_modules</span><span class="p">[</span><span class="s1">&#39;App_&#39;</span><span class="o">+</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1"> Starting ALL modules available!&#39;</span><span class="p">)</span>
+            <span class="n">module_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">all_modules</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="c1">#anything that starts with App should go at the end</span>
+            <span class="n">module_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">module_names</span><span class="p">)))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Startup order:&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">module_names</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">newmods</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">module_names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">]</span>
+        <span class="n">restartmods</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">module_names</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">newmods</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1"> Starting New Modules:&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">newmods</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">restartmods</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1"> Restarting Modules:&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">restartmods</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">newmods</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">trina</span>
+            <span class="n">module_locations</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;module_locations&#39;</span><span class="p">]</span>
+            <span class="n">app_locations</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;app_locations&#39;</span><span class="p">]</span>
+            <span class="n">mod_class_map</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;module_class_map&#39;</span><span class="p">]</span>
+
+        <span class="n">module_updates</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">module_names</span><span class="p">:</span>
+            <span class="n">briefName</span> <span class="o">=</span> <span class="n">name</span>  <span class="c1">#this is the name used by the Python module</span>
+            <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;App_&#39;</span><span class="p">):</span>
+                <span class="n">briefName</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">:</span>  <span class="c1">#new modules</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  Starting module&quot;</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
+                <span class="n">modobj</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;App_&#39;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">app_locations</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">modobj</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">location</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">briefName</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">location</span> <span class="ow">in</span> <span class="n">module_locations</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">modobj</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">location</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="n">briefName</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                <span class="k">if</span> <span class="n">modobj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;App_&quot;</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid app name </span><span class="si">{}</span><span class="s2">, could not be found/loaded in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">briefName</span><span class="p">,</span><span class="n">app_locations</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid module name </span><span class="si">{}</span><span class="s2">, could not be found/loaded in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">briefName</span><span class="p">,</span><span class="n">module_locations</span><span class="p">))</span>
+                <span class="n">modclassname</span> <span class="o">=</span> <span class="n">mod_class_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">briefName</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">modclass</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">modobj</span><span class="p">,</span><span class="n">modclassname</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Class </span><span class="si">{}</span><span class="s2"> not found in module </span><span class="si">{}</span><span class="s2">; perhaps you should set the entry point in settings.Jarvis.module_class_map?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modclassname</span><span class="p">,</span><span class="n">modobj</span><span class="o">.</span><span class="vm">__file__</span><span class="p">))</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">classinstance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_module</span><span class="p">(</span><span class="n">modclass</span><span class="p">,</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Failed to initialize module&#39;</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;due to &#39;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">mod</span> <span class="o">=</span> <span class="n">RunningModuleInfo</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">modobj</span><span class="p">,</span><span class="n">modclass</span><span class="p">,</span><span class="n">classinstance</span><span class="p">)</span>
+                <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="p">(</span><span class="n">classinstance</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s1">&#39;idle&#39;</span><span class="p">)</span>
+                <span class="n">module_updates</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mod</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c1">#existing module, restart</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;   Killing module &#39;</span><span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+                <span class="n">mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">mod</span><span class="o">.</span><span class="n">classinstance</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;   Restarting module &#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+                <span class="c1">#need to reload module and all sub-modules</span>
+                <span class="n">reload</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">modobj</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">modobj</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+                        <span class="n">reload</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+                <span class="c1">#reload class map</span>
+                <span class="kn">import</span> <span class="nn">trina</span>
+                <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">reload</span><span class="p">()</span>
+                <span class="n">mod_class_map</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">app_settings</span><span class="p">(</span><span class="s1">&#39;Jarvis&#39;</span><span class="p">)[</span><span class="s1">&#39;module_class_map&#39;</span><span class="p">]</span>
+                <span class="n">modclassname</span> <span class="o">=</span> <span class="n">mod_class_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="n">briefName</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">mod</span><span class="o">.</span><span class="n">classobj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">modobj</span><span class="p">,</span><span class="n">modclassname</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Class </span><span class="si">{}</span><span class="s2"> not found in module </span><span class="si">{}</span><span class="s2">; perhaps you should set the entry point in settings.CommandServer.module_class_map?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modclassname</span><span class="p">,</span><span class="n">mod</span><span class="o">.</span><span class="n">modobj</span><span class="o">.</span><span class="vm">__file__</span><span class="p">))</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">mod</span><span class="o">.</span><span class="n">classinstance</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_module</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">classobj</span><span class="p">,</span><span class="n">name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Failed to initialize module&#39;</span><span class="p">,</span><span class="n">name</span><span class="p">,</span><span class="s1">&#39;due to &#39;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="ow">not</span> <span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">classinstance</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s1">&#39;idle&#39;</span><span class="p">)</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">mod</span>
+        <span class="k">return</span></div>
+        
+<div class="viewcode-block" id="CommandServer.restart_module"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.restart_module">[docs]</a>    <span class="k">def</span> <span class="nf">restart_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;App-accessible call.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">:</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">module</span><span class="p">]</span>
+            <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">mod</span><span class="o">.</span><span class="n">classinstance</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem terminating module&quot;</span><span class="p">,</span><span class="n">module</span><span class="p">,</span><span class="s2">&quot;, restarting anyway&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_modules</span><span class="p">([</span><span class="n">name</span><span class="p">])</span></div>
+    
+<div class="viewcode-block" id="CommandServer.deactivate_module"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.deactivate_module">[docs]</a>    <span class="k">def</span> <span class="nf">deactivate_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;App-accessible call.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid module name&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;idle&#39;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">mod</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">apiname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1">#disable in other modules&#39; APIs</span>
+                <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mod</span><span class="o">.</span><span class="n">apiname</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span><span class="p">:</span>
+                        <span class="nb">delattr</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">jarvis</span><span class="p">,</span><span class="n">mod</span><span class="o">.</span><span class="n">apiname</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">is_managed</span><span class="p">():</span>
+                <span class="c1">#it&#39;s managed by the CommandServer, deactivate access to other apis</span>
+                <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">apiname</span> <span class="ow">in</span> <span class="n">mod</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span><span class="p">:</span>
+                        <span class="nb">delattr</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">jarvis</span><span class="p">,</span><span class="n">apiname</span><span class="p">)</span></div>
+        
+<div class="viewcode-block" id="CommandServer.activate_module"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.activate_module">[docs]</a>    <span class="k">def</span> <span class="nf">activate_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;App-accessible call.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid module name&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">is_managed</span><span class="p">():</span>
+                <span class="c1">#it&#39;s managed by the CommandServer, re-activate access to other apis</span>
+                <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">apiname</span><span class="p">,</span><span class="n">apihandle</span> <span class="ow">in</span> <span class="n">mod</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">jarvis</span><span class="p">,</span><span class="n">apiname</span><span class="p">,</span><span class="n">apihandle</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">apiname</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1">#re-enable in other modules&#39; APIs</span>
+                <span class="k">for</span> <span class="n">other</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">mod</span><span class="o">.</span><span class="n">apiname</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span><span class="p">:</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">jarvis</span><span class="p">,</span><span class="n">mod</span><span class="o">.</span><span class="n">apiname</span><span class="p">,</span><span class="n">other</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">apis</span><span class="p">[</span><span class="n">mod</span><span class="o">.</span><span class="n">apiname</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="CommandServer.switch_module_activity"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.switch_module_activity">[docs]</a>    <span class="k">def</span> <span class="nf">switch_module_activity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">to_activate</span><span class="p">,</span><span class="n">to_deactivate</span> <span class="o">=</span> <span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;App-accessible call.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;switching module activity:&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">to_deactivate</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;App&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">to_activate</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;  auto-deactivating other apps&quot;</span><span class="p">)</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tmp</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;App&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">to_activate</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">deactivate_module</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">to_deactivate</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">deactivate_module</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">to_activate</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">activate_module</span><span class="p">(</span><span class="n">i</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CommandServer.shutdown_all"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.shutdown_all">[docs]</a>    <span class="k">def</span> <span class="nf">shutdown_all</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;closing all and exiting&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">module</span><span class="p">]</span><span class="o">.</span><span class="n">classinstance</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">module</span><span class="p">]</span><span class="o">.</span><span class="n">classinstance</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">module</span><span class="p">]</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="CommandServer.timeUpdaterLoop"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.timeUpdaterLoop">[docs]</a>    <span class="k">def</span> <span class="nf">timeUpdaterLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">warning_frequency</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;auto&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">looper</span> <span class="o">=</span> <span class="n">TimedLooper</span><span class="p">(</span><span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CommandServer.time_updater_dt&#39;</span><span class="p">),</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;timeUpdater&#39;</span><span class="p">,</span><span class="n">warning_frequency</span><span class="o">=</span><span class="n">warning_frequency</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">looper</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shut_down_flag</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;TRINA_TIME&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span></div>
+    
+<div class="viewcode-block" id="CommandServer.commandReceiverLoop"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.commandReceiverLoop">[docs]</a>    <span class="k">def</span> <span class="nf">commandReceiverLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">command_logger</span> <span class="o">=</span> <span class="n">CommandLogger</span><span class="p">(</span><span class="s1">&#39;EXECUTED_COMMANDS&#39;</span><span class="p">)</span>
+        <span class="n">warning_frequency</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;auto&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">looper</span> <span class="o">=</span> <span class="n">TimedLooper</span><span class="p">(</span><span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CommandServer.command_receiver_dt&#39;</span><span class="p">),</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;commandReceiver&#39;</span><span class="p">,</span><span class="n">warning_frequency</span><span class="o">=</span><span class="n">warning_frequency</span><span class="p">)</span>
+        <span class="n">trina_queue_reader</span> <span class="o">=</span> <span class="n">jarvis</span><span class="o">.</span><span class="n">RedisQueueReader</span><span class="p">(</span><span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">redis_server_ip</span><span class="p">())</span>
+        <span class="k">while</span> <span class="n">looper</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shut_down_flag</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                <span class="n">module_activities</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span><span class="n">mod</span><span class="o">.</span><span class="n">active</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">mod</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">active</span> <span class="ow">in</span> <span class="n">module_activities</span><span class="p">:</span>
+                <span class="n">module_commands</span> <span class="o">=</span> <span class="n">trina_queue_reader</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;_MODULE_COMMANDS&#39;</span><span class="p">)</span>
+                <span class="c1">#print(i,&quot;:&quot;,module_commands)</span>
+                <span class="k">if</span> <span class="n">module_commands</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">active</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">module_commands</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">runModuleCommand</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+                                <span class="c1"># print(command)</span>
+                        <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">module_commands</span><span class="p">:</span>
+                            <span class="n">command_logger</span><span class="o">.</span><span class="n">log_command</span><span class="p">(</span><span class="n">command</span><span class="p">,</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;ignoring commands from </span><span class="si">{}</span><span class="s1"> because it is inactive&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)),</span><span class="n">module_commands</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CommandServer.runModuleCommand"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.runModuleCommand">[docs]</a>    <span class="k">def</span> <span class="nf">runModuleCommand</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">command</span><span class="p">):</span>
+        <span class="c1">#print(&quot;Executing module command&quot;,command,&quot;in env&quot;,list(self.module_command_env.keys()))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Executing module command&quot;</span><span class="p">,</span><span class="n">command</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">exec</span><span class="p">(</span><span class="n">command</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">module_command_env</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;there was an error executing your command!&#39;</span><span class="p">,</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1">#print(&quot;command received was &quot; + str(command))</span>
+            <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="CommandServer.moduleMonitorLoop"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.moduleMonitorLoop">[docs]</a>    <span class="k">def</span> <span class="nf">moduleMonitorLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">heartbeat_tolerance</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CommandServer.heartbeat_tolerance&#39;</span><span class="p">)</span>
+        <span class="n">dt</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CommandServer.health_monitor_dt&#39;</span><span class="p">)</span>
+        <span class="n">warning_frequency</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;auto&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">looper</span> <span class="o">=</span> <span class="n">TimedLooper</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;moduleMonitor&#39;</span><span class="p">,</span><span class="n">warning_frequency</span><span class="o">=</span><span class="n">warning_frequency</span><span class="p">)</span>
+        <span class="k">while</span> <span class="n">looper</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">shut_down_flag</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="n">module_activity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">module_health</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;HEALTH_LOG&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="c1">#discover other modules run from command line</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">module_activity</span><span class="p">:</span>               
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">module_health</span><span class="p">:</span>
+                        <span class="n">health</span> <span class="o">=</span> <span class="n">module_health</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">health</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;off&#39;</span> <span class="ow">or</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">health</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">heartbeat_tolerance</span><span class="p">:</span>
+                            <span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">active</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">if</span> <span class="n">active</span><span class="p">:</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Discovered module&quot;</span><span class="p">,</span><span class="n">key</span><span class="p">,</span><span class="s2">&quot;run from command line... not managed by CommandServer</span><span class="se">\n\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="n">mod</span> <span class="o">=</span> <span class="n">RunningModuleInfo</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)</span>
+                        <span class="n">mod</span><span class="o">.</span><span class="n">active</span> <span class="o">=</span> <span class="p">(</span><span class="n">module_activity</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;idle&#39;</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">mod</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1">#clean up keys</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;HEALTH_LOG&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+                        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                            <span class="k">pass</span>
+                        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                <span class="n">managed_restarts</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">unmanaged_restarts</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span><span class="n">mod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">module_health</span><span class="p">:</span>
+                        <span class="c1">#assume unmanaged</span>
+                        <span class="k">continue</span>
+                    <span class="n">health</span> <span class="o">=</span> <span class="n">module_health</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">health</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;off&#39;</span> <span class="ow">and</span> <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">health</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">heartbeat_tolerance</span><span class="o">*</span><span class="n">dt</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">is_managed</span><span class="p">():</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Module &quot;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s2">&quot; is dead  due to timeout, queueing restart&quot;</span><span class="p">)</span>
+                            <span class="n">managed_restarts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Module &quot;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s2">&quot; is dead  due to timeout, removing it from Command Server control&quot;</span><span class="p">)</span>
+                            <span class="n">unmanaged_restarts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s2">&quot;HEALTH_LOG&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="kc">False</span><span class="p">,</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()]</span>
+                    <span class="k">elif</span> <span class="n">mod</span><span class="o">.</span><span class="n">is_managed</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">mod</span><span class="o">.</span><span class="n">classinstance</span><span class="o">.</span><span class="n">healthy</span><span class="p">():</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">Module &quot;</span> <span class="o">+</span> <span class="n">key</span> <span class="o">+</span> <span class="s2">&quot; is dead due to dead process / hung thread, queueing restart</span><span class="se">\n\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="n">managed_restarts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">managed_restarts</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">CommandServer health monitor: restarting modules </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">managed_restarts</span><span class="p">)))</span>
+                <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">managed_restarts</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">module</span><span class="p">]</span><span class="o">.</span><span class="n">classinstance</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Problem terminating module&quot;</span><span class="p">,</span><span class="n">module</span><span class="p">,</span><span class="s2">&quot;, restarting anyway&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">start_modules</span><span class="p">(</span><span class="n">managed_restarts</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">unmanaged_restarts</span><span class="p">:</span>
+                <span class="c1">#non-managed, clean this up from the activity / health keys</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_dict</span><span class="p">[</span><span class="n">module</span><span class="p">]</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;ACTIVITY_STATUS&#39;</span><span class="p">][</span><span class="n">module</span><span class="p">]</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">server</span><span class="p">[</span><span class="s1">&#39;HEALTH_LOG&#39;</span><span class="p">][</span><span class="n">module</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="CommandServer.shutdown"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#send shutdown to all modules</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">shut_down_flag</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="CommandServer.start_redis"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.start_redis">[docs]</a>    <span class="k">def</span> <span class="nf">start_redis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Taken out in the Redrun version&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;starting redis&#39;</span><span class="p">)</span>
+        <span class="n">origWD</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="c1"># remember our original working directory</span>
+        <span class="c1">#setting up the start of the redis server</span>
+        <span class="n">redis_server_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~/database-server/redis-5.0.4/src/redis-server&#39;</span><span class="p">)</span>
+        <span class="n">redis_conf_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~/database-server/redis.conf&#39;</span><span class="p">)</span>
+        <span class="n">redis_folder</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s1">&#39;~/database-server&#39;</span><span class="p">)</span>
+        <span class="n">command_string</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{}</span><span class="s1"> </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">redis_server_path</span><span class="p">,</span><span class="n">redis_conf_path</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">redis_folder</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command_string</span><span class="p">)</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="n">pid</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">fork</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">setsid</span><span class="p">()</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;could not separate the process.&#39;</span><span class="p">)</span>
+                <span class="c1"># if pid==0: # new process</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">redis_pipe</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">while</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1000</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">redis_pipe</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">args</span><span class="p">,</span><span class="n">start_new_session</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># reverting back to trina directory</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">origWD</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CommandServer.start_ros_stuff"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandServer.start_ros_stuff">[docs]</a>    <span class="k">def</span> <span class="nf">start_ros_stuff</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Taken out in the Redrun version&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;starting ros stuff&#39;</span><span class="p">)</span>
+        <span class="n">origWD</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span> <span class="c1"># remember our original working directory</span>
+        <span class="c1">#setting up the start of the redis server</span>
+        <span class="c1"># catkin_folder = os.path.expanduser(&#39;~/catkin_ws/devel/&#39;)</span>
+        <span class="c1"># os.chdir(catkin_folder)</span>
+        <span class="c1"># os.system(&#39;./setup.sh&#39;)</span>
+
+        <span class="n">command_string</span> <span class="o">=</span> <span class="s1">&#39;roscore&#39;</span>
+        <span class="n">gmapping_string</span> <span class="o">=</span> <span class="s1">&#39;rosrun gmapping slam_gmapping scan:=base_scan _xmax:=10 _xmin:=-10 _ymax:=10 _ymin:=-10&#39;</span>
+        <span class="n">ros_args</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">command_string</span><span class="p">)</span>
+        <span class="n">gmapping_args</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">gmapping_string</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="ow">not</span> <span class="n">rosgraph</span><span class="o">.</span><span class="n">is_master_online</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ros_process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">ros_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;roscore already running, skipping this part&#39;</span><span class="p">)</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gmapping</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">gmapping_args</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;executed gmapping&#39;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">origWD</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CommandLogger"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandLogger">[docs]</a><span class="k">class</span> <span class="nc">CommandLogger</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">key</span><span class="p">,</span> <span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="mi">6379</span><span class="p">,</span><span class="n">max_length</span> <span class="o">=</span> <span class="mi">10000</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">r</span> <span class="o">=</span> <span class="n">redis</span><span class="o">.</span><span class="n">Redis</span><span class="p">(</span><span class="n">host</span> <span class="o">=</span> <span class="n">host</span><span class="p">,</span> <span class="n">port</span> <span class="o">=</span> <span class="n">port</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span> <span class="o">=</span> <span class="n">max_length</span>
+<div class="viewcode-block" id="CommandLogger.log_command"><a class="viewcode-back" href="../../trina.html#trina.command_server.CommandLogger.log_command">[docs]</a>    <span class="k">def</span> <span class="nf">log_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">command</span><span class="p">,</span><span class="n">time</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">llen</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_length</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n\n</span><span class="s1">QUEUE OVERFLOW!!!! </span><span class="se">\n\n\n\n\n</span><span class="s1"> SOMETHING WRONG WITH THE LOGGER?&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">r</span><span class="o">.</span><span class="n">rpush</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span><span class="nb">str</span><span class="p">([</span><span class="n">command</span><span class="p">,</span><span class="n">time</span><span class="p">]))</span></div></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span><span class="o">==</span><span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">argparse</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s1">&#39;Runs the Jarvis command server&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--modules&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Motion&#39;</span><span class="p">,</span><span class="s1">&#39;Example&#39;</span><span class="p">,</span><span class="s1">&#39;App_DirectTeleOperation&#39;</span><span class="p">],</span> <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;The list of modules to activate in trina_modules&#39;</span><span class="p">)</span>
+    <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="n">server</span> <span class="o">=</span> <span class="n">CommandServer</span><span class="p">(</span><span class="n">modules</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">modules</span><span class="p">)</span>
+    
+    <span class="k">while</span><span class="p">(</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+        <span class="k">pass</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

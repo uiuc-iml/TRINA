@@ -8,12 +8,13 @@ from copy import copy
 from scipy import signal as scipysignal
 
 class LimbController:
-    def __init__(self, host, **kwargs):
+    def __init__(self, host, gripper=False,gripper_type='vacuum',**kwargs):
         """
         - host: the UR5 controller IP address
 
-        Keyword arguments:
+        Normal arguments:
         - gripper: whether gripper is enabled (True by default)
+        - gripper_type: what type of gripper is used
 
         UR5 keyword arguments
         - rtde_port: port for RTDE, default 30004
@@ -25,8 +26,8 @@ class LimbController:
         """
 
         self.ur5 = UR5Controller(host,filters=[self._update],**kwargs)
-        self._gripper = kwargs.get('gripper', False)
-        self._type = kwargs.get('type','vacuum')
+        self._gripper = gripper
+        self._gripper_type = gripper_type
 
         self._start_time = None
         self._last_t = 0
@@ -153,6 +154,7 @@ class LimbController:
         """
         Open the parallel gripper or release the vacuum gripper
         """
+<<<<<<< HEAD
         if not self._paused:
             if self._gripper:
                 self._command_lock.acquire()
@@ -162,6 +164,13 @@ class LimbController:
                 else:
                     self._gripper_action = 1
                 self._command_lock.release()
+=======
+        if self._gripper:
+            self._command_lock.acquire()
+            self._new_gripper_action = True
+            if self._gripper_type == 'vacuum':
+                self._gripper_action = 2
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
             else:
                 print("limbController:gripper not enabled")
 
@@ -169,6 +178,7 @@ class LimbController:
         """
         Close the parallel gripper or start the vacuum gripper
         """
+<<<<<<< HEAD
         if not self._paused:
             if self._gripper:
                 self._command_lock.acquire()
@@ -178,6 +188,13 @@ class LimbController:
                 else:
                     self._gripper_action = 2
                 self._command_lock.release()
+=======
+        if self._gripper:
+            self._command_lock.acquire()
+            self._new_gripper_action = True
+            if self._gripper_type == 'vacuum':
+                self._gripper_action = 1
+>>>>>>> 3fd839e90dc13183966930e65a1e899e1556d45a
             else:
                 print("limbController:gripper not enabled")
 

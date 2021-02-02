@@ -1,0 +1,576 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.apps.DirectTeleOperation.module &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../trina.html">trina package</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>trina.modules.apps.DirectTeleOperation.module</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for trina.modules.apps.DirectTeleOperation.module</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">time</span><span class="o">,</span><span class="nn">math</span>
+<span class="c1"># from klampt import vis</span>
+<span class="c1"># from klampt import WorldModel</span>
+<span class="c1"># from klampt.model.trajectory import Trajectory</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="k">import</span> <span class="n">Process</span><span class="p">,</span> <span class="n">Manager</span><span class="p">,</span> <span class="n">Pipe</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">from</span> <span class="nn">pdb</span> <span class="k">import</span> <span class="n">set_trace</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="k">import</span> <span class="n">linalg</span> <span class="k">as</span> <span class="n">LA</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.spatial.transform</span> <span class="k">import</span> <span class="n">Rotation</span> <span class="k">as</span> <span class="n">R</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">from</span> <span class="nn">threading</span> <span class="k">import</span> <span class="n">Thread</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">signal</span>
+<span class="kn">from</span> <span class="nn">klampt.math</span> <span class="k">import</span> <span class="n">so3</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">trina</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="s2">&quot;~/TRINA&quot;</span><span class="p">))</span>
+    <span class="n">trina</span>
+<span class="kn">from</span> <span class="nn">trina</span> <span class="k">import</span> <span class="n">jarvis</span>
+
+
+
+<div class="viewcode-block" id="DirectTeleOperation"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation">[docs]</a><span class="k">class</span> <span class="nc">DirectTeleOperation</span><span class="p">(</span><span class="n">jarvis</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Jarvis</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">debugging</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+		<span class="n">jarvis</span><span class="o">.</span><span class="n">Module</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">Jarvis</span><span class="p">)</span>
+		<span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">require</span><span class="p">([</span><span class="s1">&#39;Motion&#39;</span><span class="p">,</span><span class="s1">&#39;UI&#39;</span><span class="p">])</span>
+		<span class="k">assert</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">,</span><span class="s2">&quot;Motion module not available?&quot;</span>
+		<span class="k">assert</span> <span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">,</span><span class="s2">&quot;UI module not available?&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">robot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">robot</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;idle&#39;</span> <span class="c1">#states are &quot; idle, active&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">init_UI_state</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="mf">0.025</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">infoLoop_rate</span> <span class="o">=</span> <span class="mf">0.05</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">components</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">activeComponents</span><span class="p">()</span>
+		<span class="c1">#self.robot.getComponents()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">left_limb_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;left_limb&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">right_limb_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;right_limb&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">base_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;base&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">left_gripper_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;left_gripper&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">right_gripper_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;right_gripper&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">torso_active</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;torso&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">temp_robot_telemetry</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;leftArm&#39;</span><span class="p">:[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span><span class="s1">&#39;rightArm&#39;</span><span class="p">:[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span> <span class="o">=</span> <span class="kc">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">init_pos_left</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">cur_pos_left</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">init_pos_right</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">init_headset_orientation</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">cur_pos_right</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">startup</span> <span class="o">=</span> <span class="kc">True</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_serveStateLoop</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;serveState&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">startSimpleThread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_infoLoop</span><span class="p">,</span><span class="n">dt</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">infoLoop_rate</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;infoLoop&quot;</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">_infoLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">log_health</span><span class="p">()</span>
+		<span class="n">status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">getActivityStatus</span><span class="p">()</span>
+
+		<span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;active&#39;</span><span class="p">:</span>
+			<span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;idle&#39;</span><span class="p">):</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1"> starting up Direct-Tele Operation Module! </span><span class="se">\n\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;active&#39;</span>
+				
+		<span class="k">elif</span> <span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;idle&#39;</span><span class="p">:</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;active&#39;</span><span class="p">:</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1"> Deactivating Direct-Tele Operation Module. </span><span class="se">\n\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="s1">&#39;idle&#39;</span>
+
+	<span class="k">def</span> <span class="nf">_serveStateLoop</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>	
+		<span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">startup</span> <span class="o">==</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">getUIState</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;DirectTeleoperation: started the initial values for the variables&#39;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">init_UI_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">getUIState</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">startup</span> <span class="o">=</span> <span class="kc">False</span>
+			<span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left_limb_active</span><span class="p">):</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">init_pos_left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEETransform</span><span class="p">()</span>
+			<span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right_limb_active</span><span class="p">):</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">init_pos_right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEETransform</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">init_headset_orientation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">treat_headset_orientation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_UI_state</span><span class="p">[</span><span class="s1">&#39;headSetPositionState&#39;</span><span class="p">][</span><span class="s1">&#39;deviceRotation&#39;</span><span class="p">])</span>
+			<span class="c1"># self.setRobotToDefault()</span>
+		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">startup</span><span class="p">:</span>
+			<span class="c1">#print(&#39;DirectTeleoperation: Waiting for UI to start up...&#39;)</span>
+			<span class="k">return</span>
+
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;idle&#39;</span><span class="p">:</span>
+			<span class="c1">#print(&quot;_serveStateLoop: idling&quot;)</span>
+			<span class="k">pass</span>
+		<span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;active&#39;</span><span class="p">:</span>
+			<span class="c1">#print(&#39;_serveStateLoop:active&#39;)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">last_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_limb_active</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">cur_pos_left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEETransform</span><span class="p">()</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">right_limb_active</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">cur_pos_right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEETransform</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">getUIState</span><span class="p">()</span>
+			<span class="c1">#print(self.UI_state[&#39;controllerButtonState&#39;])</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">UIStateLogic</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DirectTeleOperation.setRobotToDefault"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.setRobotToDefault">[docs]</a>	<span class="k">def</span> <span class="nf">setRobotToDefault</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">leftUntuckedConfig</span> <span class="o">=</span> <span class="n">trina</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">left_arm_config</span><span class="p">(</span><span class="s1">&#39;untucked&#39;</span><span class="p">)</span>
+		<span class="n">rightUntuckedConfig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">mirror_arm_config</span><span class="p">(</span><span class="n">leftUntuckedConfig</span><span class="p">)</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;right_Untucked&#39;</span><span class="p">,</span><span class="n">rightUntuckedConfig</span><span class="p">)</span>
+		<span class="k">if</span> <span class="s1">&#39;left_limb&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setLeftLimbPositionLinear</span><span class="p">(</span><span class="n">leftUntuckedConfig</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+		<span class="k">if</span> <span class="s1">&#39;right_limb&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">components</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setRightLimbPositionLinear</span><span class="p">(</span><span class="n">rightUntuckedConfig</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DirectTeleOperation.UIStateLogic"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.UIStateLogic">[docs]</a>	<span class="k">def</span> <span class="nf">UIStateLogic</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;leftController&quot;</span><span class="p">][</span><span class="s2">&quot;press&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">setRobotToDefault</span><span class="p">()</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;leftController&quot;</span><span class="p">][</span><span class="s2">&quot;press&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n</span><span class="s1"> resetting UI initial state </span><span class="se">\n\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">init_UI_state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">init_headset_orientation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">treat_headset_orientation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s1">&#39;headSetPositionState&#39;</span><span class="p">][</span><span class="s1">&#39;deviceRotation&#39;</span><span class="p">])</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">init_pos_right</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEETransform</span><span class="p">()</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">init_pos_left</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEETransform</span><span class="p">()</span>
+
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_active</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">baseControl</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">positionControl</span><span class="p">()</span></div>
+		
+
+<div class="viewcode-block" id="DirectTeleOperation.baseControl"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.baseControl">[docs]</a>	<span class="k">def</span> <span class="nf">baseControl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;controlling base movement&#39;&#39;&#39;</span>
+		<span class="n">base_velocity</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;rightController&quot;</span><span class="p">][</span><span class="s2">&quot;thumbstickMovement&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]),</span><span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;rightController&quot;</span><span class="p">][</span><span class="s2">&quot;thumbstickMovement&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])]</span>
+		<span class="n">curr_velocity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedBaseVelocity</span><span class="p">())</span>
+		<span class="n">base_velocity_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">base_velocity</span><span class="p">)</span>
+		<span class="c1"># if the commanded velocity differs from the actual velocity:</span>
+		<span class="k">if</span><span class="p">((</span><span class="n">curr_velocity</span><span class="o">-</span><span class="n">base_velocity_vec</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setBaseVelocity</span><span class="p">(</span><span class="n">base_velocity</span><span class="p">)</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;setBaseVelocity&quot;</span><span class="p">,</span><span class="n">base_velocity</span><span class="p">)</span>
+			<span class="k">except</span><span class="p">:</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;setBaseVelocity not successful&quot;</span><span class="p">)</span>
+				<span class="k">pass</span></div>
+
+<div class="viewcode-block" id="DirectTeleOperation.positionControl"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.positionControl">[docs]</a>	<span class="k">def</span> <span class="nf">positionControl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;controlling arm movement with position command</span>
+<span class="sd">		variable naming:</span>
+<span class="sd">			LT_cw_cc =&gt; Left Traslational matrix from Controller World to Controller Current</span>
+<span class="sd">			RR_rw_rh =&gt; Right Rotational matrix from Robot World to Robot Home</span>
+<span class="sd">			RR_rw_rh_T =&gt; Right Rotational matrix from Robot World to Robot Home Transpose</span>
+<span class="sd">			R_cw_rw  =&gt; Rotational matrix from Controller World to Robot World</span>
+
+<span class="sd">			cc------controller current</span>
+<span class="sd">			rc------robot current</span>
+
+<span class="sd">			cw------controller world</span>
+<span class="sd">			rw------robot world</span>
+
+<span class="sd">			ch------controller homw</span>
+<span class="sd">			rh------robot home</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">left_limb_active</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">positionControlArm</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">temp_robot_telemetry</span><span class="p">[</span><span class="s1">&#39;leftArm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftLimbPosition</span><span class="p">()</span>
+		<span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">right_limb_active</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">positionControlArm</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">temp_robot_telemetry</span><span class="p">[</span><span class="s1">&#39;rightArm&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRightLimbPosition</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">jarvis</span><span class="o">.</span><span class="n">ui</span><span class="o">.</span><span class="n">addRobotTelemetry</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">temp_robot_telemetry</span><span class="p">)</span></div>
+		
+<div class="viewcode-block" id="DirectTeleOperation.positionControlArm"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.positionControlArm">[docs]</a>	<span class="k">def</span> <span class="nf">positionControlArm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">side</span><span class="p">):</span>
+		<span class="n">actual_dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="n">side</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;left&#39;</span><span class="p">,</span><span class="s1">&#39;right&#39;</span><span class="p">]),</span> <span class="s2">&quot;invalid arm selection&quot;</span>
+		<span class="n">R_cw_rw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span>
+		<span class="n">joystick</span> <span class="o">=</span> <span class="n">side</span><span class="o">+</span><span class="s2">&quot;Controller&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s2">&quot;squeeze&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="p">:</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;right&#39;</span><span class="p">):</span>
+				<span class="p">[</span><span class="n">RR_rw_rh</span><span class="p">,</span><span class="n">RT_rw_rh</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_pos_right</span>
+				<span class="n">curr_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEETransform</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
+
+			<span class="k">elif</span><span class="p">(</span><span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;left&#39;</span><span class="p">):</span>
+				<span class="p">[</span><span class="n">RR_rw_rh</span><span class="p">,</span><span class="n">RT_rw_rh</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_pos_left</span>
+				<span class="n">curr_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEETransform</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
+			<span class="n">RT_rw_rh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">RT_rw_rh</span><span class="p">)</span>
+			<span class="n">RT_cw_cc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerPositionState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s2">&quot;controllerPosition&quot;</span><span class="p">])</span>
+			<span class="n">RT_cw_ch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_UI_state</span><span class="p">[</span><span class="s2">&quot;controllerPositionState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s2">&quot;controllerPosition&quot;</span><span class="p">])</span>
+			<span class="n">RT_final</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">RT_rw_rh</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_headset_orientation</span><span class="o">.</span><span class="n">as_dcm</span><span class="p">(),</span><span class="n">R_cw_rw</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">RT_cw_cc</span><span class="p">,</span><span class="n">RT_cw_ch</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">()))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+			<span class="c1"># RT_final = np.add(RT_rw_rh, np.matmul(R_cw_rw, np.subtract(RT_cw_cc,RT_cw_ch).transpose())).tolist()</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1"> Translation Transforms </span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+			<span class="nb">print</span><span class="p">(</span><span class="n">RT_final</span><span class="p">,</span><span class="n">RT_rw_rh</span><span class="p">)</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+			<span class="n">RR_rw_rh</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_dcm</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">RR_rw_rh</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))))</span>
+
+			<span class="n">init_quat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_UI_state</span><span class="p">[</span><span class="s2">&quot;controllerPositionState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s1">&#39;controllerRotation&#39;</span><span class="p">])</span>
+
+			<span class="n">R_cw_rw</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_dcm</span><span class="p">(</span><span class="n">R_cw_rw</span><span class="p">)</span>
+
+			<span class="c1"># world_adjustment_matrix = R_cw_rw</span>
+			<span class="n">world_adjustment_matrix</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_dcm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+			<span class="n">init_angle</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span><span class="o">*</span><span class="n">init_quat</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+			<span class="n">right_handed_init_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">init_quat</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">init_quat</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="o">-</span><span class="n">init_quat</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">init_angle</span><span class="p">)</span>
+			<span class="c1">#transform it to right handed:</span>
+
+			<span class="n">curr_quat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerPositionState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s1">&#39;controllerRotation&#39;</span><span class="p">])</span>
+			<span class="n">curr_angle</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span><span class="o">*</span><span class="n">curr_quat</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+			<span class="n">right_handed_curr_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">curr_quat</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">curr_quat</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="o">-</span><span class="n">curr_quat</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span><span class="o">*</span><span class="p">(</span><span class="o">-</span><span class="n">curr_angle</span><span class="p">)</span>
+
+			<span class="n">RR_cw_ch</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_rotvec</span><span class="p">(</span><span class="n">right_handed_init_vec</span><span class="p">)</span>
+			<span class="n">RR_cw_ch_T</span> <span class="o">=</span> <span class="n">RR_cw_ch</span><span class="o">.</span><span class="n">inv</span><span class="p">()</span>
+			<span class="n">RR_cw_cc</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_rotvec</span><span class="p">(</span><span class="n">right_handed_curr_vec</span><span class="p">)</span>
+			<span class="n">RR_ch_cc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_headset_orientation</span><span class="o">*</span><span class="p">(</span><span class="n">RR_cw_ch_T</span><span class="o">*</span><span class="n">RR_cw_cc</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">init_headset_orientation</span><span class="o">.</span><span class="n">inv</span><span class="p">()</span>
+
+			<span class="n">RR_final</span> <span class="o">=</span> <span class="p">(</span><span class="n">RR_rw_rh</span><span class="o">*</span><span class="n">RR_ch_cc</span><span class="p">)</span><span class="o">.</span><span class="n">as_dcm</span><span class="p">()</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+			<span class="c1"># RR_final = np.eye(3).flatten().tolist()</span>
+			<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;right&#39;</span><span class="p">):</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n\n\n</span><span class="s1"> moving right arm </span><span class="se">\n\n\n\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+				<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setRightEEInertialTransform</span><span class="p">([</span><span class="n">RR_final</span><span class="p">,</span><span class="n">RT_final</span><span class="p">],</span><span class="n">actual_dt</span><span class="p">)</span>
+
+			<span class="k">else</span><span class="p">:</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n\n\n\n</span><span class="s1"> moving left arm </span><span class="se">\n\n\n\n\n\n\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+				<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setLeftEEInertialTransform</span><span class="p">([</span><span class="n">RR_final</span><span class="p">,</span><span class="n">RT_final</span><span class="p">],</span><span class="n">actual_dt</span><span class="p">)</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_gripper_active</span><span class="p">:</span>
+					<span class="n">closed_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;leftController&quot;</span><span class="p">][</span><span class="s2">&quot;squeeze&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mf">2.3</span>
+					<span class="k">if</span><span class="p">(</span><span class="n">closed_value</span> <span class="o">&gt;=</span> <span class="mf">0.2</span><span class="p">):</span>
+						<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setLeftGripperPosition</span><span class="p">([</span><span class="n">closed_value</span><span class="p">,</span><span class="n">closed_value</span><span class="p">,</span><span class="n">closed_value</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+					<span class="k">else</span><span class="p">:</span>
+						<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setLeftGripperPosition</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="DirectTeleOperation.velocityControl"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.velocityControl">[docs]</a>	<span class="k">def</span> <span class="nf">velocityControl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;controlling arm movement with position command</span>
+<span class="sd">		variable naming:</span>
+<span class="sd">			LT_cw_cc =&gt; Left Traslational matrix from Controller World to Controller Current</span>
+<span class="sd">			RR_rw_rh =&gt; Right Rotational matrix from Robot World to Robot Home</span>
+<span class="sd">			RR_rw_rh_T =&gt; Right Rotational matrix from Robot World to Robot Home Transpose</span>
+<span class="sd">			R_cw_rw  =&gt; Rotational matrix from Controller World to Robot World</span>
+<span class="sd">			RR_hs =&gt; Initial headset</span>
+
+<span class="sd">			cc------controller current</span>
+<span class="sd">			rc------robot current</span>
+
+<span class="sd">			cw------controller world</span>
+<span class="sd">			rw------robot world</span>
+
+<span class="sd">			ch------controller homw</span>
+<span class="sd">			rh------robot home</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">velocityControlArm</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">velocityControlArm</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DirectTeleOperation.velocityControlArm"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.velocityControlArm">[docs]</a>	<span class="k">def</span> <span class="nf">velocityControlArm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">side</span><span class="p">):</span>
+		<span class="k">assert</span> <span class="p">(</span><span class="n">side</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;left&#39;</span><span class="p">,</span><span class="s1">&#39;right&#39;</span><span class="p">]),</span> <span class="s2">&quot;invalid arm selection&quot;</span>
+		<span class="n">R_cw_rw</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span>
+		<span class="n">joystick</span> <span class="o">=</span> <span class="n">side</span><span class="o">+</span><span class="s2">&quot;Controller&quot;</span>
+		<span class="c1"># print(&quot;{} button pushed&quot;.format(side),self.UI_state[&quot;controllerButtonState&quot;][joystick])</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s2">&quot;squeeze&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.5</span> <span class="p">:</span>
+			<span class="c1"># print(&quot;{} button pushed&quot;.format(side))</span>
+			<span class="c1"># print(&#39;moving arm&#39;)</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;right&#39;</span><span class="p">):</span>
+				<span class="p">[</span><span class="n">RR_rw_rh</span><span class="p">,</span><span class="n">RT_rw_rh</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_pos_right</span>
+				<span class="n">curr_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEETransform</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
+				<span class="n">R</span><span class="o">.</span><span class="n">from_dcm</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">RR_rw_rh</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))))</span>
+				<span class="n">curr_orientation</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_dcm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEETransform</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)))</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1"> </span><span class="si">{}</span><span class="s1"> </span><span class="se">\n\n\n</span><span class="s1"> &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedRightEETransform</span><span class="p">()[</span><span class="mi">1</span><span class="p">]))</span>
+
+			<span class="k">elif</span><span class="p">(</span><span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;left&#39;</span><span class="p">):</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n\n</span><span class="s1"> gets to the left side here </span><span class="se">\n\n\n</span><span class="s1"> &#39;</span><span class="p">)</span>
+				<span class="p">[</span><span class="n">RR_rw_rh</span><span class="p">,</span><span class="n">RT_rw_rh</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_pos_left</span>
+				<span class="n">curr_position</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEETransform</span><span class="p">()[</span><span class="mi">1</span><span class="p">])</span>
+				<span class="n">curr_orientation</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_dcm</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">sensedLeftEETransform</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)))</span>
+
+			<span class="n">RT_rw_rh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">RT_rw_rh</span><span class="p">)</span>
+			<span class="n">RT_cw_cc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerPositionState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s2">&quot;controllerPosition&quot;</span><span class="p">])</span>
+			<span class="n">RT_cw_ch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">init_UI_state</span><span class="p">[</span><span class="s2">&quot;controllerPositionState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s2">&quot;controllerPosition&quot;</span><span class="p">])</span>
+
+			<span class="n">RT_final</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">RT_rw_rh</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">R_cw_rw</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">RT_cw_cc</span><span class="p">,</span><span class="n">RT_cw_ch</span><span class="p">)))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+			<span class="n">vel</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">RT_final</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">curr_position</span><span class="p">))</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+			<span class="n">vel_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">vel</span><span class="p">)</span>
+			<span class="n">max_vel</span> <span class="o">=</span> <span class="mf">0.5</span>
+			<span class="n">actual_dt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">vel_norm</span> <span class="o">&gt;</span> <span class="n">max_vel</span><span class="p">):</span>
+				<span class="n">vel</span> <span class="o">=</span> <span class="p">(</span><span class="n">vel</span><span class="o">*</span><span class="n">max_vel</span><span class="o">/</span><span class="n">vel_norm</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">vel</span> <span class="o">=</span> <span class="n">vel</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+
+
+			<span class="n">RR_rw_rh</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_dcm</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">RR_rw_rh</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">))))</span>
+
+			<span class="c1"># Transforming from left handed to right handed</span>
+			<span class="c1"># we first read the quaternion</span>
+			<span class="n">init_quat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_UI_state</span><span class="p">[</span><span class="s2">&quot;controllerPositionState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s1">&#39;controllerRotation&#39;</span><span class="p">]</span>
+			<span class="c1"># turn it into a left handed rotation vector</span>
+			<span class="n">right_handed_init_quat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">init_quat</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">init_quat</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="o">-</span><span class="n">init_quat</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="o">-</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span><span class="o">*</span><span class="n">init_quat</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+			<span class="c1">#transform it to right handed:</span>
+
+			<span class="n">curr_quat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerPositionState&quot;</span><span class="p">][</span><span class="n">joystick</span><span class="p">][</span><span class="s1">&#39;controllerRotation&#39;</span><span class="p">]</span>
+
+			<span class="n">right_handed_curr_quat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">curr_quat</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">curr_quat</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="o">-</span><span class="n">curr_quat</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="o">-</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span><span class="o">*</span><span class="n">curr_quat</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+			<span class="n">RR_cw_ch</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_rotvec</span><span class="p">(</span><span class="n">right_handed_init_quat</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">right_handed_init_quat</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+			<span class="n">RR_cw_ch_T</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_dcm</span><span class="p">(</span><span class="n">RR_cw_ch</span><span class="o">.</span><span class="n">as_dcm</span><span class="p">()</span><span class="o">.</span><span class="n">transpose</span><span class="p">())</span>
+			<span class="n">RR_cw_cc</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_rotvec</span><span class="p">(</span><span class="n">right_handed_curr_quat</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">right_handed_curr_quat</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+
+			<span class="n">RR_final</span> <span class="o">=</span> <span class="p">(</span><span class="n">RR_rw_rh</span><span class="o">*</span><span class="n">RR_cw_ch_T</span><span class="o">*</span><span class="n">RR_cw_cc</span><span class="p">)</span>
+			<span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+			<span class="c1"># we now calculate the difference between current and desired positions:</span>
+			<span class="n">Delta_RR</span> <span class="o">=</span> <span class="p">(</span><span class="n">curr_orientation</span><span class="o">.</span><span class="n">inv</span><span class="p">()</span><span class="o">*</span><span class="n">RR_final</span><span class="p">)</span><span class="o">.</span><span class="n">inv</span><span class="p">()</span><span class="o">.</span><span class="n">as_rotvec</span><span class="p">()</span>
+			<span class="n">rotation_norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">Delta_RR</span><span class="p">)</span>
+			<span class="n">max_rot</span> <span class="o">=</span> <span class="mi">1</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">rotation_norm</span> <span class="o">&gt;</span> <span class="n">max_rot</span><span class="p">):</span>
+				<span class="n">Delta_RR</span> <span class="o">=</span> <span class="p">(</span><span class="n">Delta_RR</span><span class="o">*</span><span class="n">max_rot</span><span class="o">/</span><span class="n">rotation_norm</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">Delta_RR</span> <span class="o">=</span> <span class="n">Delta_RR</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">side</span> <span class="o">==</span> <span class="s1">&#39;right&#39;</span><span class="p">):</span>
+
+				<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setRightEEVelocity</span><span class="p">(</span><span class="n">vel</span><span class="o">+</span><span class="n">Delta_RR</span><span class="p">,</span> <span class="n">tool</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+
+
+			<span class="k">else</span><span class="p">:</span>
+				<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;moving left arm </span><span class="se">\n\n\n</span><span class="s1">&#39;</span><span class="p">,</span><span class="n">vel</span><span class="o">+</span><span class="n">Delta_RR</span><span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setLeftEEVelocity</span><span class="p">(</span><span class="n">vel</span><span class="o">+</span><span class="n">Delta_RR</span><span class="p">,</span> <span class="n">tool</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+				<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">left_gripper_active</span><span class="p">:</span>
+					<span class="n">closed_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UI_state</span><span class="p">[</span><span class="s2">&quot;controllerButtonState&quot;</span><span class="p">][</span><span class="s2">&quot;leftController&quot;</span><span class="p">][</span><span class="s2">&quot;squeeze&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mf">2.3</span>
+					<span class="k">if</span><span class="p">(</span><span class="n">closed_value</span> <span class="o">&gt;=</span> <span class="mf">0.2</span><span class="p">):</span>
+						<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setLeftGripperPosition</span><span class="p">([</span><span class="n">closed_value</span><span class="p">,</span><span class="n">closed_value</span><span class="p">,</span><span class="n">closed_value</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+					<span class="k">else</span><span class="p">:</span>
+						<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setLeftGripperPosition</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="DirectTeleOperation.logTeleoperation"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.logTeleoperation">[docs]</a>	<span class="k">def</span> <span class="nf">logTeleoperation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="p">):</span>
+		<span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">robotPoser</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+		<span class="n">left_limb_command</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="mi">10</span><span class="p">:</span><span class="mi">16</span><span class="p">]</span>
+		<span class="n">right_limb_command</span> <span class="o">=</span> <span class="n">q</span><span class="p">[</span><span class="mi">35</span><span class="p">:</span><span class="mi">41</span><span class="p">]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">fileName</span> <span class="o">=</span> <span class="s1">&#39;Teleoperation_log/motion&#39;</span> <span class="o">+</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;.csv&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">saveStartTime</span> <span class="o">=</span>  <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">saveEndTime</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span> <span class="o">+</span> <span class="n">datetime</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">3.1</span><span class="p">)</span>
+		<span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;timestep&#39;</span><span class="p">,</span> <span class="s1">&#39;Left Shoulder&#39;</span><span class="p">,</span> <span class="s1">&#39;Left UpperArm&#39;</span><span class="p">,</span> <span class="s1">&#39;Left ForeArm&#39;</span><span class="p">,</span> <span class="s1">&#39;Left Wrist1&#39;</span><span class="p">,</span><span class="s1">&#39;Left Wrist2&#39;</span><span class="p">,</span><span class="s1">&#39;Left Wrist3&#39;</span><span class="p">,</span><span class="s1">&#39;Right Shoulder&#39;</span><span class="p">,</span> <span class="s1">&#39;Right UpperArm&#39;</span><span class="p">,</span> <span class="s1">&#39;Right ForeArm&#39;</span><span class="p">,</span> <span class="s1">&#39;Right Wrist1&#39;</span><span class="p">,</span><span class="s1">&#39;Right Wrist2&#39;</span><span class="p">,</span><span class="s1">&#39;Right Wrist3&#39;</span><span class="p">,</span><span class="s1">&#39;Left EE Transform&#39;</span><span class="p">,</span> <span class="s1">&#39;Right EE Transform&#39;</span> <span class="p">]</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileName</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">csvfile</span><span class="p">:</span>
+			<span class="c1"># creating a csv writer object</span>
+			<span class="n">csvwriter</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">csvfile</span><span class="p">)</span>
+			<span class="n">csvwriter</span><span class="o">.</span><span class="n">writerow</span><span class="p">(</span><span class="n">fields</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setLeftLimbPositionLinear</span><span class="p">(</span><span class="n">left_limb_command</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">robot</span><span class="o">.</span><span class="n">setRightLimbPositionLinear</span><span class="p">(</span><span class="n">right_limb_command</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+		<span class="k">return</span></div>
+
+<div class="viewcode-block" id="DirectTeleOperation.treat_headset_orientation"><a class="viewcode-back" href="../../../../../trina.modules.apps.DirectTeleOperation.html#trina.modules.apps.DirectTeleOperation.module.DirectTeleOperation.treat_headset_orientation">[docs]</a>	<span class="k">def</span> <span class="nf">treat_headset_orientation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">headset_orientation</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		input: Rotvec of the headset position</span>
+<span class="sd">		output: Rotation Matrix for the headset that ignores pitch and roll</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="c1">#first we turn the input into a right_handed rotvec</span>
+		<span class="n">right_handed_rotvec</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">headset_orientation</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">headset_orientation</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="o">-</span><span class="n">headset_orientation</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="o">-</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">180</span><span class="p">)</span><span class="o">*</span><span class="n">headset_orientation</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+
+		<span class="n">partial_rotation</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_rotvec</span><span class="p">(</span><span class="n">right_handed_rotvec</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="n">right_handed_rotvec</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+		<span class="c1"># we then get its equivalent row, pitch and yaw</span>
+		<span class="n">rpy</span> <span class="o">=</span> <span class="n">partial_rotation</span><span class="o">.</span><span class="n">as_euler</span><span class="p">(</span><span class="s1">&#39;ZYX&#39;</span><span class="p">)</span>
+		<span class="c1"># we then ignore its roll and pitch in unity</span>
+		<span class="n">rotation_final</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">from_euler</span><span class="p">(</span><span class="s1">&#39;ZYX&#39;</span><span class="p">,[</span><span class="n">rpy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+
+		<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Treated initial matrix - here is the transform&#39;</span><span class="p">)</span>
+		<span class="nb">print</span><span class="p">(</span><span class="n">rotation_final</span><span class="o">.</span><span class="n">as_dcm</span><span class="p">())</span>
+
+		<span class="c1">#so3 version:</span>
+		<span class="c1"># partial_rotation = so3.from_rotation_vector((right_handed_rotvec[:3]*right_handed_rotvec[3]).tolist())</span>
+		<span class="c1"># # we then get its equivalent roll, pitch and yaw</span>
+		<span class="c1"># rpy = so3.rpy(partial_rotation)</span>
+		<span class="c1"># # # we then ignore its roll and pitch in unity</span>
+		<span class="c1"># rotation_final = so3.from_rpy([rpy[0],0,0])</span>
+
+		<span class="c1"># # print(&#39;Treated initial matrix - here is the transform&#39;)</span>
+		<span class="c1"># # print(rotation_final.as_dcm())</span>
+
+		<span class="c1"># return so3.matrix(rotation_final)</span>
+		<span class="k">return</span> <span class="n">rotation_final</span></div></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span> <span class="p">:</span>
+	<span class="n">my_controller</span> <span class="o">=</span> <span class="n">DirectTeleOperation</span><span class="p">()</span>
+	<span class="k">while</span> <span class="n">my_controller</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="s1">&#39;terminated&#39;</span><span class="p">:</span>
+		<span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

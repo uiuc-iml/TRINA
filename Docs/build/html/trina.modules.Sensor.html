@@ -1,0 +1,645 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>trina.modules.Sensor package &mdash; TRINA Python API 0.1.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="trina.modules.UI package" href="trina.modules.UI.html" />
+    <link rel="prev" title="trina.modules.Motion package" href="trina.modules.Motion.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> TRINA Python API
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="trina.html">trina package</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="trina.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="trina.jarvis.html">trina.jarvis package</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="trina.modules.html">trina.modules package</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="trina.modules.html#subpackages">Subpackages</a></li>
+<li class="toctree-l4"><a class="reference internal" href="trina.modules.html#module-trina.modules">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="trina.sensors.html">trina.sensors package</a></li>
+<li class="toctree-l3"><a class="reference internal" href="trina.utils.html">trina.utils package</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.command_server">trina.command_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.settings">trina.settings module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.setup">trina.setup module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina.state_server">trina.state_server module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="trina.html#module-trina">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">TRINA Python API</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="trina.html">trina package</a> &raquo;</li>
+        
+          <li><a href="trina.modules.html">trina.modules package</a> &raquo;</li>
+        
+      <li>trina.modules.Sensor package</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/trina.modules.Sensor.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="trina-modules-sensor-package">
+<h1>trina.modules.Sensor package<a class="headerlink" href="#trina-modules-sensor-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-trina.modules.Sensor.api">
+<span id="trina-modules-sensor-api-module"></span><h2>trina.modules.Sensor.api module<a class="headerlink" href="#module-trina.modules.Sensor.api" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.modules.Sensor.api.SensorAPI">
+<em class="property">class </em><code class="sig-prename descclassname">trina.modules.Sensor.api.</code><code class="sig-name descname">SensorAPI</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sensor_module</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trina.jarvis.html#trina.jarvis.api.APILayer" title="trina.jarvis.api.APILayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">trina.jarvis.api.APILayer</span></code></a></p>
+<p>External API for the sensor module.</p>
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.camerasAvailable">
+<code class="sig-name descname">camerasAvailable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.camerasAvailable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.camerasAvailable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of strings describing available cameras</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.getLidarPointCloud">
+<code class="sig-name descname">getLidarPointCloud</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.getLidarPointCloud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.getLidarPointCloud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Lidar scan as an N x 3 numpy array of points.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.getLidarScan">
+<code class="sig-name descname">getLidarScan</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.getLidarScan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.getLidarScan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Lidar scan as a list of floats</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.getNextLidarPointCloud">
+<code class="sig-name descname">getNextLidarPointCloud</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.getNextLidarPointCloud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.getNextLidarPointCloud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Promise for the Lidar scan.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>To get the next point clouds when they arrive, call wait()
+on the Promise object.  value() has the same result as
+<a class="reference internal" href="#trina.modules.Sensor.api.SensorAPI.getLidarPointCloud" title="trina.modules.Sensor.api.SensorAPI.getLidarPointCloud"><code class="xref py py-func docutils literal notranslate"><span class="pre">getLidarPointCloud()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="trina.utils.html#trina.utils.promise.Promise" title="trina.utils.promise.Promise">Promise</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.getNextLidarScan">
+<code class="sig-name descname">getNextLidarScan</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.getNextLidarScan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.getNextLidarScan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Promise for the Lidar scan.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>To get the next point clouds when they arrive, call wait()
+on the Promise object.  value() has the same result as
+<a class="reference internal" href="#trina.modules.Sensor.api.SensorAPI.getLidarScan" title="trina.modules.Sensor.api.SensorAPI.getLidarScan"><code class="xref py py-func docutils literal notranslate"><span class="pre">getLidarScan()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="trina.utils.html#trina.utils.promise.Promise" title="trina.utils.promise.Promise">Promise</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.getNextPointClouds">
+<code class="sig-name descname">getNextPointClouds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.getNextPointClouds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.getNextPointClouds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Promise for the next point clouds.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cameras</strong> – <p>Can be one of the following:</p>
+<ul class="simple">
+<li><p>None indicates all cameras.</p></li>
+<li><p>str: indicates one camera.  (Note the return value is still a dict
+with one key)</p></li>
+<li><p>list of str: multiple cameras.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>To get the next point clouds when they arrive, call wait()
+on the Promise object.  value() has the same format the result of
+<a class="reference internal" href="#trina.modules.Sensor.api.SensorAPI.getPointClouds" title="trina.modules.Sensor.api.SensorAPI.getPointClouds"><code class="xref py py-func docutils literal notranslate"><span class="pre">getPointClouds()</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="trina.utils.html#trina.utils.promise.Promise" title="trina.utils.promise.Promise">Promise</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.getNextRgbdImages">
+<code class="sig-name descname">getNextRgbdImages</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.getNextRgbdImages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.getNextRgbdImages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a Promise for the next RGBD images.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cameras</strong> – <p>Can be one of the following:</p>
+<ul class="simple">
+<li><p>None indicates all cameras.</p></li>
+<li><p>str: indicates one camera.  (Note the return value is still a dict
+with one key)</p></li>
+<li><p>list of str: multiple cameras.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>To get the next images when they arrive, call wait() on the
+Promise object. value() has the same format the result of
+<a class="reference internal" href="#trina.modules.Sensor.api.SensorAPI.getRgbdImages" title="trina.modules.Sensor.api.SensorAPI.getRgbdImages"><code class="xref py py-func docutils literal notranslate"><span class="pre">getRgbdImages()</span></code></a>.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="trina.utils.html#trina.utils.promise.Promise" title="trina.utils.promise.Promise">Promise</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.getPointClouds">
+<code class="sig-name descname">getPointClouds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.getPointClouds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.getPointClouds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the point clouds corresponding to the latest image
+taken.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cameras</strong> – <p>Can be one of the following:</p>
+<ul class="simple">
+<li><p>None indicates all cameras.</p></li>
+<li><p>str: indicates one camera.  (Note the return value is still a dict
+with one key)</p></li>
+<li><p>list of str: multiple cameras.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>where keys are camera snd values are point clouds. Each
+point cloud is expressed in world coordinates as Open3D PointCloud
+objects.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.getRgbdImages">
+<code class="sig-name descname">getRgbdImages</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.getRgbdImages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.getRgbdImages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the RGBD cameras from all cameras or a subset of cameras
+corresponding to the latest images taken.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cameras</strong> – <p>Can be one of the following:</p>
+<ul class="simple">
+<li><p>None indicates all cameras.</p></li>
+<li><p>str: indicates one camera.  (Note the return value is still a dict
+with one key)</p></li>
+<li><p>list of str: multiple cameras.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>keys are cameras and values are (rgb,depth) image pairs.  Each
+image is a numpy object. (These are shared across threads, so be careful
+not to modify them.)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.interprocess">
+<em class="property">classmethod </em><code class="sig-name descname">interprocess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.interprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.interprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if the API is safe to pass across processes.  Returns
+True by default; implementers that share objects should overload and
+return False.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPI.name">
+<em class="property">classmethod </em><code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPI.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPI.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an identifier that will be used to refer to the API under
+jarvis and the state server.  Subclass may override this, otherwise
+the identifier is lowercase(classname)-‘api’</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.modules.Sensor.api.SensorAPISlow">
+<em class="property">class </em><code class="sig-prename descclassname">trina.modules.Sensor.api.</code><code class="sig-name descname">SensorAPISlow</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">caller_name</span></em>, <em class="sig-param"><span class="n">state_server</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPISlow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPISlow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trina.jarvis.html#trina.jarvis.api.APILayer" title="trina.jarvis.api.APILayer"><code class="xref py py-class docutils literal notranslate"><span class="pre">trina.jarvis.api.APILayer</span></code></a></p>
+<p>External API for the sensor module – slow version that uses the state server to copy images.</p>
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPISlow.camerasAvailable">
+<code class="sig-name descname">camerasAvailable</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPISlow.camerasAvailable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPISlow.camerasAvailable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of strings describing available cameras</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPISlow.getLidarPointCloud">
+<code class="sig-name descname">getLidarPointCloud</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPISlow.getLidarPointCloud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPISlow.getLidarPointCloud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Lidar scan as an N x 3 numpy array of points.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPISlow.getLidarScan">
+<code class="sig-name descname">getLidarScan</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPISlow.getLidarScan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPISlow.getLidarScan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the Lidar scan as a list of floats</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPISlow.getPointClouds">
+<code class="sig-name descname">getPointClouds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPISlow.getPointClouds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPISlow.getPointClouds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the point clouds corresponding to the latest image
+taken.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cameras</strong> – <p>Can be one of the following:</p>
+<ul class="simple">
+<li><p>None indicates all cameras.</p></li>
+<li><p>str: indicates one camera.  (Note the return value is still a dict
+with one key)</p></li>
+<li><p>list of str: multiple cameras.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>where keys are camera snd values are point clouds. Each
+point cloud is expressed in world coordinates as Open3D PointCloud
+objects.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPISlow.getRgbdImages">
+<code class="sig-name descname">getRgbdImages</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPISlow.getRgbdImages"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPISlow.getRgbdImages" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the RGBD cameras from all cameras or a subset of cameras
+corresponding to the latest images taken.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cameras</strong> – <p>Can be one of the following:</p>
+<ul class="simple">
+<li><p>None indicates all cameras.</p></li>
+<li><p>str: indicates one camera.  (Note the return value is still a dict
+with one key)</p></li>
+<li><p>list of str: multiple cameras.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>keys are cameras and values are (rgb,depth) image pairs.  Each
+image is a numpy object. (These are shared across threads, so be careful
+not to modify them.)</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPISlow.interprocess">
+<em class="property">classmethod </em><code class="sig-name descname">interprocess</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPISlow.interprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPISlow.interprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if the API is safe to pass across processes.  Returns
+True by default; implementers that share objects should overload and
+return False.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.api.SensorAPISlow.name">
+<em class="property">classmethod </em><code class="sig-name descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/api.html#SensorAPISlow.name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.api.SensorAPISlow.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an identifier that will be used to refer to the API under
+jarvis and the state server.  Subclass may override this, otherwise
+the identifier is lowercase(classname)-‘api’</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.modules.Sensor.module">
+<span id="trina-modules-sensor-module-module"></span><h2>trina.modules.Sensor.module module<a class="headerlink" href="#module-trina.modules.Sensor.module" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="trina.modules.Sensor.module.CameraData">
+<em class="property">class </em><code class="sig-prename descclassname">trina.modules.Sensor.module.</code><code class="sig-name descname">CameraData</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">settings</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#CameraData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.CameraData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.modules.Sensor.module.SensorModule">
+<em class="property">class </em><code class="sig-prename descclassname">trina.modules.Sensor.module.</code><code class="sig-name descname">SensorModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">Jarvis</span></em>, <em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'Kinematic'</span></em>, <em class="sig-param"><span class="n">ros_active</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="trina.jarvis.html#trina.jarvis.api.APIModule" title="trina.jarvis.api.APIModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">trina.jarvis.api.APIModule</span></code></a></p>
+<p>This is the primary class of this helper module. It instantiates a motion client and handles the streamed inputs from the realsense camera</p>
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.api">
+<code class="sig-name descname">api</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other_module</span></em>, <em class="sig-param"><span class="n">other_comms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.api"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.api" title="Permalink to this definition">¶</a></dt>
+<dd><p>To implement an API module, subclass must return a <code class="xref py py-class docutils literal notranslate"><span class="pre">APILayer</span></code>
+subclass that implements the communication from the other module to
+your module.</p>
+<p>By default, this instantiates the class in <a class="reference internal" href="#trina.modules.Sensor.module.SensorModule.apiClass" title="trina.modules.Sensor.module.SensorModule.apiClass"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apiClass()</span></code></a>.</p>
+<p>The basic implementation is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="n">MyAPILayer</span><span class="p">(</span><span class="n">other_module_name</span><span class="p">,</span><span class="n">other_comm_handles</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to restrict which modules have access to your module, you
+can raise a NotImplementedError() if the other module should be denied
+access.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.apiClass">
+<em class="property">classmethod </em><code class="sig-name descname">apiClass</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.apiClass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.apiClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the class used to implement the API layer.  Must be
+overridden by subclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.get_base_transform">
+<code class="sig-name descname">get_base_transform</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.get_base_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.get_base_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.get_camera_transform">
+<code class="sig-name descname">get_camera_transform</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">camera_name</span></em>, <em class="sig-param"><span class="n">format</span><span class="o">=</span><span class="default_value">'klampt'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.get_camera_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.get_camera_transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.get_lidar_point_cloud">
+<code class="sig-name descname">get_lidar_point_cloud</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.get_lidar_point_cloud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.get_lidar_point_cloud" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.get_lidar_scan">
+<code class="sig-name descname">get_lidar_scan</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.get_lidar_scan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.get_lidar_scan" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.get_point_clouds">
+<code class="sig-name descname">get_point_clouds</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.get_point_clouds"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.get_point_clouds" title="Permalink to this definition">¶</a></dt>
+<dd><p>API-call. Returns the point cloud from the referred source in the robot’s
+base frame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cameras</strong> (<em>[</em><em>str</em><em>]</em>) – A string or list of strings containing which cameras</p></li>
+<li><p><strong>are using for this process.</strong> (<em>we</em>) – </p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>point_cloud} : A dictionary containing an open3D point
+cloud for each camera string for which a point_cloud is available.
+point_cloud is None if the requested camera is not yet producing images.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>output {camera</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.get_rgbd_images">
+<code class="sig-name descname">get_rgbd_images</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cameras</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.get_rgbd_images"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.get_rgbd_images" title="Permalink to this definition">¶</a></dt>
+<dd><p>API-call.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModule.terminate">
+<code class="sig-name descname">terminate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModule.terminate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModule.terminate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Called by CommandServer to terminate the module.  Optional override
+to close resources.</p>
+<p>Thread safe.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="trina.modules.Sensor.module.SensorModuleSlow">
+<em class="property">class </em><code class="sig-prename descclassname">trina.modules.Sensor.module.</code><code class="sig-name descname">SensorModuleSlow</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModuleSlow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModuleSlow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#trina.modules.Sensor.module.SensorModule" title="trina.modules.Sensor.module.SensorModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">trina.modules.Sensor.module.SensorModule</span></code></a></p>
+<p>A sensor module that copies images / point clouds to the Redis server.
+Slower than SensorModule but interprocess communication works.</p>
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModuleSlow.api">
+<code class="sig-name descname">api</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other_module</span></em>, <em class="sig-param"><span class="n">other_comms</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModuleSlow.api"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModuleSlow.api" title="Permalink to this definition">¶</a></dt>
+<dd><p>To implement an API module, subclass must return a <code class="xref py py-class docutils literal notranslate"><span class="pre">APILayer</span></code>
+subclass that implements the communication from the other module to
+your module.</p>
+<p>By default, this instantiates the class in <a class="reference internal" href="#trina.modules.Sensor.module.SensorModuleSlow.apiClass" title="trina.modules.Sensor.module.SensorModuleSlow.apiClass"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apiClass()</span></code></a>.</p>
+<p>The basic implementation is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">return</span> <span class="n">MyAPILayer</span><span class="p">(</span><span class="n">other_module_name</span><span class="p">,</span><span class="n">other_comm_handles</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you want to restrict which modules have access to your module, you
+can raise a NotImplementedError() if the other module should be denied
+access.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModuleSlow.apiClass">
+<em class="property">classmethod </em><code class="sig-name descname">apiClass</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModuleSlow.apiClass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModuleSlow.apiClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the class used to implement the API layer.  Must be
+overridden by subclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="trina.modules.Sensor.module.SensorModuleSlow.checkRequests">
+<code class="sig-name descname">checkRequests</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/trina/modules/Sensor/module.html#SensorModuleSlow.checkRequests"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#trina.modules.Sensor.module.SensorModuleSlow.checkRequests" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-trina.modules.Sensor">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-trina.modules.Sensor" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="trina.modules.UI.html" class="btn btn-neutral float-right" title="trina.modules.UI package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="trina.modules.Motion.html" class="btn btn-neutral float-left" title="trina.modules.Motion package" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2021, Intelligent Motion Lab
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

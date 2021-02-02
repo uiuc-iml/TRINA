@@ -133,8 +133,8 @@ cd
 
 echo "installing redis and setting up the databases"
 
-mkdir database-server
-cd database-server
+mkdir trina-database-server
+cd trina-database-server
 wget http://download.redis.io/releases/redis-5.0.4.tar.gz
 tar xzf redis-5.0.4.tar.gz
 cd redis-5.0.4/deps
@@ -148,7 +148,7 @@ echo "installing dependencies necessary for compiling redisjson"
 sudo apt-get install cargo libclang-dev==8.0
 
 
-cd ~/database-server
+cd ~/trina-database-server
 echo "installing redisjson"
 git clone https://github.com/RedisLabsModules/redisjson.git
 cd redisjson
@@ -158,7 +158,7 @@ cd ..
 
 echo "cloning configuration file from TRINA"
 
-cp ~/TRINA/redis.conf ~/database-server/redis.conf
+cp ~/TRINA/redis.conf ~/trina-database-server/redis.conf
 
 echo "installing reem from source"
 cd
